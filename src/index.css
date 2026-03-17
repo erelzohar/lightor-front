@@ -1,0 +1,150 @@
+@import url('https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&family=Raleway:wght@300;400;500;600;700&family=Rubik:wght@300;400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Light */
+    --color-primary: 139 92 246; 
+    /* dark */
+    --color-primary-dark: 6 182 212;
+
+    
+    --color-light-bg: 249 250 251;
+    --color-light-surface: 255 255 255;
+    --color-light-gray: 229 231 235;
+    --color-light-text: 55 65 81;
+    
+    --color-dark-bg: 17 24 39;
+    --color-dark-surface: 31 41 55;
+    --color-dark-gray: 156 163 175;
+    --color-dark-text: 249 250 251;
+  }
+}
+
+html {
+  scroll-behavior: smooth;
+  font-size: 16px;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html.dark {
+  color-scheme: dark;
+}
+
+/* Make all text non-selectable by default */
+* {
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+/* Allow text selection for specific elements */
+input,
+textarea,
+[contenteditable="true"],
+pre,
+code {
+  -webkit-user-select: text;
+  -moz-user-select: text;
+  -ms-user-select: text;
+  user-select: text;
+}
+
+/* Smooth transitions for all theme changes */
+*, *::before, *::after {
+  transition: background-color 0.3s ease-in-out, border-color 0.3s ease-in-out;
+}
+
+body {
+  font-family: 'Inter', sans-serif;
+}
+
+/* Headers */
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Raleway', sans-serif;
+}
+
+/* Business name specific style */
+.business-name {
+  font-family: 'Heebo', sans-serif;
+  letter-spacing: -0.025em;
+}
+
+/* RTL Support */
+[dir="rtl"] body {
+  font-family: 'Rubik', sans-serif;
+}
+
+[dir="rtl"] h1, 
+[dir="rtl"] h2, 
+[dir="rtl"] h3, 
+[dir="rtl"] h4, 
+[dir="rtl"] h5, 
+[dir="rtl"] h6 {
+  font-family: 'Rubik', sans-serif;
+}
+
+[dir="rtl"] .ltr {
+  direction: ltr;
+}
+
+[dir="ltr"] .rtl {
+  direction: rtl;
+}
+
+/* Fix RTL spacing */
+[dir="rtl"] .space-x-2 > :not([hidden]) ~ :not([hidden]) {
+  --tw-space-x-reverse: 1;
+}
+
+[dir="rtl"] .space-x-3 > :not([hidden]) ~ :not([hidden]) {
+  --tw-space-x-reverse: 1;
+}
+
+[dir="rtl"] .space-x-4 > :not([hidden]) ~ :not([hidden]) {
+  --tw-space-x-reverse: 1;
+}
+
+[dir="rtl"] .space-x-8 > :not([hidden]) ~ :not([hidden]) {
+  --tw-space-x-reverse: 1;
+}
+
+/* Fix RTL transforms */
+[dir="rtl"] .translate-x-full {
+  --tw-translate-x: -100%;
+}
+
+[dir="rtl"] .-translate-x-full {
+  --tw-translate-x: 100%;
+}
+
+@keyframes blob {
+  0% {
+    transform: translate(0px, 0px) scale(1);
+  }
+  33% {
+    transform: translate(30px, -50px) scale(1.1);
+  }
+  66% {
+    transform: translate(-20px, 20px) scale(0.9);
+  }
+  100% {
+    transform: translate(0px, 0px) scale(1);
+  }
+}
+
+.animate-blob {
+  animation: blob 7s infinite;
+}
+
+.animation-delay-2000 {
+  animation-delay: 2s;
+}
+
+.animation-delay-4000 {
+  animation-delay: 4s;
+}
