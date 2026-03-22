@@ -23,13 +23,22 @@ class DevelopmentGlobals extends Globals {
 
 // }
 class ProductionGlobals extends Globals {
-    public appointmentsUrl = "https://api.ez-lines.com/api/appointments";
-    public webConfigsUrl = "https://api.ez-lines.com/api/web-configs";
-    public messagingUrl = "https://api.ez-lines.com/api/messaging";
-    public imagesUrl = "https://api.ez-lines.com/api/images/";
+    public appointmentsUrl = "https://api.lightor.app/api/appointments";
+    public webConfigsUrl = "https://api.lightor.app/api/web-configs";
+    public messagingUrl = "https://api.lightor.app/api/messaging";
+    public imagesUrl = "https://api.lightor.app/api/images/";
     // public typesUrl = "https://api.ez-lines.com/api/appointment-types/";
 
 }
+
+// class ProductionGlobals extends Globals {
+//     public appointmentsUrl = "https://api.ez-lines.com/api/appointments";
+//     public webConfigsUrl = "https://api.ez-lines.com/api/web-configs";
+//     public messagingUrl = "https://api.ez-lines.com/api/messaging";
+//     public imagesUrl = "https://api.ez-lines.com/api/images/";
+//     // public typesUrl = "https://api.ez-lines.com/api/appointment-types/";
+
+// }
 
 const globals = process.env.NODE_ENV === "production" ? new ProductionGlobals() : new DevelopmentGlobals();
 
