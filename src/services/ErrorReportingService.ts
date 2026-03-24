@@ -29,7 +29,7 @@ export const reportError = async (errorReport: Partial<ErrorReport> & { error: s
             timestamp: new Date().toISOString(),
             ...errorReport,
         };
-        await api.post('/report-error', fullReport, { headers: { Authorization: process.env.NODE_ENV !== "production" ? "Bearer " + import.meta.env.VITE_CLIENT_TOKEN : '' } });
+        await api.post('/report-error', fullReport);
     } catch (err) {
         console.error('Failed to report error to backend:', err);
     }

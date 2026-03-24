@@ -19,7 +19,7 @@ class WebConfigService {
 
   public async getWebConfig(idOrSubDomain: string): Promise<WebsiteConfig> {
     try {
-      const response = await axios.get<any>(`${this.baseUrl}/subdomain/${idOrSubDomain}`,{headers:{ Authorization: process.env.NODE_ENV !== "production" ? "Bearer " + import.meta.env.VITE_CLIENT_TOKEN : '' }});
+      const response = await axios.get<any>(`${this.baseUrl}/subdomain/${idOrSubDomain}`);
       if (!response.data.success) throw Error ("Failed to get web config");
       return WebsiteConfig.fromJSON(response.data.data);
     } catch (error) {
@@ -29,7 +29,7 @@ class WebConfigService {
   }
   public async getWebConfigByUserId(user_id: string): Promise<WebsiteConfig> {
     try {
-      const response = await axios.get<any>(`${this.baseUrl}?user_id=${user_id}&limit=1`,{headers:{ Authorization: process.env.NODE_ENV !== "production" ? "Bearer " + import.meta.env.VITE_CLIENT_TOKEN : '' }});
+      const response = await axios.get<any>(`${this.baseUrl}?user_id=${user_id}&limit=1`);
       if (!response.data.success) throw Error ("Failed to get web config");
       return WebsiteConfig.fromJSON(response.data.data[0]);
     } catch (error) {

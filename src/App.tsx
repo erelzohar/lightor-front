@@ -176,7 +176,6 @@ function App() {
     <Routes>
       <Route path="/" element={<MainContent />} />
       <Route path="/manage/:appointment-id" element={<ManageAppointment />} />
-      <Route path="/cancel/:appointment-id" element={<ManageAppointment />} />
       <Route path="*" element={<NotFound />} />
     </Routes>
   );

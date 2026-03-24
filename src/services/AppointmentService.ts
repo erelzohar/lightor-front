@@ -20,7 +20,7 @@ class AppointmentService {
   public async getAppointments(params: string): Promise<Appointment[]> {
     // try {
     if (!params) throw new Error("params required");
-    const response = await axios.get<any>(this.baseUrl + params, { headers: { Authorization: process.env.NODE_ENV !== "production" ? "Bearer " + import.meta.env.VITE_CLIENT_TOKEN : '' } });
+    const response = await axios.get<any>(this.baseUrl + params);
     return response.data?.data.map((appointment: any) => Appointment.fromJSON(appointment));
     // } catch (error) {
     //   console.error('Error fetching appointments:', error);
@@ -41,7 +41,7 @@ class AppointmentService {
 
   public async createAppointment(appointment: Partial<Appointment>): Promise<Appointment> {
     try {
-      const response = await axios.post<any>(this.baseUrl, appointment, { headers: { Authorization: process.env.NODE_ENV !== "production" ? "Bearer " + import.meta.env.VITE_CLIENT_TOKEN : '' } });
+      const response = await axios.post<any>(this.baseUrl, appointment);
       // if (!response.data.success) return 
       return Appointment.fromJSON(response.data.data);
     } catch (error: any) {
@@ -55,7 +55,7 @@ class AppointmentService {
 
   public async updateAppointment(app: Partial<Appointment>): Promise<Appointment> {
     try {
-      const response = await axios.put<any>(`${this.baseUrl}/${app._id}`, app, { headers: { Authorization: process.env.NODE_ENV !== "production" ? "Bearer " + import.meta.env.VITE_CLIENT_TOKEN : '' } });
+      const response = await axios.put<any>(`${this.baseUrl}/${app._id}`, app);
       return Appointment.fromJSON(response.data?.data);
     } catch (error) {
       console.error(`Error updating appointment with id ${app._id}:`, error);
@@ -65,7 +65,7 @@ class AppointmentService {
 
   public async deleteAppointment(id: string): Promise<void> {
     try {
-      await axios.delete(`${this.baseUrl}/${id}`, { headers: { Authorization: process.env.NODE_ENV !== "production" ? "Bearer " + import.meta.env.VITE_CLIENT_TOKEN : '' } });
+      await axios.delete(`${this.baseUrl}/${id}`);
     } catch (error) {
       console.error(`Error deleting appointment with id ${id}:`, error);
       throw error;
