@@ -246,7 +246,7 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
           date: dateStr,
           time: selectedTime,
           timeUntilLabel: timeUntilLabel,
-          link: window.location.hostname + "/manage/" + res._id
+          link: "https://" + window.location.hostname + "/manage/" + res._id
         });
 
         await smsService.sendSMS(formData.phone, userMsg);
