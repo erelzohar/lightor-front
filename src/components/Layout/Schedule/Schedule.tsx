@@ -226,7 +226,8 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
       const res = isUpdating && appointmentToUpdate
         ? await service.updateAppointment({ ...appointmentToUpdate, ...appointmentToCreate })
         : await service.createAppointment(appointmentToCreate);
-
+      console.log(res);
+      
       setBookedAppointments(prev => isUpdating ? prev.map(a => a._id === res._id ? res : a) : [...prev, res])
 
       if (isUpdating && onUpdateComplete) {

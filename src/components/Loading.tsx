@@ -61,12 +61,12 @@ const Loading: React.FC<LoadingProps> = ({ isLoading, onLoadingComplete }) => {
                 }}
               >
                 <img
-                  src="/ez-logo-black.png"
+                  src="/lightor-purple.png"
                   alt="Logo Dark"
                   className="w-full h-full object-contain dark:opacity-0 transition-opacity duration-300"
                 />
                 <img
-                  src="/ez-logo-white.png"
+                  src="/lightor.png"
                   alt="Logo Light"
                   className="absolute inset-0 w-full h-full object-contain opacity-0 dark:opacity-100 transition-opacity duration-300"
                 />

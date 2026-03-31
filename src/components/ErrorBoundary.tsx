@@ -54,13 +54,13 @@ class ErrorBoundaryClass extends Component<ErrorBoundaryProps & { language: 'en'
         title: 'Something went wrong...',
         description: 'If the problem persists, please contact support at',
         stackTrace: 'Stack trace',
-        supportEmail: 'ezwebsisr@gmail.com'
+        supportEmail: 'lightorapp@gmail.com'
       },
       he: {
         title: 'משהו השתבש...',
         description: 'אם הבעיה נמשכת, אנא צור קשר עם התמיכה בכתובת',
         stackTrace: 'מעקב שגיאה',
-        supportEmail: 'ezwebsisr@gmail.com'
+        supportEmail: 'lightorapp@gmail.com'
       }
     };
 

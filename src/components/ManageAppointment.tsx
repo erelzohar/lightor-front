@@ -82,7 +82,7 @@ const ManageAppointment: React.FC = () => {
         const msg = `התור של ${appointment.name} - ${appointment.phone}
         בתאריך ${formatDate(appointment.timestamp)} בשעה ${formatTime(appointment.timestamp)}
         בוטל ע"י הלקוח
-        EZ-lines`;
+        Lightor`;
 
         await smsService.sendSMS(businessPhone, msg);
       }

@@ -36,11 +36,36 @@ function MainContent() {
           setConfig(result);
           setLanguage(result.defaultLanguage as 'en' | 'he');
 
-          // Set document title and favicon
+          // Update SEO and Meta tags
           document.title = result.businessName;
-          const favicon = document.querySelector('link[rel="icon"]') as HTMLLinkElement;
-          if (favicon && result.logoImageName) {
-            favicon.href = ImagesService.getInstance().getImage(result.logoImageName);
+          
+          const updateMetaTag = (attrName: 'name' | 'property', attrValue: string, content: string) => {
+            let tag = document.querySelector(`meta[${attrName}="${attrValue}"]`);
+            if (!tag) {
+              tag = document.createElement('meta');
+              tag.setAttribute(attrName, attrValue);
+              document.head.appendChild(tag);
+            }
+            tag.setAttribute('content', content);
+          };
+
+          updateMetaTag('name', 'title', result.businessName);
+          updateMetaTag('property', 'og:title', result.businessName);
+          updateMetaTag('property', 'twitter:title', result.businessName);
+
+          const description = result.components?.about?.description || `הזמן תור בקלות אצל ${result.businessName}`;
+          updateMetaTag('name', 'description', description);
+          updateMetaTag('property', 'og:description', description);
+          updateMetaTag('property', 'twitter:description', description);
+
+          if (result.logoImageName) {
+            const logoUrl = ImagesService.getInstance().getImage(result.logoImageName);
+            
+            const icons = document.querySelectorAll('link[rel="icon"], link[rel="apple-touch-icon"]');
+            icons.forEach(icon => (icon as HTMLLinkElement).href = logoUrl);
+
+            updateMetaTag('property', 'og:image', logoUrl);
+            updateMetaTag('property', 'twitter:image', logoUrl);
           }
         }
       } catch (err: any) {
