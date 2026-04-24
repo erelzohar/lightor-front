@@ -168,6 +168,12 @@ const translations = {
     'footer.policy.privacy': 'Privacy Policy',
     'footer.policy.terms': 'Terms of Use',
     'footer.policy.security': 'Security Policy',
+    
+    // Loading Screen
+    'loading.step1': 'Loading...',
+    'loading.step2': 'Checking you\'re not a robot...',
+    'loading.step3': 'Relaxing on the beach...',
+    'loading.step4': 'Consulting with my teddy bear...',
 
   },
   he: {
@@ -329,6 +335,12 @@ const translations = {
     'footer.policy.privacy': 'מדיניות פרטיות',
     'footer.policy.terms': 'תנאי שימוש',
     'footer.policy.security': 'מדיניות אבטחה',
+
+    // Loading Screen
+    'loading.step1': 'טוען...',
+    'loading.step2': 'בודק שאתה לא רובוט...',
+    'loading.step3': 'משתזף על החוף...',
+    'loading.step4': 'מתייעץ עם הדובי שלי...',
 
   }
 };

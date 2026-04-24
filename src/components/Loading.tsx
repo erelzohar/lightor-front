@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useLanguage } from '../contexts/LanguageContext';
 
 interface LoadingProps {
   isLoading: boolean;
@@ -8,6 +9,8 @@ interface LoadingProps {
 
 const Loading: React.FC<LoadingProps> = ({ isLoading, onLoadingComplete }) => {
   const [progress, setProgress] = useState(0);
+  const [textIndex, setTextIndex] = useState(1);
+  const { t } = useLanguage();
 
   useEffect(() => {
     if (!isLoading) {
@@ -22,6 +25,16 @@ const Loading: React.FC<LoadingProps> = ({ isLoading, onLoadingComplete }) => {
       }, 20);
 
       return () => clearInterval(timer);
+    }
+  }, [isLoading]);
+
+  useEffect(() => {
+    if (isLoading) {
+      const textTimer = setInterval(() => {
+        setTextIndex(prev => (prev % 4) + 1);
+      }, 2000);
+
+      return () => clearInterval(textTimer);
     }
   }, [isLoading]);
 
@@ -87,15 +100,32 @@ const Loading: React.FC<LoadingProps> = ({ isLoading, onLoadingComplete }) => {
                   transition={{ duration: 0.1 }}
                 />
               </div>
-              <motion.div 
-                className="mt-2 text-center text-sm font-medium text-light-text/60 dark:text-dark-text/60"
-                animate={{
-                  scale: progress === 100 ? [1, 1.1, 1] : 1,
-                }}
-                transition={{ duration: 0.2 }}
-              >
-                {progress}%
-              </motion.div>
+              <div className="mt-2 flex flex-col items-center gap-2">
+                <motion.div 
+                  className="text-center text-sm font-medium text-light-text/60 dark:text-dark-text/60"
+                  animate={{
+                    scale: progress === 100 ? [1, 1.1, 1] : 1,
+                  }}
+                  transition={{ duration: 0.2 }}
+                >
+                  {progress}%
+                </motion.div>
+
+                <div className="h-6 relative w-72 flex justify-center">
+                  <AnimatePresence mode="wait">
+                    <motion.div
+                      key={textIndex}
+                      initial={{ opacity: 0, y: 5 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -5 }}
+                      transition={{ duration: 0.2 }}
+                      className="absolute text-center text-sm font-medium text-light-text/80 dark:text-dark-text/80 whitespace-nowrap"
+                    >
+                      {t(`loading.step${textIndex}`)}
+                    </motion.div>
+                  </AnimatePresence>
+                </div>
+              </div>
             </motion.div>
 
             {/* Animated background effects */}
