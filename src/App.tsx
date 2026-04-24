@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { Routes, Route } from 'react-router-dom';
 import { useEffect } from 'react';
 import Navbar from './components/Layout/Navbar';
@@ -20,13 +20,34 @@ import Loading from './components/Loading';
 import ImagesService from './services/ImagesService';
 import { useTheme } from './hooks/useTheme';
 import { reportError } from './services/ErrorReportingService';
+import { Turnstile } from '@marsidev/react-turnstile';
+import AuthService from './services/AuthService';
 
 function MainContent() {
   const [config, setConfig] = useState<WebsiteConfig | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
+  const [isAuthorized, setIsAuthorized] = useState<boolean>(false);
   const { setLanguage } = useLanguage();
 
+  // Ref to prevent double-handshake in React StrictMode
+  const handshakeInProgress = useRef(false);
+
+  // 1. Handshake Logic
+  const handleHandshake = async (token: string) => {
+    if (handshakeInProgress.current || isAuthorized) return;
+    handshakeInProgress.current = true;
+
+    const success = await AuthService.handshake(token);
+    if (success) {
+      setIsAuthorized(true);
+    } else {
+      // If handshake fails, keep loading or show error
+      console.error("Security verification failed.");
+    }
+    handshakeInProgress.current = false;
+  };
   useEffect(() => {
+    if (!isAuthorized) return;
     const loadConfig = async () => {
       try {
         const subdomain = window.location.hostname.split('.')[0];
@@ -38,7 +59,7 @@ function MainContent() {
 
           // Update SEO and Meta tags
           document.title = result.businessName;
-          
+
           const updateMetaTag = (attrName: 'name' | 'property', attrValue: string, content: string) => {
             let tag = document.querySelector(`meta[${attrName}="${attrValue}"]`);
             if (!tag) {
@@ -60,7 +81,7 @@ function MainContent() {
 
           if (result.logoImageName) {
             const logoUrl = ImagesService.getInstance().getImage(result.logoImageName);
-            
+
             const icons = document.querySelectorAll('link[rel="icon"], link[rel="apple-touch-icon"]');
             icons.forEach(icon => (icon as HTMLLinkElement).href = logoUrl);
 
@@ -84,11 +105,28 @@ function MainContent() {
     };
 
     loadConfig();
-  }, [setLanguage]);
+  }, [setLanguage, isAuthorized]);
 
   useTheme(config);
 
-  return ((loading && !config) ? <Loading isLoading={loading} /> : !config ? <NotFound /> :
+  if (!isAuthorized) {
+    return (
+      <>
+        <Loading isLoading={true} />
+        <div style={{ display: 'none' }}>
+          <Turnstile
+            siteKey={import.meta.env.VITE_TURNSTILE_SITE_KEY}
+            onSuccess={handleHandshake}
+          />
+        </div>
+      </>
+    );
+  }
+
+  if (loading && !config) return <Loading isLoading={loading} />;
+  if (!config) return <NotFound />;
+
+  return (
     <div className="min-h-screen bg-light-bg dark:bg-dark-bg transition-colors duration-300">
       {config.components?.introPopup?.visible && (
         <ErrorBoundary>
@@ -134,7 +172,7 @@ function MainContent() {
             timeToCancel={config.minCancelTimeMS}
             vacations={config.vacations}
             appointmentTypes={config.appointmentTypes}
-            minsPerSlot={config.minsPerSlot}
+          // minsPerSlot={config.minsPerSlot}
           />
         </ErrorBoundary>
       )}

@@ -134,14 +134,7 @@ const ManageAppointment: React.FC = () => {
     const hours = Math.floor(timeDiff / (1000 * 60 * 60));
     const minutes = Math.floor((timeDiff % (1000 * 60 * 60)) / (1000 * 60));
     if (timeDiff <= 0) {
-      return language === 'he' // Missing specific translation for "started" - falling back to conditional or generic if needed, but keeping logic for now or adding key? 
-        // User didn't ask to add NEW keys now, just use what was found.
-        // I will assume existing logic for formatting time remains unless I have a key. 
-        // Wait, "Only {{time}} until..." is for the alert.
-        // The formatting "X hours Y minutes" is internal to this function.
-        // I will verify if I can replace the usage of this function's output in the JSX.
-        ? 'התור כבר התחיל'
-        : 'The appointment has started';
+      return t('manage.message.started');
     }
     if (language === 'he') {
       return `${hours} שעות ו-${minutes} דקות`;
@@ -171,7 +164,6 @@ const ManageAppointment: React.FC = () => {
         workingDays={config.workingDays}
         vacations={config.vacations}
         appointmentTypes={config.appointmentTypes}
-        minsPerSlot={config.minsPerSlot}
         businessName={config.businessName}
         phone={config.contact.phone}
         timeToCancel={minCancelTime || config.minCancelTimeMS}
@@ -218,7 +210,9 @@ const ManageAppointment: React.FC = () => {
           <div className="mb-6 p-4 bg-red-500/10 rounded-xl flex items-center gap-3">
             <AlertTriangle className="w-5 h-5 text-red-500 flex-shrink-0" />
             <p className="text-red-500 text-sm">
-              {t('manage.message.time.until').replace('{{time}}', getTimeUntilAppointment(appointment.timestamp))}
+              {parseInt(appointment.timestamp) - Date.now() <= 0
+                ? getTimeUntilAppointment(appointment.timestamp)
+                : t('manage.message.time.until').replace('{{time}}', getTimeUntilAppointment(appointment.timestamp))}
             </p>
           </div>
         )}

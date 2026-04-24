@@ -12,6 +12,7 @@ class DevelopmentGlobals extends Globals {
     public messagingUrl = "http://localhost:3000/api/messaging";
     // public typesUrl = "http://localhost:3000/api/appointment-types/";
     public imagesUrl = "http://localhost:3000/api/images/";
+    public authUrl = "http://localhost:3000/api/auth/";
 }
 
 // class ProductionGlobals extends Globals {
@@ -27,6 +28,7 @@ class ProductionGlobals extends Globals {
     public webConfigsUrl = "https://api.lightor.app/api/web-configs";
     public messagingUrl = "https://api.lightor.app/api/messaging";
     public imagesUrl = "https://api.lightor.app/api/images/";
+    public authUrl = "https://api.lightor.app/api/auth/";
     // public typesUrl = "https://api.ez-lines.com/api/appointment-types/";
 
 }
