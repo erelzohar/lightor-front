@@ -22,7 +22,7 @@ const Loading: React.FC<LoadingProps> = ({ isLoading, onLoadingComplete }) => {
     if (isLoading) {
       const timer = setInterval(() => {
         setProgress(prev => (prev >= 100 ? 100 : prev + 1));
-      }, 20);
+      }, 50);
 
       return () => clearInterval(timer);
     }
