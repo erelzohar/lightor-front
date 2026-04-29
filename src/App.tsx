@@ -1,6 +1,5 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Routes, Route } from 'react-router-dom';
-import { Turnstile } from '@marsidev/react-turnstile';
 
 // Components & Services
 import Navbar from './components/Layout/Navbar';
@@ -24,25 +23,13 @@ import WebConfigService from './services/WebConfigService';
 import ImagesService from './services/ImagesService';
 import { useTheme } from './hooks/useTheme';
 import { reportError } from './services/ErrorReportingService';
-import AuthService from './services/AuthService';
 import { Loader2 } from 'lucide-react';
 
 function MainContent() {
   const [config, setConfig] = useState<WebsiteConfig | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
-  const [isAuthorized, setIsAuthorized] = useState<boolean>(false);
   const { setLanguage } = useLanguage();
 
-  const handshakeInProgress = useRef(false);
-
-  // 1. Handshake Logic
-  const handleHandshake = async (token: string) => {
-    if (handshakeInProgress.current || isAuthorized) return;
-    handshakeInProgress.current = true;
-    const success = await AuthService.handshake(token);
-    if (success) setIsAuthorized(true);
-    handshakeInProgress.current = false;
-  };
 
   // 2. Load Config IMMEDIATELY (Public Data)
   useEffect(() => {
@@ -137,19 +124,7 @@ function MainContent() {
       {config.components?.schedule && (
         <ErrorBoundary>
           <div id="booking-section" className="relative min-h-[400px]">
-            <div className="absolute top-0 left-0 opacity-0 pointer-events-none">
-              <Turnstile
-                siteKey={import.meta.env.VITE_TURNSTILE_SITE_KEY}
-                onSuccess={handleHandshake}
-                options={{
-                  theme: 'auto',
-                  size: 'invisible',
-                  appearance: 'execute'
-                }}
-              />
-            </div>
             <Schedule
-              isAuthorized={isAuthorized}
               config={config.components.schedule}
               workingDays={config.workingDays}
               user_id={config.user_id}

@@ -1,11 +1,13 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { Calendar as CalendarIcon, Clock, CheckCircle, ChevronLeft, ChevronRight, Phone, User, Shield, Tag, XCircle, MessageSquareX, MessageSquareCode, MessagesSquare } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { Turnstile } from '@marsidev/react-turnstile';
 import { useLanguage } from '../../../contexts/LanguageContext';
 import { AppointmentType } from '../../../models/AppointmentType';
 import { Appointment } from '../../../models/Appointment';
 import { ScheduleConfig } from '../../../models/ScheduleConfig';
 import AppointmentService from '../../../services/AppointmentService';
+import AuthService from '../../../services/AuthService';
 import smsService from '../../../services/SmsService';
 import { Loader2 } from 'lucide-react';
 import { Vacation } from '../../../models/Vacation';
@@ -37,13 +39,24 @@ interface ScheduleProps {
   appointmentToUpdate?: Appointment;
   onUpdateComplete?: (newAppointment: Appointment) => void;
   onCancelUpdate?: () => void;
-  isAuthorized?: boolean;
 }
 
-const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone, businessName, timeToCancel, vacations, appointmentTypes, isUpdating, appointmentToUpdate, onUpdateComplete, onCancelUpdate, isAuthorized }) => {
+
+const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone, businessName, timeToCancel, vacations, appointmentTypes, isUpdating, appointmentToUpdate, onUpdateComplete, onCancelUpdate }) => {
   if (!appointmentTypes || appointmentTypes.length === 0) {
     throw new Error('No appointment types available');
   }
+
+  const [isAuthorized, setIsAuthorized] = useState<boolean>(false);
+  const handshakeInProgress = useRef(false);
+
+  const handleHandshake = async (token: string) => {
+    if (handshakeInProgress.current || isAuthorized) return;
+    handshakeInProgress.current = true;
+    const success = await AuthService.handshake(token);
+    if (success) setIsAuthorized(true);
+    handshakeInProgress.current = false;
+  };
 
   const { t, language } = useLanguage();
   const [currentMonth, setCurrentMonth] = useState(() => {
@@ -107,7 +120,7 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
   useEffect(() => {
     if (error) throw error;
     if (!isAuthorized) return;
-    
+
     AppointmentService.getInstance()
       .getAppointments("?user_id=" + user_id + "&status=scheduled&startDate=" + Date.now())
       .then(setBookedAppointments)
@@ -172,7 +185,7 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
 
     setIsSubmitting(true);
     try {
-      const success =true //await smsService.sendOtp(formData.phone, channelType);
+      const success = true //await smsService.sendOtp(formData.phone, channelType);
       if (success) {
         setError(null);
         setResendTimer(30);
@@ -475,7 +488,7 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
   const isAvailable = useCallback((date: Date) => {
     const dayIndex = date.getDay();
     if (workingDays[dayIndex] === null) return false;
-    
+
     return appointmentTypes.some(type => {
       const durationMS = parseInt(type.durationMS);
       return generateTimeSlots(date, durationMS).length > 0;
@@ -726,489 +739,508 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
 
   return (
     <section id="schedule" className="py-32 bg-gradient-to-b from-light-bg to-light-surface dark:from-dark-bg dark:to-dark-surface transition-colors duration-300">
-      <motion.div 
-        className="container mx-auto px-4"
-        initial={{ opacity: 0, y: 30 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true, margin: "-50px" }}
-        transition={{ duration: 0.6, ease: 'easeOut' }}
-      >
-        <motion.div className="text-center mb-20">
-          <h2 className="text-4xl font-bold text-light-text dark:text-dark-text mb-6">
-            {config.title}
-          </h2>
-          <div className="w-24 h-1 bg-primary dark:bg-primary-dark mx-auto mb-8"></div>
+      {!isAuthorized ? (
+        <div className="flex flex-col items-center py-20 bg-gray-50/50 dark:bg-gray-900/10">
+          <div className="min-h-[400px] flex items-center justify-center p-4">
+            <Loader2 className="w-8 h-8 text-primary dark:text-primary-dark animate-spin" />
+          </div>
+          <div className="mt-8">
+            <Turnstile
+              siteKey={import.meta.env.VITE_TURNSTILE_SITE_KEY}
+              onSuccess={handleHandshake}
+              options={{
+                theme: 'auto',
+                size: 'normal',
+                appearance: 'always'
+              }}
+            />
+          </div>
+        </div>
+      ) : (
+        <motion.div
+          className="container mx-auto px-4"
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-20%" }}
+          transition={{ duration: 0.6, ease: 'easeOut' }}
+        >
+          <motion.div className="text-center mb-20">
+            <h2 className="text-4xl font-bold text-light-text dark:text-dark-text mb-6">
+              {config.title}
+            </h2>
+            <div className="w-24 h-1 bg-primary dark:bg-primary-dark mx-auto mb-8"></div>
 
 
-          <p className="text-xl text-light-text/80 dark:text-dark-text/80 max-w-2xl mx-auto">
-            {config.description}
-          </p>
+            <p className="text-xl text-light-text/80 dark:text-dark-text/80 max-w-2xl mx-auto">
+              {config.description}
+            </p>
 
-          {isUpdating && appointmentToUpdate && (
-            <motion.div
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="my-2 p-4 rounded-2xl bg-primary/5 dark:bg-primary-dark/5 border border-primary/10 dark:border-primary-dark/10 inline-flex flex-col items-center"
-            >
-              {/* <span className="text-sm font-medium text-light-text/60 dark:text-dark-text/60 mb-1">
+            {isUpdating && appointmentToUpdate && (
+              <motion.div
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="my-2 p-4 rounded-2xl bg-primary/5 dark:bg-primary-dark/5 border border-primary/10 dark:border-primary-dark/10 inline-flex flex-col items-center"
+              >
+                {/* <span className="text-sm font-medium text-light-text/60 dark:text-dark-text/60 mb-1">
                 {t('schedule.original.appointment')}
               </span> */}
-              <div className="flex items-center gap-3 text-primary dark:text-primary-dark font-semibold">
-                <div className="flex items-center gap-1.5">
-                  <CalendarIcon className="w-4 h-4" />
-                  {formatSelectedDate(new Date(parseInt(appointmentToUpdate.timestamp)))}
+                <div className="flex items-center gap-3 text-primary dark:text-primary-dark font-semibold">
+                  <div className="flex items-center gap-1.5">
+                    <CalendarIcon className="w-4 h-4" />
+                    {formatSelectedDate(new Date(parseInt(appointmentToUpdate.timestamp)))}
+                  </div>
+                  <div className="w-1.5 h-1.5 rounded-full bg-primary/30 dark:bg-primary-dark/30" />
+                  <div className="flex items-center gap-1.5">
+                    <Clock className="w-4 h-4" />
+                    {formatTime(appointmentToUpdate.timestamp)}
+                  </div>
                 </div>
-                <div className="w-1.5 h-1.5 rounded-full bg-primary/30 dark:bg-primary-dark/30" />
-                <div className="flex items-center gap-1.5">
-                  <Clock className="w-4 h-4" />
-                  {formatTime(appointmentToUpdate.timestamp)}
-                </div>
-              </div>
-            </motion.div>
-          )}
-        </motion.div>
-
-        <motion.div className="max-w-[700px] mx-auto">
-          <motion.div className="bg-light-surface dark:bg-dark-surface rounded-3xl shadow-xl p-6 md:p-8">
-            {(bookingStep !== 'date' || (isUpdating && onCancelUpdate)) && (
-              <motion.button
-                type="button"
-                onClick={handleBack}
-                className="mb-6 text-primary dark:text-primary-dark hover:underline flex items-center gap-2"
-                whileHover={{ x: -5 }}
-              >
-                <ChevronLeft className={`h-5 w-5 ${language === 'he' ? 'rotate-180' : ''}`} />
-                {t('common.back')}
-              </motion.button>
+              </motion.div>
             )}
+          </motion.div>
 
-            <div className="flex items-center justify-center gap-2 mb-8">
-              {['date', 'type', 'time', 'details', 'verification'].map((step, index) => (
-                <div
-                  key={step}
-                  className={`h-2 rounded-full transition-all ${index === ['date', 'type', 'time', 'details', 'verification'].indexOf(bookingStep)
-                    ? 'w-8 bg-primary dark:bg-primary-dark'
-                    : 'w-2 bg-primary/30 dark:bg-primary-dark/30'
-                    }`}
-                />
-              ))}
-            </div>
+          <motion.div className="max-w-[700px] mx-auto">
+            <motion.div className="bg-light-surface dark:bg-dark-surface rounded-3xl shadow-xl p-6 md:p-8">
+              {(bookingStep !== 'date' || (isUpdating && onCancelUpdate)) && (
+                <motion.button
+                  type="button"
+                  onClick={handleBack}
+                  className="mb-6 text-primary dark:text-primary-dark hover:underline flex items-center gap-2"
+                  whileHover={{ x: -5 }}
+                >
+                  <ChevronLeft className={`h-5 w-5 ${language === 'he' ? 'rotate-180' : ''}`} />
+                  {t('common.back')}
+                </motion.button>
+              )}
 
-            {bookingStep === 'date' && (
-              <>
-                <div className="flex items-center justify-between mb-6">
-                  <motion.button
-                    type="button"
-                    onClick={() => setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1))}
-                    className={`p-2 rounded-lg transition-colors ${isCurrentMonth()
-                      ? 'opacity-30 cursor-not-allowed'
-                      : 'hover:bg-light-gray dark:hover:bg-dark-gray'
+              <div className="flex items-center justify-center gap-2 mb-8">
+                {['date', 'type', 'time', 'details', 'verification'].map((step, index) => (
+                  <div
+                    key={step}
+                    className={`h-2 rounded-full transition-all ${index === ['date', 'type', 'time', 'details', 'verification'].indexOf(bookingStep)
+                      ? 'w-8 bg-primary dark:bg-primary-dark'
+                      : 'w-2 bg-primary/30 dark:bg-primary-dark/30'
                       }`}
-                    whileHover={!isCurrentMonth() ? { scale: 1.1 } : undefined}
-                    whileTap={!isCurrentMonth() ? { scale: 0.9 } : undefined}
-                    disabled={isCurrentMonth()}
-                  >
-                    <ChevronLeft className={`h-5 w-5 text-light-text dark:text-dark-text ${language === 'he' ? 'rotate-180' : ''}`} />
-                  </motion.button>
-                  <h3 className="text-xl font-semibold text-light-text dark:text-dark-text">
-                    {currentMonth.toLocaleDateString(language === 'he' ? 'he-IL' : 'en-US', {
-                      month: 'long',
-                      year: 'numeric'
-                    })}
-                  </h3>
-                  <motion.button
-                    type="button"
-                    onClick={() => setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1))}
-                    className="p-2 hover:bg-light-gray dark:hover:bg-dark-gray rounded-lg transition-colors"
-                    whileHover={{ scale: 1.1 }}
-                    whileTap={{ scale: 0.9 }}
-                  >
-                    <ChevronRight className={`h-5 w-5 text-light-text dark:text-dark-text ${language === 'he' ? 'rotate-180' : ''}`} />
-                  </motion.button>
-                </div>
+                  />
+                ))}
+              </div>
 
-                <div className="grid grid-cols-7 gap-2 mb-2">
-                  {getDayNames().map((day, index) => (
-                    <div
-                      key={index}
-                      className="text-center text-light-text/60 dark:text-dark-text/60 text-sm font-medium"
+              {bookingStep === 'date' && (
+                <>
+                  <div className="flex items-center justify-between mb-6">
+                    <motion.button
+                      type="button"
+                      onClick={() => setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1))}
+                      className={`p-2 rounded-lg transition-colors ${isCurrentMonth()
+                        ? 'opacity-30 cursor-not-allowed'
+                        : 'hover:bg-light-gray dark:hover:bg-dark-gray'
+                        }`}
+                      whileHover={!isCurrentMonth() ? { scale: 1.1 } : undefined}
+                      whileTap={!isCurrentMonth() ? { scale: 0.9 } : undefined}
+                      disabled={isCurrentMonth()}
                     >
-                      {day}
-                    </div>
-                  ))}
-                </div>
+                      <ChevronLeft className={`h-5 w-5 text-light-text dark:text-dark-text ${language === 'he' ? 'rotate-180' : ''}`} />
+                    </motion.button>
+                    <h3 className="text-xl font-semibold text-light-text dark:text-dark-text">
+                      {currentMonth.toLocaleDateString(language === 'he' ? 'he-IL' : 'en-US', {
+                        month: 'long',
+                        year: 'numeric'
+                      })}
+                    </h3>
+                    <motion.button
+                      type="button"
+                      onClick={() => setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1))}
+                      className="p-2 hover:bg-light-gray dark:hover:bg-dark-gray rounded-lg transition-colors"
+                      whileHover={{ scale: 1.1 }}
+                      whileTap={{ scale: 0.9 }}
+                    >
+                      <ChevronRight className={`h-5 w-5 text-light-text dark:text-dark-text ${language === 'he' ? 'rotate-180' : ''}`} />
+                    </motion.button>
+                  </div>
 
-                <div className="grid grid-cols-7 gap-2">
-                  {generateCalendarDays()}
-                </div>
-                <div className={`mt-8 pt-4 border-t border-light-gray dark:border-dark-gray text-sm 
+                  <div className="grid grid-cols-7 gap-2 mb-2">
+                    {getDayNames().map((day, index) => (
+                      <div
+                        key={index}
+                        className="text-center text-light-text/60 dark:text-dark-text/60 text-sm font-medium"
+                      >
+                        {day}
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="grid grid-cols-7 gap-2">
+                    {generateCalendarDays()}
+                  </div>
+                  <div className={`mt-8 pt-4 border-t border-light-gray dark:border-dark-gray text-sm 
                             ${language === 'he' ? 'text-right' : 'text-left'}`}>
 
-                  <div className="flex flex-wrap gap-4 justify-center md:justify-start">
-                    {/* Full Availability Dot */}
-                    <div className="flex items-center gap-2">
-                      <div className="h-2.5 w-2.5 rounded-full bg-emerald-500" />
-                      <span className="text-light-text dark:text-dark-text/80">
-                        {t('schedule.legend.available')}
-                      </span>
-                    </div>
-                    {/* Limited Availability Dot */}
-                    <div className="flex items-center gap-2">
-                      <div className="h-2.5 w-2.5 rounded-full bg-amber-500" />
-                      <span className="text-light-text dark:text-dark-text/80">
-                        {t('schedule.legend.limited')}
-                      </span>
-                    </div>
-                    {/* vacation Dot */}
-                    <div className="flex items-center gap-2">
-                      <div className="h-2.5 w-2.5 rounded-full bg-indigo-500" />
-                      <span className="text-light-text dark:text-dark-text/80">
-                        {t('schedule.legend.vacation')}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <div className="h-2.5 w-2.5 rounded-full bg-red-500" />
-                      <span className="text-light-text dark:text-dark-text/80">
-                        {t('schedule.legend.closed')}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              </>
-            )}
-
-            {bookingStep === 'type' && selectedDate && (
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="space-y-6"
-              >
-                <h3 className="text-xl font-semibold text-light-text dark:text-dark-text mb-6">
-                  {t('schedule.select.type')}
-                </h3>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {appointmentTypes.map((type) => {
-                    const durationMS = +type.durationMS || 0;
-                    if (generateTimeSlots(selectedDate, durationMS).length > 0)
-                      return (
-                        <motion.button
-                          key={type._id}
-                          type="button"
-                          onClick={() => handleAppointmentTypeSelect(type)}
-                          className="p-6 rounded-xl bg-light-gray/30 dark:bg-dark-gray/30 hover:bg-primary/10 dark:hover:bg-primary-dark/10 transition-colors group"
-                          whileHover={{ scale: 1.02 }}
-                          whileTap={{ scale: 0.98 }}
-                        >
-                          <div className="flex items-center gap-4">
-                            <div className="w-12 h-12 rounded-lg bg-primary/10 dark:bg-primary-dark/10 flex items-center justify-center group-hover:bg-primary/20 dark:group-hover:bg-primary-dark/20">
-                              <Tag className="h-6 w-6 text-primary dark:text-primary-dark" />
-                            </div>
-                            <div className="flex-1 text-right">
-                              <h4 className="font-semibold text-light-text dark:text-dark-text mb-1">
-                                {type.name}
-                              </h4>
-                              <p className="text-sm text-light-text/70 dark:text-dark-text/70">
-                                {parseInt(type.durationMS) / 60000} {t('common.minutes')} | ₪{type.price}
-                              </p>
-                            </div>
-                          </div>
-                        </motion.button>
-                      )
-                  })}
-                </div>
-              </motion.div>
-            )}
-
-            {bookingStep === 'time' && selectedDate && selectedAppointmentType && (
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="space-y-6"
-              >
-                <div className="p-4 rounded-lg bg-light-gray/30 dark:bg-dark-gray/30">
-                  <h4 className="font-semibold text-light-text dark:text-dark-text mb-1">
-                    {selectedAppointmentType.name}
-                  </h4>
-                  <p className="text-sm text-light-text/70 dark:text-dark-text/70">
-                    {parseInt(selectedAppointmentType.durationMS) / 60000} {language === 'he' ? 'דקות' : 'minutes'} | ₪{selectedAppointmentType.price}
-                  </p>
-                </div>
-
-                <div>
-                  <h4 className="text-lg font-semibold text-light-text dark:text-dark-text mb-4">
-                    {t('schedule.available.times')} {formatSelectedDate(selectedDate)}
-                  </h4>
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                    {generateTimeSlots(selectedDate, parseInt(selectedAppointmentType.durationMS)).map((time) => (
-                      <motion.button
-                        key={time}
-                        type="button"
-                        onClick={() => handleTimeSelect(time)}
-                        className={`relative overflow-hidden p-3 rounded-xl text-sm font-medium ${selectedTime === time
-                          ? 'bg-primary dark:bg-primary-dark text-white dark:text-dark-surface shadow-lg'
-                          : 'bg-primary/10 dark:bg-primary-dark/10 text-primary dark:text-primary-dark hover:shadow-md'
-                          }`}
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
-                      >
-                        <motion.div
-                          className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent"
-                          initial={{ x: '-100%' }}
-                          whileHover={{ x: '100%' }}
-                          transition={{ duration: 0.3 }}
-                        />
-                        <span className="relative flex items-center justify-center gap-2">
-                          <Clock className="h-4 w-4" />
-                          {time}
+                    <div className="flex flex-wrap gap-4 justify-center md:justify-start">
+                      {/* Full Availability Dot */}
+                      <div className="flex items-center gap-2">
+                        <div className="h-2.5 w-2.5 rounded-full bg-emerald-500" />
+                        <span className="text-light-text dark:text-dark-text/80">
+                          {t('schedule.legend.available')}
                         </span>
-                      </motion.button>
-                    ))}
-                  </div>
-                </div>
-              </motion.div>
-            )}
-
-            {bookingStep === 'details' && (
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="space-y-8"
-              >
-                <div className="flex flex-col items-center mb-8 text-center">
-                  <div className="flex items-center gap-2 text-lg font-semibold text-light-text dark:text-dark-text">
-                    <CalendarIcon className="h-5 w-5 text-primary/70 dark:text-primary-dark/70" />
-                    <span>{selectedDate ? formatSelectedDate(selectedDate) : ''}</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-lg font-semibold text-light-text dark:text-dark-text mt-1">
-                    <Clock className="h-5 w-5 text-primary/70 dark:text-primary-dark/70" />
-                    <span>{selectedTime}</span>
-                  </div>
-                </div>
-                <form onSubmit={handleDetailsSubmit}>
-                  <MaterialInput
-                    icon={User}
-                    label={t('schedule.form.name')}
-                    value={formData.name}
-                    onChange={(e) => handleInputChange('name', e.target.value)}
-                    error={formErrors.name}
-                    name="name"
-                    id="schedule-name"
-                    maxLength={50}
-                  />
-
-                  <div className="mt-6">
-                    <MaterialInput
-                      icon={Phone}
-                      label={t('schedule.form.phone')}
-                      value={formData.phone}
-                      onChange={(e) => handleInputChange('phone', e.target.value)}
-                      error={formErrors.phone}
-                      type="tel"
-                      inputMode="numeric"
-                      pattern="[0-9]*"
-                      name="phone"
-                      id="schedule-phone"
-                    />
-                  </div>
-
-
-
-                  <div className="flex flex-col items-center gap-3 mt-6">
-                    <span className="text-sm font-medium text-light-text/70 dark:text-dark-text/70 text-center">
-                      {channelType === 'whatsapp'
-                        ? t('schedule.channel.whatsapp')
-                        : t('schedule.channel.sms')}
-                    </span>
-                    <div className="flex items-center gap-4 py-2" dir="ltr">
-                      <MessagesSquare className={`w-6 h-6 transition-colors ${channelType === 'sms' ? 'text-amber-400' : 'text-gray-400'}`} />
-
-                      <button
-                        type="button"
-                        onClick={() => setChannelType(prev => prev === 'sms' ? 'whatsapp' : 'sms')}
-                        className={`w-12 h-6 rounded-full p-1 transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary ${channelType === 'whatsapp' ? 'bg-green-500' : 'bg-amber-400'
-                          }`}
-                      >
-                        <div
-                          className={`w-4 h-4 rounded-full bg-white shadow-md transform transition-transform duration-300 ${channelType === 'whatsapp' ? 'translate-x-6' : 'translate-x-0'
-                            }`}
-                        />
-                      </button>
-
-                      <svg
-                        viewBox="0 0 24 24"
-                        fill="currentColor"
-                        className={`w-6 h-6 transition-colors ${channelType === 'whatsapp' ? 'text-[#25D366]' : 'text-gray-400'}`}
-                        aria-hidden="true"
-                      >
-                        <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" />
-                      </svg>
+                      </div>
+                      {/* Limited Availability Dot */}
+                      <div className="flex items-center gap-2">
+                        <div className="h-2.5 w-2.5 rounded-full bg-amber-500" />
+                        <span className="text-light-text dark:text-dark-text/80">
+                          {t('schedule.legend.limited')}
+                        </span>
+                      </div>
+                      {/* vacation Dot */}
+                      <div className="flex items-center gap-2">
+                        <div className="h-2.5 w-2.5 rounded-full bg-indigo-500" />
+                        <span className="text-light-text dark:text-dark-text/80">
+                          {t('schedule.legend.vacation')}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <div className="h-2.5 w-2.5 rounded-full bg-red-500" />
+                        <span className="text-light-text dark:text-dark-text/80">
+                          {t('schedule.legend.closed')}
+                        </span>
+                      </div>
                     </div>
                   </div>
+                </>
+              )}
 
-                  <motion.button
-                    type="submit"
-                    className="w-full mt-8 bg-primary dark:bg-primary-dark text-white dark:text-dark-surface py-4 px-6 rounded-xl transition-all relative overflow-hidden shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    disabled={isSubmitting || !formData.name || !formData.phone}
-                  >
+              {bookingStep === 'type' && selectedDate && (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="space-y-6"
+                >
+                  <h3 className="text-xl font-semibold text-light-text dark:text-dark-text mb-6">
+                    {t('schedule.select.type')}
+                  </h3>
 
-                    <span className="relative text-center">{isSubmitting ? <Loader2 className="animate-spin m-auto" /> : t('schedule.form.send.code')}</span>
-                  </motion.button>
-                  <p className="mt-4 text-xs text-light-text/60 dark:text-dark-text/50 text-center">
-                    {t('schedule.form.helper')}
-                  </p>
-                </form>
-              </motion.div>
-            )}
-
-            {bookingStep === 'verification' && (
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="space-y-6"
-              >
-                <div className="flex flex-col items-center mb-8 text-center">
-                  <div className="flex items-center gap-2 text-lg font-semibold text-light-text dark:text-dark-text">
-                    <CalendarIcon className="h-5 w-5 text-primary/70 dark:text-primary-dark/70" />
-                    <span>{selectedDate ? formatSelectedDate(selectedDate) : ''}</span>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {appointmentTypes.map((type) => {
+                      const durationMS = +type.durationMS || 0;
+                      if (generateTimeSlots(selectedDate, durationMS).length > 0)
+                        return (
+                          <motion.button
+                            key={type._id}
+                            type="button"
+                            onClick={() => handleAppointmentTypeSelect(type)}
+                            className="p-6 rounded-xl bg-light-gray/30 dark:bg-dark-gray/30 hover:bg-primary/10 dark:hover:bg-primary-dark/10 transition-colors group"
+                            whileHover={{ scale: 1.02 }}
+                            whileTap={{ scale: 0.98 }}
+                          >
+                            <div className="flex items-center gap-4">
+                              <div className="w-12 h-12 rounded-lg bg-primary/10 dark:bg-primary-dark/10 flex items-center justify-center group-hover:bg-primary/20 dark:group-hover:bg-primary-dark/20">
+                                <Tag className="h-6 w-6 text-primary dark:text-primary-dark" />
+                              </div>
+                              <div className="flex-1 text-right">
+                                <h4 className="font-semibold text-light-text dark:text-dark-text mb-1">
+                                  {type.name}
+                                </h4>
+                                <p className="text-sm text-light-text/70 dark:text-dark-text/70">
+                                  {parseInt(type.durationMS) / 60000} {t('common.minutes')} | ₪{type.price}
+                                </p>
+                              </div>
+                            </div>
+                          </motion.button>
+                        )
+                    })}
                   </div>
-                  <div className="flex items-center gap-2 text-lg font-semibold text-light-text dark:text-dark-text mt-1">
-                    <Clock className="h-5 w-5 text-primary/70 dark:text-primary-dark/70" />
-                    <span>{selectedTime}</span>
+                </motion.div>
+              )}
+
+              {bookingStep === 'time' && selectedDate && selectedAppointmentType && (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="space-y-6"
+                >
+                  <div className="p-4 rounded-lg bg-light-gray/30 dark:bg-dark-gray/30">
+                    <h4 className="font-semibold text-light-text dark:text-dark-text mb-1">
+                      {selectedAppointmentType.name}
+                    </h4>
+                    <p className="text-sm text-light-text/70 dark:text-dark-text/70">
+                      {parseInt(selectedAppointmentType.durationMS) / 60000} {language === 'he' ? 'דקות' : 'minutes'} | ₪{selectedAppointmentType.price}
+                    </p>
                   </div>
-                </div>
-                <form onSubmit={handleVerificationSubmit}>
-                  <div className="flex justify-center gap-1 sm:gap-2 mb-2 mx-1" dir="ltr">
-                    {[0, 1, 2, 3, 4, 5].map((index) => (
-                      <input
-                        key={index.toString()}
-                        ref={(el) => (otpInputRefs.current[index] = el)}
-                        type="text"
+
+                  <div>
+                    <h4 className="text-lg font-semibold text-light-text dark:text-dark-text mb-4">
+                      {t('schedule.available.times')} {formatSelectedDate(selectedDate)}
+                    </h4>
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                      {generateTimeSlots(selectedDate, parseInt(selectedAppointmentType.durationMS)).map((time) => (
+                        <motion.button
+                          key={time}
+                          type="button"
+                          onClick={() => handleTimeSelect(time)}
+                          className={`relative overflow-hidden p-3 rounded-xl text-sm font-medium ${selectedTime === time
+                            ? 'bg-primary dark:bg-primary-dark text-white dark:text-dark-surface shadow-lg'
+                            : 'bg-primary/10 dark:bg-primary-dark/10 text-primary dark:text-primary-dark hover:shadow-md'
+                            }`}
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
+                        >
+                          <motion.div
+                            className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent"
+                            initial={{ x: '-100%' }}
+                            whileHover={{ x: '100%' }}
+                            transition={{ duration: 0.3 }}
+                          />
+                          <span className="relative flex items-center justify-center gap-2">
+                            <Clock className="h-4 w-4" />
+                            {time}
+                          </span>
+                        </motion.button>
+                      ))}
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+
+              {bookingStep === 'details' && (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="space-y-8"
+                >
+                  <div className="flex flex-col items-center mb-8 text-center">
+                    <div className="flex items-center gap-2 text-lg font-semibold text-light-text dark:text-dark-text">
+                      <CalendarIcon className="h-5 w-5 text-primary/70 dark:text-primary-dark/70" />
+                      <span>{selectedDate ? formatSelectedDate(selectedDate) : ''}</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-lg font-semibold text-light-text dark:text-dark-text mt-1">
+                      <Clock className="h-5 w-5 text-primary/70 dark:text-primary-dark/70" />
+                      <span>{selectedTime}</span>
+                    </div>
+                  </div>
+                  <form onSubmit={handleDetailsSubmit}>
+                    <MaterialInput
+                      icon={User}
+                      label={t('schedule.form.name')}
+                      value={formData.name}
+                      onChange={(e) => handleInputChange('name', e.target.value)}
+                      error={formErrors.name}
+                      name="name"
+                      id="schedule-name"
+                      maxLength={50}
+                    />
+
+                    <div className="mt-6">
+                      <MaterialInput
+                        icon={Phone}
+                        label={t('schedule.form.phone')}
+                        value={formData.phone}
+                        onChange={(e) => handleInputChange('phone', e.target.value)}
+                        error={formErrors.phone}
+                        type="tel"
                         inputMode="numeric"
                         pattern="[0-9]*"
-                        maxLength={1}
-                        value={formData.verificationCode[index] || ''}
-                        onChange={(e) => handleOtpChange(index, e.target.value)}
-                        onKeyDown={(e) => handleOtpKeyDown(index, e)}
-                        className={`w-11 h-14 sm:w-14 sm:h-16 text-center text-xl font-bold rounded-lg border-2 shadow-sm focus:shadow-md transition-all outline-none
-                          ${formErrors.verificationCode
-                            ? 'border-red-500 bg-red-50 dark:bg-red-900/10'
-                            : 'border-gray-200 dark:border-gray-700 focus:border-primary dark:focus:border-primary-dark bg-white dark:bg-gray-800'
-                          } text-gray-800 dark:text-gray-100`}
-                        autoFocus={index === 0}
+                        name="phone"
+                        id="schedule-phone"
                       />
-                    ))}
-                  </div>
-                  {formErrors.verificationCode && (
-                    <p className="text-sm text-red-500 text-center mb-4">{formErrors.verificationCode}</p>
-                  )}
+                    </div>
 
-                  <motion.p
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    className="text-sm text-light-text/65 dark:text-dark-text/60 text-center mt-4 mb-4"
-                  >
-                    {t('schedule.form.verification.message')}
-                  </motion.p>
 
-                  <div className="flex flex-col items-center gap-3 mb-4">
-                    <span className="text-sm font-medium text-light-text/70 dark:text-dark-text/70 text-center">
-                      {channelType === 'whatsapp'
-                        ? t('schedule.channel.whatsapp')
-                        : t('schedule.channel.sms')}
-                    </span>
-                    <div className="flex items-center gap-4 py-2" dir="ltr">
-                      <MessagesSquare className={`w-6 h-6 transition-colors ${channelType === 'sms' ? 'text-amber-400' : 'text-gray-400'}`} />
 
-                      <button
-                        type="button"
-                        onClick={() => setChannelType(prev => prev === 'sms' ? 'whatsapp' : 'sms')}
-                        className={`w-12 h-6 rounded-full p-1 transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary ${channelType === 'whatsapp' ? 'bg-green-500' : 'bg-amber-400'
-                          }`}
-                      >
-                        <div
-                          className={`w-4 h-4 rounded-full bg-white shadow-md transform transition-transform duration-300 ${channelType === 'whatsapp' ? 'translate-x-6' : 'translate-x-0'
+                    <div className="flex flex-col items-center gap-3 mt-6">
+                      <span className="text-sm font-medium text-light-text/70 dark:text-dark-text/70 text-center">
+                        {channelType === 'whatsapp'
+                          ? t('schedule.channel.whatsapp')
+                          : t('schedule.channel.sms')}
+                      </span>
+                      <div className="flex items-center gap-4 py-2" dir="ltr">
+                        <MessagesSquare className={`w-6 h-6 transition-colors ${channelType === 'sms' ? 'text-amber-400' : 'text-gray-400'}`} />
+
+                        <button
+                          type="button"
+                          onClick={() => setChannelType(prev => prev === 'sms' ? 'whatsapp' : 'sms')}
+                          className={`w-12 h-6 rounded-full p-1 transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary ${channelType === 'whatsapp' ? 'bg-green-500' : 'bg-amber-400'
                             }`}
-                        />
-                      </button>
+                        >
+                          <div
+                            className={`w-4 h-4 rounded-full bg-white shadow-md transform transition-transform duration-300 ${channelType === 'whatsapp' ? 'translate-x-6' : 'translate-x-0'
+                              }`}
+                          />
+                        </button>
 
-                      <svg
-                        viewBox="0 0 24 24"
-                        fill="currentColor"
-                        className={`w-6 h-6 transition-colors ${channelType === 'whatsapp' ? 'text-[#25D366]' : 'text-gray-400'}`}
-                        aria-hidden="true"
-                      >
-                        <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" />
-                      </svg>
+                        <svg
+                          viewBox="0 0 24 24"
+                          fill="currentColor"
+                          className={`w-6 h-6 transition-colors ${channelType === 'whatsapp' ? 'text-[#25D366]' : 'text-gray-400'}`}
+                          aria-hidden="true"
+                        >
+                          <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" />
+                        </svg>
+                      </div>
+                    </div>
+
+                    <motion.button
+                      type="submit"
+                      className="w-full mt-8 bg-primary dark:bg-primary-dark text-white dark:text-dark-surface py-4 px-6 rounded-xl transition-all relative overflow-hidden shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      disabled={isSubmitting || !formData.name || !formData.phone}
+                    >
+
+                      <span className="relative text-center">{isSubmitting ? <Loader2 className="animate-spin m-auto" /> : t('schedule.form.send.code')}</span>
+                    </motion.button>
+                    <p className="mt-4 text-xs text-light-text/60 dark:text-dark-text/50 text-center">
+                      {t('schedule.form.helper')}
+                    </p>
+                  </form>
+                </motion.div>
+              )}
+
+              {bookingStep === 'verification' && (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="space-y-6"
+                >
+                  <div className="flex flex-col items-center mb-8 text-center">
+                    <div className="flex items-center gap-2 text-lg font-semibold text-light-text dark:text-dark-text">
+                      <CalendarIcon className="h-5 w-5 text-primary/70 dark:text-primary-dark/70" />
+                      <span>{selectedDate ? formatSelectedDate(selectedDate) : ''}</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-lg font-semibold text-light-text dark:text-dark-text mt-1">
+                      <Clock className="h-5 w-5 text-primary/70 dark:text-primary-dark/70" />
+                      <span>{selectedTime}</span>
                     </div>
                   </div>
+                  <form onSubmit={handleVerificationSubmit}>
+                    <div className="flex justify-center gap-1 sm:gap-2 mb-2 mx-1" dir="ltr">
+                      {[0, 1, 2, 3, 4, 5].map((index) => (
+                        <input
+                          key={index.toString()}
+                          ref={(el) => (otpInputRefs.current[index] = el)}
+                          type="text"
+                          inputMode="numeric"
+                          pattern="[0-9]*"
+                          maxLength={1}
+                          value={formData.verificationCode[index] || ''}
+                          onChange={(e) => handleOtpChange(index, e.target.value)}
+                          onKeyDown={(e) => handleOtpKeyDown(index, e)}
+                          className={`w-11 h-14 sm:w-14 sm:h-16 text-center text-xl font-bold rounded-lg border-2 shadow-sm focus:shadow-md transition-all outline-none
+                          ${formErrors.verificationCode
+                              ? 'border-red-500 bg-red-50 dark:bg-red-900/10'
+                              : 'border-gray-200 dark:border-gray-700 focus:border-primary dark:focus:border-primary-dark bg-white dark:bg-gray-800'
+                            } text-gray-800 dark:text-gray-100`}
+                          autoFocus={index === 0}
+                        />
+                      ))}
+                    </div>
+                    {formErrors.verificationCode && (
+                      <p className="text-sm text-red-500 text-center mb-4">{formErrors.verificationCode}</p>
+                    )}
 
-                  <div className="text-center mt-4">
-                    <button
-                      type="button"
-                      onClick={handleResendCode}
-                      disabled={resendTimer > 0}
-                      className={`text-sm font-medium transition-colors ${resendTimer > 0
-                        ? 'text-light-text/65 dark:text-dark-text/65 cursor-not-allowed'
-                        : 'text-primary dark:text-primary-dark underline'
-                        }`}
+                    <motion.p
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      className="text-sm text-light-text/65 dark:text-dark-text/60 text-center mt-4 mb-4"
                     >
-                      {resendTimer > 0
-                        ? `${t('schedule.form.resend.wait')} ${resendTimer} ${t('schedule.form.resend.timer')}`
-                        : t('schedule.form.resend.code')}
-                    </button>
-                  </div>
-                  <motion.button
-                    type="submit"
-                    className="w-full mt-8 bg-primary dark:bg-primary-dark text-white dark:text-dark-surface py-4 px-6 rounded-xl transition-all relative overflow-hidden shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    disabled={isSubmitting || !formData.verificationCode}
+                      {t('schedule.form.verification.message')}
+                    </motion.p>
+
+                    <div className="flex flex-col items-center gap-3 mb-4">
+                      <span className="text-sm font-medium text-light-text/70 dark:text-dark-text/70 text-center">
+                        {channelType === 'whatsapp'
+                          ? t('schedule.channel.whatsapp')
+                          : t('schedule.channel.sms')}
+                      </span>
+                      <div className="flex items-center gap-4 py-2" dir="ltr">
+                        <MessagesSquare className={`w-6 h-6 transition-colors ${channelType === 'sms' ? 'text-amber-400' : 'text-gray-400'}`} />
+
+                        <button
+                          type="button"
+                          onClick={() => setChannelType(prev => prev === 'sms' ? 'whatsapp' : 'sms')}
+                          className={`w-12 h-6 rounded-full p-1 transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary ${channelType === 'whatsapp' ? 'bg-green-500' : 'bg-amber-400'
+                            }`}
+                        >
+                          <div
+                            className={`w-4 h-4 rounded-full bg-white shadow-md transform transition-transform duration-300 ${channelType === 'whatsapp' ? 'translate-x-6' : 'translate-x-0'
+                              }`}
+                          />
+                        </button>
+
+                        <svg
+                          viewBox="0 0 24 24"
+                          fill="currentColor"
+                          className={`w-6 h-6 transition-colors ${channelType === 'whatsapp' ? 'text-[#25D366]' : 'text-gray-400'}`}
+                          aria-hidden="true"
+                        >
+                          <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" />
+                        </svg>
+                      </div>
+                    </div>
+
+                    <div className="text-center mt-4">
+                      <button
+                        type="button"
+                        onClick={handleResendCode}
+                        disabled={resendTimer > 0}
+                        className={`text-sm font-medium transition-colors ${resendTimer > 0
+                          ? 'text-light-text/65 dark:text-dark-text/65 cursor-not-allowed'
+                          : 'text-primary dark:text-primary-dark underline'
+                          }`}
+                      >
+                        {resendTimer > 0
+                          ? `${t('schedule.form.resend.wait')} ${resendTimer} ${t('schedule.form.resend.timer')}`
+                          : t('schedule.form.resend.code')}
+                      </button>
+                    </div>
+                    <motion.button
+                      type="submit"
+                      className="w-full mt-8 bg-primary dark:bg-primary-dark text-white dark:text-dark-surface py-4 px-6 rounded-xl transition-all relative overflow-hidden shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      disabled={isSubmitting || !formData.verificationCode}
+                    >
+                      <span className="relative">{isSubmitting ? <Loader2 className="animate-spin m-auto" /> : t('schedule.form.verify')}</span>
+                    </motion.button>
+
+
+                  </form>
+                </motion.div>
+              )}
+
+              <AnimatePresence>
+                {isSuccess && (
+                  <motion.div
+                    key="success-message"
+                    className="mt-6 text-emerald-500 dark:text-emerald-400 text-center flex items-center justify-center space-x-2"
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0 }}
                   >
-                    <span className="relative">{isSubmitting ? <Loader2 className="animate-spin m-auto" /> : t('schedule.form.verify')}</span>
-                  </motion.button>
-
-
-                </form>
-              </motion.div>
-            )}
-
-            <AnimatePresence>
-              {isSuccess && (
-                <motion.div
-                  key="success-message"
-                  className="mt-6 text-emerald-500 dark:text-emerald-400 text-center flex items-center justify-center space-x-2"
-                  initial={{ opacity: 0, y: -10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0 }}
-                >
-                  <CheckCircle className="h-5 w-5" />
-                  <span>{successMessage}</span>
-                </motion.div>
-              )}
-              {error && (
-                <motion.div
-                  key="error-message"
-                  className="mt-6 text-red-500 dark:text-red-400 text-center flex items-center justify-center space-x-2"
-                  initial={{ opacity: 0, y: -10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0 }}
-                >
-                  <XCircle className="h-5 w-5" />
-                  {/* <span>{t('schedule.error')}</span> */}
-                  <span>{error}</span>
-                </motion.div>
-              )}
-            </AnimatePresence>
+                    <CheckCircle className="h-5 w-5" />
+                    <span>{successMessage}</span>
+                  </motion.div>
+                )}
+                {error && (
+                  <motion.div
+                    key="error-message"
+                    className="mt-6 text-red-500 dark:text-red-400 text-center flex items-center justify-center space-x-2"
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0 }}
+                  >
+                    <XCircle className="h-5 w-5" />
+                    {/* <span>{t('schedule.error')}</span> */}
+                    <span>{error}</span>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </motion.div>
           </motion.div>
         </motion.div>
-      </motion.div>
+      )}
     </section >
   );
 };
