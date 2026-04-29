@@ -1,6 +1,8 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Routes, Route } from 'react-router-dom';
-import { useEffect } from 'react';
+import { Turnstile } from '@marsidev/react-turnstile';
+
+// Components & Services
 import Navbar from './components/Layout/Navbar';
 import Hero from './components/Layout/Hero';
 import About from './components/Layout/About';
@@ -13,15 +15,17 @@ import ContactButton from './components/ContactButton';
 import ErrorBoundary from './components/ErrorBoundary';
 import NotFound from './components/NotFound';
 import ManageAppointment from './components/ManageAppointment';
+import Loading from './components/Loading';
+
+// Contexts & Hooks
 import { useLanguage } from './contexts/LanguageContext';
 import { WebsiteConfig } from './models/WebsiteConfig';
 import WebConfigService from './services/WebConfigService';
-import Loading from './components/Loading';
 import ImagesService from './services/ImagesService';
 import { useTheme } from './hooks/useTheme';
 import { reportError } from './services/ErrorReportingService';
-import { Turnstile } from '@marsidev/react-turnstile';
 import AuthService from './services/AuthService';
+import { Loader2 } from 'lucide-react';
 
 function MainContent() {
   const [config, setConfig] = useState<WebsiteConfig | null>(null);
@@ -29,37 +33,31 @@ function MainContent() {
   const [isAuthorized, setIsAuthorized] = useState<boolean>(false);
   const { setLanguage } = useLanguage();
 
-  // Ref to prevent double-handshake in React StrictMode
   const handshakeInProgress = useRef(false);
 
   // 1. Handshake Logic
   const handleHandshake = async (token: string) => {
     if (handshakeInProgress.current || isAuthorized) return;
     handshakeInProgress.current = true;
-
     const success = await AuthService.handshake(token);
-    if (success) {
-      setIsAuthorized(true);
-    } else {
-      // If handshake fails, keep loading or show error
-      console.error("Security verification failed.");
-    }
+    if (success) setIsAuthorized(true);
     handshakeInProgress.current = false;
   };
+
+  // 2. Load Config IMMEDIATELY (Public Data)
   useEffect(() => {
-    if (!isAuthorized) return;
     const loadConfig = async () => {
+
       try {
         const subdomain = window.location.hostname.split('.')[0];
-        const service = WebConfigService.getInstance();
-        const result = await service.getWebConfig(subdomain);
+        const result = await WebConfigService.getInstance().getWebConfig(subdomain);
+
         if (result) {
           setConfig(result);
           setLanguage(result.defaultLanguage as 'en' | 'he');
-
-          // Update SEO and Meta tags
           document.title = result.businessName;
 
+          // Helper for SEO Meta Tags
           const updateMetaTag = (attrName: 'name' | 'property', attrValue: string, content: string) => {
             let tag = document.querySelector(`meta[${attrName}="${attrValue}"]`);
             if (!tag) {
@@ -70,34 +68,18 @@ function MainContent() {
             tag.setAttribute('content', content);
           };
 
-          updateMetaTag('name', 'title', result.businessName);
           updateMetaTag('property', 'og:title', result.businessName);
-          updateMetaTag('property', 'twitter:title', result.businessName);
-
-          const description = result.components?.about?.description || `הזמן תור בקלות אצל ${result.businessName}`;
+          const description = result.components?.about?.description || `Book an appointment at ${result.businessName}`;
           updateMetaTag('name', 'description', description);
-          updateMetaTag('property', 'og:description', description);
-          updateMetaTag('property', 'twitter:description', description);
 
           if (result.logoImageName) {
             const logoUrl = ImagesService.getInstance().getImage(result.logoImageName);
-
-            const icons = document.querySelectorAll('link[rel="icon"], link[rel="apple-touch-icon"]');
-            icons.forEach(icon => (icon as HTMLLinkElement).href = logoUrl);
-
             updateMetaTag('property', 'og:image', logoUrl);
-            updateMetaTag('property', 'twitter:image', logoUrl);
           }
         }
       } catch (err: any) {
-        // Check for 404 status in both Axios error and custom error
-        const isNotFoundError = err.status === 404 || err.response?.status === 404;
-
-        if (!isNotFoundError) {
-          reportError({
-            error: err.message || 'Failed to load website configuration',
-            stack: err.stack
-          });
+        if (err.status !== 404 && err.response?.status !== 404) {
+          reportError({ error: err.message, stack: err.stack });
         }
       } finally {
         setLoading(false);
@@ -105,44 +87,34 @@ function MainContent() {
     };
 
     loadConfig();
-  }, [setLanguage, isAuthorized]);
+  }, [setLanguage]);
 
   useTheme(config);
 
-  if (!isAuthorized) {
-    return (
-      <>
-        <Loading isLoading={true} />
-        <div style={{ display: 'none' }}>
-          <Turnstile
-            siteKey={import.meta.env.VITE_TURNSTILE_SITE_KEY}
-            onSuccess={handleHandshake}
-          />
-        </div>
-      </>
-    );
-  }
-
-  if (loading && !config) return <Loading isLoading={loading} />;
+  if (loading) return <Loading isLoading={true} />;
   if (!config) return <NotFound />;
 
   return (
     <div className="min-h-screen bg-light-bg dark:bg-dark-bg transition-colors duration-300">
       {config.components?.introPopup?.visible && (
-        <ErrorBoundary>
-          <IntroPopup config={config.components.introPopup} />
-        </ErrorBoundary>
+        <ErrorBoundary><IntroPopup config={config.components.introPopup} /></ErrorBoundary>
       )}
+
       {config.components?.navbar.visible && (
-        <ErrorBoundary>
-          <Navbar websiteConfig={config} />
-        </ErrorBoundary>
+        <ErrorBoundary><Navbar websiteConfig={config} /></ErrorBoundary>
       )}
+
       {config.components?.hero.visible && (
         <ErrorBoundary>
-          <Hero config={config.components.hero} social={config.social} phone={config.contact.phone} isContactVisible={config.components.contact.visible} />
+          <Hero
+            config={config.components.hero}
+            social={config.social}
+            phone={config.contact.phone}
+            isContactVisible={config.components.contact.visible}
+          />
         </ErrorBoundary>
       )}
+
       {config.components?.about.visible && (
         <ErrorBoundary>
           <About
@@ -156,26 +128,41 @@ function MainContent() {
           />
         </ErrorBoundary>
       )}
+
       {config.components?.portfolio.visible && (
-        <ErrorBoundary>
-          <Portfolio config={config.components.portfolio} />
-        </ErrorBoundary>
+        <ErrorBoundary><Portfolio config={config.components.portfolio} /></ErrorBoundary>
       )}
+
+      {/* --- SENSITIVE SECTION: Turnstile protects the Schedule only --- */}
       {config.components?.schedule && (
         <ErrorBoundary>
-          <Schedule
-            config={config.components.schedule}
-            workingDays={config.workingDays}
-            user_id={config.user_id}
-            phone={config.contact.phone}
-            businessName={config.businessName}
-            timeToCancel={config.minCancelTimeMS}
-            vacations={config.vacations}
-            appointmentTypes={config.appointmentTypes}
-          // minsPerSlot={config.minsPerSlot}
-          />
+          <div id="booking-section" className="relative min-h-[400px]">
+            <div className="absolute top-0 left-0 opacity-0 pointer-events-none">
+              <Turnstile
+                siteKey={import.meta.env.VITE_TURNSTILE_SITE_KEY}
+                onSuccess={handleHandshake}
+                options={{
+                  theme: 'auto',
+                  size: 'invisible',
+                  appearance: 'execute'
+                }}
+              />
+            </div>
+            <Schedule
+              isAuthorized={isAuthorized}
+              config={config.components.schedule}
+              workingDays={config.workingDays}
+              user_id={config.user_id}
+              phone={config.contact.phone}
+              businessName={config.businessName}
+              timeToCancel={config.minCancelTimeMS}
+              vacations={config.vacations}
+              appointmentTypes={config.appointmentTypes}
+            />
+          </div>
         </ErrorBoundary>
       )}
+
       {config.components?.contact.visible && (
         <ErrorBoundary>
           <Contact
@@ -186,6 +173,7 @@ function MainContent() {
           />
         </ErrorBoundary>
       )}
+
       {config.components?.footer.visible && (
         <ErrorBoundary>
           <Footer
@@ -198,41 +186,28 @@ function MainContent() {
           />
         </ErrorBoundary>
       )}
+
       {config.components?.contactButton.visible && (
-        <ErrorBoundary>
-          <ContactButton phone={config.contact.phone} />
-        </ErrorBoundary>
+        <ErrorBoundary><ContactButton phone={config.contact.phone} /></ErrorBoundary>
       )}
     </div>
   );
 }
 
+// App stays simple, handling routing and global theme
 function App() {
   useEffect(() => {
-    // Load user preference from localStorage first
     const savedMode = localStorage.getItem('darkMode');
-    if (savedMode !== null) {
-      if (savedMode === 'true') {
-        document.documentElement.classList.add('dark');
-      }
-    }
+    if (savedMode === 'true') document.documentElement.classList.add('dark');
 
     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
     const handleChange = (e: MediaQueryListEvent) => {
       if (localStorage.getItem('darkMode') === null) {
-        if (e.matches) {
-          document.documentElement.classList.add('dark');
-        } else {
-          document.documentElement.classList.remove('dark');
-        }
+        e.matches ? document.documentElement.classList.add('dark') : document.documentElement.classList.remove('dark');
       }
     };
-
     mediaQuery.addEventListener('change', handleChange);
-
-    return () => {
-      mediaQuery.removeEventListener('change', handleChange);
-    };
+    return () => mediaQuery.removeEventListener('change', handleChange);
   }, []);
 
   return (

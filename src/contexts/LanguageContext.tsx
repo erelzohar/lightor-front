@@ -339,7 +339,7 @@ const translations = {
     // Loading Screen
     'loading.step1': 'טוען...',
     'loading.step2': 'בודק שאתה לא רובוט...',
-    'loading.step3': 'משתזף על החוף...',
+    'loading.step3': 'חושב על החיים...',
     'loading.step4': 'מתייעץ עם הדובי שלי...',
 
   }

@@ -7,7 +7,7 @@ import { Appointment } from '../../../models/Appointment';
 import { ScheduleConfig } from '../../../models/ScheduleConfig';
 import AppointmentService from '../../../services/AppointmentService';
 import smsService from '../../../services/SmsService';
-import { Loader } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import { Vacation } from '../../../models/Vacation';
 import { MaterialInput } from './ScheduleForms';
 import { DateButton } from './ScheduleCalendar';
@@ -37,13 +37,14 @@ interface ScheduleProps {
   appointmentToUpdate?: Appointment;
   onUpdateComplete?: (newAppointment: Appointment) => void;
   onCancelUpdate?: () => void;
+  isAuthorized?: boolean;
 }
 
-
-const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone, businessName, timeToCancel, vacations, appointmentTypes, isUpdating, appointmentToUpdate, onUpdateComplete, onCancelUpdate }) => {
+const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone, businessName, timeToCancel, vacations, appointmentTypes, isUpdating, appointmentToUpdate, onUpdateComplete, onCancelUpdate, isAuthorized }) => {
   if (!appointmentTypes || appointmentTypes.length === 0) {
     throw new Error('No appointment types available');
   }
+
   const { t, language } = useLanguage();
   const [currentMonth, setCurrentMonth] = useState(() => {
     const now = new Date();
@@ -105,12 +106,14 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
 
   useEffect(() => {
     if (error) throw error;
+    if (!isAuthorized) return;
+    
     AppointmentService.getInstance()
       .getAppointments("?user_id=" + user_id + "&status=scheduled&startDate=" + Date.now())
       .then(setBookedAppointments)
       .catch((err) => setError(err.message || String(err)));
 
-  }, []);
+  }, [isAuthorized, user_id]);
 
   useEffect(() => {
     let interval: NodeJS.Timeout;
@@ -723,7 +726,13 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
 
   return (
     <section id="schedule" className="py-32 bg-gradient-to-b from-light-bg to-light-surface dark:from-dark-bg dark:to-dark-surface transition-colors duration-300">
-      <motion.div className="container mx-auto px-4">
+      <motion.div 
+        className="container mx-auto px-4"
+        initial={{ opacity: 0, y: 30 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, margin: "-50px" }}
+        transition={{ duration: 0.6, ease: 'easeOut' }}
+      >
         <motion.div className="text-center mb-20">
           <h2 className="text-4xl font-bold text-light-text dark:text-dark-text mb-6">
             {config.title}
@@ -1048,7 +1057,7 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
                     disabled={isSubmitting || !formData.name || !formData.phone}
                   >
 
-                    <span className="relative text-center">{isSubmitting ? <Loader className="animate-spin m-auto" /> : t('schedule.form.send.code')}</span>
+                    <span className="relative text-center">{isSubmitting ? <Loader2 className="animate-spin m-auto" /> : t('schedule.form.send.code')}</span>
                   </motion.button>
                   <p className="mt-4 text-xs text-light-text/60 dark:text-dark-text/50 text-center">
                     {t('schedule.form.helper')}
@@ -1162,7 +1171,7 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
                     whileTap={{ scale: 0.98 }}
                     disabled={isSubmitting || !formData.verificationCode}
                   >
-                    <span className="relative">{isSubmitting ? <Loader className="animate-spin m-auto" /> : t('schedule.form.verify')}</span>
+                    <span className="relative">{isSubmitting ? <Loader2 className="animate-spin m-auto" /> : t('schedule.form.verify')}</span>
                   </motion.button>
 
 

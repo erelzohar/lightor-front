@@ -32,7 +32,7 @@ const Loading: React.FC<LoadingProps> = ({ isLoading, onLoadingComplete }) => {
     if (isLoading) {
       const textTimer = setInterval(() => {
         setTextIndex(prev => (prev % 4) + 1);
-      }, 2000);
+      }, 4000);
 
       return () => clearInterval(textTimer);
     }

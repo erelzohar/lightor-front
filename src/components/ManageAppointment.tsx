@@ -11,6 +11,7 @@ import { useTheme } from '../hooks/useTheme';
 import smsService from '../services/SmsService';
 import WebConfigService from '../services/WebConfigService';
 import { WebsiteConfig } from '../models/WebsiteConfig';
+import Loading from './Loading';
 
 
 
@@ -145,7 +146,7 @@ const ManageAppointment: React.FC = () => {
   if (isLoading) {
     return (
       <div className="min-h-screen bg-light-bg dark:bg-dark-bg flex items-center justify-center p-4">
-        <Loader2 className="w-8 h-8 text-primary dark:text-primary-dark animate-spin" />
+        <Loading isLoading={true} />
       </div>
     );
   }
