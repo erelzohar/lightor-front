@@ -24,6 +24,7 @@ interface ContactProps {
   address: Address;
   contact: ContactInfo;
   workingDays: (string | null)[];
+  isPreview?: boolean;
 }
 
 const MaterialInput = ({
@@ -41,11 +42,11 @@ const MaterialInput = ({
   <div className="relative pt-2">
     <label
       htmlFor={id}
-      className="absolute left-10 -top-0 px-2 text-sm font-medium text-primary dark:text-primary-dark bg-light-surface dark:bg-dark-surface"
+      className="absolute start-10 -top-0 px-2 text-sm font-medium text-primary dark:text-primary-dark bg-light-surface dark:bg-dark-surface"
     >
       {label}
     </label>
-    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+    <div className="absolute inset-y-0 start-0 ps-3 flex items-center pointer-events-none">
       <Icon className="h-5 w-5 text-primary dark:text-primary-dark" aria-hidden="true" />
     </div>
     {multiline ? (
@@ -56,7 +57,7 @@ const MaterialInput = ({
         required={required}
         name={name}
         rows={4}
-        className={`w-full pl-10 pr-4 py-3 bg-transparent border-2 ${error
+        className={`w-full ps-10 pe-4 py-3 bg-transparent border-2 ${error
           ? 'border-red-500 dark:border-red-500'
           : 'border-primary/30 dark:border-primary-dark/30 focus:border-primary dark:focus:border-primary-dark'
           } rounded-lg transition-all outline-none text-light-text dark:text-dark-text resize-none`}
@@ -71,7 +72,7 @@ const MaterialInput = ({
         onChange={onChange}
         required={required}
         name={name}
-        className={`w-full pl-10 pr-4 py-3 bg-transparent border-2 ${error
+        className={`w-full ps-10 pe-4 py-3 bg-transparent border-2 ${error
           ? 'border-red-500 dark:border-red-500'
           : 'border-primary/30 dark:border-primary-dark/30 focus:border-primary dark:focus:border-primary-dark'
           } rounded-lg transition-all outline-none text-light-text dark:text-dark-text`}
@@ -85,7 +86,7 @@ const MaterialInput = ({
   </div>
 );
 
-const Contact: React.FC<ContactProps> = ({ config, address, contact, workingDays }) => {
+const Contact: React.FC<ContactProps> = ({ config, address, contact, workingDays, isPreview }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -113,9 +114,9 @@ const Contact: React.FC<ContactProps> = ({ config, address, contact, workingDays
 
     return workingDays
       .map((hours, index) => ({
-        day: days[index],
+        day: t(`day.${index}`),
         hours: hours === null
-          ? (language === 'he' ? 'סגור' : 'Closed')
+          ? t('time.closed')
           : language === 'he'
             ? hours
             : hours.split('-').map(time => {
@@ -124,7 +125,7 @@ const Contact: React.FC<ContactProps> = ({ config, address, contact, workingDays
               return `${hour > 12 ? hour - 12 : hour}:${m} ${hour >= 12 ? 'PM' : 'AM'}`;
             }).join(' - ')
       }))
-      .filter(schedule => schedule.hours !== 'Closed' && schedule.hours !== 'סגור');
+      .filter(schedule => schedule.hours !== t('time.closed'));
   };
 
   const validateForm = () => {
@@ -135,29 +136,19 @@ const Contact: React.FC<ContactProps> = ({ config, address, contact, workingDays
     };
 
     if (formData.name.length < 2 || formData.name.length > 50) {
-      errors.name = language === 'he'
-        ? 'נא להזין שם בין 2 ל-50 תווים'
-        : 'Please enter a name between 2 and 50 characters';
+      errors.name = t('contact.validation.name');
     }
 
     if (!formData.phone.startsWith('05')) {
-      errors.phone = language === 'he'
-        ? 'מספר הטלפון חייב להתחיל ב-05'
-        : 'Phone number must start with 05';
+      errors.phone = t('contact.validation.phone.start');
     } else if (formData.phone.length !== 10) {
-      errors.phone = language === 'he'
-        ? 'מספר הטלפון חייב להכיל 10 ספרות'
-        : 'Phone number must be 10 digits long';
+      errors.phone = t('contact.validation.phone.length');
     } else if (!/^\d+$/.test(formData.phone)) {
-      errors.phone = language === 'he'
-        ? 'מספר הטלפון חייב להכיל ספרות בלבד'
-        : 'Phone number must contain only digits';
+      errors.phone = t('contact.validation.phone.digits');
     }
 
     if (formData.message.trim().length < 10) {
-      errors.message = language === 'he'
-        ? 'ההודעה חייבת להכיל לפחות 10 תווים'
-        : 'Message must be at least 10 characters long';
+      errors.message = t('contact.validation.message');
     }
 
     setFormErrors(errors);
@@ -173,14 +164,16 @@ const Contact: React.FC<ContactProps> = ({ config, address, contact, workingDays
 
     setIsSubmitting(true);
     try {
-      const msg = `השאירו לך הודעה חדשה ! 
+      if (!isPreview) {
+        const msg = t('contact.notification.business_message', {
+          name: formData.name,
+          phone: formData.phone,
+          message: formData.message
+        });
+        const res = await smsService.sendSMS(contact.phone, msg);
 
-    ${formData.name + " - " + formData.phone} 
-    
-    ${formData.message}`;
-      const res = await smsService.sendSMS(contact.phone, msg);
-
-      if (!res) throw "";
+        if (!res) throw "";
+      }
       setIsSuccess(true);
       // Reset form after showing success message
       setTimeout(() => {
@@ -188,7 +181,7 @@ const Contact: React.FC<ContactProps> = ({ config, address, contact, workingDays
         setFormData({ name: '', phone: '', message: '' });
       }, 3000);
     } catch (err) {
-      setError(language === 'he' ? 'אירעה שגיאה בשליחת ההודעה' : 'An error occurred while sending the message');
+      setError(t('schedule.error'));
       setTimeout(() => {
         setError(null)
       }, 3000);
@@ -308,7 +301,7 @@ const Contact: React.FC<ContactProps> = ({ config, address, contact, workingDays
                 {contactInfo.map((item, index) => (
                   <motion.div
                     key={index}
-                    className="flex items-start space-x-4"
+                    className="flex items-start gap-8"
                     variants={itemVariants}
                     whileHover={{ scale: 1.02 }}
                     role="listitem"
@@ -351,7 +344,7 @@ const Contact: React.FC<ContactProps> = ({ config, address, contact, workingDays
                 variants={itemVariants}
               >
                 <h4 className="font-semibold text-lg mb-4 text-light-text dark:text-dark-text">
-                  {language === 'he' ? 'שעות פעילות' : 'Business Hours'}
+                  {t('about.hours')}
                 </h4>
                 <div className="space-y-2">
                   {formatWorkingHours().map((schedule, index) => (
@@ -419,7 +412,7 @@ const Contact: React.FC<ContactProps> = ({ config, address, contact, workingDays
                       opacity: isSubmitting ? 0 : 1,
                       y: isSubmitting ? -20 : 0
                     }}
-                    className="flex items-center justify-center space-x-2"
+                    className="flex items-center justify-center gap-2"
                   >
                     <span>{t('contact.form.send')}</span>
                     <Send className="h-5 w-5" aria-hidden="true" />
@@ -439,7 +432,7 @@ const Contact: React.FC<ContactProps> = ({ config, address, contact, workingDays
                 <AnimatePresence>
                   {isSuccess && (
                     <motion.div
-                      className="text-emerald-500 dark:text-emerald-400 text-center flex items-center justify-center space-x-2"
+                      className="text-emerald-500 dark:text-emerald-400 text-center flex items-center justify-center gap-2"
                       initial={{ opacity: 0, y: -10 }}
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0 }}
@@ -452,7 +445,7 @@ const Contact: React.FC<ContactProps> = ({ config, address, contact, workingDays
                   )}
                   {error && (
                     <motion.div
-                      className="text-red-500 dark:text-red-400 text-center flex items-center justify-center space-x-2"
+                      className="text-red-500 dark:text-red-400 text-center flex items-center justify-center gap-2"
                       initial={{ opacity: 0, y: -10 }}
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0 }}

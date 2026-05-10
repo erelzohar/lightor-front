@@ -81,10 +81,12 @@ const ManageAppointment: React.FC = () => {
         const service = WebConfigService.getInstance();
         const res = await service.getWebConfigByUserId(appointment.user_id);
         const businessPhone = res.contact.phone;
-        const msg = `התור של ${appointment.name} - ${appointment.phone}
-        בתאריך ${formatDate(appointment.timestamp)} בשעה ${formatTime(appointment.timestamp)}
-        בוטל ע"י הלקוח
-        Lightor`;
+        const msg = t('manage.notifications.business_cancel', {
+          name: appointment.name,
+          phone: appointment.phone,
+          date: formatDate(appointment.timestamp),
+          time: formatTime(appointment.timestamp)
+        });
 
         await smsService.sendSMS(businessPhone, msg);
       }
@@ -209,7 +211,7 @@ const ManageAppointment: React.FC = () => {
           <p className="text-light-text/70 dark:text-dark-text/70">
             {isCancellable
               ? t('manage.message.cancellable')
-              : t('manage.message.not_cancellable') + (minCancelTime ? minCancelTime / (1000 * 60 * 60) : 0) + t('manage.message.hours_before')
+              : t('manage.message.not_cancellable_full', { hours: minCancelTime ? minCancelTime / (1000 * 60 * 60) : 0 })
             }
           </p>
         </div>
@@ -218,9 +220,7 @@ const ManageAppointment: React.FC = () => {
           <div className="mb-6 p-4 bg-red-500/10 rounded-xl flex items-center gap-3">
             <AlertTriangle className="w-5 h-5 text-red-500 flex-shrink-0" />
             <p className="text-red-500 text-sm">
-              {parseInt(appointment.timestamp) - Date.now() <= 0
-                ? getTimeUntilAppointment(appointment.timestamp)
-                : t('manage.message.time_until', { time: getTimeUntilAppointment(appointment.timestamp) })}
+              {t('manage.message.time_until', { time: getTimeUntilAppointment(appointment.timestamp) })}
             </p>
           </div>
         )}
@@ -393,13 +393,13 @@ const ManageAppointment: React.FC = () => {
                 <div className="relative w-24 h-24 mx-auto mb-6">
                   {/* Garbage Can Lid */}
                   <motion.div
-                    className="absolute top-0 left-1/4 w-1/2 h-2 bg-red-500 rounded-t-sm z-10"
+                    className="absolute top-0 start-1/4 w-1/2 h-2 bg-red-500 rounded-t-sm z-10"
                     initial={{ y: 0, rotate: 0 }}
                     animate={{ y: -15, rotate: -25 }}
                     transition={{ delay: 0.2, duration: 0.4 }}
                   />
                   {/* Garbage Can Body */}
-                  <div className="absolute bottom-0 left-1/4 w-1/2 h-16 bg-red-500 rounded-b-lg border-t-4 border-red-600">
+                  <div className="absolute bottom-0 start-1/4 w-1/2 h-16 bg-red-500 rounded-b-lg border-t-4 border-red-600">
                     <div className="flex justify-around px-2 mt-2">
                       <div className="w-1 h-10 bg-red-600/50 rounded-full" />
                       <div className="w-1 h-10 bg-red-600/50 rounded-full" />
@@ -408,7 +408,7 @@ const ManageAppointment: React.FC = () => {
                   </div>
                   {/* Falling "Appointment" paper */}
                   <motion.div
-                    className="absolute top-0 left-1/3 w-8 h-10 bg-white dark:bg-gray-200 rounded-sm shadow-sm flex flex-col gap-1 p-1"
+                    className="absolute top-0 start-1/3 w-8 h-10 bg-white dark:bg-gray-200 rounded-sm shadow-sm flex flex-col gap-1 p-1"
                     initial={{ y: -50, opacity: 0, rotate: 0 }}
                     animate={{ y: 20, opacity: [0, 1, 1, 0], rotate: 45 }}
                     transition={{ duration: 0.8, times: [0, 0.2, 0.7, 1] }}

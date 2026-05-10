@@ -252,7 +252,7 @@ const Hero: React.FC<HeroProps> = ({ config, social, phone, isContactVisible, is
         ref={vantaRef}
         id="home"
         className="min-h-screen relative overflow-hidden bg-light-bg dark:bg-dark-bg transition-colors duration-300"
-        aria-label="Welcome to StyleTime"
+        aria-label={t('hero.welcome_label')}
       >
         {!isVanta && (
           <div
@@ -375,7 +375,7 @@ const Hero: React.FC<HeroProps> = ({ config, social, phone, isContactVisible, is
                 </motion.h1>
 
                 <motion.p
-                  className="text-xl text-light-text/80 dark:text-dark-text/80 mb-12 max-w-2xl md:mr-0 md:ml-auto"
+                  className="text-xl text-light-text/80 dark:text-dark-text/80 mb-12 max-w-2xl md:me-0 md:ms-auto"
                   variants={itemVariants}
                 >
                   {config.description}
@@ -385,7 +385,7 @@ const Hero: React.FC<HeroProps> = ({ config, social, phone, isContactVisible, is
                   className="flex flex-col sm:flex-row gap-4 justify-center md:justify-end"
                   variants={itemVariants}
                   role="group"
-                  aria-label="Call to action"
+                  aria-label={t('common.actions', { defaultValue: 'Actions' })}
                 >
                   <motion.a
                     href="#schedule"
@@ -393,7 +393,7 @@ const Hero: React.FC<HeroProps> = ({ config, social, phone, isContactVisible, is
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
                     role="button"
-                    aria-label="Book an appointment"
+                    aria-label={t('hero.book')}
                   >
                     <motion.div
                       className="absolute inset-0 bg-gradient-to-r from-primary via-accent-violet to-primary dark:from-primary-dark dark:via-accent-cyan dark:to-primary-dark"
@@ -454,7 +454,7 @@ const Hero: React.FC<HeroProps> = ({ config, social, phone, isContactVisible, is
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
                     role="button"
-                    aria-label="contact"
+                    aria-label={t('hero.contact')}
                   >
                     {t('hero.contact')}
                   </motion.a>}
@@ -530,7 +530,7 @@ const Hero: React.FC<HeroProps> = ({ config, social, phone, isContactVisible, is
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                   role="button"
-                  aria-label="Book an appointment"
+                  aria-label={t('hero.book')}
                 >
                   <motion.div
                     className="absolute inset-0 bg-gradient-to-r from-primary via-accent-violet to-primary dark:from-primary-dark dark:via-accent-cyan dark:to-primary-dark"

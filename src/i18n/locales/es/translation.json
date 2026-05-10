@@ -1,223 +1,244 @@
 {
-  "nav": {
-    "home": "Inicio",
-    "about": "Sobre nosotros",
-    "portfolio": "Reciente",
-    "schedule": "Citas",
-    "contact": "Contacto"
-  },
-  "intro": {
-    "title": "Mensaje del sistema",
-    "button": "Cerrar"
-  },
-  "hero": {
-    "book": "Reservar cita",
-    "contact": "Contáctenos"
-  },
-  "about": {
-    "title": "Sobre StyleTime Studio",
-    "location": "Ubicación",
-    "phone": "Teléfono",
-    "email": "Correo",
-    "hours": "Horarios",
-    "visit": "Visítanos"
-  },
-  "portfolio": {
-    "title": "Nuestros últimos trabajos",
-    "view": {
-      "slideshow": "Presentación",
-      "grid": "Cuadrícula"
+    "nav": {
+        "home": "Inicio",
+        "about": "Nosotros",
+        "portfolio": "Portfolio",
+        "schedule": "Citas",
+        "contact": "Contacto"
+    },
+    "intro": {
+        "title": "Mensaje del sistema",
+        "button": "Cerrar"
+    },
+    "hero": {
+        "book": "Reservar Cita",
+        "contact": "Contáctanos",
+        "welcome_label": "Bienvenidos a StyleTime"
+    },
+    "about": {
+        "title": "Sobre StyleTime Studio",
+        "location": "Ubicación",
+        "phone": "Teléfono",
+        "email": "Email",
+        "hours": "Horario",
+        "visit": "Visítanos"
+    },
+    "portfolio": {
+        "title": "Nuestros Últimos Trabajos",
+        "view": {
+            "slideshow": "Presentación",
+            "grid": "Cuadrícula"
+        },
+        "grid_label": "Cuadrícula del portfolio",
+        "slideshow_label": "Presentación del portfolio",
+        "slideshow_instruction": "Usa las flechas izquierda y derecha para navegar",
+        "slideshow_prev": "Diapositiva anterior",
+        "slideshow_next": "Siguiente diapositiva",
+        "slideshow_dot": "Ir a la diapositiva {{index}}"
+    },
+    "schedule": {
+        "title": "Programa tu visita",
+        "select": {
+            "date": "Elegir fecha",
+            "time": "Elegir hora",
+            "type": "Elegir tipo de servicio"
+        },
+        "available": {
+            "times": "Horarios disponibles para"
+        },
+        "book": "Reservar",
+        "success": "¡Cita reservada con éxito!",
+        "update": {
+            "success": "¡Cita actualizada con éxito!"
+        },
+        "error": {
+            "sendOtp": "Error al enviar el código",
+            "invalidOtp": "Código de verificación inválido"
+        },
+        "conflictError": "Este horario ya está ocupado, por favor elige otro",
+        "form": {
+            "name": "Nombre completo",
+            "phone": "Número de teléfono",
+            "otp": "Código de verificación",
+            "send": "Enviar código",
+            "verify": "Confirmar y reservar",
+            "resend": "Reenviar código",
+            "resend_in": "Reenviar en {{seconds}}s"
+        },
+        "validation": {
+            "name": "Por favor ingresa tu nombre completo",
+            "phone": {
+                "start": "El número debe empezar con 05",
+                "length": "El número debe tener 10 dígitos",
+                "digits": "El número solo debe contener dígitos"
+            },
+            "otp": {
+                "length": "El código debe tener 6 dígitos",
+                "digits": "El código solo debe contener dígitos"
+            }
+        },
+        "legend": {
+            "available": "Disponible",
+            "limited": "Plazas limitadas",
+            "vacation": "De vacaciones",
+            "closed": "Completo / Cerrado"
+        },
+        "notifications": {
+            "user": "Hola {{name}}, tu cita en {{businessName}} ha sido programada para el {{day}} {{date}} a las {{time}}. Enlace de cancelación {{timeUntilLabel}}: {{link}}",
+            "user_update": "Hola {{name}}, tu cita en {{businessName}} ha sido actualizada para el {{day}} {{date}} a las {{time}}. Enlace de cancelación {{timeUntilLabel}}: {{link}}",
+            "business": "¡Nueva cita reservada!\nNombre: {{name}}\nTel: {{phone}}\nFecha: {{day}} {{date}} a las {{time}}\nEZ-lines"
+        }
+    },
+    "common": {
+        "back": "Volver",
+        "minutes": "minutos",
+        "until": "en {{time}}",
+        "before": "antes de la cita",
+        "hours_and_minutes": "{{hours}} horas y {{minutes}} minutos",
+        "currency": "₪",
+        "toggle_dark_mode": "Cambiar a modo oscuro"
+    },
+    "day": {
+        "0": "Domingo",
+        "1": "Lunes",
+        "2": "Martes",
+        "3": "Miércoles",
+        "4": "Jueves",
+        "5": "Viernes",
+        "6": "Sábado"
+    },
+    "time": {
+        "unlimited": "Ilimitado",
+        "half": {
+            "hour": "Media hora"
+        },
+        "hour": "Una hora",
+        "2hours": "2 horas",
+        "3hours": "3 horas",
+        "4hours": "4 horas",
+        "6hours": "6 horas",
+        "12hours": "12 horas",
+        "24hours": "24 horas",
+        "48hours": "48 horas",
+        "72hours": "72 horas",
+        "week": "Una semana",
+        "2weeks": "Dos semanas",
+        "closed": "Cerrado"
+    },
+    "contact": {
+        "title": "Contáctanos",
+        "form": {
+            "name": "Nombre",
+            "phone": "Teléfono",
+            "message": "Mensaje",
+            "send": "Enviar",
+            "success": "¡Mensaje enviado con éxito!"
+        },
+        "validation": {
+            "name": "Ingresa un nombre (2-50 caracteres)",
+            "phone": {
+                "start": "El número debe empezar con 05",
+                "length": "El número debe tener 10 dígitos",
+                "digits": "El número solo debe contener dígitos"
+            },
+            "message": "El mensaje debe tener al menos 10 caracteres"
+        },
+        "button": {
+            "options": "Opciones de contacto"
+        },
+        "option": {
+            "call": "Llámanos",
+            "whatsapp": "WhatsApp",
+            "report": "Informar un problema"
+        },
+        "modal": {
+            "close": "Cerrar ventana",
+            "scan_title": "Escanea para abrir WhatsApp",
+            "call_title": "Llámanos",
+            "qr_label": "Código QR de WhatsApp",
+            "scan_message": "Escanea el código QR con tu móvil para abrir WhatsApp",
+            "or_whatsapp": "O pulsa el botón para abrir WhatsApp directamente",
+            "or_call": "O pulsa el botón para llamar directamente",
+            "button_whatsapp": "Abrir WhatsApp",
+            "button_call": "Llamar ahora",
+            "link_text_whatsapp": "Abrir WhatsApp",
+            "link_text_call": "Llamar ahora"
+        }
+    },
+    "footer": {
+        "links": "Enlaces Rápidos",
+        "services": "Servicios",
+        "follow": "Síguenos",
+        "rights": "Todos los derechos reservados.",
+        "business_link": "¿Quieres esto para tu negocio? Haz clic aquí",
+        "social": {
+            "follow": {
+                "instagram": "Síguenos en Instagram",
+                "tiktok": "Síguenos en TikTok",
+                "facebook": "Síguenos en Facebook",
+                "x": "Síguenos en X"
+            }
+        },
+        "policy": {
+            "privacy": "Política de privacidad",
+            "terms": "Términos de uso",
+            "security": "Seguridad",
+            "privacy_content": "\u003cp\u003eEn Lightor respetamos la privacidad de nuestros usuarios y nos comprometemos a proteger su información personal.\u003c/p\u003e\u003cbr /\u003e\u003ch4\u003eRecolección de datos\u003c/h4\u003e\u003cp\u003eAl reservar, recolectamos información básica como nombre completo, teléfono y a veces email.\u003c/p\u003e\u003cbr /\u003e\u003cp\u003eLa información se recolecta directamente del usuario y no se transfiere a terceros sin consentimiento.\u003c/p\u003e\u003cbr /\u003e\u003ch4\u003eUso de la información\u003c/h4\u003e\u003cp\u003eLa información personal se usará solo para fines relacionados con la reserva y recordatorios.\u003c/p\u003e\u003cbr /\u003e",
+            "terms_content": "\u003cp\u003eEl uso del sistema Lightor constituye la aceptación de los términos detallados aquí.\u003c/p\u003e\u003cbr /\u003e",
+            "security_content": "\u003cp\u003eLightor se compromete a mantener la seguridad de los datos usando tecnologías avanzadas.\u003c/p\u003e\u003cbr /\u003e"
+        }
+    },
+    "manage": {
+        "update": {
+            "title": "Actualizar cita",
+            "success_title": "Cita actualizada"
+        },
+        "new_time_title": "Elige un nuevo horario",
+        "manage_title": "Gestionar cita",
+        "message": {
+            "cancellable": "Puedes cancelar o actualizar esta cita",
+            "not_cancellable": "No se puede cancelar con menos de ",
+            "not_cancellable_full": "No se puede cancelar con menos de {{hours}} horas de antelación",
+            "hours_before": " horas antes",
+            "time_until": "Faltan {{time}} para la cita",
+            "started": "La cita ya ha comenzado"
+        },
+        "label": {
+            "date": "Fecha",
+            "time": "Hora",
+            "name": "Nombre",
+            "phone": "Teléfono",
+            "type": "Servicio"
+        },
+        "button": {
+            "back": "Volver",
+            "cancel": "Cancelar",
+            "update": "Actualizar"
+        },
+        "modal": {
+            "confirm": {
+                "title": "Confirmar cancelación",
+                "message": "¿Estás seguro de que quieres cancelar esta cita?"
+            },
+            "button_confirm": "Confirmar cancelación"
+        },
+        "success_title": "Cita cancelada",
+        "notifications": {
+            "business_cancel": "La cita de {{name}} - {{phone}} el {{date}} a las {{time}} fue cancelada por el cliente. Lightor"
+        }
+    },
+    "notfound": {
+        "title": "Página no encontrada",
+        "message": "La página que buscas no existe. Intenta refrescar o vuelve al inicio.",
+        "button": {
+            "home": "Volver al inicio",
+            "refresh": "Refrescar"
+        }
+    },
+    "loading": {
+        "step1": "Cargando...",
+        "step2": "Verificando que no seas un robot...",
+        "step3": "Relajándonos en la playa...",
+        "step4": "Consultando con mi osito de peluche..."
     }
-  },
-  "schedule": {
-    "title": "Agenda tu visita",
-    "select": {
-      "date": "Seleccionar fecha",
-      "time": "Seleccionar hora",
-      "type": "Seleccionar tipo de servicio"
-    },
-    "available": {
-      "times": "Horarios disponibles para el"
-    },
-    "book": "Reservar cita",
-    "success": "¡Cita reservada con éxito!",
-    "update": {
-      "success": "¡Cita actualizada con éxito!"
-    },
-    "error": "Algo salió mal...",
-    "conflictError": "Este horario ya está ocupado, por favor intenta con otro",
-    "form": {
-      "name": "Nombre completo",
-      "phone": "Número de teléfono",
-      "verification": "Código de verificación",
-      "verification_message": "Se ha enviado un código de verificación a tu teléfono",
-      "send_code": "Reservar cita",
-      "verify": "Verificar y reservar",
-      "resend_code": "Reenviar código",
-      "resend_wait": "Reenviar en",
-      "resend_timer": "segundos",
-      "helper": "Al hacer clic en 'Reservar cita', se enviará un código de verificación al número de teléfono proporcionado."
-    },
-    "legend": {
-      "available": "Disponible",
-      "limited": "Cupos limitados",
-      "vacation": "De vacaciones",
-      "closed": "Agotado / Cerrado"
-    },
-    "original_appointment": "Tu cita",
-    "error_sendOtp": "Error al enviar el código de verificación",
-    "error_invalidOtp": "Código de verificación inválido",
-    "validation": {
-      "name": "Por favor ingresa un nombre entre 2 y 50 caracteres",
-      "phone": {
-        "start": "El número de teléfono debe comenzar con 05",
-        "length": "El número de teléfono debe tener 10 dígitos",
-        "digits": "El número de teléfono debe contener solo dígitos"
-      },
-      "otp": {
-        "length": "El código de verificación debe tener 6 dígitos",
-        "digits": "El código de verificación debe contener solo dígitos"
-      }
-    },
-    "channel": {
-      "sms": "Enviar código y actualizaciones por SMS",
-      "whatsapp": "Enviar código y actualizaciones por WhatsApp"
-    },
-    "confirmation": {
-      "user": "Hola {{name}}, tu cita en {{businessName}} ha sido programada para el {{day}} {{date}} a las {{time}}. Enlace de cancelación {{timeUntilLabel}}: {{link}}",
-      "user_update": "Hola {{name}}, tu cita en {{businessName}} ha sido actualizada para el {{day}} {{date}} a las {{time}}. Enlace de cancelación {{timeUntilLabel}}: {{link}}",
-      "business": "¡Nueva cita programada!\nNombre: {{name}}\nTeléfono: {{phone}}\nFecha: {{day}} {{date}} a las {{time}}\nEZ-lines"
-    }
-  },
-  "common": {
-    "back": "Volver",
-    "minutes": "minutos",
-    "until": "hasta las {{time}}",
-    "before": "antes de la cita",
-    "hours_and_minutes": "{{hours}} horas y {{minutes}} minutos"
-  },
-  "day": {
-    "0": "Domingo",
-    "1": "Lunes",
-    "2": "Martes",
-    "3": "Miércoles",
-    "4": "Jueves",
-    "5": "Viernes",
-    "6": "Sábado"
-  },
-  "time": {
-    "unlimited": "Ilimitado",
-    "half": { "hour": "Media hora" },
-    "hour": "Una hora",
-    "2hours": "2 horas",
-    "3hours": "3 horas",
-    "4hours": "4 horas",
-    "6hours": "6 horas",
-    "12hours": "12 horas",
-    "24hours": "24 horas",
-    "48hours": "48 horas",
-    "72hours": "72 horas",
-    "week": "Una semana",
-    "2weeks": "Dos semanas"
-  },
-  "contact": {
-    "title": "Contáctanos",
-    "form": {
-      "name": "Nombre",
-      "phone": "Teléfono",
-      "message": "Mensaje",
-      "send": "Enviar mensaje",
-      "success": "¡Mensaje enviado con éxito!"
-    },
-    "button": {
-      "options": "Opciones de contacto"
-    },
-    "option": {
-      "call": "Llámanos",
-      "whatsapp": "Enviar WhatsApp",
-      "report": "Reportar un problema"
-    },
-    "modal": {
-      "close": "Cerrar ventana",
-      "scan_title": "Escanea para WhatsApp",
-      "call_title": "Llámanos",
-      "qr_label": "Código QR de WhatsApp",
-      "scan_message": "Escanea el código con la cámara de tu teléfono para abrir el chat de WhatsApp",
-      "or_whatsapp": "O haz clic en el botón para abrir WhatsApp directamente",
-      "or_call": "O haz clic en el botón para llamar directamente",
-      "button_whatsapp": "Abrir WhatsApp en una nueva ventana",
-      "button_call": "Llamar ahora",
-      "link_text_whatsapp": "Abrir WhatsApp",
-      "link_text_call": "Llamar ahora"
-    }
-  },
-  "footer": {
-    "links": "Enlaces rápidos",
-    "services": "Servicios",
-    "follow": "Síguenos",
-    "rights": "Todos los derechos reservados.",
-    "business_link": "¿Quieres esto para tu negocio? Haz clic aquí",
-    "social": {
-      "follow": {
-        "instagram": "Síguenos en Instagram",
-        "tiktok": "Síguenos en TikTok",
-        "facebook": "Síguenos en Facebook",
-        "x": "Síguenos en X"
-      }
-    },
-    "policy": {
-      "privacy": "Política de privacidad",
-      "terms": "Términos de uso",
-      "security": "Política de seguridad"
-    }
-  },
-  "manage": {
-    "update": {
-      "title": "Actualizar cita",
-      "success_title": "Cita actualizada con éxito"
-    },
-    "new_time_title": "Elige un nuevo horario para tu cita",
-    "manage_title": "Gestionar cita",
-    "message": {
-      "cancellable": "Puedes cancelar o actualizar esta cita",
-      "not_cancellable": "No se puede cancelar o actualizar la cita con menos de ",
-      "hours_before": " horas antes de la cita",
-      "time_until": "Solo faltan {{time}} para la cita",
-      "started": "La cita ya ha comenzado"
-    },
-    "label": {
-      "date": "Fecha",
-      "time": "Hora",
-      "name": "Nombre",
-      "phone": "Teléfono",
-      "type": "Tipo de servicio"
-    },
-    "button": {
-      "back": "Volver",
-      "cancel": "Cancelar cita",
-      "update": "Actualizar"
-    },
-    "modal": {
-      "confirm": {
-        "title": "Confirmar cancelación",
-        "message": "¿Estás seguro de que deseas cancelar esta cita?"
-      },
-      "button_confirm": "Confirmar cancelación"
-    },
-    "success_title": "Cita cancelada con éxito"
-  },
-  "notfound": {
-    "title": "Página no encontrada",
-    "message": "La página que buscas no existe o ha sido eliminada. Intenta refrescar o vuelve al inicio.",
-    "button": {
-      "home": "Volver al inicio",
-      "refresh": "Refrescar página"
-    }
-  },
-  "loading": {
-    "step1": "Cargando...",
-    "step2": "Verificando que no eres un robot...",
-    "step3": "Relajándote en la playa...",
-    "step4": "Consultando con mi osito de peluche..."
-  }
 }

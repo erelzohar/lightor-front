@@ -1,223 +1,257 @@
 {
-  "nav": {
-    "home": "Home",
-    "about": "About",
-    "portfolio": "Latest",
-    "schedule": "Schedule",
-    "contact": "Contact"
-  },
-  "intro": {
-    "title": "System message",
-    "button": "Close"
-  },
-  "hero": {
-    "book": "Book Appointment",
-    "contact": "Contact Us"
-  },
-  "about": {
-    "title": "About StyleTime Studio",
-    "location": "Location",
-    "phone": "Phone",
-    "email": "Email",
-    "hours": "Work Hours",
-    "visit": "Visit Us"
-  },
-  "portfolio": {
-    "title": "Our Latest",
-    "view": {
-      "slideshow": "Slideshow",
-      "grid": "Grid"
+    "nav": {
+        "home": "Home",
+        "about": "About",
+        "portfolio": "Latest",
+        "schedule": "Schedule",
+        "contact": "Contact",
+        "open_menu": "Open menu",
+        "close_menu": "Close menu"
+    },
+    "intro": {
+        "title": "System message",
+        "button": "Close"
+    },
+    "hero": {
+        "book": "Book Appointment",
+        "contact": "Contact Us",
+        "welcome_label": "Welcome to StyleTime"
+    },
+    "about": {
+        "title": "About StyleTime Studio",
+        "location": "Location",
+        "phone": "Phone",
+        "email": "Email",
+        "hours": "Work Hours",
+        "visit": "Visit Us"
+    },
+    "portfolio": {
+        "title": "Our Latest",
+        "view": {
+            "slideshow": "Slideshow",
+            "grid": "Grid"
+        },
+        "grid_label": "Portfolio grid",
+        "slideshow_label": "Portfolio slideshow",
+        "slideshow_instruction": "Use left and right arrow keys to navigate between slides",
+        "slideshow_prev": "Previous slide",
+        "slideshow_next": "Next slide",
+        "slideshow_dot": "Go to slide {{index}}"
+    },
+    "schedule": {
+        "title": "Schedule Your Visit",
+        "select": {
+            "date": "Select Date",
+            "time": "Select Time",
+            "type": "Select haircut type"
+        },
+        "available": {
+            "times": "Available Times for"
+        },
+        "book": "Book Appointment",
+        "success": "Appointment booked successfully!",
+        "update": {
+            "success": "Appointment updated successfully!"
+        },
+        "error": {
+            "sendOtp": "Error sending verification code",
+            "invalidOtp": "Invalid verification code"
+        },
+        "conflictError": "The appointment has been taken please try another one",
+        "form": {
+            "name": "Full Name",
+            "phone": "Phone Number",
+            "verification": "Verification Code",
+            "verification_message": "A verification code has been sent to your phone",
+            "send_code": "Send Verification Code",
+            "verify": "Verify and Book",
+            "resend_code": "Resend Code",
+            "resend_wait": "Resend in",
+            "resend_timer": "seconds",
+            "helper": "By clicking \u0027Book Appointment\u0027, a verification code will be sent to the phone number provided."
+        },
+        "legend": {
+            "available": "Available",
+            "limited": "Limited Slots",
+            "vacation": "On vacation",
+            "closed": "Fully Booked / Closed"
+        },
+        "original_appointment": "Your Appointment",
+        "validation": {
+            "name": "Please enter a name between 2 and 50 characters",
+            "phone": {
+                "start": "Phone number must start with 05",
+                "length": "Phone number must be 10 digits long",
+                "digits": "Phone number must contain only digits"
+            },
+            "otp": {
+                "length": "Verification code must be 6 digits long",
+                "digits": "Verification code must contain only digits"
+            }
+        },
+        "channel": {
+            "sms": "Send code \u0026 updates via SMS",
+            "whatsapp": "Send code \u0026 updates via WhatsApp"
+        },
+        "confirmation": {
+            "user": "Hi {{name}}, your appointment at {{businessName}} has been scheduled for {{day}} {{date}} at {{time}}. Cancellation link {{timeUntilLabel}}: {{link}}",
+            "user_update": "Hi {{name}}, your appointment at {{businessName}} has been updated to {{day}} {{date}} at {{time}}. Cancellation link {{timeUntilLabel}}: {{link}}",
+            "business": "New appointment scheduled!\nName: {{name}}\nPhone: {{phone}}\nDate: {{day}} {{date}} at {{time}}\nEZ-lines"
+        }
+    },
+    "common": {
+        "back": "Back",
+        "minutes": "minutes",
+        "until": "until {{time}}",
+        "before": "before the appointment",
+        "hours_and_minutes": "{{hours}} hours and {{minutes}} minutes",
+        "currency": "$",
+        "toggle_dark_mode": "Toggle dark mode"
+    },
+    "day": {
+        "0": "Sunday",
+        "1": "Monday",
+        "2": "Tuesday",
+        "3": "Wednesday",
+        "4": "Thursday",
+        "5": "Friday",
+        "6": "Saturday"
+    },
+    "time": {
+        "unlimited": "Unlimited",
+        "half": {
+            "hour": "Half an hour"
+        },
+        "hour": "An hour",
+        "2hours": "2 hours",
+        "3hours": "3 hours",
+        "4hours": "4 hours",
+        "6hours": "6 hours",
+        "12hours": "12 hours",
+        "24hours": "24 hours",
+        "48hours": "48 hours",
+        "72hours": "72 hours",
+        "week": "A week",
+        "2weeks": "Two weeks",
+        "closed": "Closed"
+    },
+    "contact": {
+        "title": "Get in Touch",
+        "form": {
+            "name": "Name",
+            "phone": "Phone",
+            "message": "Message",
+            "send": "Send Message",
+            "success": "Message sent successfully!"
+        },
+        "validation": {
+            "name": "Please enter a name between 2 and 50 characters",
+            "phone": {
+                "start": "Phone number must start with 05",
+                "length": "Phone number must be 10 digits long",
+                "digits": "Phone number must contain only digits"
+            },
+            "message": "Message must be at least 10 characters long"
+        },
+        "button": {
+            "options": "Contact options"
+        },
+        "option": {
+            "call": "Call us",
+            "whatsapp": "Send WhatsApp",
+            "report": "Report a Problem"
+        },
+        "modal": {
+            "close": "Close modal",
+            "scan_title": "Scan to Open WhatsApp",
+            "call_title": "Call Us",
+            "qr_label": "WhatsApp QR Code",
+            "scan_message": "Scan the QR code with your phone camera to open WhatsApp chat",
+            "or_whatsapp": "Or click the button to open WhatsApp directly",
+            "or_call": "Or click the button to call directly",
+            "button_whatsapp": "Open WhatsApp in new window",
+            "button_call": "Call now",
+            "link_text_whatsapp": "Open WhatsApp",
+            "link_text_call": "Call now"
+        },
+        "notification": {
+            "business_message": "New message for you!\n\n{{name}} - {{phone}}\n\n{{message}}"
+        }
+    },
+    "footer": {
+        "links": "Quick Links",
+        "services": "Services",
+        "follow": "Follow Us",
+        "rights": "All rights reserved.",
+        "business_link": "Want this for your business? Click here",
+        "social": {
+            "follow": {
+                "instagram": "Follow us on Instagram",
+                "tiktok": "Follow us on TikTok",
+                "facebook": "Follow us on Facebook",
+                "x": "Follow us on X"
+            }
+        },
+        "policy": {
+            "privacy": "Privacy Policy",
+            "terms": "Terms of Use",
+            "security": "Security Policy",
+            "privacy_content": "\u003cp\u003eAt Lightor, we respect our users\u0027 privacy and are committed to protecting their personal information.\u003c/p\u003e\u003cbr /\u003e\u003ch4\u003eData Collection\u003c/h4\u003e\u003cp\u003eWhen booking an appointment, we collect basic information such as full name, phone number, and sometimes email address or other contact details.\u003c/p\u003e\u003cbr /\u003e\u003cp\u003eInformation is collected directly from the user and is not transferred to third parties without prior consent.\u003c/p\u003e\u003cbr /\u003e\u003ch4\u003eInformation Use\u003c/h4\u003e\u003cp\u003ePersonal information will be used solely for purposes related to booking appointments, reminders, updates, and providing services related to the scheduled services.\u003c/p\u003e\u003cbr /\u003e\u003cp\u003eInformation should not be used for other commercial purposes without obtaining your consent.\u003c/p\u003e\u003cbr /\u003e\u003ch4\u003eInformation Transfer to Third Parties\u003c/h4\u003e\u003cp\u003eWe will not provide personal information to third parties unless required by law or court order.\u003c/p\u003e\u003cbr /\u003e\u003ch4\u003eDisclaimer\u003c/h4\u003e\u003cp\u003eUse of the site is at the user\u0027s sole responsibility. Lightor will not be liable for any direct or indirect damage, including loss of information, resulting from site use or information provided through it.\u003c/p\u003e\u003cbr /\u003e\u003cp\u003eThe site may contain links to external sites â€“ we have no control over them and are not responsible for their content or conduct.\u003c/p\u003e\u003cbr /\u003e",
+            "terms_content": "\u003cp\u003eUse of the Lightor system constitutes full agreement by the user to the conditions detailed below:\u003c/p\u003e\u003cbr /\u003e\u003ch4\u003eSystem Use\u003c/h4\u003e\u003cp\u003eThe service is provided \"As Is\". We do not guarantee full availability or malfunction-free operation at all times.\u003c/p\u003e\u003cbr /\u003e\u003cp\u003eThe user is responsible for ensuring the information they enter is correct and up to date. Lightor is not responsible for consequences of incorrect information.\u003c/p\u003e\u003cbr /\u003e\u003cp\u003eWhile using the system, you confirm receiving mailings/system messages/reminders through various media means.\u003c/p\u003e\u003cbr /\u003e\u003ch4\u003eCancellations and No-Shows\u003c/h4\u003e\u003cp\u003eUsers are requested to cancel appointments according to operator conditions. Failure to arrive for an appointment may lead to charges or restriction on future use.\u003c/p\u003e\u003cbr /\u003e\u003ch4\u003eWaiver of Liability\u003c/h4\u003e\u003cp\u003eLightor will not be liable for any damage, direct or indirect, caused due to use or inability to use the system, including technical failures or availability.\u003c/p\u003e\u003cbr /\u003e\u003cp\u003eAll content on the site or system, including texts, images, or other information, are for illustration only and do not constitute professional advice or a binding legal document.\u003c/p\u003e\u003cbr /\u003e",
+            "security_content": "\u003cp\u003eLightor is committed to maintaining its users\u0027 data security using advanced security technologies and accepted protocols.\u003c/p\u003e\u003cbr /\u003e\u003ch4\u003eEncryption and Storage\u003c/h4\u003e\u003cp\u003eInformation is transferred to our servers in encrypted form and kept in a secure and protected environment.\u003c/p\u003e\u003cbr /\u003e\u003ch4\u003eAccess to Information\u003c/h4\u003e\u003cp\u003eAccess to personal information is limited strictly to authorized staff who need it for service operation.\u003c/p\u003e\u003cbr /\u003e\u003ch4\u003eUser Responsibility\u003c/h4\u003e\u003cp\u003eThe user should ensure they keep their passwords and identification means secret. Lightor will not be liable for damages resulting from unauthorized use of user identification details.\u003c/p\u003e\u003cbr /\u003e\u003ch4\u003eWaiver of Liability\u003c/h4\u003e\u003cp\u003eDespite our efforts, absolute immunity from breaches or failures cannot be guaranteed. Use of the site and system is done at the user\u0027s sole responsibility.\u003c/p\u003e\u003cbr /\u003e"
+        }
+    },
+    "manage": {
+        "update": {
+            "title": "Update appointment",
+            "success_title": "Appointment Updated"
+        },
+        "new_time_title": "Choose a new time for your appointment",
+        "manage_title": "Manage Appointment",
+        "message": {
+            "cancellable": "You can cancel or update this appointment",
+            "not_cancellable": "Cannot cancel or update appointment less than ",
+            "not_cancellable_full": "Cannot cancel or update appointment less than {{hours}} hours before the appointment",
+            "hours_before": " hours before the appointment",
+            "time_until": "Only {{time}} until the appointment",
+            "started": "The appointment has started"
+        },
+        "label": {
+            "date": "Date",
+            "time": "Time",
+            "name": "Name",
+            "phone": "Phone",
+            "type": "Service Type"
+        },
+        "button": {
+            "back": "Go Back",
+            "cancel": "Cancel",
+            "update": "Update"
+        },
+        "modal": {
+            "confirm": {
+                "title": "Confirm Cancellation",
+                "message": "Are you sure you want to cancel this appointment?"
+            },
+            "button_confirm": "Confirm Cancel"
+        },
+        "success_title": "Appointment Cancelled",
+        "notifications": {
+            "business_cancel": "Appointment for {{name}} - {{phone}} on {{date}} at {{time}} was cancelled by the client. Lightor"
+        }
+    },
+    "notfound": {
+        "title": "Page Not Found",
+        "message": "The page you are looking for does not exist or has been removed. Try refreshing or return to homepage.",
+        "button": {
+            "home": "Back to Home",
+            "refresh": "Refresh Page"
+        }
+    },
+    "loading": {
+        "step1": "Loading...",
+        "step2": "Checking you\u0027re not a robot...",
+        "step3": "Relaxing on the beach...",
+        "step4": "Consulting with my teddy bear..."
     }
-  },
-  "schedule": {
-    "title": "Schedule Your Visit",
-    "select": {
-      "date": "Select Date",
-      "time": "Select Time",
-      "type": "Select haircut type"
-    },
-    "available": {
-      "times": "Available Times for"
-    },
-    "book": "Book Appointment",
-    "success": "Appointment booked successfully!",
-    "update": {
-      "success": "Appointment updated successfully!"
-    },
-    "error": "Something went wrong...",
-    "conflictError": "The appointment has been taken please try another one",
-    "form": {
-      "name": "Full Name",
-      "phone": "Phone Number",
-      "verification": "Verification Code",
-      "verification_message": "A verification code has been sent to your phone",
-      "send_code": "Send Verification Code",
-      "verify": "Verify and Book",
-      "resend_code": "Resend Code",
-      "resend_wait": "Resend in",
-      "resend_timer": "seconds",
-      "helper": "By clicking 'Book Appointment', a verification code will be sent to the phone number provided."
-    },
-    "legend": {
-      "available": "Available",
-      "limited": "Limited Slots",
-      "vacation": "On vacation",
-      "closed": "Fully Booked / Closed"
-    },
-    "original_appointment": "Your Appointment",
-    "error_sendOtp": "Error sending verification code",
-    "error_invalidOtp": "Invalid verification code",
-    "validation": {
-      "name": "Please enter a name between 2 and 50 characters",
-      "phone": {
-        "start": "Phone number must start with 05",
-        "length": "Phone number must be 10 digits long",
-        "digits": "Phone number must contain only digits"
-      },
-      "otp": {
-        "length": "Verification code must be 6 digits long",
-        "digits": "Verification code must contain only digits"
-      }
-    },
-    "channel": {
-      "sms": "Send code & updates via SMS",
-      "whatsapp": "Send code & updates via WhatsApp"
-    },
-    "confirmation": {
-      "user": "Hi {{name}}, your appointment at {{businessName}} has been scheduled for {{day}} {{date}} at {{time}}. Cancellation link {{timeUntilLabel}}: {{link}}",
-      "user_update": "Hi {{name}}, your appointment at {{businessName}} has been updated to {{day}} {{date}} at {{time}}. Cancellation link {{timeUntilLabel}}: {{link}}",
-      "business": "New appointment scheduled!\nName: {{name}}\nPhone: {{phone}}\nDate: {{day}} {{date}} at {{time}}\nEZ-lines"
-    }
-  },
-  "common": {
-    "back": "Back",
-    "minutes": "minutes",
-    "until": "until {{time}}",
-    "before": "before the appointment",
-    "hours_and_minutes": "{{hours}} hours and {{minutes}} minutes"
-  },
-  "day": {
-    "0": "Sunday",
-    "1": "Monday",
-    "2": "Tuesday",
-    "3": "Wednesday",
-    "4": "Thursday",
-    "5": "Friday",
-    "6": "Saturday"
-  },
-  "time": {
-    "unlimited": "Unlimited",
-    "half": { "hour": "Half an hour" },
-    "hour": "An hour",
-    "2hours": "2 hours",
-    "3hours": "3 hours",
-    "4hours": "4 hours",
-    "6hours": "6 hours",
-    "12hours": "12 hours",
-    "24hours": "24 hours",
-    "48hours": "48 hours",
-    "72hours": "72 hours",
-    "week": "A week",
-    "2weeks": "Two weeks"
-  },
-  "contact": {
-    "title": "Get in Touch",
-    "form": {
-      "name": "Name",
-      "phone": "Phone",
-      "message": "Message",
-      "send": "Send Message",
-      "success": "Message sent successfully!"
-    },
-    "button": {
-      "options": "Contact options"
-    },
-    "option": {
-      "call": "Call us",
-      "whatsapp": "Send WhatsApp",
-      "report": "Report a Problem"
-    },
-    "modal": {
-      "close": "Close modal",
-      "scan_title": "Scan to Open WhatsApp",
-      "call_title": "Call Us",
-      "qr_label": "WhatsApp QR Code",
-      "scan_message": "Scan the QR code with your phone camera to open WhatsApp chat",
-      "or_whatsapp": "Or click the button to open WhatsApp directly",
-      "or_call": "Or click the button to call directly",
-      "button_whatsapp": "Open WhatsApp in new window",
-      "button_call": "Call now",
-      "link_text_whatsapp": "Open WhatsApp",
-      "link_text_call": "Call now"
-    }
-  },
-  "footer": {
-    "links": "Quick Links",
-    "services": "Services",
-    "follow": "Follow Us",
-    "rights": "All rights reserved.",
-    "business_link": "Want this for your business? Click here",
-    "social": {
-      "follow": {
-        "instagram": "Follow us on Instagram",
-        "tiktok": "Follow us on TikTok",
-        "facebook": "Follow us on Facebook",
-        "x": "Follow us on X"
-      }
-    },
-    "policy": {
-      "privacy": "Privacy Policy",
-      "terms": "Terms of Use",
-      "security": "Security Policy"
-    }
-  },
-  "manage": {
-    "update": {
-      "title": "Update appointment",
-      "success_title": "Appointment Updated"
-    },
-    "new_time_title": "Choose a new time for your appointment",
-    "manage_title": "Manage Appointment",
-    "message": {
-      "cancellable": "You can cancel or update this appointment",
-      "not_cancellable": "Cannot cancel or update appointment less than ",
-      "hours_before": " hours before the appointment",
-      "time_until": "Only {{time}} until the appointment",
-      "started": "The appointment has started"
-    },
-    "label": {
-      "date": "Date",
-      "time": "Time",
-      "name": "Name",
-      "phone": "Phone",
-      "type": "Service Type"
-    },
-    "button": {
-      "back": "Go Back",
-      "cancel": "Cancel",
-      "update": "Update"
-    },
-    "modal": {
-      "confirm": {
-        "title": "Confirm Cancellation",
-        "message": "Are you sure you want to cancel this appointment?"
-      },
-      "button_confirm": "Confirm Cancel"
-    },
-    "success_title": "Appointment Cancelled"
-  },
-  "notfound": {
-    "title": "Page Not Found",
-    "message": "The page you are looking for does not exist or has been removed. Try refreshing or return to homepage.",
-    "button": {
-      "home": "Back to Home",
-      "refresh": "Refresh Page"
-    }
-  },
-  "loading": {
-    "step1": "Loading...",
-    "step2": "Checking you're not a robot...",
-    "step3": "Relaxing on the beach...",
-    "step4": "Consulting with my teddy bear..."
-  }
 }

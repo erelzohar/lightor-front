@@ -16,7 +16,7 @@ const Portfolio: React.FC<PortfolioProps> = ({ config }) => {
   const [touchStart, setTouchStart] = useState(0);
   const [touchEnd, setTouchEnd] = useState(0);
   const slideRef = useRef<HTMLDivElement>(null);
-  const { language } = useLanguage();
+  const { t, language } = useLanguage();
 
   const nextSlide = useCallback(() => {
     setCurrentSlide((prev) => (prev + 1) % config.items.length);
@@ -98,7 +98,7 @@ const Portfolio: React.FC<PortfolioProps> = ({ config }) => {
     <section
       id="portfolio"
       className="py-32 bg-gradient-to-b from-light-surface to-light-bg dark:from-dark-surface dark:to-dark-bg transition-colors duration-300"
-      aria-label="Portfolio"
+      aria-label={t('nav.portfolio')}
     >
       <motion.div
         className="container mx-auto px-4"
@@ -127,33 +127,33 @@ const Portfolio: React.FC<PortfolioProps> = ({ config }) => {
           </p>
           {/* 
           <motion.div
-            className="inline-flex items-center space-x-2 bg-light-surface dark:bg-dark-surface p-1 rounded-lg shadow-md"
+            className="inline-flex items-center gap-2 bg-light-surface dark:bg-dark-surface p-1 rounded-lg shadow-md"
             whileHover={{ scale: 1.05 }}
             role="group"
-            aria-label="View options"
+            aria-label={t('common.view_options', { defaultValue: 'View options' })}
           >
             <motion.button
               onClick={() => setIsGridView(false)}
-              className={`flex items-center space-x-2 px-4 py-2 rounded-md transition-colors ${!isGridView
+              className={`flex items-center gap-2 px-4 py-2 rounded-md transition-colors ${!isGridView
                   ? 'bg-primary dark:bg-primary-dark text-white dark:text-dark-surface'
                   : 'text-light-text dark:text-dark-text hover:bg-light-gray dark:hover:bg-dark-gray'
                 }`}
               whileTap={{ scale: 0.95 }}
               aria-pressed={!isGridView}
-              aria-label="Switch to slideshow view"
+              aria-label={t('portfolio.view.slideshow')}
             >
               <Slideshow className="h-4 w-4" aria-hidden="true" />
               <span>{t('portfolio.view.slideshow')}</span>
             </motion.button>
             <motion.button
               onClick={() => setIsGridView(true)}
-              className={`flex items-center space-x-2 px-4 py-2 rounded-md transition-colors ${isGridView
+              className={`flex items-center gap-2 px-4 py-2 rounded-md transition-colors ${isGridView
                   ? 'bg-primary dark:bg-primary-dark text-white dark:text-dark-surface'
                   : 'text-light-text dark:text-dark-text hover:bg-light-gray dark:hover:bg-dark-gray'
                 }`}
               whileTap={{ scale: 0.95 }}
               aria-pressed={isGridView}
-              aria-label="Switch to grid view"
+              aria-label={t('portfolio.view.grid')}
             >
               <Grid className="h-4 w-4" aria-hidden="true" />
               <span>{t('portfolio.view.grid')}</span>
@@ -166,7 +166,7 @@ const Portfolio: React.FC<PortfolioProps> = ({ config }) => {
             <div
               className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
               role="grid"
-              aria-label="Portfolio grid"
+              aria-label={t('portfolio.grid_label')}
             >
               {config.items.map((item, index) => (
                 <motion.div
@@ -185,7 +185,7 @@ const Portfolio: React.FC<PortfolioProps> = ({ config }) => {
                     className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"
                     aria-hidden="true"
                   >
-                    <div className="absolute bottom-0 left-0 right-0 p-4 md:p-6">
+                    <div className="absolute bottom-0 inset-x-0 p-4 md:p-6">
                       <h3 className="text-lg md:text-xl font-bold text-white mb-1 md:mb-2">{item.title}</h3>
                       <p className="text-sm md:text-base text-white/80">{item.description}</p>
                     </div>
@@ -198,12 +198,12 @@ const Portfolio: React.FC<PortfolioProps> = ({ config }) => {
               ref={slideRef}
               className="relative aspect-square md:aspect-[15/10] overflow-hidden rounded-3xl shadow-2xl bg-light-surface dark:bg-dark-bg mx-2 md:mx-0"
               role="region"
-              aria-label="Portfolio slideshow"
+              aria-label={t('portfolio.slideshow_label')}
               aria-roledescription="carousel"
               aria-live="polite"
             >
               <div className="sr-only">
-                Use left and right arrow keys to navigate between slides
+                {t('portfolio.slideshow_instruction')}
               </div>
 
               <AnimatePresence initial={false} custom={currentSlide}>
@@ -225,7 +225,7 @@ const Portfolio: React.FC<PortfolioProps> = ({ config }) => {
                 >
                   <div className="relative h-full">
                     <img
-                      src={globals.imagesUrl + config.items[currentSlide].url}
+                      src={ImagesService.getInstance().getImage(config.items[currentSlide].url)}
                       alt={config.items[currentSlide].title}
                       className="w-full h-full object-contain"
                       draggable="false"
@@ -234,7 +234,7 @@ const Portfolio: React.FC<PortfolioProps> = ({ config }) => {
                       className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent"
                       aria-hidden="true"
                     >
-                      <div className="absolute bottom-0 left-0 right-0 p-4 md:p-8">
+                      <div className="absolute bottom-0 inset-x-0 p-4 md:p-8">
                         <h3 className="text-xl md:text-3xl font-bold mb-1 md:mb-2 text-white">
                           {config.items[currentSlide].title}
                         </h3>
@@ -253,7 +253,7 @@ const Portfolio: React.FC<PortfolioProps> = ({ config }) => {
                   className="z-10 pointer-events-auto p-3 bg-light-surface/40 dark:bg-dark-surface/40 rounded-full shadow-lg hover:bg-light-surface/70 dark:hover:bg-dark-surface/70 transition-colors backdrop-blur-sm"
                   whileHover={{ scale: 1.1 }}
                   whileTap={{ scale: 0.9 }}
-                  aria-label="Previous slide"
+                  aria-label={t('portfolio.slideshow_prev')}
                 >
                   <ChevronLeft className={`h-6 w-6 text-light-text dark:text-dark-text ${language === 'he' ? 'rotate-180' : ''}`} aria-hidden="true" />
                 </motion.button>
@@ -263,16 +263,16 @@ const Portfolio: React.FC<PortfolioProps> = ({ config }) => {
                   className="z-10 pointer-events-auto p-3 bg-light-surface/40 dark:bg-dark-surface/40 rounded-full shadow-lg hover:bg-light-surface/70 dark:hover:bg-dark-surface/70 transition-colors backdrop-blur-sm"
                   whileHover={{ scale: 1.1 }}
                   whileTap={{ scale: 0.9 }}
-                  aria-label="Next slide"
+                  aria-label={t('portfolio.slideshow_next')}
                 >
                   <ChevronRight className={`h-6 w-6 text-light-text dark:text-dark-text ${language === 'he' ? 'rotate-180' : ''}`} aria-hidden="true" />
                 </motion.button>
               </div>
 
               <div
-                className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex space-x-2 z-10 md:flex hidden"
+                className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex gap-2 z-10 md:flex hidden"
                 role="tablist"
-                aria-label="Slide dots"
+                aria-label={t('portfolio.slideshow_label')}
               >
                 {config.items.map((_, index) => (
                   <button
@@ -284,7 +284,7 @@ const Portfolio: React.FC<PortfolioProps> = ({ config }) => {
                       }`}
                     role="tab"
                     aria-selected={currentSlide === index}
-                    aria-label={`Go to slide ${index + 1}`}
+                    aria-label={t('portfolio.slideshow_dot', { index: index + 1 })}
                     aria-controls={`slide-${index}`}
                   />
                 ))}

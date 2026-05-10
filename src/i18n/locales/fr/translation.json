@@ -1,223 +1,244 @@
 {
-  "nav": {
-    "home": "Accueil",
-    "about": "À propos",
-    "portfolio": "Récent",
-    "schedule": "Rendez-vous",
-    "contact": "Contact"
-  },
-  "intro": {
-    "title": "Message système",
-    "button": "Fermer"
-  },
-  "hero": {
-    "book": "Prendre RDV",
-    "contact": "Contactez-nous"
-  },
-  "about": {
-    "title": "À propos de StyleTime Studio",
-    "location": "Lieu",
-    "phone": "Téléphone",
-    "email": "Email",
-    "hours": "Horaires",
-    "visit": "Venez nous voir"
-  },
-  "portfolio": {
-    "title": "Nos dernières réalisations",
-    "view": {
-      "slideshow": "Diaporama",
-      "grid": "Grille"
+    "nav": {
+        "home": "Accueil",
+        "about": "À propos",
+        "portfolio": "Réalisations",
+        "schedule": "Rendez-vous",
+        "contact": "Contact"
+    },
+    "intro": {
+        "title": "Message système",
+        "button": "Fermer"
+    },
+    "hero": {
+        "book": "Prendre RDV",
+        "contact": "Contactez-nous",
+        "welcome_label": "Bienvenue chez StyleTime"
+    },
+    "about": {
+        "title": "À propos de StyleTime Studio",
+        "location": "Lieu",
+        "phone": "Téléphone",
+        "email": "Email",
+        "hours": "Horaires",
+        "visit": "Venez nous voir"
+    },
+    "portfolio": {
+        "title": "Nos Dernières Réalisations",
+        "view": {
+            "slideshow": "Diaporama",
+            "grid": "Grille"
+        },
+        "grid_label": "Grille du portfolio",
+        "slideshow_label": "Diaporama du portfolio",
+        "slideshow_instruction": "Utilisez les flèches gauche et droite pour naviguer",
+        "slideshow_prev": "Diapositive précédente",
+        "slideshow_next": "Diapositive suivante",
+        "slideshow_dot": "Aller à la diapositive {{index}}"
+    },
+    "schedule": {
+        "title": "Planifiez votre visite",
+        "select": {
+            "date": "Choisir une date",
+            "time": "Choisir une heure",
+            "type": "Choisir le type de service"
+        },
+        "available": {
+            "times": "Heures disponibles pour"
+        },
+        "book": "Réserver",
+        "success": "Rendez-vous réservé avec succès !",
+        "update": {
+            "success": "Rendez-vous mis à jour avec succès !"
+        },
+        "error": {
+            "sendOtp": "Échec de l\u0027envoi du code",
+            "invalidOtp": "Code de vérification invalide"
+        },
+        "conflictError": "Ce créneau est déjà pris, veuillez en choisir un autre",
+        "form": {
+            "name": "Nom complet",
+            "phone": "Numéro de téléphone",
+            "otp": "Code de vérification",
+            "send": "Envoyer le code",
+            "verify": "Confirmer et réserver",
+            "resend": "Renvoyer le code",
+            "resend_in": "Renvoyer dans {{seconds}}s"
+        },
+        "validation": {
+            "name": "Veuillez entrer votre nom complet",
+            "phone": {
+                "start": "Le numéro doit commencer par 05",
+                "length": "Le numéro doit comporter 10 chiffres",
+                "digits": "Le numéro ne doit contenir que des chiffres"
+            },
+            "otp": {
+                "length": "Le code doit comporter 6 chiffres",
+                "digits": "Le code ne doit contenir que des chiffres"
+            }
+        },
+        "legend": {
+            "available": "Disponible",
+            "limited": "Places limitées",
+            "vacation": "En vacances",
+            "closed": "Complet / Fermé"
+        },
+        "notifications": {
+            "user": "Bonjour {{name}}, votre rendez-vous chez {{businessName}} est prévu pour le {{day}} {{date}} à {{time}}. Lien d\u0027annulation {{timeUntilLabel}}: {{link}}",
+            "user_update": "Bonjour {{name}}, votre rendez-vous chez {{businessName}} a été mis à jour pour le {{day}} {{date}} à {{time}}. Lien d\u0027annulation {{timeUntilLabel}}: {{link}}",
+            "business": "Nouveau rendez-vous réservé !\nNom : {{name}}\nTél : {{phone}}\nDate : {{day}} {{date}} à {{time}}\nEZ-lines"
+        }
+    },
+    "common": {
+        "back": "Retour",
+        "minutes": "minutes",
+        "until": "dans {{time}}",
+        "before": "avant le rendez-vous",
+        "hours_and_minutes": "{{hours}} heures et {{minutes}} minutes",
+        "currency": "₪",
+        "toggle_dark_mode": "Basculer le mode sombre"
+    },
+    "day": {
+        "0": "Dimanche",
+        "1": "Lundi",
+        "2": "Mardi",
+        "3": "Mercredi",
+        "4": "Jeudi",
+        "5": "Vendredi",
+        "6": "Samedi"
+    },
+    "time": {
+        "unlimited": "Illimité",
+        "half": {
+            "hour": "Une demi-heure"
+        },
+        "hour": "Une heure",
+        "2hours": "2 heures",
+        "3hours": "3 heures",
+        "4hours": "4 heures",
+        "6hours": "6 heures",
+        "12hours": "12 heures",
+        "24hours": "24 heures",
+        "48hours": "48 heures",
+        "72hours": "72 heures",
+        "week": "Une semaine",
+        "2weeks": "Deux semaines",
+        "closed": "Fermé"
+    },
+    "contact": {
+        "title": "Contactez-nous",
+        "form": {
+            "name": "Nom",
+            "phone": "Téléphone",
+            "message": "Message",
+            "send": "Envoyer",
+            "success": "Message envoyé avec succès !"
+        },
+        "validation": {
+            "name": "Veuillez entrer un nom (2-50 caractères)",
+            "phone": {
+                "start": "Le numéro doit commencer par 05",
+                "length": "Le numéro doit comporter 10 chiffres",
+                "digits": "Le numéro ne doit contenir que des chiffres"
+            },
+            "message": "Le message doit comporter au moins 10 caractères"
+        },
+        "button": {
+            "options": "Options de contact"
+        },
+        "option": {
+            "call": "Appelez-nous",
+            "whatsapp": "WhatsApp",
+            "report": "Signaler un problème"
+        },
+        "modal": {
+            "close": "Fermer la fenêtre",
+            "scan_title": "Scannez pour ouvrir WhatsApp",
+            "call_title": "Appelez-nous",
+            "qr_label": "Code QR WhatsApp",
+            "scan_message": "Scannez le code QR avec votre téléphone pour ouvrir WhatsApp",
+            "or_whatsapp": "Ou cliquez sur le bouton pour ouvrir WhatsApp directement",
+            "or_call": "Ou cliquez sur le bouton pour appeler directement",
+            "button_whatsapp": "Ouvrir WhatsApp",
+            "button_call": "Appeler maintenant",
+            "link_text_whatsapp": "Ouvrir WhatsApp",
+            "link_text_call": "Appeler maintenant"
+        }
+    },
+    "footer": {
+        "links": "Liens Rapides",
+        "services": "Services",
+        "follow": "Suivez-nous",
+        "rights": "Tous droits réservés.",
+        "business_link": "Vous voulez cela pour votre entreprise ? Cliquez ici",
+        "social": {
+            "follow": {
+                "instagram": "Suivez-nous sur Instagram",
+                "tiktok": "Suivez-nous sur TikTok",
+                "facebook": "Suivez-nous sur Facebook",
+                "x": "Suivez-nous sur X"
+            }
+        },
+        "policy": {
+            "privacy": "Politique de confidentialité",
+            "terms": "Conditions d\u0027utilisation",
+            "security": "Sécurité",
+            "privacy_content": "\u003cp\u003eChez Lightor, nous respectons la vie privée de nos utilisateurs et nous nous engageons à protéger leurs informations personnelles.\u003c/p\u003e\u003cbr /\u003e\u003ch4\u003eCollecte de données\u003c/h4\u003e\u003cp\u003eLors de la réservation, nous collectons des informations de base telles que le nom complet, le numéro de téléphone et parfois l\u0027adresse e-mail.\u003c/p\u003e\u003cbr /\u003e\u003cp\u003eLes informations sont collectées directement auprès de l\u0027utilisateur et ne sont pas transférées à des tiers sans consentement préalable.\u003c/p\u003e\u003cbr /\u003e\u003ch4\u003eUtilisation des informations\u003c/h4\u003e\u003cp\u003eLes informations personnelles seront utilisées uniquement à des fins liées à la réservation, aux rappels, aux mises à jour et à la fourniture de services.\u003c/p\u003e\u003cbr /\u003e\u003cp\u003eLes informations ne doivent pas être utilisées à d\u0027autres fins commerciales sans votre consentement.\u003c/p\u003e\u003cbr /\u003e\u003ch4\u003eTransfert à des tiers\u003c/h4\u003e\u003cp\u003eNous ne fournirons pas d\u0027informations personnelles à des tiers, sauf si la loi ou une ordonnance du tribunal l\u0027exige.\u003c/p\u003e\u003cbr /\u003e\u003ch4\u003eClause de non-responsabilité\u003c/h4\u003e\u003cp\u003eL\u0027utilisation du site relève de la seule responsabilité de l\u0027utilisateur. Lightor ne sera pas responsable des dommages directs ou indirects résultant de l\u0027utilisation du site.\u003c/p\u003e\u003cbr /\u003e",
+            "terms_content": "\u003cp\u003eL\u0027utilisation du système Lightor constitue un accord complet de l\u0027utilisateur avec les conditions détaillées ci-dessous :\u003c/p\u003e\u003cbr /\u003e\u003ch4\u003eUtilisation du système\u003c/h4\u003e\u003cp\u003eLe service est fourni \"tel quel\" (As Is). Nous ne garantissons pas une disponibilité totale.\u003c/p\u003e\u003cbr /\u003e\u003cp\u003eL\u0027utilisateur est responsable de l\u0027exactitude des informations saisies.\u003c/p\u003e\u003cbr /\u003e\u003cp\u003eEn utilisant le système, vous confirmez recevoir des messages/rappels du système.\u003c/p\u003e\u003cbr /\u003e\u003ch4\u003eAnnulations\u003c/h4\u003e\u003cp\u003eLes utilisateurs sont priés d\u0027annuler selon les conditions. Le non-respect peut entraîner des frais.\u003c/p\u003e\u003cbr /\u003e",
+            "security_content": "\u003cp\u003eLightor s\u0027engage à maintenir la sécurité des données à l\u0027aide de technologies avancées.\u003c/p\u003e\u003cbr /\u003e\u003ch4\u003eCryptage\u003c/h4\u003e\u003cp\u003eLes informations sont transférées de manière cryptée et conservées dans un environnement sécurisé.\u003c/p\u003e\u003cbr /\u003e\u003ch4\u003eAccès\u003c/h4\u003e\u003cp\u003eL\u0027accès est strictement limité au personnel autorisé.\u003c/p\u003e\u003cbr /\u003e\u003ch4\u003eResponsabilité\u003c/h4\u003e\u003cp\u003eL\u0027utilisateur doit garder ses identifiants secrets.\u003c/p\u003e\u003cbr /\u003e"
+        }
+    },
+    "manage": {
+        "update": {
+            "title": "Modifier le rendez-vous",
+            "success_title": "Rendez-vous modifié"
+        },
+        "new_time_title": "Choisissez un nouvel horaire",
+        "manage_title": "Gérer le rendez-vous",
+        "message": {
+            "cancellable": "Vous pouvez annuler ou modifier ce rendez-vous",
+            "not_cancellable": "Impossible d\u0027annuler moins de ",
+            "not_cancellable_full": "Impossible d\u0027annuler moins de {{hours}} heures avant",
+            "hours_before": " heures avant",
+            "time_until": "Plus que {{time}} avant le rendez-vous",
+            "started": "Le rendez-vous a commencé"
+        },
+        "label": {
+            "date": "Date",
+            "time": "Heure",
+            "name": "Nom",
+            "phone": "Téléphone",
+            "type": "Service"
+        },
+        "button": {
+            "back": "Retour",
+            "cancel": "Annuler",
+            "update": "Modifier"
+        },
+        "modal": {
+            "confirm": {
+                "title": "Confirmer l\u0027annulation",
+                "message": "Êtes-vous sûr de vouloir annuler ce rendez-vous ?"
+            },
+            "button_confirm": "Confirmer l\u0027annulation"
+        },
+        "success_title": "Rendez-vous annulé",
+        "notifications": {
+            "business_cancel": "Le rendez-vous pour {{name}} - {{phone}} le {{date}} à {{time}} a été annulé par le client. Lightor"
+        }
+    },
+    "notfound": {
+        "title": "Page non trouvée",
+        "message": "La page que vous recherchez n\u0027existe pas. Essayez de rafraîchir ou retournez à l\u0027accueil.",
+        "button": {
+            "home": "Retour à l\u0027accueil",
+            "refresh": "Rafraîchir"
+        }
+    },
+    "loading": {
+        "step1": "Chargement...",
+        "step2": "Vérification anti-robot...",
+        "step3": "Détente sur la plage...",
+        "step4": "Consultation avec mon ours en peluche..."
     }
-  },
-  "schedule": {
-    "title": "Planifiez votre visite",
-    "select": {
-      "date": "Choisir une date",
-      "time": "Choisir une heure",
-      "type": "Choisir le type de service"
-    },
-    "available": {
-      "times": "Heures disponibles pour le"
-    },
-    "book": "Prendre rendez-vous",
-    "success": "Rendez-vous réservé avec succès !",
-    "update": {
-      "success": "Rendez-vous mis à jour avec succès !"
-    },
-    "error": "Une erreur est survenue...",
-    "conflictError": "Ce créneau est déjà pris, veuillez en essayer un autre",
-    "form": {
-      "name": "Nom complet",
-      "phone": "Numéro de téléphone",
-      "verification": "Code de vérification",
-      "verification_message": "Un code de vérification a été envoyé sur votre téléphone",
-      "send_code": "Prendre RDV",
-      "verify": "Vérifier et réserver",
-      "resend_code": "Renvoyer le code",
-      "resend_wait": "Renvoyer dans",
-      "resend_timer": "secondes",
-      "helper": "En cliquant sur 'Prendre RDV', un code de vérification sera envoyé au numéro de téléphone fourni."
-    },
-    "legend": {
-      "available": "Disponible",
-      "limited": "Places limitées",
-      "vacation": "En vacances",
-      "closed": "Complet / Fermé"
-    },
-    "original_appointment": "Votre rendez-vous",
-    "error_sendOtp": "Erreur lors de l'envoi du code de vérification",
-    "error_invalidOtp": "Code de vérification invalide",
-    "validation": {
-      "name": "Veuillez entrer un nom entre 2 et 50 caractères",
-      "phone": {
-        "start": "Le numéro de téléphone doit commencer par 05",
-        "length": "Le numéro de téléphone doit comporter 10 chiffres",
-        "digits": "Le numéro de téléphone ne doit contenir que des chiffres"
-      },
-      "otp": {
-        "length": "Le code de vérification doit comporter 6 chiffres",
-        "digits": "Le code de vérification ne doit contenir que des chiffres"
-      }
-    },
-    "channel": {
-      "sms": "Envoyer code et mises à jour via SMS",
-      "whatsapp": "Envoyer code et mises à jour via WhatsApp"
-    },
-    "confirmation": {
-      "user": "Bonjour {{name}}, votre rendez-vous chez {{businessName}} est programmé pour le {{day}} {{date}} à {{time}}. Lien d'annulation {{timeUntilLabel}} : {{link}}",
-      "user_update": "Bonjour {{name}}, votre rendez-vous chez {{businessName}} a été mis à jour pour le {{day}} {{date}} à {{time}}. Lien d'annulation {{timeUntilLabel}} : {{link}}",
-      "business": "Nouveau rendez-vous programmé !\nNom : {{name}}\nTéléphone : {{phone}}\nDate : {{day}} {{date}} à {{time}}\nEZ-lines"
-    }
-  },
-  "common": {
-    "back": "Retour",
-    "minutes": "minutes",
-    "until": "jusqu'à {{time}}",
-    "before": "avant le rendez-vous",
-    "hours_and_minutes": "{{hours}} heures et {{minutes}} minutes"
-  },
-  "day": {
-    "0": "Dimanche",
-    "1": "Lundi",
-    "2": "Mardi",
-    "3": "Mercredi",
-    "4": "Jeudi",
-    "5": "Vendredi",
-    "6": "Samedi"
-  },
-  "time": {
-    "unlimited": "Illimité",
-    "half": { "hour": "Demi-heure" },
-    "hour": "Une heure",
-    "2hours": "2 heures",
-    "3hours": "3 heures",
-    "4hours": "4 heures",
-    "6hours": "6 heures",
-    "12hours": "12 heures",
-    "24hours": "24 heures",
-    "48hours": "48 heures",
-    "72hours": "72 heures",
-    "week": "Une semaine",
-    "2weeks": "Deux semaines"
-  },
-  "contact": {
-    "title": "Contactez-nous",
-    "form": {
-      "name": "Nom",
-      "phone": "Téléphone",
-      "message": "Message",
-      "send": "Envoyer le message",
-      "success": "Message envoyé avec succès !"
-    },
-    "button": {
-      "options": "Options de contact"
-    },
-    "option": {
-      "call": "Appelez-nous",
-      "whatsapp": "Envoyer un WhatsApp",
-      "report": "Signaler un problème"
-    },
-    "modal": {
-      "close": "Fermer la fenêtre",
-      "scan_title": "Scanner pour WhatsApp",
-      "call_title": "Appelez-nous",
-      "qr_label": "Code QR WhatsApp",
-      "scan_message": "Scannez le code avec votre appareil photo pour ouvrir la discussion WhatsApp",
-      "or_whatsapp": "Ou cliquez sur le bouton pour ouvrir WhatsApp directement",
-      "or_call": "Ou cliquez sur le bouton pour appeler directement",
-      "button_whatsapp": "Ouvrir WhatsApp dans une nouvelle fenêtre",
-      "button_call": "Appeler maintenant",
-      "link_text_whatsapp": "Ouvrir WhatsApp",
-      "link_text_call": "Appeler maintenant"
-    }
-  },
-  "footer": {
-    "links": "Liens rapides",
-    "services": "Services",
-    "follow": "Suivez-nous",
-    "rights": "Tous droits réservés.",
-    "business_link": "Vous voulez cela pour votre entreprise ? Cliquez ici",
-    "social": {
-      "follow": {
-        "instagram": "Suivez-nous sur Instagram",
-        "tiktok": "Suivez-nous sur TikTok",
-        "facebook": "Suivez-nous sur Facebook",
-        "x": "Suivez-nous sur X"
-      }
-    },
-    "policy": {
-      "privacy": "Politique de confidentialité",
-      "terms": "Conditions d'utilisation",
-      "security": "Politique de sécurité"
-    }
-  },
-  "manage": {
-    "update": {
-      "title": "Modifier le rendez-vous",
-      "success_title": "Rendez-vous mis à jour avec succès"
-    },
-    "new_time_title": "Choisissez un nouvel horaire",
-    "manage_title": "Gérer le rendez-vous",
-    "message": {
-      "cancellable": "Vous pouvez annuler ou modifier ce rendez-vous",
-      "not_cancellable": "Impossible d'annuler ou modifier moins de ",
-      "hours_before": " heures avant le rendez-vous",
-      "time_until": "Plus que {{time}} avant le rendez-vous",
-      "started": "Le rendez-vous a déjà commencé"
-    },
-    "label": {
-      "date": "Date",
-      "time": "Heure",
-      "name": "Nom",
-      "phone": "Téléphone",
-      "type": "Type de service"
-    },
-    "button": {
-      "back": "Retour",
-      "cancel": "Annuler le RDV",
-      "update": "Modifier"
-    },
-    "modal": {
-      "confirm": {
-        "title": "Confirmer l'annulation",
-        "message": "Êtes-vous sûr de vouloir annuler ce rendez-vous ?"
-      },
-      "button_confirm": "Confirmer l'annulation"
-    },
-    "success_title": "Rendez-vous annulé avec succès"
-  },
-  "notfound": {
-    "title": "Page non trouvée",
-    "message": "La page que vous recherchez n'existe pas ou a été déplacée. Essayez de rafraîchir ou retournez à l'accueil.",
-    "button": {
-      "home": "Retour à l'accueil",
-      "refresh": "Rafraîchir la page"
-    }
-  },
-  "loading": {
-    "step1": "Chargement...",
-    "step2": "Vérification anti-robot...",
-    "step3": "Détente sur la plage...",
-    "step4": "Consultation avec mon ours en peluche..."
-  }
 }

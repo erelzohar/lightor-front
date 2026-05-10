@@ -51,17 +51,12 @@ interface AboutProps {
 const About: React.FC<AboutProps> = ({ config, websiteConfig }) => {
   const { t, language } = useLanguage();
   const { isModalOpen, setIsModalOpen, modalType, handleContactClick } = useContactHandler();
-
   const formatWorkingHours = () => {
-    const days = language === 'he'
-      ? ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי', 'שבת']
-      : ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-
     return websiteConfig.workingDays
       .map((hours, index) => ({
-        day: days[index],
+        day: t(`day.${index}`),
         hours: hours === null
-          ? (language === 'he' ? 'סגור' : 'Closed')
+          ? t('time.closed')
           : language === 'he'
             ? hours
             : hours.split('-').map(time => {
@@ -70,7 +65,7 @@ const About: React.FC<AboutProps> = ({ config, websiteConfig }) => {
               return `${hour > 12 ? hour - 12 : hour}:${m} ${hour >= 12 ? 'PM' : 'AM'}`;
             }).join(' - ')
       }))
-      .filter(schedule => schedule.hours !== 'Closed' && schedule.hours !== 'סגור');
+      .filter(schedule => schedule.hours !== t('time.closed'));
   };
 
   const getFullAddress = () => {

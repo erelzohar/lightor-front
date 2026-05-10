@@ -63,7 +63,7 @@ const IntroPopup: React.FC<IntroPopupProps> = ({ config }) => {
 
               {/* Content */}
               <div className="bg-light-gray/30 dark:bg-dark-gray/30 rounded-xl p-4 mb-6">
-                <p className="text-right text-lg leading-relaxed text-light-text dark:text-dark-text">
+                <p className="text-start text-lg leading-relaxed text-light-text dark:text-dark-text">
                   {config.value}
                 </p>
               </div>
@@ -81,7 +81,7 @@ const IntroPopup: React.FC<IntroPopupProps> = ({ config }) => {
 
             {/* Auto-close bar */}
             <motion.div
-              className="absolute bottom-0 left-0 h-0.5 bg-primary dark:bg-primary-dark"
+              className="absolute bottom-0 start-0 h-0.5 bg-primary dark:bg-primary-dark"
               initial={{ width: '100%' }}
               animate={{ width: '0%' }}
               transition={{ duration: 5, ease: 'linear' }}

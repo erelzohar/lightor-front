@@ -171,29 +171,36 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
 
     setIsSubmitting(true);
     try {
-      const success = await smsService.sendOtp(formData.phone, channelType);
-      if (success) {
+      if (isPreview) {
         setError(null);
         setResendTimer(30);
         setBookingStep('verification');
       } else {
-        setError(t('schedule.error.sendOtp'));
+        const success = await smsService.sendOtp(formData.phone, channelType);
+        if (success) {
+          setError(null);
+          setResendTimer(30);
+          setBookingStep('verification');
+        } else {
+          setError(t('schedule.error.sendOtp'));
+        }
       }
     } catch (error) {
       setError(t('schedule.error'));
     } finally {
       setIsSubmitting(false);
     }
-  }, [formData, validateForm, selectedDate, selectedAppointmentType, t, language, channelType]);
+  }, [formData, validateForm, selectedDate, selectedAppointmentType, t, language, channelType, isPreview]);
 
   const handleResendCode = useCallback(async () => {
     setResendTimer(30);
+    if (isPreview) return;
     try {
       await smsService.sendOtp(formData.phone, channelType);
     } catch (error) {
       console.error("Failed to resend code");
     }
-  }, [formData.phone, channelType]);
+  }, [formData.phone, channelType, isPreview]);
 
   const handleVerificationSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
@@ -204,13 +211,15 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
 
     setIsSubmitting(true);
     try {
-      const verified = await smsService.verifyOtp(formData.phone, formData.verificationCode);
-      if (!verified) {
-        setError(t('schedule.error.invalidOtp'));
-        setIsSubmitting(false);
-        formData.verificationCode = "";
-        otpInputRefs.current[0]?.focus();
-        return;
+      if (!isPreview) {
+        const verified = await smsService.verifyOtp(formData.phone, formData.verificationCode);
+        if (!verified) {
+          setError(t('schedule.error.invalidOtp'));
+          setIsSubmitting(false);
+          formData.verificationCode = "";
+          otpInputRefs.current[0]?.focus();
+          return;
+        }
       }
 
       // Proceed to create appointment
@@ -227,15 +236,18 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
         status: "scheduled",
         channelType
       }
-      const service = AppointmentService.getInstance();
-      const res = isUpdating && appointmentToUpdate
-        ? await service.updateAppointment({ ...appointmentToUpdate, ...appointmentToCreate })
-        : await service.createAppointment(appointmentToCreate);
+      
+      if (!isPreview) {
+        const service = AppointmentService.getInstance();
+        const res = isUpdating && appointmentToUpdate
+          ? await service.updateAppointment({ ...appointmentToUpdate, ...appointmentToCreate })
+          : await service.createAppointment(appointmentToCreate);
 
-      setBookedAppointments(prev => isUpdating ? prev.map(a => a._id === res._id ? res : a) : [...prev, res])
+        setBookedAppointments(prev => isUpdating ? prev.map(a => a._id === res._id ? res : a) : [...prev, res])
 
-      if (isUpdating && onUpdateComplete) {
-        onUpdateComplete(res);
+        if (isUpdating && onUpdateComplete) {
+          onUpdateComplete(res);
+        }
       }
 
       setError(null);
@@ -260,7 +272,7 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
     } finally {
       setIsSubmitting(false);
     }
-  }, [formData, validateForm, selectedDate, selectedAppointmentType, selectedTime, user_id, t, resetCalendar]);
+  }, [formData, validateForm, selectedDate, selectedAppointmentType, selectedTime, user_id, t, resetCalendar, isPreview, isUpdating, appointmentToUpdate, channelType, onUpdateComplete]);
 
   const handleInputChange = (field: keyof BookingFormData, value: string) => {
     let processedValue = value;
@@ -531,7 +543,7 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
   }, [isPast, workingDays, generateTimeSlots, isTimeInVacation, appointmentTypes]);
 
   const formatSelectedDate = useCallback((date: Date) => {
-    return date.toLocaleDateString(language === 'he' ? 'he-IL' : 'en-US', {
+    return date.toLocaleDateString(language === 'he' ? 'he-IL' : (language === 'ar' ? 'ar-SA' : (language === 'fr' ? 'fr-FR' : (language === 'es' ? 'es-ES' : 'en-US'))), {
       weekday: 'long',
       month: 'long',
       day: 'numeric',
@@ -540,7 +552,7 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
 
   const formatTime = useCallback((timestamp: string) => {
     const date = new Date(parseInt(timestamp));
-    return date.toLocaleTimeString(language === 'he' ? 'he-IL' : 'en-US', {
+    return date.toLocaleTimeString(language === 'he' ? 'he-IL' : (language === 'ar' ? 'ar-SA' : (language === 'fr' ? 'fr-FR' : (language === 'es' ? 'es-ES' : 'en-US'))), {
       hour: '2-digit',
       minute: '2-digit',
       hour12: language !== 'he',
@@ -602,7 +614,7 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
       const date = new Date(firstDayOfWeek);
       date.setDate(firstDayOfWeek.getDate() + i);
       days.push(
-        new Intl.DateTimeFormat(language === 'he' ? 'he-IL' : 'en-US', {
+        new Intl.DateTimeFormat(language === 'he' ? 'he-IL' : (language === 'ar' ? 'ar-SA' : (language === 'fr' ? 'fr-FR' : (language === 'es' ? 'es-ES' : 'en-US'))), {
           weekday: 'short'
         }).format(date)
       );
@@ -762,7 +774,7 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
                   className="mb-6 text-primary dark:text-primary-dark hover:underline flex items-center gap-2"
                   whileHover={{ x: -5 }}
                 >
-                  <ChevronLeft className={`h-5 w-5 ${language === 'he' ? 'rotate-180' : ''}`} />
+                  <ChevronLeft className={`h-5 w-5 ${language === 'he' || language === 'ar' ? 'rotate-180' : ''}`} />
                   {t('common.back')}
                 </motion.button>
               )}
@@ -793,10 +805,10 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
                       whileTap={!isCurrentMonth() ? { scale: 0.9 } : undefined}
                       disabled={isCurrentMonth()}
                     >
-                      <ChevronLeft className={`h-5 w-5 text-light-text dark:text-dark-text ${language === 'he' ? 'rotate-180' : ''}`} />
+                      <ChevronLeft className={`h-5 w-5 text-light-text dark:text-dark-text ${language === 'he' || language === 'ar' ? 'rotate-180' : ''}`} />
                     </motion.button>
                     <h3 className="text-xl font-semibold text-light-text dark:text-dark-text">
-                      {currentMonth.toLocaleDateString(language === 'he' ? 'he-IL' : 'en-US', {
+                      {currentMonth.toLocaleDateString(language === 'he' ? 'he-IL' : (language === 'ar' ? 'ar-SA' : (language === 'fr' ? 'fr-FR' : (language === 'es' ? 'es-ES' : 'en-US'))), {
                         month: 'long',
                         year: 'numeric'
                       })}
@@ -808,7 +820,7 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
                       whileHover={{ scale: 1.1 }}
                       whileTap={{ scale: 0.9 }}
                     >
-                      <ChevronRight className={`h-5 w-5 text-light-text dark:text-dark-text ${language === 'he' ? 'rotate-180' : ''}`} />
+                      <ChevronRight className={`h-5 w-5 text-light-text dark:text-dark-text ${language === 'he' || language === 'ar' ? 'rotate-180' : ''}`} />
                     </motion.button>
                   </div>
 
@@ -895,7 +907,7 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
                                   {type.name}
                                 </h4>
                                 <p className="text-sm text-light-text/70 dark:text-dark-text/70">
-                                  {parseInt(type.durationMS) / 60000} {t('common.minutes')} | ₪{type.price}
+                                  {parseInt(type.durationMS) / 60000} {t('common.minutes')} | {t('common.currency')}{type.price}
                                 </p>
                               </div>
                             </div>
@@ -918,7 +930,7 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
                       {selectedAppointmentType.name}
                     </h4>
                     <p className="text-sm text-light-text/70 dark:text-dark-text/70">
-                      {parseInt(selectedAppointmentType.durationMS) / 60000} {language === 'he' ? 'דקות' : 'minutes'} | ₪{selectedAppointmentType.price}
+                      {parseInt(selectedAppointmentType.durationMS) / 60000} {t('common.minutes')} | {t('common.currency')}{selectedAppointmentType.price}
                     </p>
                   </div>
 
@@ -1168,7 +1180,7 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
                 {isSuccess && (
                   <motion.div
                     key="success-message"
-                    className="mt-6 text-emerald-500 dark:text-emerald-400 text-center flex items-center justify-center space-x-2"
+                    className="mt-6 text-emerald-500 dark:text-emerald-400 text-center flex items-center justify-center gap-2"
                     initial={{ opacity: 0, y: -10 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0 }}
@@ -1180,7 +1192,7 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
                 {error && (
                   <motion.div
                     key="error-message"
-                    className="mt-6 text-red-500 dark:text-red-400 text-center flex items-center justify-center space-x-2"
+                    className="mt-6 text-red-500 dark:text-red-400 text-center flex items-center justify-center gap-2"
                     initial={{ opacity: 0, y: -10 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0 }}

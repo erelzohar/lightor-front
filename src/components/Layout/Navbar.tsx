@@ -136,6 +136,7 @@ const Navbar: React.FC<NavbarProps> = ({ websiteConfig, isPreview }) => {
           <button
             onClick={handleScrollToTop}
             className="flex items-center gap-2 min-w-0"
+            aria-label={t('nav.home')}
           >
             <img
               src={ImagesService.getInstance().getImage(websiteConfig.logoImageName)} 
@@ -148,7 +149,7 @@ const Navbar: React.FC<NavbarProps> = ({ websiteConfig, isPreview }) => {
             </span>
           </button>
 
-          <div className="hidden md:flex items-center space-x-8">
+          <div className="hidden md:flex items-center gap-8">
             {menuItems.map((item, index) => (
               <a
                 key={index}
@@ -169,6 +170,7 @@ const Navbar: React.FC<NavbarProps> = ({ websiteConfig, isPreview }) => {
                     ? 'bg-light-gray dark:bg-dark-surface hover:bg-primary/10 dark:hover:bg-primary-dark/10'
                     : 'bg-black/5 dark:bg-white/10 hover:bg-black/10 dark:hover:bg-white/20'
                   }`}
+                aria-label={t('common.toggle_dark_mode', { defaultValue: 'Toggle dark mode' })}
               >
                 {!darkMode ? (
                   <Moon className="h-5 w-5 text-light-text" />
@@ -183,6 +185,8 @@ const Navbar: React.FC<NavbarProps> = ({ websiteConfig, isPreview }) => {
             ref={menuButtonRef}
             onClick={() => setIsOpen(!isOpen)}
             className="md:hidden p-2"
+            aria-label={isOpen ? t('nav.close_menu') : t('nav.open_menu')}
+            aria-expanded={isOpen}
           >
             {isOpen ? (
               <X className="h-6 w-6 text-light-text dark:text-dark-text" />
@@ -220,6 +224,7 @@ const Navbar: React.FC<NavbarProps> = ({ websiteConfig, isPreview }) => {
                     ? 'bg-light-gray dark:bg-dark-surface hover:bg-primary/10 dark:hover:bg-primary-dark/10'
                     : 'bg-black/5 dark:bg-white/10 hover:bg-black/10 dark:hover:bg-white/20'
                   }`}
+                aria-label={t('common.toggle_dark_mode', { defaultValue: 'Toggle dark mode' })}
               >
                 {!darkMode ? (
                   <Moon className="h-5 w-5 text-light-text" />

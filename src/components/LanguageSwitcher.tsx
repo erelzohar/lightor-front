@@ -12,7 +12,7 @@ const languages: { code: Language; label: string; flag: string }[] = [
 ];
 
 const LanguageSwitcher = () => {
-  const { language, setLanguage } = useLanguage();
+  const { t, language, setLanguage } = useLanguage();
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -35,6 +35,9 @@ const LanguageSwitcher = () => {
         className="flex items-center gap-2 px-3 py-2 rounded-xl bg-light-gray/50 dark:bg-dark-gray/30 hover:bg-primary/10 dark:hover:bg-primary-dark/10 transition-all border border-transparent hover:border-primary/20"
         whileHover={{ scale: 1.02 }}
         whileTap={{ scale: 0.98 }}
+        aria-label={t('common.change_language', { defaultValue: 'Change language' })}
+        aria-expanded={isOpen}
+        aria-haspopup="listbox"
       >
         <Globe className="w-4 h-4 text-primary dark:text-primary-dark" />
         <span className="text-sm font-medium text-light-text dark:text-dark-text">
@@ -49,7 +52,7 @@ const LanguageSwitcher = () => {
             initial={{ opacity: 0, y: 10, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 10, scale: 0.95 }}
-            className="absolute top-full mt-2 right-0 w-40 bg-light-surface dark:bg-dark-surface rounded-2xl shadow-2xl border border-light-gray/20 dark:border-dark-gray/20 overflow-hidden z-[100] backdrop-blur-xl"
+            className="absolute top-full mt-2 end-0 w-40 bg-light-surface dark:bg-dark-surface rounded-2xl shadow-2xl border border-light-gray/20 dark:border-dark-gray/20 overflow-hidden z-[100] backdrop-blur-xl"
           >
             <div className="py-1">
               {languages.map((lang) => (

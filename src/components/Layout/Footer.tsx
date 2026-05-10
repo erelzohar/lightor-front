@@ -45,71 +45,19 @@ const Footer: React.FC<FooterProps> = ({ config, social, businessName, logoImage
       privacy: {
         title: t('footer.policy.privacy'),
         content: (
-          <div>
-            {language === 'he' ? (
-              <>
-                <p>אנו במערכת Lightor מכבדים את פרטיות המשתמשים ומחויבים להגן על המידע האישי שלהם.</p><br />
-                <h4>איסוף מידע</h4>
-                <p>בעת קביעת תור אנו אוספים מידע בסיסי כמו שם מלא, מספר טלפון ולעיתים גם כתובת דוא״ל או פרטי התקשרות נוספים.</p><br />
-                <p>המידע נאסף ישירות מהמשתמש ואינו מועבר לצדדים שלישיים ללא הסכמה מראש.</p><br />
-                <h4>שימוש במידע</h4>
-                <p>המידע האישי ישמש אך ורק למטרות הקשורות לקביעת תורים, תזכורות, עדכונים, ומתן שירותים הקשורים לשירותים שנקבעו.</p><br />
-                <p>אין להשתמש במידע לצרכים מסחריים אחרים מבלי לקבל את הסכמתך.</p><br />
-                <h4>העברת מידע לצדדים שלישיים</h4>
-                <p>אנו לא נמסור את המידע האישי לצדדים שלישיים אלא אם נידרש לכך על פי חוק או צו בית משפט.</p><br />
-                <h4>כתב ויתור</h4>
-                <p>השימוש באתר הינו באחריות המשתמש בלבד. {'Lightor'} לא תישא באחריות לכל נזק ישיר או עקיף, כולל אובדן מידע, הנובע משימוש באתר או ממידע שנמסר באמצעותו.</p><br />
-                <p>האתר עשוי להכיל קישורים לאתרים חיצוניים – אין לנו שליטה עליהם ואנו לא אחראים לתוכנם או להתנהלותם.</p><br />
-              </>
-            ) : (
-              <></>
-            )}
-          </div>
+          <div dangerouslySetInnerHTML={{ __html: t('footer.policy.privacy_content') }} />
         )
       },
       terms: {
         title: t('footer.policy.terms'),
         content: (
-          <div>
-            {language === 'he' ? (
-              <>
-                <p>השימוש במערכת {'Lightor'} מהווה הסכמה מלאה מצד המשתמש לתנאים המפורטים להלן:</p><br />
-                <h4>שימוש במערכת</h4>
-                <p>השירות ניתן כמות שהוא ("As Is"). איננו מתחייבים לזמינות מלאה או לתפקוד ללא תקלות בכל עת.</p><br />
-                <p>המשתמש אחראי לוודא כי המידע שהוא מזין נכון ועדכני. {'Lightor'} אינה אחראית להשלכות של מידע שגוי.</p><br />
-                <p>בעת השימוש במערכת הנך מאשר לקבל דיוור\הודעות מערכת\תזכורות באמצעי המדיה השונים.</p><br />
-                <h4>ביטולים ואי-הגעה</h4>
-                <p>משתמשים מתבקשים לבטל תורים לפי תנאי המפעיל. אי הגעה לתור עלולה להוביל לחיוב או הגבלה בשימוש עתידי.</p><br />
-                <h4>ויתור מאחריות</h4>
-                <p>{'Lightor'} לא תישא באחריות לכל נזק, ישיר או עקיף, שייגרם עקב שימוש או חוסר יכולת להשתמש במערכת, לרבות תקלות טכניות או זמינות.</p><br />
-                <p>כל תוכן באתר או במערכת לרבות טקסטים, תמונות או מידע אחר, נועדו להמחשה בלבד ואינם מהווים ייעוץ מקצועי או מסמך משפטי מחייב.</p><br />
-              </>
-            ) : (
-              <></>
-            )}
-          </div>
+          <div dangerouslySetInnerHTML={{ __html: t('footer.policy.terms_content') }} />
         )
       },
       security: {
         title: t('footer.policy.security'),
         content: (
-          <div>
-            {language === 'he' ? (
-              <>
-                <p>{'Lightor'} מחויבת לשמור על אבטחת המידע של משתמשיה באמצעות טכנולוגיות אבטחה מתקדמות ופרוטוקולים מקובלים.</p><br />
-                <h4>הצפנה ואחסון</h4>
-                <p>המידע מועבר לשרתים שלנו באופן מוצפן ונשמר בסביבה מאובטחת ומוגנת.</p><br />
-                <h4>גישה למידע</h4>
-                <p>הגישה למידע האישי מוגבלת אך ורק לצוות המורשה שזקוק לכך לצורך תפעול השירות.</p><br />
-                <h4>אחריות המשתמש</h4>
-                <p>על המשתמש לוודא שהוא שומר על סיסמאותיו ואמצעי ההזדהות שלו בסוד. {'Lightor'} לא תישא באחריות לנזקים הנובעים משימוש לא מורשה בפרטי ההזדהות של המשתמש.</p><br />
-                <h4>ויתור מאחריות</h4>
-                <p>למרות מאמצינו, לא ניתן להבטיח חסינות מוחלטת מפריצות או כשלים. השימוש באתר ובמערכת נעשה באחריות המשתמש בלבד.</p><br />
-              </>
-            ) : (
-              <></>
-            )}
-          </div>
+          <div dangerouslySetInnerHTML={{ __html: t('footer.policy.security_content') }} />
         )
       }
     };
@@ -213,8 +161,8 @@ const Footer: React.FC<FooterProps> = ({ config, social, businessName, logoImage
         >
           <div className="grid md:grid-cols-3 gap-12 mb-12">
             {/* Logo and Description */}
-            <motion.div variants={itemVariants} className="text-center md:text-right">
-              <div className="flex items-center justify-center md:justify-start space-x-2 mb-6">
+            <motion.div variants={itemVariants} className="text-center md:text-start">
+              <div className="flex items-center justify-center md:justify-start gap-2 mb-6">
                 <img
                   src={ImagesService.getInstance().getImage(logoImageName)}
                   alt="Logo"
@@ -229,7 +177,7 @@ const Footer: React.FC<FooterProps> = ({ config, social, businessName, logoImage
 
             {/* Social Links */}
             {socialLinks.length > 0 && (
-              <motion.div variants={itemVariants} className="text-center md:text-right">
+              <motion.div variants={itemVariants} className="text-center md:text-start">
                 <h3
                   className="text-lg font-semibold mb-6"
                   id="footer-social"
@@ -237,7 +185,7 @@ const Footer: React.FC<FooterProps> = ({ config, social, businessName, logoImage
                   {t('footer.follow')}
                 </h3>
                 <div
-                  className="flex justify-center md:justify-start space-x-4"
+                  className="flex justify-center md:justify-start gap-4"
                   role="list"
                   aria-labelledby="footer-social"
                 >
@@ -262,7 +210,7 @@ const Footer: React.FC<FooterProps> = ({ config, social, businessName, logoImage
             )}
 
             {/* Quick Links and Services */}
-            <motion.div variants={itemVariants} className="text-center md:text-right">
+            <motion.div variants={itemVariants} className="text-center md:text-start">
               <div className="grid grid-cols-2 gap-8">
                 {/* Quick Links */}
                 <div>
@@ -274,7 +222,7 @@ const Footer: React.FC<FooterProps> = ({ config, social, businessName, logoImage
                   </h3>
                   <nav aria-labelledby="footer-links">
                     <ul className="space-y-4" role="list">
-                      <motion.li whileHover={{ x: 5 }} role="listitem">
+                      <motion.li whileHover={{ x: language === 'he' || language === 'ar' ? -5 : 5 }} role="listitem">
                         <button
                           onClick={handleScrollToTop}
                           className="text-dark-text/80 hover:text-primary-dark transition-colors"
@@ -283,7 +231,7 @@ const Footer: React.FC<FooterProps> = ({ config, social, businessName, logoImage
                         </button>
                       </motion.li>
                       {menuItems.map((item, index) => (
-                        <motion.li key={index} whileHover={{ x: 5 }} role="listitem">
+                        <motion.li key={index} whileHover={{ x: language === 'he' || language === 'ar' ? -5 : 5 }} role="listitem">
                           <a
                             href={item.href}
                             className="text-dark-text/80 hover:text-primary-dark transition-colors"
@@ -309,7 +257,7 @@ const Footer: React.FC<FooterProps> = ({ config, social, businessName, logoImage
                       <motion.li
                         key={index}
                         className="text-dark-text/80"
-                        whileHover={{ x: 5 }}
+                        whileHover={{ x: language === 'he' || language === 'ar' ? -5 : 5 }}
                         role="listitem"
                       >
                         {app.name}
@@ -351,14 +299,14 @@ const Footer: React.FC<FooterProps> = ({ config, social, businessName, logoImage
               </button>
             </div>
             <motion.a
-              href="https://instagram.com/ezwebs"
+              href="https://register.lightor.app"
               target="_blank"
               rel="noopener noreferrer"
               className="inline-block text-primary-dark hover:text-primary transition-colors"
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
             >
-              {t('footer.business.link')}
+              {t('footer.business_link')}
             </motion.a>
           </motion.div>
         </motion.div>
@@ -368,8 +316,8 @@ const Footer: React.FC<FooterProps> = ({ config, social, businessName, logoImage
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         contactLink={modalType === 'whatsapp'
-          ? `https://wa.me/${websiteConfig?.contact?.phone?.replace(/[^0-9+]/g, '') || ''}`
-          : `tel:${websiteConfig?.contact?.phone?.replace(/[^0-9+]/g, '') || ''}`}
+          ? `https://wa.me/${websiteConfig.contact?.phone?.replace(/[^0-9+]/g, '')}`
+          : `tel:${websiteConfig.contact?.phone?.replace(/[^0-9+]/g, '')}`}
         type={modalType}
       />
 

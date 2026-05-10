@@ -12,7 +12,7 @@ interface LegalModalProps {
 
 export function LegalModal({ isOpen, onClose, title, content }: LegalModalProps) {
   const { language } = useLanguage();
-  const isRTL = language === 'he';
+  const isRTL = language === 'he' || language === 'ar';
 
   return (
     <AnimatePresence>
@@ -33,12 +33,12 @@ export function LegalModal({ isOpen, onClose, title, content }: LegalModalProps)
           >
             <button
               onClick={onClose}
-              className="absolute top-4 left-4 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors"
+              className="absolute top-4 start-4 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors"
             >
               <X className="w-6 h-6" />
             </button>
 
-            <div className={`text-${isRTL ? 'right' : 'left'}`}>
+            <div className="text-start">
               <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">{title}</h3>
               <div className="prose prose-lg max-w-none text-gray-600 dark:text-gray-300">
                 {content}

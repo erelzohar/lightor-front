@@ -48,14 +48,14 @@ const ContactButton: React.FC<ContactButtonProps> = ({ phone }) => {
   ];
 
   return (
-    <div className="fixed bottom-4 left-4 z-50">
+    <div className="fixed bottom-4 start-4 z-50">
       <AnimatePresence>
         {isOpen && (
           <motion.div
-            initial={{ opacity: 0, x: -50 }}
+            initial={{ opacity: 0, x: language === 'he' || language === 'ar' ? 50 : -50 }}
             animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -50 }}
-            className="absolute bottom-0 left-12 mb-2 bg-white dark:bg-dark-surface rounded-lg shadow-lg p-4 min-w-[15rem]"
+            exit={{ opacity: 0, x: language === 'he' || language === 'ar' ? 50 : -50 }}
+            className="absolute bottom-0 start-12 mb-2 bg-white dark:bg-dark-surface rounded-lg shadow-lg p-4 min-w-[15rem]"
           >
             <div className="space-y-3">
               {contactOptions.map((option, index) => (
@@ -63,7 +63,7 @@ const ContactButton: React.FC<ContactButtonProps> = ({ phone }) => {
                   key={index}
                   onClick={option.onClick || (() => window.open(option.action, '_blank'))}
                   className={`flex items-center gap-3 p-3 rounded-lg transition-all ${option.color} hover:text-white group w-full`}
-                  whileHover={{ x: 5 }}
+                  whileHover={{ x: language === 'he' || language === 'ar' ? -5 : 5 }}
                   whileTap={{ scale: 0.95 }}
                 >
                   {typeof option.icon === 'function' ? (

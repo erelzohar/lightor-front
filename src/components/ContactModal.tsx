@@ -13,7 +13,7 @@ interface ContactModalProps {
 
 export function ContactModal({ isOpen, onClose, contactLink, type }: ContactModalProps) {
   const { language, t } = useLanguage();
-  const isRTL = language === 'he';
+  const isRTL = language === 'he' || language === 'ar';
   const isWhatsApp = type === 'whatsapp';
 
   useEffect(() => {
@@ -57,7 +57,7 @@ export function ContactModal({ isOpen, onClose, contactLink, type }: ContactModa
           >
             <button
               onClick={onClose}
-              className="absolute top-4 right-4 text-light-text/50 dark:text-dark-text/50 hover:text-light-text dark:hover:text-dark-text transition-colors p-2 rounded-full hover:bg-light-gray dark:hover:bg-dark-gray"
+              className="absolute top-4 end-4 text-light-text/50 dark:text-dark-text/50 hover:text-light-text dark:hover:text-dark-text transition-colors p-2 rounded-full hover:bg-light-gray dark:hover:bg-dark-gray"
               aria-label={t('contact.modal.close')}
             >
               <X className="w-6 h-6" aria-hidden="true" />

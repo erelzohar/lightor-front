@@ -74,14 +74,9 @@ const Loading: React.FC<LoadingProps> = ({ isLoading, onLoadingComplete }) => {
                 }}
               >
                 <img
-                  src="/lightor-purple.png"
-                  alt="Logo Dark"
-                  className="w-full h-full object-contain dark:opacity-0 transition-opacity duration-300"
-                />
-                <img
                   src="/lightor.png"
-                  alt="Logo Light"
-                  className="absolute inset-0 w-full h-full object-contain opacity-0 dark:opacity-100 transition-opacity duration-300"
+                  alt="Logo"
+                  className="absolute inset-0 w-full h-full object-contain"
                 />
               </motion.div>
             </motion.div>

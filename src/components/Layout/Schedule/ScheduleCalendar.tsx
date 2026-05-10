@@ -65,12 +65,12 @@ export const DateButton = memo(({
         whileTap={!isPast(date) && isAvailable(date) ? { scale: 0.9 } : undefined}
         disabled={isPast(date) || !isAvailable(date)}
         aria-label={`${formatSelectedDate(date)}${isPast(date)
-            ? ' - Past date'
+            ? ` - ${language === 'he' ? 'תאריך שעבר' : (language === 'ar' ? 'تاريخ ماض' : (language === 'fr' ? 'Date passée' : (language === 'es' ? 'Fecha pasada' : 'Past date')))}`
             : availabilityStatus === 'full'
-                ? ' - Fully Available'
+                ? ` - ${language === 'he' ? 'זמינות מלאה' : (language === 'ar' ? 'متاح بالكامل' : (language === 'fr' ? 'Entièrement disponible' : (language === 'es' ? 'Totalmente disponible' : 'Fully Available')))}`
                 : availabilityStatus === 'limited'
-                    ? ' - Limited Availability'
-                    : ' - Not available'
+                    ? ` - ${language === 'he' ? 'זמינות מוגבלת' : (language === 'ar' ? 'توفر محدود' : (language === 'fr' ? 'Disponibilité limitée' : (language === 'es' ? 'Disponibilidad limitada' : 'Limited Availability')))}`
+                    : ` - ${language === 'he' ? 'לא זמין' : (language === 'ar' ? 'غير متاح' : (language === 'fr' ? 'Indisponible' : (language === 'es' ? 'No disponible' : 'Not available')))}`
             }`}
         aria-selected={isSelected(date)}
         aria-disabled={isPast(date) || !isAvailable(date)}

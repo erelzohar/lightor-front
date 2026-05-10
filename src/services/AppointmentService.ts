@@ -30,7 +30,8 @@ class AppointmentService {
 
   public async getAppointmentById(id: string): Promise<Appointment> {
     try {
-      const response = await axios.get<any>(`${this.baseUrl}/${id}`, { headers: { Authorization: process.env.NODE_ENV !== "production" ? "Bearer " + import.meta.env.VITE_CLIENT_TOKEN : '' } });
+      // const response = await axios.get<any>(`${this.baseUrl}/${id}`, { headers: { Authorization: process.env.NODE_ENV !== "production" ? "Bearer " + import.meta.env.VITE_CLIENT_TOKEN : '' } });
+      const response = await axios.get<any>(`${this.baseUrl}/${id}`);
 
       return Appointment.fromJSON(response.data.data);
     } catch (error) {
