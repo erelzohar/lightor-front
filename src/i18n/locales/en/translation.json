@@ -1,0 +1,223 @@
+{
+  "nav": {
+    "home": "Home",
+    "about": "About",
+    "portfolio": "Latest",
+    "schedule": "Schedule",
+    "contact": "Contact"
+  },
+  "intro": {
+    "title": "System message",
+    "button": "Close"
+  },
+  "hero": {
+    "book": "Book Appointment",
+    "contact": "Contact Us"
+  },
+  "about": {
+    "title": "About StyleTime Studio",
+    "location": "Location",
+    "phone": "Phone",
+    "email": "Email",
+    "hours": "Work Hours",
+    "visit": "Visit Us"
+  },
+  "portfolio": {
+    "title": "Our Latest",
+    "view": {
+      "slideshow": "Slideshow",
+      "grid": "Grid"
+    }
+  },
+  "schedule": {
+    "title": "Schedule Your Visit",
+    "select": {
+      "date": "Select Date",
+      "time": "Select Time",
+      "type": "Select haircut type"
+    },
+    "available": {
+      "times": "Available Times for"
+    },
+    "book": "Book Appointment",
+    "success": "Appointment booked successfully!",
+    "update": {
+      "success": "Appointment updated successfully!"
+    },
+    "error": "Something went wrong...",
+    "conflictError": "The appointment has been taken please try another one",
+    "form": {
+      "name": "Full Name",
+      "phone": "Phone Number",
+      "verification": "Verification Code",
+      "verification_message": "A verification code has been sent to your phone",
+      "send_code": "Send Verification Code",
+      "verify": "Verify and Book",
+      "resend_code": "Resend Code",
+      "resend_wait": "Resend in",
+      "resend_timer": "seconds",
+      "helper": "By clicking 'Book Appointment', a verification code will be sent to the phone number provided."
+    },
+    "legend": {
+      "available": "Available",
+      "limited": "Limited Slots",
+      "vacation": "On vacation",
+      "closed": "Fully Booked / Closed"
+    },
+    "original_appointment": "Your Appointment",
+    "error_sendOtp": "Error sending verification code",
+    "error_invalidOtp": "Invalid verification code",
+    "validation": {
+      "name": "Please enter a name between 2 and 50 characters",
+      "phone": {
+        "start": "Phone number must start with 05",
+        "length": "Phone number must be 10 digits long",
+        "digits": "Phone number must contain only digits"
+      },
+      "otp": {
+        "length": "Verification code must be 6 digits long",
+        "digits": "Verification code must contain only digits"
+      }
+    },
+    "channel": {
+      "sms": "Send code & updates via SMS",
+      "whatsapp": "Send code & updates via WhatsApp"
+    },
+    "confirmation": {
+      "user": "Hi {{name}}, your appointment at {{businessName}} has been scheduled for {{day}} {{date}} at {{time}}. Cancellation link {{timeUntilLabel}}: {{link}}",
+      "user_update": "Hi {{name}}, your appointment at {{businessName}} has been updated to {{day}} {{date}} at {{time}}. Cancellation link {{timeUntilLabel}}: {{link}}",
+      "business": "New appointment scheduled!\nName: {{name}}\nPhone: {{phone}}\nDate: {{day}} {{date}} at {{time}}\nEZ-lines"
+    }
+  },
+  "common": {
+    "back": "Back",
+    "minutes": "minutes",
+    "until": "until {{time}}",
+    "before": "before the appointment",
+    "hours_and_minutes": "{{hours}} hours and {{minutes}} minutes"
+  },
+  "day": {
+    "0": "Sunday",
+    "1": "Monday",
+    "2": "Tuesday",
+    "3": "Wednesday",
+    "4": "Thursday",
+    "5": "Friday",
+    "6": "Saturday"
+  },
+  "time": {
+    "unlimited": "Unlimited",
+    "half": { "hour": "Half an hour" },
+    "hour": "An hour",
+    "2hours": "2 hours",
+    "3hours": "3 hours",
+    "4hours": "4 hours",
+    "6hours": "6 hours",
+    "12hours": "12 hours",
+    "24hours": "24 hours",
+    "48hours": "48 hours",
+    "72hours": "72 hours",
+    "week": "A week",
+    "2weeks": "Two weeks"
+  },
+  "contact": {
+    "title": "Get in Touch",
+    "form": {
+      "name": "Name",
+      "phone": "Phone",
+      "message": "Message",
+      "send": "Send Message",
+      "success": "Message sent successfully!"
+    },
+    "button": {
+      "options": "Contact options"
+    },
+    "option": {
+      "call": "Call us",
+      "whatsapp": "Send WhatsApp",
+      "report": "Report a Problem"
+    },
+    "modal": {
+      "close": "Close modal",
+      "scan_title": "Scan to Open WhatsApp",
+      "call_title": "Call Us",
+      "qr_label": "WhatsApp QR Code",
+      "scan_message": "Scan the QR code with your phone camera to open WhatsApp chat",
+      "or_whatsapp": "Or click the button to open WhatsApp directly",
+      "or_call": "Or click the button to call directly",
+      "button_whatsapp": "Open WhatsApp in new window",
+      "button_call": "Call now",
+      "link_text_whatsapp": "Open WhatsApp",
+      "link_text_call": "Call now"
+    }
+  },
+  "footer": {
+    "links": "Quick Links",
+    "services": "Services",
+    "follow": "Follow Us",
+    "rights": "All rights reserved.",
+    "business_link": "Want this for your business? Click here",
+    "social": {
+      "follow": {
+        "instagram": "Follow us on Instagram",
+        "tiktok": "Follow us on TikTok",
+        "facebook": "Follow us on Facebook",
+        "x": "Follow us on X"
+      }
+    },
+    "policy": {
+      "privacy": "Privacy Policy",
+      "terms": "Terms of Use",
+      "security": "Security Policy"
+    }
+  },
+  "manage": {
+    "update": {
+      "title": "Update appointment",
+      "success_title": "Appointment Updated"
+    },
+    "new_time_title": "Choose a new time for your appointment",
+    "manage_title": "Manage Appointment",
+    "message": {
+      "cancellable": "You can cancel or update this appointment",
+      "not_cancellable": "Cannot cancel or update appointment less than ",
+      "hours_before": " hours before the appointment",
+      "time_until": "Only {{time}} until the appointment",
+      "started": "The appointment has started"
+    },
+    "label": {
+      "date": "Date",
+      "time": "Time",
+      "name": "Name",
+      "phone": "Phone",
+      "type": "Service Type"
+    },
+    "button": {
+      "back": "Go Back",
+      "cancel": "Cancel",
+      "update": "Update"
+    },
+    "modal": {
+      "confirm": {
+        "title": "Confirm Cancellation",
+        "message": "Are you sure you want to cancel this appointment?"
+      },
+      "button_confirm": "Confirm Cancel"
+    },
+    "success_title": "Appointment Cancelled"
+  },
+  "notfound": {
+    "title": "Page Not Found",
+    "message": "The page you are looking for does not exist or has been removed. Try refreshing or return to homepage.",
+    "button": {
+      "home": "Back to Home",
+      "refresh": "Refresh Page"
+    }
+  },
+  "loading": {
+    "step1": "Loading...",
+    "step2": "Checking you're not a robot...",
+    "step3": "Relaxing on the beach...",
+    "step4": "Consulting with my teddy bear..."
+  }
+}

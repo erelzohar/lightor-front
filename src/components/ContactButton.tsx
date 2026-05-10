@@ -55,7 +55,7 @@ const ContactButton: React.FC<ContactButtonProps> = ({ phone }) => {
             initial={{ opacity: 0, x: -50 }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -50 }}
-            className="absolute bottom-0 left-12 mb-2 bg-white dark:bg-dark-surface rounded-lg shadow-lg p-4 min-w-[240px]"
+            className="absolute bottom-0 left-12 mb-2 bg-white dark:bg-dark-surface rounded-lg shadow-lg p-4 min-w-[15rem]"
           >
             <div className="space-y-3">
               {contactOptions.map((option, index) => (

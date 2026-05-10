@@ -8,7 +8,8 @@ export class Appointment {
     public name: string,
     public status: string,
     public phone: string,
-    public timestamp: string
+    public timestamp: string,
+    public channelType: 'sms' | 'whatsapp'
   ) {}
 
   static fromJSON(json: any): Appointment {    
@@ -19,7 +20,8 @@ export class Appointment {
       json.name,
       json.status,
       json.phone,
-      json.timestamp
+      json.timestamp,
+      json.channelType || 'sms'
     );
   }
 }

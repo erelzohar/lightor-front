@@ -12,6 +12,7 @@ import smsService from '../services/SmsService';
 import WebConfigService from '../services/WebConfigService';
 import { WebsiteConfig } from '../models/WebsiteConfig';
 import Loading from './Loading';
+import ImagesService from '../services/ImagesService';
 
 
 
@@ -137,10 +138,7 @@ const ManageAppointment: React.FC = () => {
     if (timeDiff <= 0) {
       return t('manage.message.started');
     }
-    if (language === 'he') {
-      return `${hours} שעות ו-${minutes} דקות`;
-    }
-    return `${hours} hours and ${minutes} minutes`;
+    return t('common.hours_and_minutes', { hours, minutes });
   };
 
   if (isLoading) {
@@ -196,13 +194,22 @@ const ManageAppointment: React.FC = () => {
         className="w-full max-w-lg bg-light-surface dark:bg-dark-surface rounded-3xl shadow-xl p-6 md:p-8 transition-colors duration-300"
       >
         <div className="text-center mb-8">
+          {config.logoImageName && (
+            <div className="flex justify-center mb-6">
+              <img
+                src={ImagesService.getInstance().getImage(config.logoImageName)}
+                alt={config.businessName}
+                className="h-20 w-auto object-contain"
+              />
+            </div>
+          )}
           <h2 className="text-2xl font-bold text-light-text dark:text-dark-text mb-2">
             {t('manage.manage.title')}
           </h2>
           <p className="text-light-text/70 dark:text-dark-text/70">
             {isCancellable
               ? t('manage.message.cancellable')
-              : t('manage.message.not.cancellable') + (minCancelTime / (1000 * 60 * 60)) + (language === 'he' ? ' שעות לפני מועד התור' : ' hours before the appointment')
+              : t('manage.message.not_cancellable') + (minCancelTime ? minCancelTime / (1000 * 60 * 60) : 0) + t('manage.message.hours_before')
             }
           </p>
         </div>
@@ -213,7 +220,7 @@ const ManageAppointment: React.FC = () => {
             <p className="text-red-500 text-sm">
               {parseInt(appointment.timestamp) - Date.now() <= 0
                 ? getTimeUntilAppointment(appointment.timestamp)
-                : t('manage.message.time.until').replace('{{time}}', getTimeUntilAppointment(appointment.timestamp))}
+                : t('manage.message.time_until', { time: getTimeUntilAppointment(appointment.timestamp) })}
             </p>
           </div>
         )}
@@ -292,7 +299,7 @@ const ManageAppointment: React.FC = () => {
             disabled={!isCancellable}
           >
             <Edit className="w-4 h-4" />
-            {language === 'he' ? 'עדכן תור' : 'Update'}
+            {t('manage.button.update')}
           </motion.button>
 
           <motion.button
@@ -372,7 +379,7 @@ const ManageAppointment: React.FC = () => {
             <motion.div
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
-              className="bg-light-surface dark:bg-dark-surface rounded-2xl p-8 text-center shadow-2xl overflow-hidden min-w-[280px]"
+              className="bg-light-surface dark:bg-dark-surface rounded-2xl p-8 text-center shadow-2xl overflow-hidden min-w-[17.5rem]"
             >
               {lastAction === 'update' ? (
                 <motion.div

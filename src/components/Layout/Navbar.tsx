@@ -3,6 +3,7 @@ import { Menu, X, Sun, Moon } from 'lucide-react';
 import { useLanguage } from '../../contexts/LanguageContext';
 import LanguageSwitcher from '../LanguageSwitcher';
 import globals from '../../services/globals';
+import ImagesService from '../../services/ImagesService';
 
 interface WebsiteConfig {
   logoImageName: string;
@@ -21,9 +22,10 @@ interface WebsiteConfig {
 
 interface NavbarProps {
   websiteConfig: WebsiteConfig;
+  isPreview?: boolean;
 }
 
-const Navbar: React.FC<NavbarProps> = ({ websiteConfig }) => {
+const Navbar: React.FC<NavbarProps> = ({ websiteConfig, isPreview }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [darkMode, setDarkMode] = useState(() => {
     const savedMode = localStorage.getItem('darkMode');
@@ -136,8 +138,8 @@ const Navbar: React.FC<NavbarProps> = ({ websiteConfig }) => {
             className="flex items-center gap-2 min-w-0"
           >
             <img
-              // src={servcie.getImage(websiteConfig.logoImageName)} 
-              src={globals.imagesUrl + websiteConfig.logoImageName}
+              src={ImagesService.getInstance().getImage(websiteConfig.logoImageName)} 
+              // src={isPreview && websiteConfig.logoImageName?.startsWith('blob:') ? websiteConfig.logoImageName : globals.imagesUrl + websiteConfig.logoImageName}
               alt="Logo"
               className="h-12 w-12 rounded-full object-cover flex-shrink-0"
             />
@@ -193,7 +195,7 @@ const Navbar: React.FC<NavbarProps> = ({ websiteConfig }) => {
         <div
           ref={mobileMenuRef}
           className={`md:hidden overflow-hidden transition-all duration-300 ${isOpen
-              ? 'max-h-[400px] opacity-100 visible pt-4 pb-6'
+              ? 'max-h-[25rem] opacity-100 visible pt-4 pb-6'
               : 'max-h-0 opacity-0 invisible'
             }`}
         >

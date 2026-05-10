@@ -85,7 +85,7 @@ const NotFound = () => {
       <motion.div
         className="absolute inset-0 opacity-0 dark:opacity-60 pointer-events-none"
         animate={{
-          background: `radial-gradient(circle 600px at ${mousePosition.x + window.innerWidth / 2}px ${mousePosition.y + window.innerHeight / 2}px, rgba(96, 165, 250, 0.25), transparent 60%)`,
+          background: `radial-gradient(circle 40vw at ${mousePosition.x + window.innerWidth / 2}px ${mousePosition.y + window.innerHeight / 2}px, rgba(96, 165, 250, 0.25), transparent 60%)`,
         }}
         transition={{ type: "spring", damping: 15 }}
         aria-hidden="true"
@@ -99,7 +99,7 @@ const NotFound = () => {
       >
         {/* 404 Number */}
         <div className="mb-8">
-          <div className="text-[150px] md:text-[200px] font-bold leading-none bg-clip-text text-transparent bg-gradient-to-r from-primary via-accent-violet to-primary dark:from-primary-dark dark:via-accent-cyan dark:to-primary-dark">
+          <div className="text-[9.375rem] md:text-[12.5rem] font-bold leading-none bg-clip-text text-transparent bg-gradient-to-r from-primary via-accent-violet to-primary dark:from-primary-dark dark:via-accent-cyan dark:to-primary-dark">
             404
           </div>
         </div>

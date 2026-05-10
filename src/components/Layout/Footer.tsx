@@ -8,6 +8,7 @@ import { LegalModal } from '../LegalModal';
 import { AppointmentType } from '../../models/AppointmentType';
 import { Social } from '../../models/Social';
 import globals from '../../services/globals';
+import ImagesService from '../../services/ImagesService';
 
 interface WebsiteConfig {
   about?: { visible?: boolean };
@@ -215,7 +216,7 @@ const Footer: React.FC<FooterProps> = ({ config, social, businessName, logoImage
             <motion.div variants={itemVariants} className="text-center md:text-right">
               <div className="flex items-center justify-center md:justify-start space-x-2 mb-6">
                 <img
-                  src={globals.imagesUrl + logoImageName}
+                  src={ImagesService.getInstance().getImage(logoImageName)}
                   alt="Logo"
                   className="h-10 w-10 rounded-full object-cover"
                 />

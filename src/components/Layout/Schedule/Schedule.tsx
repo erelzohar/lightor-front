@@ -39,15 +39,16 @@ interface ScheduleProps {
   appointmentToUpdate?: Appointment;
   onUpdateComplete?: (newAppointment: Appointment) => void;
   onCancelUpdate?: () => void;
+  isPreview?: boolean;
 }
 
 
-const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone, businessName, timeToCancel, vacations, appointmentTypes, isUpdating, appointmentToUpdate, onUpdateComplete, onCancelUpdate }) => {
+const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone, businessName, timeToCancel, vacations, appointmentTypes, isUpdating, appointmentToUpdate, onUpdateComplete, onCancelUpdate, isPreview }) => {
   if (!appointmentTypes || appointmentTypes.length === 0) {
     throw new Error('No appointment types available');
   }
 
-  const [isAuthorized, setIsAuthorized] = useState<boolean>(false);
+  const [isAuthorized, setIsAuthorized] = useState<boolean>(!!isPreview);
   const handshakeInProgress = useRef(false);
 
   const handleHandshake = async (token: string) => {
@@ -92,41 +93,26 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
       const hours = new Date(parseInt(appointmentToUpdate.timestamp)).getHours().toString().padStart(2, '0');
       const minutes = new Date(parseInt(appointmentToUpdate.timestamp)).getMinutes().toString().padStart(2, '0');
       setSelectedTime(`${hours}:${minutes}`);
+      setChannelType(appointmentToUpdate.channelType || 'sms');
     }
   }, [isUpdating, appointmentToUpdate]);
   const [error, setError] = useState<string | null>(null);
   const [bookedAppointments, setBookedAppointments] = useState<Appointment[]>([]);
   const [resendTimer, setResendTimer] = useState(0);
-  const days = [t('day.0'), t('day.1'), t('day.2'), t('day.3'), t('day.4'), t('day.5'), t('day.6')];
 
-  const millisecondsToTimeMap: Record<number, string> = {
-    0: t('time.unlimited'),
-    90000: t('time.half.hour'),
-    1800000: t('time.half.hour'),
-    3600000: t('time.hour'),
-    7200000: t('time.2hours'),
-    10800000: t('time.3hours'),
-    14400000: t('time.4hours'),
-    21600000: t('time.6hours'),
-    43200000: t('time.12hours'),
-    86400000: t('time.24hours'),
-    172800000: t('time.48hours'),
-    259200000: t('time.72hours'),
-    604800000: t('time.week'),
-    1209600000: t('time.2weeks')
-  };
+
 
 
   useEffect(() => {
     if (error) throw error;
-    if (!isAuthorized) return;
+    if (!isAuthorized || isPreview) return;
 
     AppointmentService.getInstance()
       .getAppointments("?user_id=" + user_id + "&status=scheduled&startDate=" + Date.now())
       .then(setBookedAppointments)
       .catch((err) => setError(err.message || String(err)));
 
-  }, [isAuthorized, user_id]);
+  }, [isAuthorized, user_id, isPreview]);
 
   useEffect(() => {
     let interval: NodeJS.Timeout;
@@ -185,7 +171,7 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
 
     setIsSubmitting(true);
     try {
-      const success = true //await smsService.sendOtp(formData.phone, channelType);
+      const success = await smsService.sendOtp(formData.phone, channelType);
       if (success) {
         setError(null);
         setResendTimer(30);
@@ -218,7 +204,7 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
 
     setIsSubmitting(true);
     try {
-      const verified = true//await smsService.verifyOtp(formData.phone, formData.verificationCode);
+      const verified = await smsService.verifyOtp(formData.phone, formData.verificationCode);
       if (!verified) {
         setError(t('schedule.error.invalidOtp'));
         setIsSubmitting(false);
@@ -238,7 +224,8 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
         type_id: selectedAppointmentType._id,
         timestamp: fixedDate.valueOf().toString(),
         user_id,
-        status: "scheduled"
+        status: "scheduled",
+        channelType
       }
       const service = AppointmentService.getInstance();
       const res = isUpdating && appointmentToUpdate
@@ -251,39 +238,6 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
         onUpdateComplete(res);
       }
 
-      try {
-        const dateStr = `${selectedDate.getDate()}.${selectedDate.getMonth() + 1}`;
-        const timeUntilLabel = timeToCancel > 0
-          ? t('common.until', { time: millisecondsToTimeMap[timeToCancel] }) + ' ' + t('common.before')
-          : '';
-
-        const userMsg = t(isUpdating ? 'schedule.confirmation.user.update' : 'schedule.confirmation.user', {
-          name: formData.name,
-          businessName: businessName,
-          day: days[selectedDate.getDay()],
-          date: dateStr,
-          time: selectedTime,
-          timeUntilLabel: timeUntilLabel,
-          link: window.location.hostname + "/manage/" + res._id
-        });
-
-        //await smsService.sendSMS(formData.phone, userMsg);
-
-        if (!isUpdating) {
-          const businessMsg = t('schedule.confirmation.business', {
-            name: formData.name,
-            phone: formData.phone,
-            day: days[selectedDate.getDay()],
-            date: dateStr,
-            time: selectedTime
-          });
-
-          //await smsService.sendSMS(phone, businessMsg);
-        }
-      }
-      catch (err) {
-        console.log("Failed to send message");
-      }
       setError(null);
       setSuccessMessage(isUpdating ? t('schedule.update.success') : t('schedule.success'));
       setIsSuccess(true);
@@ -306,7 +260,7 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
     } finally {
       setIsSubmitting(false);
     }
-  }, [formData, validateForm, selectedDate, selectedAppointmentType, selectedTime, user_id, days, businessName, timeToCancel, phone, t, resetCalendar, language, millisecondsToTimeMap]);
+  }, [formData, validateForm, selectedDate, selectedAppointmentType, selectedTime, user_id, t, resetCalendar]);
 
   const handleInputChange = (field: keyof BookingFormData, value: string) => {
     let processedValue = value;
@@ -406,7 +360,7 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
     const testSlotEnd = testSlotStartTime + testDurationMS; // End time of the new slot (e.g., 14:00 + 1hr = 15:00)
 
     // 2. Iterate and Check Against Vacation Periods
-    return vacations.some(vacation => {
+    return vacations?.some(vacation => {
       // Retrieve the start and end times of the existing vacation
       const vacationStart = +vacation.startDate; // Existing Vacation Start (e.g., 14:20)
       const vacationEnd = +vacation.endDate;     // Existing Vacation End (e.g., 16:00)
@@ -741,7 +695,7 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
     <section id="schedule" className="py-32 bg-gradient-to-b from-light-bg to-light-surface dark:from-dark-bg dark:to-dark-surface transition-colors duration-300">
       {!isAuthorized ? (
         <div className="flex flex-col items-center py-20 bg-gray-50/50 dark:bg-gray-900/10">
-          <div className="min-h-[400px] flex items-center justify-center p-4">
+          <div className="min-h-[25rem] flex items-center justify-center p-4">
             <Loader2 className="w-8 h-8 text-primary dark:text-primary-dark animate-spin" />
           </div>
           <div className="mt-8">
@@ -799,7 +753,7 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
             )}
           </motion.div>
 
-          <motion.div className="max-w-[700px] mx-auto">
+          <motion.div className="max-w-[43.75rem] mx-auto">
             <motion.div className="bg-light-surface dark:bg-dark-surface rounded-3xl shadow-xl p-6 md:p-8">
               {(bookingStep !== 'date' || (isUpdating && onCancelUpdate)) && (
                 <motion.button

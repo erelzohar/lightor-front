@@ -1,0 +1,223 @@
+{
+  "nav": {
+    "home": "Accueil",
+    "about": "À propos",
+    "portfolio": "Récent",
+    "schedule": "Rendez-vous",
+    "contact": "Contact"
+  },
+  "intro": {
+    "title": "Message système",
+    "button": "Fermer"
+  },
+  "hero": {
+    "book": "Prendre RDV",
+    "contact": "Contactez-nous"
+  },
+  "about": {
+    "title": "À propos de StyleTime Studio",
+    "location": "Lieu",
+    "phone": "Téléphone",
+    "email": "Email",
+    "hours": "Horaires",
+    "visit": "Venez nous voir"
+  },
+  "portfolio": {
+    "title": "Nos dernières réalisations",
+    "view": {
+      "slideshow": "Diaporama",
+      "grid": "Grille"
+    }
+  },
+  "schedule": {
+    "title": "Planifiez votre visite",
+    "select": {
+      "date": "Choisir une date",
+      "time": "Choisir une heure",
+      "type": "Choisir le type de service"
+    },
+    "available": {
+      "times": "Heures disponibles pour le"
+    },
+    "book": "Prendre rendez-vous",
+    "success": "Rendez-vous réservé avec succès !",
+    "update": {
+      "success": "Rendez-vous mis à jour avec succès !"
+    },
+    "error": "Une erreur est survenue...",
+    "conflictError": "Ce créneau est déjà pris, veuillez en essayer un autre",
+    "form": {
+      "name": "Nom complet",
+      "phone": "Numéro de téléphone",
+      "verification": "Code de vérification",
+      "verification_message": "Un code de vérification a été envoyé sur votre téléphone",
+      "send_code": "Prendre RDV",
+      "verify": "Vérifier et réserver",
+      "resend_code": "Renvoyer le code",
+      "resend_wait": "Renvoyer dans",
+      "resend_timer": "secondes",
+      "helper": "En cliquant sur 'Prendre RDV', un code de vérification sera envoyé au numéro de téléphone fourni."
+    },
+    "legend": {
+      "available": "Disponible",
+      "limited": "Places limitées",
+      "vacation": "En vacances",
+      "closed": "Complet / Fermé"
+    },
+    "original_appointment": "Votre rendez-vous",
+    "error_sendOtp": "Erreur lors de l'envoi du code de vérification",
+    "error_invalidOtp": "Code de vérification invalide",
+    "validation": {
+      "name": "Veuillez entrer un nom entre 2 et 50 caractères",
+      "phone": {
+        "start": "Le numéro de téléphone doit commencer par 05",
+        "length": "Le numéro de téléphone doit comporter 10 chiffres",
+        "digits": "Le numéro de téléphone ne doit contenir que des chiffres"
+      },
+      "otp": {
+        "length": "Le code de vérification doit comporter 6 chiffres",
+        "digits": "Le code de vérification ne doit contenir que des chiffres"
+      }
+    },
+    "channel": {
+      "sms": "Envoyer code et mises à jour via SMS",
+      "whatsapp": "Envoyer code et mises à jour via WhatsApp"
+    },
+    "confirmation": {
+      "user": "Bonjour {{name}}, votre rendez-vous chez {{businessName}} est programmé pour le {{day}} {{date}} à {{time}}. Lien d'annulation {{timeUntilLabel}} : {{link}}",
+      "user_update": "Bonjour {{name}}, votre rendez-vous chez {{businessName}} a été mis à jour pour le {{day}} {{date}} à {{time}}. Lien d'annulation {{timeUntilLabel}} : {{link}}",
+      "business": "Nouveau rendez-vous programmé !\nNom : {{name}}\nTéléphone : {{phone}}\nDate : {{day}} {{date}} à {{time}}\nEZ-lines"
+    }
+  },
+  "common": {
+    "back": "Retour",
+    "minutes": "minutes",
+    "until": "jusqu'à {{time}}",
+    "before": "avant le rendez-vous",
+    "hours_and_minutes": "{{hours}} heures et {{minutes}} minutes"
+  },
+  "day": {
+    "0": "Dimanche",
+    "1": "Lundi",
+    "2": "Mardi",
+    "3": "Mercredi",
+    "4": "Jeudi",
+    "5": "Vendredi",
+    "6": "Samedi"
+  },
+  "time": {
+    "unlimited": "Illimité",
+    "half": { "hour": "Demi-heure" },
+    "hour": "Une heure",
+    "2hours": "2 heures",
+    "3hours": "3 heures",
+    "4hours": "4 heures",
+    "6hours": "6 heures",
+    "12hours": "12 heures",
+    "24hours": "24 heures",
+    "48hours": "48 heures",
+    "72hours": "72 heures",
+    "week": "Une semaine",
+    "2weeks": "Deux semaines"
+  },
+  "contact": {
+    "title": "Contactez-nous",
+    "form": {
+      "name": "Nom",
+      "phone": "Téléphone",
+      "message": "Message",
+      "send": "Envoyer le message",
+      "success": "Message envoyé avec succès !"
+    },
+    "button": {
+      "options": "Options de contact"
+    },
+    "option": {
+      "call": "Appelez-nous",
+      "whatsapp": "Envoyer un WhatsApp",
+      "report": "Signaler un problème"
+    },
+    "modal": {
+      "close": "Fermer la fenêtre",
+      "scan_title": "Scanner pour WhatsApp",
+      "call_title": "Appelez-nous",
+      "qr_label": "Code QR WhatsApp",
+      "scan_message": "Scannez le code avec votre appareil photo pour ouvrir la discussion WhatsApp",
+      "or_whatsapp": "Ou cliquez sur le bouton pour ouvrir WhatsApp directement",
+      "or_call": "Ou cliquez sur le bouton pour appeler directement",
+      "button_whatsapp": "Ouvrir WhatsApp dans une nouvelle fenêtre",
+      "button_call": "Appeler maintenant",
+      "link_text_whatsapp": "Ouvrir WhatsApp",
+      "link_text_call": "Appeler maintenant"
+    }
+  },
+  "footer": {
+    "links": "Liens rapides",
+    "services": "Services",
+    "follow": "Suivez-nous",
+    "rights": "Tous droits réservés.",
+    "business_link": "Vous voulez cela pour votre entreprise ? Cliquez ici",
+    "social": {
+      "follow": {
+        "instagram": "Suivez-nous sur Instagram",
+        "tiktok": "Suivez-nous sur TikTok",
+        "facebook": "Suivez-nous sur Facebook",
+        "x": "Suivez-nous sur X"
+      }
+    },
+    "policy": {
+      "privacy": "Politique de confidentialité",
+      "terms": "Conditions d'utilisation",
+      "security": "Politique de sécurité"
+    }
+  },
+  "manage": {
+    "update": {
+      "title": "Modifier le rendez-vous",
+      "success_title": "Rendez-vous mis à jour avec succès"
+    },
+    "new_time_title": "Choisissez un nouvel horaire",
+    "manage_title": "Gérer le rendez-vous",
+    "message": {
+      "cancellable": "Vous pouvez annuler ou modifier ce rendez-vous",
+      "not_cancellable": "Impossible d'annuler ou modifier moins de ",
+      "hours_before": " heures avant le rendez-vous",
+      "time_until": "Plus que {{time}} avant le rendez-vous",
+      "started": "Le rendez-vous a déjà commencé"
+    },
+    "label": {
+      "date": "Date",
+      "time": "Heure",
+      "name": "Nom",
+      "phone": "Téléphone",
+      "type": "Type de service"
+    },
+    "button": {
+      "back": "Retour",
+      "cancel": "Annuler le RDV",
+      "update": "Modifier"
+    },
+    "modal": {
+      "confirm": {
+        "title": "Confirmer l'annulation",
+        "message": "Êtes-vous sûr de vouloir annuler ce rendez-vous ?"
+      },
+      "button_confirm": "Confirmer l'annulation"
+    },
+    "success_title": "Rendez-vous annulé avec succès"
+  },
+  "notfound": {
+    "title": "Page non trouvée",
+    "message": "La page que vous recherchez n'existe pas ou a été déplacée. Essayez de rafraîchir ou retournez à l'accueil.",
+    "button": {
+      "home": "Retour à l'accueil",
+      "refresh": "Rafraîchir la page"
+    }
+  },
+  "loading": {
+    "step1": "Chargement...",
+    "step2": "Vérification anti-robot...",
+    "step3": "Détente sur la plage...",
+    "step4": "Consultation avec mon ours en peluche..."
+  }
+}

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Routes, Route } from 'react-router-dom';
 
 // Components & Services
@@ -17,31 +17,59 @@ import ManageAppointment from './components/ManageAppointment';
 import Loading from './components/Loading';
 
 // Contexts & Hooks
-import { useLanguage } from './contexts/LanguageContext';
+import { useLanguage, Language } from './contexts/LanguageContext';
 import { WebsiteConfig } from './models/WebsiteConfig';
 import WebConfigService from './services/WebConfigService';
 import ImagesService from './services/ImagesService';
 import { useTheme } from './hooks/useTheme';
 import { reportError } from './services/ErrorReportingService';
-import { Loader2 } from 'lucide-react';
 
 function MainContent() {
   const [config, setConfig] = useState<WebsiteConfig | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
+  const [isPreview, setIsPreview] = useState<boolean>(false);
+  const isPreviewRef = useRef(false);
   const { setLanguage } = useLanguage();
 
+  // Listen for preview data from a parent window (iframe preview mode)
+  useEffect(() => {
+    const handleMessage = (event: MessageEvent) => {
+      if (event.data?.type === 'PREVIEW_DATA') {
+        isPreviewRef.current = true;
+        const cfg = event.data.config as WebsiteConfig;
+        setConfig(cfg);
+        setIsPreview(true);
+        setLoading(false);
+        setLanguage(cfg.defaultLanguage as Language);
+      }
+    };
+    window.addEventListener('message', handleMessage);
+    return () => window.removeEventListener('message', handleMessage);
+  }, [setLanguage]);
 
-  // 2. Load Config IMMEDIATELY (Public Data)
+  // Load Config from backend (skipped when preview data has already arrived)
   useEffect(() => {
     const loadConfig = async () => {
+      const isInsideIframe = window.self !== window.top;
+
+      // 2. בדיקה: האם יש לי flag של preview ב-URL?
+      const hasPreviewFlag = new URLSearchParams(window.location.search).has('preview');
+
+      // אם אחד מהם נכון, אנחנו עוצרים הכל ומחכים ל-postMessage
+      if (isInsideIframe || hasPreviewFlag || isPreviewRef.current) {
+        console.log("Iframe/Preview detected.");
+        return;
+      }
 
       try {
         const subdomain = window.location.hostname.split('.')[0];
         const result = await WebConfigService.getInstance().getWebConfig(subdomain);
 
+        if (isPreviewRef.current) return;
+
         if (result) {
           setConfig(result);
-          setLanguage(result.defaultLanguage as 'en' | 'he');
+          setLanguage(result.defaultLanguage as Language);
           document.title = result.businessName;
 
           // Helper for SEO Meta Tags
@@ -65,11 +93,11 @@ function MainContent() {
           }
         }
       } catch (err: any) {
-        if (err.status !== 404 && err.response?.status !== 404) {
+        if (!isPreviewRef.current && err.status !== 404 && err.response?.status !== 404 && process.env.NODE_ENV === 'production') {
           reportError({ error: err.message, stack: err.stack });
         }
       } finally {
-        setLoading(false);
+        if (!isPreviewRef.current) setLoading(false);
       }
     };
 
@@ -88,7 +116,7 @@ function MainContent() {
       )}
 
       {config.components?.navbar.visible && (
-        <ErrorBoundary><Navbar websiteConfig={config} /></ErrorBoundary>
+        <ErrorBoundary><Navbar websiteConfig={config} isPreview={isPreview} /></ErrorBoundary>
       )}
 
       {config.components?.hero.visible && (
@@ -98,6 +126,8 @@ function MainContent() {
             social={config.social}
             phone={config.contact.phone}
             isContactVisible={config.components.contact.visible}
+            isPreview={isPreview}
+            palette={config.pallete}
           />
         </ErrorBoundary>
       )}
@@ -123,7 +153,7 @@ function MainContent() {
       {/* --- SENSITIVE SECTION: Turnstile protects the Schedule only --- */}
       {config.components?.schedule && (
         <ErrorBoundary>
-          <div id="booking-section" className="relative min-h-[400px]">
+          <div id="booking-section" className="relative min-h-[25rem]">
             <Schedule
               config={config.components.schedule}
               workingDays={config.workingDays}
@@ -133,6 +163,7 @@ function MainContent() {
               timeToCancel={config.minCancelTimeMS}
               vacations={config.vacations}
               appointmentTypes={config.appointmentTypes}
+              isPreview={isPreview}
             />
           </div>
         </ErrorBoundary>

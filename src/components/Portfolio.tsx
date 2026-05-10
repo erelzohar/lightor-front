@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useLanguage } from '../contexts/LanguageContext';
 import { PortfolioConfig } from '../models/PortfolioConfig';
 import globals from '../services/globals';
+import ImagesService from '../services/ImagesService';
 
 interface PortfolioProps {
   config: PortfolioConfig;
@@ -77,7 +78,7 @@ const Portfolio: React.FC<PortfolioProps> = ({ config }) => {
 
   const slideVariants = {
     enter: (direction: number) => ({
-      x: direction > 0 ? 1000 : -1000,
+      x: direction > 0 ? '100vw' : '-100vw',
       opacity: 0
     }),
     center: {
@@ -87,7 +88,7 @@ const Portfolio: React.FC<PortfolioProps> = ({ config }) => {
     },
     exit: (direction: number) => ({
       zIndex: 0,
-      x: direction < 0 ? 1000 : -1000,
+      x: direction < 0 ? '100vw' : '-100vw',
       opacity: 0
     })
   };
@@ -176,7 +177,7 @@ const Portfolio: React.FC<PortfolioProps> = ({ config }) => {
                   aria-label={`${item.title}: ${item.description}`}
                 >
                   <img
-                    src={globals.imagesUrl + item.url}
+                    src={ImagesService.getInstance().getImage(item.url)}
                     alt={item.title}
                     className="w-full h-full object-contain transition-transform duration-500 group-hover:scale-110"
                   />

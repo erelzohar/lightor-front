@@ -38,11 +38,14 @@ class ErrorBoundaryClass extends Component<ErrorBoundaryProps & { language: 'en'
     this.setState({ error, errorInfo });
 
     // Automatically report the error to the backend
-    reportError({
-      error: error.message || error.toString(),
-      stack: error.stack,
-      componentStack: errorInfo.componentStack || undefined
-    });
+
+    if (process.env.NODE_ENV == 'production'){
+      reportError({
+        error: error.message || error.toString(),
+        stack: error.stack,
+        componentStack: errorInfo.componentStack || undefined
+      });
+    }
   }
 
   render() {
@@ -69,7 +72,7 @@ class ErrorBoundaryClass extends Component<ErrorBoundaryProps & { language: 'en'
     if (hasError) {
       return (
         fallback || (
-          <div className="min-h-[400px] flex items-center justify-center p-8">
+          <div className="min-h-[25rem] flex items-center justify-center p-8">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}

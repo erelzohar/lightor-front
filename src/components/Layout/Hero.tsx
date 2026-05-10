@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Calendar, Phone, Instagram, Facebook } from 'lucide-react';
 import { motion, useAnimation } from 'framer-motion';
 import { useLanguage } from '../../contexts/LanguageContext';
@@ -6,32 +6,155 @@ import { ContactModal } from '../ContactModal';
 import { useContactHandler } from '../../hooks/useContactHandler';
 import { HeroConfig } from '../../models/HeroConfig';
 import { Social } from '../../models/Social';
+import { Palette } from '../../models/WebsiteConfig';
 import globals from '../../services/globals';
+import ImagesService from '../../services/ImagesService';
+
+function hexToRgba(hex: string, alpha: number): string {
+  const clean = hex.replace('#', '');
+  const full = clean.length === 3
+    ? clean.split('').map(c => c + c).join('')
+    : clean;
+  const r = parseInt(full.slice(0, 2), 16);
+  const g = parseInt(full.slice(2, 4), 16);
+  const b = parseInt(full.slice(4, 6), 16);
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+}
+
+function hexToInt(hex: string): number {
+  return parseInt(hex.replace('#', ''), 16);
+}
+
+function buildVantaOptions(type: string, isDark: boolean, palette: Palette | undefined): Record<string, any> {
+  const primary = palette?.colorPrimary ?? '#2563eb';
+  const primaryDark = palette?.colorPrimaryDark ?? '#14b8a6';
+  const lightBg = palette?.colorLightBg ?? '#ffffff';
+  const darkBg = palette?.colorDarkBg ?? '#000000';
+
+  switch (type) {
+    case 'clouds':
+      return isDark
+        ? { skyColor: 0x30a0c, cloudColor: 0x8f99a7, sunColor: 0x8ccaed, sunGlareColor: hexToInt(primaryDark), sunlightColor: 0xcfcf33, speed: 0.5 }
+        : { skyColor: hexToInt(lightBg), cloudColor: 0xd0d8e0, sunColor: hexToInt(primary), sunGlareColor: 0xe34307, speed: 0.5 };
+
+    case 'fog':
+      return isDark
+        ? { highlightColor: hexToInt(primaryDark), midtoneColor: 0xa7a7, baseColor: 0x0, blurFactor: 0.52, speed: 0.5, zoom: 0.5 }
+        : { highlightColor: hexToInt(primary), midtoneColor: hexToInt(primaryDark), blurFactor: 0.52, speed: 0.5, zoom: 0.5 };
+
+    case 'waves':
+      return isDark
+        ? { color: hexToInt(primaryDark), shininess: 69, waveHeight: 18, waveSpeed: 0.4, zoom: 0.76 }
+        : { color: hexToInt(primary), shininess: 69, waveHeight: 18, waveSpeed: 0.4, zoom: 0.76 };
+
+    case 'clouds2':
+      return isDark
+        ? { skyColor: 0x365f72, cloudColor: hexToInt(primaryDark), lightColor: 0x91aecd, speed: 0.5, texturePath: 'https://www.vantajs.com/gallery/noise.png' }
+        : { speed: 0.5, texturePath: 'https://www.vantajs.com/gallery/noise.png' };
+
+    case 'topology':
+      return isDark
+        ? { color: hexToInt(primaryDark), backgroundColor: hexToInt(darkBg) }
+        : { color: hexToInt(primary), backgroundColor: hexToInt(lightBg) };
+
+    case 'trunk':
+      return isDark
+        ? { color: hexToInt(primaryDark), backgroundColor: 0x111111, spacing: 8.5, chaos: 2.0 }
+        : { color: hexToInt(primary), backgroundColor: hexToInt(lightBg), spacing: 8.5, chaos: 2.0 };
+
+    case 'birds':
+      return isDark
+        ? { backgroundColor: hexToInt(darkBg), color1: hexToInt(primaryDark), color2: hexToInt(primary) }
+        : { backgroundColor: hexToInt(lightBg), color1: hexToInt(primary), color2: hexToInt(primaryDark) };
+
+    default:
+      return {};
+  }
+}
 
 interface HeroProps {
   config: HeroConfig;
   social: Social;
   phone: string | null;
   isContactVisible: boolean;
+  isPreview?: boolean;
+  palette?: Palette;
 }
 
-const Hero: React.FC<HeroProps> = ({ config, social, phone, isContactVisible }) => {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const VANTA_IMPORTERS: Record<string, () => Promise<any>> = {
+  clouds:   () => import('vanta/dist/vanta.clouds.min'),
+  fog:      () => import('vanta/dist/vanta.fog.min'),
+  waves:    () => import('vanta/dist/vanta.waves.min'),
+  clouds2:  () => import('vanta/dist/vanta.clouds2.min'),
+  topology: () => import('vanta/dist/vanta.topology.min'),
+  trunk:    () => import('vanta/dist/vanta.trunk.min'),
+  birds:    () => import('vanta/dist/vanta.birds.min'),
+};
+
+const Hero: React.FC<HeroProps> = ({ config, social, phone, isContactVisible, isPreview, palette }) => {
+  const c1 = palette?.colorPrimary ?? '#2563eb';
+  const c2 = palette?.colorPrimaryDark ?? '#14b8a6';
+  const blobColors = [c1, c2, c1];
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
-  // const backgroundControls = useAnimation();
   const { t, language } = useLanguage();
   const { isModalOpen, setIsModalOpen, modalType, handleContactClick } = useContactHandler();
+
+  const vantaRef = useRef<HTMLDivElement>(null);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [vantaEffect, setVantaEffect] = useState<any>(null);
+  const [isDarkMode, setIsDarkMode] = useState(document.documentElement.classList.contains('dark'));
+
+  const bgType = config.bgType ?? 'default';
+  const isVanta = bgType !== 'default';
 
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
       const { clientX, clientY } = e;
-      const moveX = clientX - window.innerWidth / 2;
-      const moveY = clientY - window.innerHeight / 2;
-      setMousePosition({ x: moveX, y: moveY });
+      setMousePosition({ x: clientX - window.innerWidth / 2, y: clientY - window.innerHeight / 2 });
     };
-
     window.addEventListener('mousemove', handleMouseMove);
     return () => window.removeEventListener('mousemove', handleMouseMove);
   }, []);
+
+  useEffect(() => {
+    if (!isVanta) return;
+
+    const observer = new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
+        if (mutation.attributeName === 'class') {
+          const newIsDark = document.documentElement.classList.contains('dark');
+          if (newIsDark !== isDarkMode) {
+            setIsDarkMode(newIsDark);
+            if (vantaEffect) { vantaEffect.destroy(); setVantaEffect(null); }
+          }
+        }
+      });
+    });
+    observer.observe(document.documentElement, { attributes: true });
+
+    const loadVanta = async () => {
+      if (!vantaEffect) {
+        const VANTA = (await VANTA_IMPORTERS[bgType]()).default;
+        setVantaEffect(VANTA({
+          el: vantaRef.current,
+          mouseControls: true,
+          touchControls: true,
+          gyroControls: false,
+          minHeight: 200,
+          minWidth: 200,
+          ...buildVantaOptions(bgType, isDarkMode, palette),
+        }));
+      }
+    };
+
+    loadVanta();
+    return () => {
+      if (vantaEffect) vantaEffect.destroy();
+      observer.disconnect();
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isDarkMode, vantaEffect]);
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -126,103 +249,112 @@ const Hero: React.FC<HeroProps> = ({ config, social, phone, isContactVisible }) 
   return (
     <>
       <section
+        ref={vantaRef}
         id="home"
-        className="min-h-screen relative overflow-hidden"
+        className="min-h-screen relative overflow-hidden bg-light-bg dark:bg-dark-bg transition-colors duration-300"
         aria-label="Welcome to StyleTime"
       >
-        <div
-          className="absolute inset-0 bg-light-bg dark:bg-dark-bg transition-colors duration-300"
-          aria-hidden="true"
-        />
+        {!isVanta && (
+          <div
+            className="absolute inset-0 bg-light-bg dark:bg-dark-bg"
+            aria-hidden="true"
+          />
+        )}
 
-        <div className="absolute inset-0" aria-hidden="true">
-          {Array.from({ length: 3 }).map((_, i) => (
+        {!isVanta && (
+          <>
+            <div className="absolute inset-0" aria-hidden="true">
+              {Array.from({ length: 3 }).map((_, i) => (
+                <motion.div
+                  key={i}
+                  className="absolute inset-0"
+                  initial={{ opacity: 0.5 }}
+                  animate={{
+                    scale: [1, 1.2, 1],
+                    rotate: [0, 180, 0],
+                    opacity: [0.5, 0.7, 0.5],
+                  }}
+                  transition={{
+                    duration: 20 + i * 5,
+                    repeat: Infinity,
+                    delay: i * 5,
+                    ease: "linear",
+                  }}
+                  style={{
+                    background: `radial-gradient(circle at ${50 + i * 25}% ${50 + i * 25}%, ${hexToRgba(blobColors[i], 0.3)} 0%, transparent 50%)`,
+                  }}
+                />
+              ))}
+            </div>
+
             <motion.div
-              key={i}
-              className="absolute inset-0"
-              initial={{ opacity: 0.5 }}
+              className="absolute inset-0 opacity-70"
               animate={{
-                scale: [1, 1.2, 1],
-                rotate: [0, 180, 0],
-                opacity: [0.5, 0.7, 0.5],
+                background: [
+                  `radial-gradient(circle at 0% 0%, ${hexToRgba(c1, 0.6)} 0%, transparent 50%), radial-gradient(circle at 100% 100%, ${hexToRgba(c2, 0.6)} 0%, transparent 50%)`,
+                  `radial-gradient(circle at 100% 0%, ${hexToRgba(c2, 0.6)} 0%, transparent 50%), radial-gradient(circle at 0% 100%, ${hexToRgba(c1, 0.6)} 0%, transparent 50%)`,
+                  `radial-gradient(circle at 50% 50%, ${hexToRgba(c1, 0.6)} 0%, transparent 50%), radial-gradient(circle at 0% 0%, ${hexToRgba(c2, 0.6)} 0%, transparent 50%)`,
+                ],
               }}
               transition={{
-                duration: 20 + i * 5,
+                duration: 20,
                 repeat: Infinity,
-                delay: i * 5,
+                repeatType: "reverse",
                 ease: "linear",
               }}
-              style={{
-                background: `radial-gradient(circle at ${50 + i * 25}% ${50 + i * 25}%, rgba(${i === 0 ? '37, 99, 235' : i === 1 ? '20, 184, 166' : '167, 139, 250'}, 0.3) 0%, transparent 50%)`,
-              }}
+              aria-hidden="true"
             />
-          ))}
-        </div>
 
-        <motion.div
-          className="absolute inset-0 opacity-70"
-          animate={{
-            background: [
-              'radial-gradient(circle at 0% 0%, rgba(37, 99, 235, 0.6) 0%, transparent 50%), radial-gradient(circle at 100% 100%, rgba(20, 184, 166, 0.6) 0%, transparent 50%)',
-              'radial-gradient(circle at 100% 0%, rgba(167, 139, 250, 0.6) 0%, transparent 50%), radial-gradient(circle at 0% 100%, rgba(96, 165, 250, 0.6) 0%, transparent 50%)',
-              'radial-gradient(circle at 50% 50%, rgba(37, 99, 235, 0.6) 0%, transparent 50%), radial-gradient(circle at 0% 0%, rgba(20, 184, 166, 0.6) 0%, transparent 50%)',
-            ],
-          }}
-          transition={{
-            duration: 20,
-            repeat: Infinity,
-            repeatType: "reverse",
-            ease: "linear",
-          }}
-          aria-hidden="true"
-        />
-
-        <motion.div
-          className="absolute inset-0 opacity-0 dark:opacity-60 pointer-events-none"
-          animate={{
-            background: `radial-gradient(circle 600px at ${mousePosition.x + window.innerWidth / 2}px ${mousePosition.y + window.innerHeight / 2}px, rgba(96, 165, 250, 0.25), transparent 60%)`,
-          }}
-          transition={{ type: "spring", damping: 15 }}
-          aria-hidden="true"
-        />
-
-        <div className="absolute inset-0 overflow-hidden pointer-events-none" aria-hidden="true">
-          {particles.map((particle) => (
             <motion.div
-              key={particle.id}
-              className="absolute w-1 h-1 bg-primary/60 dark:bg-primary-dark/40 rounded-full"
-              initial={{
-                x: `${particle.x}%`,
-                y: `${particle.y}%`,
-                opacity: 0,
-              }}
+              className="absolute inset-0 opacity-0 dark:opacity-60 pointer-events-none"
               animate={{
-                x: [
-                  `${particle.x}%`,
-                  `${particle.x + (Math.random() * 10 - 5)}%`,
-                  `${particle.x}%`
-                ],
-                y: [
-                  `${particle.y}%`,
-                  `${particle.y + (Math.random() * 10 - 5)}%`,
-                  `${particle.y}%`
-                ],
-                opacity: [0, 0.8, 0],
+                background: `radial-gradient(circle 40vw at ${mousePosition.x + window.innerWidth / 2}px ${mousePosition.y + window.innerHeight / 2}px, rgba(96, 165, 250, 0.25), transparent 60%)`,
               }}
-              transition={{
-                duration: particle.duration,
-                repeat: Infinity,
-                delay: particle.delay,
-                ease: "linear",
-              }}
-              style={{
-                width: particle.size,
-                height: particle.size,
-                filter: 'blur(0.5px)',
-              }}
+              transition={{ type: "spring", damping: 15 }}
+              aria-hidden="true"
             />
-          ))}
-        </div>
+          </>
+        )}
+
+        {!isVanta && (
+          <div className="absolute inset-0 overflow-hidden pointer-events-none" aria-hidden="true">
+            {particles.map((particle) => (
+              <motion.div
+                key={particle.id}
+                className="absolute w-1 h-1 bg-primary/60 dark:bg-primary-dark/40 rounded-full"
+                initial={{
+                  x: `${particle.x}%`,
+                  y: `${particle.y}%`,
+                  opacity: 0,
+                }}
+                animate={{
+                  x: [
+                    `${particle.x}%`,
+                    `${particle.x + (Math.random() * 10 - 5)}%`,
+                    `${particle.x}%`
+                  ],
+                  y: [
+                    `${particle.y}%`,
+                    `${particle.y + (Math.random() * 10 - 5)}%`,
+                    `${particle.y}%`
+                  ],
+                  opacity: [0, 0.8, 0],
+                }}
+                transition={{
+                  duration: particle.duration,
+                  repeat: Infinity,
+                  delay: particle.delay,
+                  ease: "linear",
+                }}
+                style={{
+                  width: particle.size,
+                  height: particle.size,
+                  filter: 'blur(0.03125rem)',
+                }}
+              />
+            ))}
+          </div>
+        )}
 
         <motion.div
           className="container mx-auto px-4 pt-16 md:pt-32 pb-20 relative"
@@ -334,7 +466,7 @@ const Hero: React.FC<HeroProps> = ({ config, social, phone, isContactVisible }) 
               className="flex-1 relative w-full md:w-auto pt-6 md:pt-0"
               variants={itemVariants}
             >
-              <div className="max-w-[200px] sm:max-w-[220px] md:max-w-none mx-auto">
+              <div className="max-w-[12.5rem] sm:max-w-[13.75rem] md:max-w-none mx-auto">
                 <motion.div
                   className="absolute inset-0 bg-gradient-to-br from-primary/20 to-accent-teal/20 dark:from-primary-dark/10 dark:to-accent-cyan/10 rounded-full blur-3xl"
                   animate={{
@@ -364,7 +496,7 @@ const Hero: React.FC<HeroProps> = ({ config, social, phone, isContactVisible }) 
                   }}
                 >
                   <motion.img
-                    src={globals.imagesUrl + config.heroImageSrc}
+                    src={ImagesService.getInstance().getImage(config.heroImageSrc)}
                     alt="intro"
                     className="relative w-full aspect-square object-cover rounded-full border-4 border-white dark:border-dark-surface shadow-2xl"
                     whileHover={{ scale: 1.02 }}
