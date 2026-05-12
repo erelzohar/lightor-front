@@ -34,6 +34,8 @@ html.dark {
   color-scheme: dark;
 }
 
+/* body::-webkit-scrollbar { display: none; }
+html, body { scrollbar-width: none; -ms-overflow-style: none; } */
 /* Make all text non-selectable by default */
 * {
   -webkit-user-select: none;

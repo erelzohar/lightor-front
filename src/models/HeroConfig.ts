@@ -1,4 +1,5 @@
-export type HeroBgType = 'default' | 'clouds' | 'fog' | 'waves' | 'clouds2' | 'topology' | 'trunk' | 'birds';
+export type HeroBgType = 'gradient' | 'clouds' | 'fog' | 'waves' | 'clouds2' | 'topology' | 'trunk' | 'birds' | 'net';
+export type HeroBordersType = 'round' | 'square';
 
 export class HeroConfig {
   constructor(
@@ -7,7 +8,8 @@ export class HeroConfig {
     public subtitle: string,
     public description: string,
     public heroImageSrc: string,
-    public bgType: HeroBgType
+    public bgType: HeroBgType,
+    public bordersType: HeroBordersType
   ) {}
 
   static fromJSON(json: any): HeroConfig {
@@ -17,7 +19,8 @@ export class HeroConfig {
       json.subtitle,
       json.description,
       json.heroImageSrc,
-      json.bgType ?? 'default'
+      json.bgType ?? 'gradient',
+      json.bordersType ?? 'round'
     );
   }
 }

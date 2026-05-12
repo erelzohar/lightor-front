@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect } from 'react';
+import React, { createContext, useContext, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 
 export type Language = 'en' | 'he' | 'ar' | 'fr' | 'es';
@@ -18,15 +18,15 @@ interface LanguageProviderProps {
 
 export const LanguageProvider: React.FC<LanguageProviderProps> = ({ children, defaultLanguage = 'he' }) => {
   const { t, i18n } = useTranslation();
-  
+
   // Normalize the language code (e.g., "he-IL" -> "he")
   const currentLang = (i18n.language?.split('-')[0] || defaultLanguage) as Language;
 
-  const setLanguage = (lang: Language) => {
+  const setLanguage = useCallback((lang: Language) => {
     if (i18n.language !== lang) {
       i18n.changeLanguage(lang);
     }
-  };
+  }, [i18n]);
 
   // Determine direction based on normalized language
   const isRTL = currentLang === 'he' || currentLang === 'ar';

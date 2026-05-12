@@ -58,6 +58,9 @@ function MainContent() {
       // אם אחד מהם נכון, אנחנו עוצרים הכל ומחכים ל-postMessage
       if (isInsideIframe || hasPreviewFlag || isPreviewRef.current) {
         console.log("Iframe/Preview detected.");
+        const style = document.createElement('style');
+        style.textContent = '::-webkit-scrollbar{display:none}html,body{scrollbar-width:none;-ms-overflow-style:none}';
+        document.head.appendChild(style);
         return;
       }
 

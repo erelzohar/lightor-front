@@ -44,7 +44,7 @@ interface ScheduleProps {
 
 
 const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone, businessName, timeToCancel, vacations, appointmentTypes, isUpdating, appointmentToUpdate, onUpdateComplete, onCancelUpdate, isPreview }) => {
-  if (!appointmentTypes || appointmentTypes.length === 0) {
+  if (!appointmentTypes) {
     throw new Error('No appointment types available');
   }
 

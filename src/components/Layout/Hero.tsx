@@ -1,13 +1,12 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Calendar, Phone, Instagram, Facebook } from 'lucide-react';
-import { motion, useAnimation } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { ContactModal } from '../ContactModal';
 import { useContactHandler } from '../../hooks/useContactHandler';
 import { HeroConfig } from '../../models/HeroConfig';
 import { Social } from '../../models/Social';
 import { Palette } from '../../models/WebsiteConfig';
-import globals from '../../services/globals';
 import ImagesService from '../../services/ImagesService';
 
 function hexToRgba(hex: string, alpha: number): string {
@@ -34,8 +33,8 @@ function buildVantaOptions(type: string, isDark: boolean, palette: Palette | und
   switch (type) {
     case 'clouds':
       return isDark
-        ? { skyColor: 0x30a0c, cloudColor: 0x8f99a7, sunColor: 0x8ccaed, sunGlareColor: hexToInt(primaryDark), sunlightColor: 0xcfcf33, speed: 0.5 }
-        : { skyColor: hexToInt(lightBg), cloudColor: 0xd0d8e0, sunColor: hexToInt(primary), sunGlareColor: 0xe34307, speed: 0.5 };
+        ? { skyColor: hexToInt(darkBg), cloudColor: 0x8f99a7, sunColor: 0x8ccaed, sunGlareColor: hexToInt(primaryDark), sunlightColor: 0xcfcf33, speed: 0.5 }
+        : { skyColor: 0x4e9ebe, cloudColor: 0xd0d8e0, sunColor: hexToInt(primary), sunGlareColor: primaryDark, speed: 0.5 };
 
     case 'fog':
       return isDark
@@ -44,13 +43,13 @@ function buildVantaOptions(type: string, isDark: boolean, palette: Palette | und
 
     case 'waves':
       return isDark
-        ? { color: hexToInt(primaryDark), shininess: 69, waveHeight: 18, waveSpeed: 0.4, zoom: 0.76 }
-        : { color: hexToInt(primary), shininess: 69, waveHeight: 18, waveSpeed: 0.4, zoom: 0.76 };
+        ? { color: hexToInt(primary), shininess: 150, waveHeight: 50, waveSpeed: 0.5, zoom: 2 }
+        : { color: hexToInt(primary+"0"), shininess: 150, waveHeight: 50, waveSpeed: 0.5, zoom: 2 };
 
     case 'clouds2':
       return isDark
-        ? { skyColor: 0x365f72, cloudColor: hexToInt(primaryDark), lightColor: 0x91aecd, speed: 0.5, texturePath: 'https://www.vantajs.com/gallery/noise.png' }
-        : { speed: 0.5, texturePath: 'https://www.vantajs.com/gallery/noise.png' };
+        ? { skyColor: hexToInt(darkBg), cloudColor: hexToInt(primaryDark), lightColor: 0x91aecd, speed: 0.5, texturePath: '/noise.png' }
+        : { skyColor: hexToInt(lightBg),cloudColor: hexToInt(primary), speed: 0.5, texturePath: '/noise.png' };
 
     case 'topology':
       return isDark
@@ -66,6 +65,11 @@ function buildVantaOptions(type: string, isDark: boolean, palette: Palette | und
       return isDark
         ? { backgroundColor: hexToInt(darkBg), color1: hexToInt(primaryDark), color2: hexToInt(primary) }
         : { backgroundColor: hexToInt(lightBg), color1: hexToInt(primary), color2: hexToInt(primaryDark) };
+
+    case 'net':
+      return isDark
+        ? { color: hexToInt(primaryDark), backgroundColor: hexToInt(darkBg), points: 13.00, maxDistance: 23.00, spacing: 17.00, scale: 1.00, scaleMobile: 1.00 }
+        : { color: hexToInt(primary), backgroundColor: hexToInt(lightBg), points: 13.00, maxDistance: 23.00, spacing: 17.00, scale: 1.00, scaleMobile: 1.00 };
 
     default:
       return {};
@@ -83,13 +87,14 @@ interface HeroProps {
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const VANTA_IMPORTERS: Record<string, () => Promise<any>> = {
-  clouds:   () => import('vanta/dist/vanta.clouds.min'),
-  fog:      () => import('vanta/dist/vanta.fog.min'),
-  waves:    () => import('vanta/dist/vanta.waves.min'),
-  clouds2:  () => import('vanta/dist/vanta.clouds2.min'),
+  clouds: () => import('vanta/dist/vanta.clouds.min'),
+  fog: () => import('vanta/dist/vanta.fog.min'),
+  waves: () => import('vanta/dist/vanta.waves.min'),
+  clouds2: () => import('vanta/dist/vanta.clouds2.min'),
   topology: () => import('vanta/dist/vanta.topology.min'),
-  trunk:    () => import('vanta/dist/vanta.trunk.min'),
-  birds:    () => import('vanta/dist/vanta.birds.min'),
+  trunk: () => import('vanta/dist/vanta.trunk.min'),
+  birds: () => import('vanta/dist/vanta.birds.min'),
+  net: () => import('vanta/dist/vanta.net.min'),
 };
 
 const Hero: React.FC<HeroProps> = ({ config, social, phone, isContactVisible, isPreview, palette }) => {
@@ -105,8 +110,11 @@ const Hero: React.FC<HeroProps> = ({ config, social, phone, isContactVisible, is
   const [vantaEffect, setVantaEffect] = useState<any>(null);
   const [isDarkMode, setIsDarkMode] = useState(document.documentElement.classList.contains('dark'));
 
-  const bgType = config.bgType ?? 'default';
-  const isVanta = bgType !== 'default';
+  const bgType = config.bgType ?? 'gradient';
+  const isVanta = bgType !== 'gradient';
+  const isRound = (config.bordersType ?? 'round') === 'round';
+  const btnRadius = isRound ? 'rounded-full' : 'rounded-3xl';
+  const imgRadius = isRound ? 'rounded-full' : 'rounded-3xl';
 
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
@@ -153,7 +161,7 @@ const Hero: React.FC<HeroProps> = ({ config, social, phone, isContactVisible, is
       if (vantaEffect) vantaEffect.destroy();
       observer.disconnect();
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isDarkMode, vantaEffect]);
 
   const containerVariants = {
@@ -357,17 +365,17 @@ const Hero: React.FC<HeroProps> = ({ config, social, phone, isContactVisible, is
         )}
 
         <motion.div
-          className="container mx-auto px-4 pt-16 md:pt-32 pb-20 relative"
+          className="container mx-auto px-4 pt-16 md:pt-20 lg:pt-32 pb-20 relative"
           initial="hidden"
           animate="visible"
           variants={containerVariants}
         >
-          <div className="flex flex-col-reverse md:flex-row items-center justify-between gap-12">
+          <div className="flex flex-col-reverse md:flex-row items-center justify-between gap-6 lg:gap-12">
             <motion.div className="flex-1 text-center md:text-right" variants={containerVariants}>
               {/* Desktop content */}
               <div className="hidden md:block">
                 <motion.h1
-                  className="text-5xl md:text-7xl font-bold text-light-text dark:text-dark-text mb-8 leading-tight"
+                  className="text-5xl md:text-7xl font-bold text-light-text dark:text-dark-text mb-4 lg:mb-8 leading-tight"
                   variants={itemVariants}
                 >
                   {config.title}
@@ -375,7 +383,7 @@ const Hero: React.FC<HeroProps> = ({ config, social, phone, isContactVisible, is
                 </motion.h1>
 
                 <motion.p
-                  className="text-xl text-light-text/80 dark:text-dark-text/80 mb-12 max-w-2xl md:me-0 md:ms-auto"
+                  className={`text-xl text-light-text/80 dark:text-dark-text/80 mb-6 lg:mb-12 max-w-2xl ${language === 'he' || language === 'ar' ? 'md:me-0 md:ms-auto md:text-right' : 'md:ms-0 md:me-auto md:text-left'}`}
                   variants={itemVariants}
                 >
                   {config.description}
@@ -389,7 +397,7 @@ const Hero: React.FC<HeroProps> = ({ config, social, phone, isContactVisible, is
                 >
                   <motion.a
                     href="#schedule"
-                    className="group relative inline-flex items-center justify-center px-8 py-4 bg-primary dark:bg-primary-dark text-white dark:text-dark-surface rounded-full shadow-lg hover:shadow-xl overflow-hidden"
+                    className={`group relative inline-flex items-center justify-center px-8 py-4 bg-primary dark:bg-primary-dark text-white dark:text-dark-surface ${btnRadius} shadow-lg hover:shadow-xl overflow-hidden`}
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
                     role="button"
@@ -425,7 +433,7 @@ const Hero: React.FC<HeroProps> = ({ config, social, phone, isContactVisible, is
                       aria-hidden="true"
                     />
 
-                    <span className="relative flex items-center justify-center gap-2">
+                    <span className="relative text-center flex items-center justify-center gap-2">
                       <span>{t('hero.book')}</span>
                       <motion.div
                         initial="initial"
@@ -450,7 +458,7 @@ const Hero: React.FC<HeroProps> = ({ config, social, phone, isContactVisible, is
 
                   {isContactVisible && <motion.a
                     href="#contact"
-                    className="inline-flex items-center justify-center px-8 py-4 bg-light-surface dark:bg-dark-surface border-2 border-primary dark:border-primary-dark text-primary dark:text-primary-dark rounded-full hover:bg-primary/5 dark:hover:bg-primary-dark/5 transition-colors shadow-lg hover:shadow-xl"
+                    className={`inline-flex text-center items-center justify-center px-8 py-4 bg-light-surface dark:bg-dark-surface border-2 border-primary dark:border-primary-dark text-primary dark:text-primary-dark ${btnRadius} hover:bg-primary/5 dark:hover:bg-primary-dark/5 transition-colors shadow-lg hover:shadow-xl`}
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
                     role="button"
@@ -498,7 +506,7 @@ const Hero: React.FC<HeroProps> = ({ config, social, phone, isContactVisible, is
                   <motion.img
                     src={ImagesService.getInstance().getImage(config.heroImageSrc)}
                     alt="intro"
-                    className="relative w-full aspect-square object-cover rounded-full border-4 border-white dark:border-dark-surface shadow-2xl"
+                    className={`relative w-full aspect-square object-cover ${imgRadius} border-4 border-white dark:border-dark-surface shadow-2xl`}
                     whileHover={{ scale: 1.02 }}
                     transition={{ type: "spring", stiffness: 300 }}
                   />
@@ -526,7 +534,7 @@ const Hero: React.FC<HeroProps> = ({ config, social, phone, isContactVisible, is
 
                 <motion.a
                   href="#schedule"
-                  className="group relative inline-flex items-center justify-center w-full px-8 py-4 bg-primary dark:bg-primary-dark text-white dark:text-dark-surface rounded-full shadow-lg hover:shadow-xl overflow-hidden"
+                  className={`group relative inline-flex items-center justify-center w-full px-8 py-4 bg-primary dark:bg-primary-dark text-white dark:text-dark-surface ${btnRadius} shadow-lg hover:shadow-xl overflow-hidden`}
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                   role="button"
