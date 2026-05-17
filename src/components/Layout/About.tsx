@@ -242,6 +242,7 @@ const About: React.FC<AboutProps> = ({ config, websiteConfig }) => {
                     {feature.icon === 'Heart' && <Heart className="h-8 w-8 text-primary dark:text-primary-dark" />}
                     {feature.icon === 'Sparkles' && <Sparkles className="h-8 w-8 text-primary dark:text-primary-dark" />}
                     {feature.icon === 'Hand' && <Hand className="h-8 w-8 text-primary dark:text-primary-dark" />}
+                    {feature.icon === 'Clock' && <Clock className="h-8 w-8 text-primary dark:text-primary-dark" />}
                   </div>
                   <h3 className="text-xl font-semibold mb-4 text-light-text dark:text-dark-text text-center">{feature.title}</h3>
                   <p className="text-light-text/80 dark:text-dark-text/80 text-center flex-grow">{feature.description}</p>
