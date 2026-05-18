@@ -126,8 +126,8 @@ const Navbar: React.FC<NavbarProps> = ({ websiteConfig, isPreview }) => {
   return (
     <nav
       className={`fixed top-4 left-4 right-4 z-50 rounded-2xl mx-auto max-w-7xl transition-all duration-300 transform ${isScrolled || isOpen
-          ? 'bg-white/90 dark:bg-dark-surface/90 backdrop-blur-md shadow-lg'
-          : 'bg-transparent'
+        ? 'bg-white/90 dark:bg-dark-surface/90 backdrop-blur-md shadow-lg'
+        : 'bg-transparent'
         } ${isVisible ? 'translate-y-0' : '-translate-y-full'
         }`}
     >
@@ -139,7 +139,11 @@ const Navbar: React.FC<NavbarProps> = ({ websiteConfig, isPreview }) => {
             aria-label={t('nav.home')}
           >
             <img
-              src={ImagesService.getInstance().getImage(websiteConfig.logoImageName)} 
+              src={ImagesService.getInstance().getImage(websiteConfig.logoImageName)}
+              onError={(e) => {
+                e.currentTarget.onerror = null; // Prevent infinite loop
+                e.currentTarget.src = "/lightor.png";
+              }}
               // src={isPreview && websiteConfig.logoImageName?.startsWith('blob:') ? websiteConfig.logoImageName : globals.imagesUrl + websiteConfig.logoImageName}
               alt="Logo"
               className="h-12 w-12 rounded-full object-cover flex-shrink-0"
@@ -167,8 +171,8 @@ const Navbar: React.FC<NavbarProps> = ({ websiteConfig, isPreview }) => {
               <button
                 onClick={toggleDarkMode}
                 className={`p-2 rounded-full transition-colors ${isScrolled
-                    ? 'bg-light-gray dark:bg-dark-surface hover:bg-primary/10 dark:hover:bg-primary-dark/10'
-                    : 'bg-black/5 dark:bg-white/10 hover:bg-black/10 dark:hover:bg-white/20'
+                  ? 'bg-light-gray dark:bg-dark-surface hover:bg-primary/10 dark:hover:bg-primary-dark/10'
+                  : 'bg-black/5 dark:bg-white/10 hover:bg-black/10 dark:hover:bg-white/20'
                   }`}
                 aria-label={t('common.toggle_dark_mode', { defaultValue: 'Toggle dark mode' })}
               >
@@ -199,8 +203,8 @@ const Navbar: React.FC<NavbarProps> = ({ websiteConfig, isPreview }) => {
         <div
           ref={mobileMenuRef}
           className={`md:hidden overflow-hidden transition-all duration-300 ${isOpen
-              ? 'max-h-[25rem] opacity-100 visible pt-4 pb-6'
-              : 'max-h-0 opacity-0 invisible'
+            ? 'max-h-[25rem] opacity-100 visible pt-4 pb-6'
+            : 'max-h-0 opacity-0 invisible'
             }`}
         >
           {menuItems.map((item) => (
@@ -221,8 +225,8 @@ const Navbar: React.FC<NavbarProps> = ({ websiteConfig, isPreview }) => {
               <button
                 onClick={toggleDarkMode}
                 className={`p-2 rounded-full transition-colors ${isScrolled
-                    ? 'bg-light-gray dark:bg-dark-surface hover:bg-primary/10 dark:hover:bg-primary-dark/10'
-                    : 'bg-black/5 dark:bg-white/10 hover:bg-black/10 dark:hover:bg-white/20'
+                  ? 'bg-light-gray dark:bg-dark-surface hover:bg-primary/10 dark:hover:bg-primary-dark/10'
+                  : 'bg-black/5 dark:bg-white/10 hover:bg-black/10 dark:hover:bg-white/20'
                   }`}
                 aria-label={t('common.toggle_dark_mode', { defaultValue: 'Toggle dark mode' })}
               >

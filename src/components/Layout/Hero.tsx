@@ -40,16 +40,10 @@ function buildVantaOptions(type: string, isDark: boolean, palette: Palette | und
       return isDark
         ? { highlightColor: hexToInt(primaryDark), midtoneColor: 0xa7a7, baseColor: 0x0, blurFactor: 0.52, speed: 0.5, zoom: 0.5 }
         : { highlightColor: hexToInt(primary), midtoneColor: hexToInt(primaryDark), blurFactor: 0.52, speed: 0.5, zoom: 0.5 };
-
-    case 'waves':
-      return isDark
-        ? { color: hexToInt(primary), shininess: 150, waveHeight: 50, waveSpeed: 0.5, zoom: 2 }
-        : { color: hexToInt(primary+"0"), shininess: 150, waveHeight: 50, waveSpeed: 0.5, zoom: 2 };
-
     case 'clouds2':
       return isDark
         ? { skyColor: hexToInt(darkBg), cloudColor: hexToInt(primaryDark), lightColor: 0x91aecd, speed: 0.5, texturePath: '/noise.png' }
-        : { skyColor: hexToInt(lightBg),cloudColor: hexToInt(primary), speed: 0.5, texturePath: '/noise.png' };
+        : { skyColor: hexToInt(lightBg), cloudColor: hexToInt(primary), speed: 0.5, texturePath: '/noise.png' };
 
     case 'topology':
       return isDark
@@ -89,7 +83,6 @@ interface HeroProps {
 const VANTA_IMPORTERS: Record<string, () => Promise<any>> = {
   clouds: () => import('vanta/dist/vanta.clouds.min'),
   fog: () => import('vanta/dist/vanta.fog.min'),
-  waves: () => import('vanta/dist/vanta.waves.min'),
   clouds2: () => import('vanta/dist/vanta.clouds2.min'),
   topology: () => import('vanta/dist/vanta.topology.min'),
   trunk: () => import('vanta/dist/vanta.trunk.min'),
@@ -506,6 +499,10 @@ const Hero: React.FC<HeroProps> = ({ config, social, phone, isContactVisible, is
                   <motion.img
                     src={ImagesService.getInstance().getImage(config.heroImageSrc)}
                     alt="intro"
+                    onError={(e) => {
+                      e.currentTarget.onerror = null; // Prevent infinite loop
+                      e.currentTarget.src = "/lightor.png";
+                    }}
                     className={`relative w-full aspect-square object-cover ${imgRadius} border-4 border-white dark:border-dark-surface shadow-2xl`}
                     whileHover={{ scale: 1.02 }}
                     transition={{ type: "spring", stiffness: 300 }}
