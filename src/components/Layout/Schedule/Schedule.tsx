@@ -44,9 +44,9 @@ interface ScheduleProps {
 
 
 const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone, businessName, timeToCancel, vacations, appointmentTypes, isUpdating, appointmentToUpdate, onUpdateComplete, onCancelUpdate, isPreview }) => {
-  if (!appointmentTypes) {
-    throw new Error('No appointment types available');
-  }
+  // if (!appointmentTypes) {
+  //   throw new Error('No appointment types available');
+  // }
 
   const [isAuthorized, setIsAuthorized] = useState<boolean>(!!isPreview);
   const handshakeInProgress = useRef(false);

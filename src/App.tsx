@@ -37,6 +37,8 @@ function MainContent() {
       if (event.data?.type === 'PREVIEW_DATA') {
         isPreviewRef.current = true;
         const cfg = event.data.config as WebsiteConfig;
+        console.log(cfg);
+
         setConfig(cfg);
         setIsPreview(true);
         setLoading(false);
@@ -44,7 +46,27 @@ function MainContent() {
       }
     };
     window.addEventListener('message', handleMessage);
-    return () => window.removeEventListener('message', handleMessage);
+
+    // Safety valve: if we are inside an iframe and the parent never sends
+    // PREVIEW_DATA (message lost in a race, or X-Frame-Options blocked
+    // embedding), stop the infinite loading spinner after 6 seconds so the
+    // user sees something useful instead of spinning forever.
+    const isInsideIframe = window.self !== window.top;
+    const hasPreviewFlag = new URLSearchParams(window.location.search).has('preview');
+    let fallbackTimer: ReturnType<typeof setTimeout> | undefined;
+    if (isInsideIframe || hasPreviewFlag) {
+      fallbackTimer = setTimeout(() => {
+        if (!isPreviewRef.current) {
+          console.warn('[lightor-front] PREVIEW_DATA not received within 6 s — releasing loading state.');
+          setLoading(false);
+        }
+      }, 6000);
+    }
+
+    return () => {
+      window.removeEventListener('message', handleMessage);
+      clearTimeout(fallbackTimer);
+    };
   }, [setLanguage]);
 
   // Load Config from backend (skipped when preview data has already arrived)
@@ -59,6 +81,8 @@ function MainContent() {
       if (isInsideIframe || hasPreviewFlag || isPreviewRef.current) {
         console.log("Iframe/Preview detected.");
         const style = document.createElement('style');
+        console.log(style);
+        
         style.textContent = '::-webkit-scrollbar{display:none}html,body{scrollbar-width:none;-ms-overflow-style:none}';
         document.head.appendChild(style);
         return;
