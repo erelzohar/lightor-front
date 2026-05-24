@@ -31,18 +31,25 @@ function MainContent() {
   const isPreviewRef = useRef(false);
   const { setLanguage } = useLanguage();
 
-  // Listen for preview data from a parent window (iframe preview mode)
+  // Keep a stable ref to setLanguage so the message listener never needs to
+  // re-register when the context returns a new function reference.
+  const setLanguageRef = useRef(setLanguage);
+  useEffect(() => { setLanguageRef.current = setLanguage; }, [setLanguage]);
+
+  // Listen for preview data from a parent window (iframe preview mode).
+  // Empty deps: register once on mount and never tear down mid-session.
+  // Using setLanguageRef avoids stale closures without causing re-registration,
+  // which was the root cause of dropped postMessages (listener was briefly
+  // absent right after each setLanguage call triggered effect cleanup).
   useEffect(() => {
     const handleMessage = (event: MessageEvent) => {
       if (event.data?.type === 'PREVIEW_DATA') {
         isPreviewRef.current = true;
         const cfg = event.data.config as WebsiteConfig;
-        console.log(cfg);
-
         setConfig(cfg);
         setIsPreview(true);
         setLoading(false);
-        setLanguage(cfg.defaultLanguage as Language);
+        setLanguageRef.current(cfg.defaultLanguage as Language);
       }
     };
     window.addEventListener('message', handleMessage);
@@ -67,7 +74,8 @@ function MainContent() {
       window.removeEventListener('message', handleMessage);
       clearTimeout(fallbackTimer);
     };
-  }, [setLanguage]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Load Config from backend (skipped when preview data has already arrived)
   useEffect(() => {
@@ -129,7 +137,8 @@ function MainContent() {
     };
 
     loadConfig();
-  }, [setLanguage]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useTheme(config);
 

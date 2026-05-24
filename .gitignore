@@ -24,4 +24,5 @@ dist-ssr
 *.sw?
 .agents/*
 .claude/*
+src/test/
 *.sh

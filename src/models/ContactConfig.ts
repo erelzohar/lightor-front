@@ -7,6 +7,7 @@ export class ContactConfig {
 
   static fromJSON(json: any): ContactConfig {
     return new ContactConfig(
+      json.visible,
       json.title,
       json.description
     );

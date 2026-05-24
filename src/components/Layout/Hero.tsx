@@ -99,8 +99,9 @@ const Hero: React.FC<HeroProps> = ({ config, social, phone, isContactVisible, is
   const { isModalOpen, setIsModalOpen, modalType, handleContactClick } = useContactHandler();
 
   const vantaRef = useRef<HTMLDivElement>(null);
+  // Use a ref (not state) so Vanta destroy/recreate never triggers extra renders.
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [vantaEffect, setVantaEffect] = useState<any>(null);
+  const vantaInstanceRef = useRef<any>(null);
   const [isDarkMode, setIsDarkMode] = useState(document.documentElement.classList.contains('dark'));
 
   const bgType = config.bgType ?? 'gradient';
@@ -108,6 +109,17 @@ const Hero: React.FC<HeroProps> = ({ config, social, phone, isContactVisible, is
   const isRound = (config.bordersType ?? 'round') === 'round';
   const btnRadius = isRound ? 'rounded-full' : 'rounded-3xl';
   const imgRadius = isRound ? 'rounded-full' : 'rounded-3xl';
+
+  // Stable string key — changes only when something that visually affects Vanta changes.
+  // Adding this as a single dep means we recreate the canvas exactly when needed.
+  const vantaKey = [
+    bgType,
+    isDarkMode ? 'dark' : 'light',
+    palette?.colorPrimary       ?? '',
+    palette?.colorPrimaryDark   ?? '',
+    palette?.colorLightBg       ?? '',
+    palette?.colorDarkBg        ?? '',
+  ].join('|');
 
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
@@ -118,44 +130,52 @@ const Hero: React.FC<HeroProps> = ({ config, social, phone, isContactVisible, is
     return () => window.removeEventListener('mousemove', handleMouseMove);
   }, []);
 
+  // Watch dark-mode class changes and update isDarkMode state (drives vantaKey).
   useEffect(() => {
     if (!isVanta) return;
+    const observer = new MutationObserver(() => {
+      setIsDarkMode(document.documentElement.classList.contains('dark'));
+    });
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+    return () => observer.disconnect();
+  }, [isVanta]);
 
-    const observer = new MutationObserver((mutations) => {
-      mutations.forEach((mutation) => {
-        if (mutation.attributeName === 'class') {
-          const newIsDark = document.documentElement.classList.contains('dark');
-          if (newIsDark !== isDarkMode) {
-            setIsDarkMode(newIsDark);
-            if (vantaEffect) { vantaEffect.destroy(); setVantaEffect(null); }
-          }
-        }
+  // Recreate the Vanta canvas whenever vantaKey changes (palette, bgType, dark mode).
+  useEffect(() => {
+    if (!isVanta || !vantaRef.current) return;
+
+    // Destroy the previous instance first (sync, before the async import).
+    if (vantaInstanceRef.current) {
+      vantaInstanceRef.current.destroy();
+      vantaInstanceRef.current = null;
+    }
+
+    let cancelled = false;
+
+    VANTA_IMPORTERS[bgType]().then((mod) => {
+      if (cancelled || !vantaRef.current) return;
+      vantaInstanceRef.current = mod.default({
+        el: vantaRef.current,
+        mouseControls: true,
+        touchControls: true,
+        gyroControls: false,
+        minHeight: 200,
+        minWidth: 200,
+        ...buildVantaOptions(bgType, isDarkMode, palette),
       });
     });
-    observer.observe(document.documentElement, { attributes: true });
 
-    const loadVanta = async () => {
-      if (!vantaEffect) {
-        const VANTA = (await VANTA_IMPORTERS[bgType]()).default;
-        setVantaEffect(VANTA({
-          el: vantaRef.current,
-          mouseControls: true,
-          touchControls: true,
-          gyroControls: false,
-          minHeight: 200,
-          minWidth: 200,
-          ...buildVantaOptions(bgType, isDarkMode, palette),
-        }));
+    return () => {
+      cancelled = true;
+      if (vantaInstanceRef.current) {
+        vantaInstanceRef.current.destroy();
+        vantaInstanceRef.current = null;
       }
     };
-
-    loadVanta();
-    return () => {
-      if (vantaEffect) vantaEffect.destroy();
-      observer.disconnect();
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isDarkMode, vantaEffect]);
+  // vantaKey encodes all the values we care about; palette/isDarkMode are intentionally omitted
+  // from the dep array to avoid object-reference churn — they're captured via the key string.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [vantaKey]);
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -503,7 +523,7 @@ const Hero: React.FC<HeroProps> = ({ config, social, phone, isContactVisible, is
                       e.currentTarget.onerror = null; // Prevent infinite loop
                       e.currentTarget.src = "/lightor.png";
                     }}
-                    className={`relative w-full aspect-square object-cover ${imgRadius} border-4 border-white dark:border-dark-surface shadow-2xl`}
+                    className={`relative w-full aspect-square object-cover ${imgRadius} shadow-2xl`}
                     whileHover={{ scale: 1.02 }}
                     transition={{ type: "spring", stiffness: 300 }}
                   />
