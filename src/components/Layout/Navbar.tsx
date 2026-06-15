@@ -18,6 +18,10 @@ interface WebsiteConfig {
     portfolio: { visible: boolean };
     contact: { visible: boolean };
   };
+  design?: {
+    navbarStyle?: 'floating' | 'solid' | 'transparent';
+    borderRadius?: string;
+  };
 }
 
 interface NavbarProps {
@@ -120,17 +124,26 @@ const Navbar: React.FC<NavbarProps> = ({ websiteConfig, isPreview }) => {
   ].filter(item => item.visible === undefined || item.visible);
 
   const { visible, darkMode: showDarkMode, languageSwitcher } = websiteConfig.components.navbar;
+  const navbarStyle = websiteConfig.design?.navbarStyle ?? 'floating';
 
   if (!visible) return null;
 
+  const navClassName = (() => {
+    const visibility = isVisible ? 'translate-y-0' : '-translate-y-full';
+    if (navbarStyle === 'solid') {
+      return `fixed top-0 left-0 right-0 z-50 transition-all duration-300 transform bg-white/95 dark:bg-dark-surface/95 backdrop-blur-md shadow-md ${visibility}`;
+    }
+    if (navbarStyle === 'transparent') {
+      return `fixed top-0 left-0 right-0 z-50 transition-all duration-300 transform ${visibility}`;
+    }
+    // floating (default)
+    return `fixed top-4 left-4 right-4 z-50 rounded-2xl mx-auto max-w-7xl transition-all duration-300 transform ${
+      isScrolled || isOpen ? 'bg-white/90 dark:bg-dark-surface/90 backdrop-blur-md shadow-lg' : 'bg-transparent'
+    } ${visibility}`;
+  })();
+
   return (
-    <nav
-      className={`fixed top-4 left-4 right-4 z-50 rounded-2xl mx-auto max-w-7xl transition-all duration-300 transform ${isScrolled || isOpen
-        ? 'bg-white/90 dark:bg-dark-surface/90 backdrop-blur-md shadow-lg'
-        : 'bg-transparent'
-        } ${isVisible ? 'translate-y-0' : '-translate-y-full'
-        }`}
-    >
+    <nav className={navClassName}>
       <div className="px-4 py-3">
         <div className="flex items-center justify-between">
           <button

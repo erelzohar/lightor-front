@@ -97,7 +97,7 @@ const Portfolio: React.FC<PortfolioProps> = ({ config }) => {
   return (
     <section
       id="portfolio"
-      className="py-32 bg-gradient-to-b from-light-surface to-light-bg dark:from-dark-surface dark:to-dark-bg transition-colors duration-300"
+      className="section-y bg-light-bg dark:bg-dark-bg transition-colors duration-300"
       aria-label={t('nav.portfolio')}
     >
       <motion.div

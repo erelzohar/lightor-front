@@ -256,7 +256,7 @@ const Contact: React.FC<ContactProps> = ({ config, address, contact, workingDays
     <>
       <section
         id="contact"
-        className="py-32 bg-gradient-to-b from-light-surface to-light-bg dark:from-dark-surface dark:to-dark-bg transition-colors duration-300 relative overflow-hidden"
+        className="section-y bg-light-bg dark:bg-dark-bg transition-colors duration-300 relative overflow-hidden"
         aria-label="Contact us"
       >
         <motion.div
@@ -340,7 +340,7 @@ const Contact: React.FC<ContactProps> = ({ config, address, contact, workingDays
               </div>
 
               <motion.div
-                className="mt-12 p-6 bg-light-surface dark:bg-dark-surface rounded-3xl shadow-lg border-2 border-primary/10 dark:border-primary-dark/10"
+                className="card-design mt-12 p-6"
                 variants={itemVariants}
               >
                 <h4 className="font-semibold text-lg mb-4 text-light-text dark:text-dark-text">
@@ -359,7 +359,7 @@ const Contact: React.FC<ContactProps> = ({ config, address, contact, workingDays
             <motion.div variants={containerVariants}>
               <motion.form
                 onSubmit={handleSubmit}
-                className="space-y-6 bg-light-surface dark:bg-dark-surface p-8 rounded-3xl shadow-xl border-2 border-primary/10 dark:border-primary-dark/10"
+                className="card-design space-y-6 p-8"
                 variants={itemVariants}
                 aria-labelledby="contact-form-title"
               >

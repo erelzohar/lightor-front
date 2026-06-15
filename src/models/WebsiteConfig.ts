@@ -6,6 +6,7 @@ import { ScheduleConfig } from './ScheduleConfig';
 import { ContactConfig } from './ContactConfig';
 import { Vacation } from './Vacation';
 import { AppointmentType } from './AppointmentType';
+import { DesignConfig } from './DesignConfig';
 
 export class Address {
   constructor(
@@ -155,10 +156,11 @@ export class WebsiteConfig {
     public contact: Contact,
     public social: Social,
     public pallete: Palette,
-    public components: Components
+    public components: Components,
+    public design: DesignConfig
   ) {}
 
-  static fromJSON(json: any): WebsiteConfig {    
+  static fromJSON(json: any): WebsiteConfig {
     return new WebsiteConfig(
       json.user_id,
       json.businessName,
@@ -174,7 +176,8 @@ export class WebsiteConfig {
       Contact.fromJSON(json.contact),
       Social.fromJSON(json.social),
       Palette.fromJSON(json.pallete),
-      Components.fromJSON(json.components)
+      Components.fromJSON(json.components),
+      DesignConfig.fromJSON(json.design)
     );
   }
 }

@@ -27,6 +27,14 @@ export default {
         sans: ['Inter', 'sans-serif'],
         heading: ['Raleway', 'sans-serif'],
       },
+      borderRadius: {
+        'design': 'var(--radius)',
+        'design-sm': 'calc(var(--radius) / 2)',
+        'design-lg': 'calc(var(--radius) * 1.5)',
+      },
+      boxShadow: {
+        'card': 'var(--card-shadow)',
+      },
     },
   },
   plugins: [],

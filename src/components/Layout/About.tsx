@@ -187,7 +187,7 @@ const About: React.FC<AboutProps> = ({ config, websiteConfig }) => {
 
   return (
     <>
-      <section id="about" className="py-32 bg-gradient-to-b from-light-bg to-light-surface dark:from-dark-bg dark:to-dark-surface transition-colors duration-300">
+      <section id="about" className="section-y bg-light-surface dark:bg-dark-surface transition-colors duration-300">
         <motion.div
           className="container mx-auto px-4"
           initial="hidden"
@@ -225,8 +225,8 @@ const About: React.FC<AboutProps> = ({ config, websiteConfig }) => {
                 whileHover={{ scale: 1.05 }}
                 transition={{ type: "spring", stiffness: 300 }}
               >
-                <div className="absolute inset-0 bg-primary/10 dark:bg-primary-dark/10 rounded-2xl transform -rotate-6 group-hover:rotate-0 transition-transform"></div>
-                <div className="relative bg-light-surface dark:bg-dark-surface p-8 rounded-2xl shadow-lg h-full flex flex-col">
+                <div className="absolute inset-0 bg-primary/10 dark:bg-primary-dark/10 rounded-design transform -rotate-6 group-hover:rotate-0 transition-transform"></div>
+                <div className="card-design relative p-8 h-full flex flex-col">
                   <div className="w-16 h-16 mx-auto mb-6 bg-primary/10 dark:bg-primary-dark/10 rounded-2xl flex items-center justify-center transform group-hover:scale-110 transition-transform">
                     {feature.icon === 'Star' && <Star className="h-8 w-8 text-primary dark:text-primary-dark" />}
                     {feature.icon === 'Award' && <Award className="h-8 w-8 text-primary dark:text-primary-dark" />}
@@ -255,7 +255,7 @@ const About: React.FC<AboutProps> = ({ config, websiteConfig }) => {
             className="relative"
             variants={itemVariants}
           >
-            <div className="relative bg-light-surface dark:bg-dark-surface rounded-3xl shadow-2xl p-12 backdrop-blur-lg">
+            <div className="card-design relative p-12">
               <h3 className="text-3xl font-bold text-center mb-12 text-light-text dark:text-dark-text">
                 {t('about.visit')}
                 <div className="w-20 h-1 bg-primary dark:bg-primary-dark mx-auto mt-4"></div>
@@ -269,7 +269,7 @@ const About: React.FC<AboutProps> = ({ config, websiteConfig }) => {
                     variants={itemVariants}
                   >
                     <motion.div
-                      className="h-full p-6 rounded-2xl bg-light-surface dark:bg-dark-surface border-2 border-primary/10 dark:border-primary-dark/10 shadow-lg flex flex-col items-center text-center"
+                      className="card-design h-full p-6 flex flex-col items-center text-center"
                       whileHover={{
                         y: -5,
                         transition: { duration: 0.2 }

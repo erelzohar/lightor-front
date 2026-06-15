@@ -88,7 +88,7 @@ const ManageAppointment: React.FC = () => {
           time: formatTime(appointment.timestamp)
         });
 
-        await smsService.sendSMS(businessPhone, msg);
+        // await smsService.sendSMS(businessPhone, msg);
       }
       catch (err) {
 

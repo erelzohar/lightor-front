@@ -8,7 +8,35 @@
       "Bash(Get-ChildItem -Recurse -Path \"c:\\\\Users\\\\Dudi\\\\Documents\\\\lightor-front\\\\src\" -Include \"*.ts\",\"*.tsx\",\"*.js\")",
       "Bash(Select-String -Pattern \"swagger|openapi|register\" -List)",
       "Bash(Select-Object -ExpandProperty Filename)",
-      "Bash(npx vitest *)"
+      "Bash(npx vitest *)",
+      "Bash(claude mcp *)",
+      "PowerShell(claude mcp add playwright npx @playwright/mcp@latest)",
+      "PowerShell(Get-Command claude -ErrorAction SilentlyContinue; where.exe claude 2>$null; Get-ChildItem \"$env:LOCALAPPDATA\\\\AnthropicClaude\" -ErrorAction SilentlyContinue | Select-Object Name, FullName)",
+      "Read(//c/Users/Dudi/**)",
+      "mcp__playwright__browser_navigate",
+      "mcp__playwright__browser_snapshot",
+      "mcp__playwright__browser_click",
+      "mcp__playwright__browser_take_screenshot",
+      "mcp__playwright__browser_wait_for",
+      "mcp__playwright__browser_evaluate",
+      "mcp__playwright__browser_type",
+      "Bash(Get-ChildItem -Path \"c:\\\\Users\\\\Dudi\\\\Documents\\\\lightor-front\" -Force)",
+      "Bash(Select-Object Name, PSIsContainer)",
+      "Bash(Get-ChildItem -Path \"c:\\\\Users\\\\Dudi\\\\Documents\\\\lightor-back\" -Depth 2)",
+      "Bash(Select-Object -Property FullName, PSIsContainer)",
+      "Bash(Format-List)",
+      "Bash(find \"c:\\\\\\\\Users\\\\\\\\Dudi\\\\\\\\Documents\\\\\\\\lightor-back\" -maxdepth 2 -type d)",
+      "Bash(find \"c:\\\\\\\\Users\\\\\\\\Dudi\\\\\\\\Documents\\\\\\\\lightor-back\\\\\\\\src\" -maxdepth 1 -type d)",
+      "Bash(grep -r \"webConfigRoutes\" \"c:\\\\\\\\Users\\\\\\\\Dudi\\\\\\\\Documents\\\\\\\\lightor-back\\\\\\\\src\" --include=\"*.ts\")",
+      "Bash(grep -r \"toJSON\\\\|lean\\\\|serialize\" \"c:\\\\\\\\Users\\\\\\\\Dudi\\\\\\\\Documents\\\\\\\\lightor-back\\\\\\\\src\\\\\\\\models\" --include=\"*.ts\")",
+      "Bash(xargs grep -l \"GoogleGenAI\\\\|generateContent\\\\|gemini\")",
+      "Bash(npx --prefix \"c:/Users/Dudi/Documents/lightor-back\" tsc --noEmit -p \"c:/Users/Dudi/Documents/lightor-back/tsconfig.json\")"
+    ],
+    "additionalDirectories": [
+      "C:\\Users\\Dudi\\.claude",
+      "c:\\Users\\Dudi\\Documents\\lightor-back\\src\\models",
+      "c:\\Users\\Dudi\\Documents\\lightor-back\\src\\dto",
+      "c:\\Users\\Dudi\\Documents\\lightor-back\\src\\controllers"
     ]
   }
 }

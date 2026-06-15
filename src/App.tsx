@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, Fragment, type ReactNode } from 'react';
 import { Routes, Route } from 'react-router-dom';
 
 // Components & Services
@@ -15,6 +15,7 @@ import ErrorBoundary from './components/ErrorBoundary';
 import NotFound from './components/NotFound';
 import ManageAppointment from './components/ManageAppointment';
 import Loading from './components/Loading';
+import SectionDivider, { type SectionTone } from './components/SectionDivider';
 
 // Contexts & Hooks
 import { useLanguage, Language } from './contexts/LanguageContext';
@@ -145,6 +146,82 @@ function MainContent() {
   if (loading) return <Loading isLoading={true} />;
   if (!config) return <NotFound />;
 
+  // Build the in-flow content sections with their solid background "tone".
+  // The page alternates bg <-> surface; dividers are interleaved between
+  // consecutive visible sections (see SectionDivider).
+  const divider = config.design?.sectionDivider ?? 'none';
+  const flow: { key: string; tone: SectionTone; node: ReactNode }[] = [];
+
+  if (config.components?.hero.visible) {
+    flow.push({
+      key: 'hero', tone: 'bg', node: (
+        <Hero
+          config={config.components.hero}
+          social={config.social}
+          phone={config.contact.phone}
+          isContactVisible={config.components.contact.visible}
+          isPreview={isPreview}
+          palette={config.pallete}
+          design={config.design}
+        />
+      )
+    });
+  }
+
+  if (config.components?.about.visible) {
+    flow.push({
+      key: 'about', tone: 'surface', node: (
+        <About
+          config={config.components.about}
+          websiteConfig={{
+            address: config.address,
+            contact: config.contact,
+            social: config.social,
+            workingDays: config.workingDays
+          }}
+        />
+      )
+    });
+  }
+
+  if (config.components?.portfolio.visible) {
+    flow.push({ key: 'portfolio', tone: 'bg', node: <Portfolio config={config.components.portfolio} /> });
+  }
+
+  // --- SENSITIVE SECTION: Turnstile protects the Schedule only ---
+  if (config.components?.schedule) {
+    flow.push({
+      key: 'schedule', tone: 'surface', node: (
+        <div id="booking-section" className="relative min-h-[25rem]">
+          <Schedule
+            config={config.components.schedule}
+            workingDays={config.workingDays}
+            user_id={config.user_id}
+            phone={config.contact.phone}
+            businessName={config.businessName}
+            timeToCancel={config.minCancelTimeMS}
+            vacations={config.vacations}
+            appointmentTypes={config.appointmentTypes}
+            isPreview={isPreview}
+          />
+        </div>
+      )
+    });
+  }
+
+  if (config.components?.contact.visible) {
+    flow.push({
+      key: 'contact', tone: 'bg', node: (
+        <Contact
+          config={config.components.contact}
+          address={config.address}
+          contact={config.contact}
+          workingDays={config.workingDays}
+        />
+      )
+    });
+  }
+
   return (
     <div className="min-h-screen bg-light-bg dark:bg-dark-bg transition-colors duration-300">
       {config.components?.introPopup?.visible && (
@@ -155,66 +232,14 @@ function MainContent() {
         <ErrorBoundary><Navbar websiteConfig={config} isPreview={isPreview} /></ErrorBoundary>
       )}
 
-      {config.components?.hero.visible && (
-        <ErrorBoundary>
-          <Hero
-            config={config.components.hero}
-            social={config.social}
-            phone={config.contact.phone}
-            isContactVisible={config.components.contact.visible}
-            isPreview={isPreview}
-            palette={config.pallete}
-          />
-        </ErrorBoundary>
-      )}
-
-      {config.components?.about.visible && (
-        <ErrorBoundary>
-          <About
-            config={config.components.about}
-            websiteConfig={{
-              address: config.address,
-              contact: config.contact,
-              social: config.social,
-              workingDays: config.workingDays
-            }}
-          />
-        </ErrorBoundary>
-      )}
-
-      {config.components?.portfolio.visible && (
-        <ErrorBoundary><Portfolio config={config.components.portfolio} /></ErrorBoundary>
-      )}
-
-      {/* --- SENSITIVE SECTION: Turnstile protects the Schedule only --- */}
-      {config.components?.schedule && (
-        <ErrorBoundary>
-          <div id="booking-section" className="relative min-h-[25rem]">
-            <Schedule
-              config={config.components.schedule}
-              workingDays={config.workingDays}
-              user_id={config.user_id}
-              phone={config.contact.phone}
-              businessName={config.businessName}
-              timeToCancel={config.minCancelTimeMS}
-              vacations={config.vacations}
-              appointmentTypes={config.appointmentTypes}
-              isPreview={isPreview}
-            />
-          </div>
-        </ErrorBoundary>
-      )}
-
-      {config.components?.contact.visible && (
-        <ErrorBoundary>
-          <Contact
-            config={config.components.contact}
-            address={config.address}
-            contact={config.contact}
-            workingDays={config.workingDays}
-          />
-        </ErrorBoundary>
-      )}
+      {flow.map((s, i) => (
+        <Fragment key={s.key}>
+          {i > 0 && (
+            <SectionDivider variant={divider} aboveTone={flow[i - 1].tone} belowTone={s.tone} />
+          )}
+          <ErrorBoundary>{s.node}</ErrorBoundary>
+        </Fragment>
+      ))}
 
       {config.components?.footer.visible && (
         <ErrorBoundary>

@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&family=Raleway:wght@300;400;500;600;700&family=Rubik:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&family=Montserrat:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Poppins:wght@300;400;500;600;700&family=Raleway:wght@300;400;500;600;700&family=Rubik:wght@300;400;500;600;700&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -6,21 +6,28 @@
 
 @layer base {
   :root {
-    /* Light */
-    --color-primary: 139 92 246; 
-    /* dark */
+    /* Palette defaults */
+    --color-primary: 139 92 246;
     --color-primary-dark: 6 182 212;
-
-    
     --color-light-bg: 249 250 251;
     --color-light-surface: 255 255 255;
     --color-light-gray: 229 231 235;
     --color-light-text: 55 65 81;
-    
     --color-dark-bg: 17 24 39;
     --color-dark-surface: 31 41 55;
     --color-dark-gray: 156 163 175;
     --color-dark-text: 249 250 251;
+
+    /* Design token defaults — overridden at runtime by useTheme */
+    --radius: 1rem;
+    --card-shadow: 0 4px 24px 0 rgba(0,0,0,0.10);
+    --card-border-width: 0px;
+    --card-border-color: transparent;
+    --card-blur: 0px;
+    --card-bg-opacity: 1;
+    --font-body: 'Inter', sans-serif;
+    --font-heading: 'Raleway', sans-serif;
+    --anim-duration: 0.6s;
   }
 }
 
@@ -34,8 +41,6 @@ html.dark {
   color-scheme: dark;
 }
 
-/* body::-webkit-scrollbar { display: none; }
-html, body { scrollbar-width: none; -ms-overflow-style: none; } */
 /* Make all text non-selectable by default */
 * {
   -webkit-user-select: none;
@@ -62,12 +67,11 @@ code {
 }
 
 body {
-  font-family: 'Inter', sans-serif;
+  font-family: var(--font-body, 'Inter', sans-serif);
 }
 
-/* Headers */
 h1, h2, h3, h4, h5, h6 {
-  font-family: 'Raleway', sans-serif;
+  font-family: var(--font-heading, 'Raleway', sans-serif);
 }
 
 /* Business name specific style */
@@ -76,16 +80,16 @@ h1, h2, h3, h4, h5, h6 {
   letter-spacing: -0.025em;
 }
 
-/* RTL Support */
+/* RTL always uses Rubik regardless of chosen font */
 [dir="rtl"] body {
   font-family: 'Rubik', sans-serif;
 }
 
-[dir="rtl"] h1, 
-[dir="rtl"] h2, 
-[dir="rtl"] h3, 
-[dir="rtl"] h4, 
-[dir="rtl"] h5, 
+[dir="rtl"] h1,
+[dir="rtl"] h2,
+[dir="rtl"] h3,
+[dir="rtl"] h4,
+[dir="rtl"] h5,
 [dir="rtl"] h6 {
   font-family: 'Rubik', sans-serif;
 }
@@ -123,6 +127,58 @@ h1, h2, h3, h4, h5, h6 {
 [dir="rtl"] .-translate-x-full {
   --tw-translate-x: 100%;
 }
+
+/* Reusable card class — apply to any card element to pick up design token
+   styling (shadow / border / radius / glass blur all driven by useTheme). */
+.card-design {
+  background-color: rgb(var(--color-light-surface) / var(--card-bg-opacity, 1));
+  box-shadow: var(--card-shadow, none);
+  border-width: var(--card-border-width, 0px);
+  border-style: solid;
+  border-color: var(--card-border-color, transparent);
+  backdrop-filter: blur(var(--card-blur, 0px));
+  -webkit-backdrop-filter: blur(var(--card-blur, 0px));
+  border-radius: var(--radius, 1rem);
+  transition: box-shadow 0.3s ease, border-color 0.3s ease;
+}
+
+.dark .card-design {
+  background-color: rgb(var(--color-dark-surface) / var(--card-bg-opacity, 1));
+}
+
+/* Section vertical rhythm — density token controls the whitespace between
+   sections. Apply `.section-y` to a section root instead of a fixed py-* class. */
+.section-y {
+  padding-top: 7rem;
+  padding-bottom: 7rem;
+}
+
+html[data-density="compact"] .section-y {
+  padding-top: 4rem;
+  padding-bottom: 4rem;
+}
+
+html[data-density="comfortable"] .section-y {
+  padding-top: 7rem;
+  padding-bottom: 7rem;
+}
+
+html[data-density="spacious"] .section-y {
+  padding-top: 11rem;
+  padding-bottom: 11rem;
+}
+
+/* Type scale — fluid heading sizes per design.typeScale. Higher specificity
+   than Tailwind text-* utilities so it cleanly overrides inline sizing, and
+   uses clamp() to stay responsive without breakpoint classes. */
+html[data-type-scale="modest"] h1 { font-size: clamp(2rem, 1.4rem + 2.5vw, 3.25rem); }
+html[data-type-scale="modest"] h2 { font-size: clamp(1.5rem, 1.2rem + 1.5vw, 2.25rem); }
+
+html[data-type-scale="balanced"] h1 { font-size: clamp(2.5rem, 1.8rem + 3.2vw, 4.5rem); }
+html[data-type-scale="balanced"] h2 { font-size: clamp(2rem, 1.5rem + 2vw, 3rem); }
+
+html[data-type-scale="dramatic"] h1 { font-size: clamp(3rem, 2rem + 5vw, 6rem); }
+html[data-type-scale="dramatic"] h2 { font-size: clamp(2.5rem, 1.8rem + 3vw, 4.25rem); }
 
 @keyframes blob {
   0% {

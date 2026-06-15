@@ -26,3 +26,6 @@ dist-ssr
 .claude/*
 src/test/
 *.sh
+*playwright*
+e2e
+test-results
