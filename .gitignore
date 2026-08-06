@@ -26,6 +26,8 @@ dist-ssr
 .claude/*
 src/test/
 *.sh
+# the deploy script belongs with the app it deploys
+!deploy.sh
 *playwright*
 e2e
 test-results
