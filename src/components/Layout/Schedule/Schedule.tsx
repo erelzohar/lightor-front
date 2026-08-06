@@ -5,6 +5,7 @@ import { Turnstile } from '@marsidev/react-turnstile';
 import { useLanguage } from '../../../contexts/LanguageContext';
 import { AppointmentType } from '../../../models/AppointmentType';
 import { Appointment } from '../../../models/Appointment';
+import { BusySlot } from '../../../models/BusySlot';
 import { ScheduleConfig } from '../../../models/ScheduleConfig';
 import AppointmentService from '../../../services/AppointmentService';
 import AuthService from '../../../services/AuthService';
@@ -97,7 +98,7 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
     }
   }, [isUpdating, appointmentToUpdate]);
   const [error, setError] = useState<string | null>(null);
-  const [bookedAppointments, setBookedAppointments] = useState<Appointment[]>([]);
+  const [bookedAppointments, setBookedAppointments] = useState<BusySlot[]>([]);
   const [resendTimer, setResendTimer] = useState(0);
 
 
@@ -108,7 +109,7 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
     if (!isAuthorized || isPreview) return;
 
     AppointmentService.getInstance()
-      .getAppointments("?user_id=" + user_id + "&status=scheduled&startDate=" + Date.now())
+      .getAvailability(Date.now())
       .then(setBookedAppointments)
       .catch((err) => setError(err.message || String(err)));
 
@@ -243,7 +244,10 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
           ? await service.updateAppointment({ ...appointmentToUpdate, ...appointmentToCreate })
           : await service.createAppointment(appointmentToCreate);
 
-        setBookedAppointments(prev => isUpdating ? prev.map(a => a._id === res._id ? res : a) : [...prev, res])
+        // Refetch rather than patching local state: busy slots are anonymous
+        // (no id to match on for the reschedule case), and a refetch also picks
+        // up anything booked by someone else while this form was open.
+        service.getAvailability(Date.now()).then(setBookedAppointments).catch(console.error);
 
         if (isUpdating && onUpdateComplete) {
           onUpdateComplete(res);
@@ -260,7 +264,7 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
     } catch (error: any) {
       if (error && error.message === "SLOT_TAKEN") {
         AppointmentService.getInstance()
-          .getAppointments("?user_id=" + user_id + "&status=scheduled&startDate=" + Date.now())
+          .getAvailability(Date.now())
           .then(setBookedAppointments)
           .catch(console.error);
         setError(t('schedule.conflictError'));
@@ -336,10 +340,9 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
     testSlotStart.setHours(hours, minutes, 0, 0);
     const testSlotEnd = testSlotStart.getTime() + testDurationMS; // End time of the new slot
 
-    return bookedAppointments.some(appointment => {
-      const appointmentStart = parseInt(appointment.timestamp);
-      // Ensure type.durationMS is treated as string properly before parsing if needed, or assume model is strings
-      const appointmentDuration = parseInt(appointment.type.durationMS);
+    return bookedAppointments.some(slot => {
+      const appointmentStart = parseInt(slot.timestamp);
+      const appointmentDuration = parseInt(slot.durationMS);
       const appointmentEnd = appointmentStart + appointmentDuration; // End time of the existing appointment
 
       // 1. Existing appointment starts during the new slot's duration
@@ -907,7 +910,11 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
                                   {type.name}
                                 </h4>
                                 <p className="text-sm text-light-text/70 dark:text-dark-text/70">
-                                  {parseInt(type.durationMS) / 60000} {t('common.minutes')} | {t('common.currency')}{type.price}
+                                  {/* Price is optional — a service seeded at signup is unpriced
+                                      until the owner sets one. Show the duration alone rather
+                                      than a lone currency symbol. */}
+                                  {parseInt(type.durationMS) / 60000} {t('common.minutes')}
+                                  {type.price?.trim() ? ` | ${t('common.currency')}${type.price}` : ''}
                                 </p>
                               </div>
                             </div>
@@ -930,7 +937,8 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
                       {selectedAppointmentType.name}
                     </h4>
                     <p className="text-sm text-light-text/70 dark:text-dark-text/70">
-                      {parseInt(selectedAppointmentType.durationMS) / 60000} {t('common.minutes')} | {t('common.currency')}{selectedAppointmentType.price}
+                      {parseInt(selectedAppointmentType.durationMS) / 60000} {t('common.minutes')}
+                      {selectedAppointmentType.price?.trim() ? ` | ${t('common.currency')}${selectedAppointmentType.price}` : ''}
                     </p>
                   </div>
 

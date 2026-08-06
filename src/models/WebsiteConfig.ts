@@ -8,15 +8,21 @@ import { Vacation } from './Vacation';
 import { AppointmentType } from './AppointmentType';
 import { DesignConfig } from './DesignConfig';
 
+/**
+ * Every part is optional, and the whole address may be absent — a business can
+ * legitimately have no premises (online therapy, mobile or at-home services).
+ * The API stores an address only when it carries real values.
+ */
 export class Address {
   constructor(
-    public state: string,
-    public city: string,
-    public street: string,
-    public other: string
+    public state?: string,
+    public city?: string,
+    public street?: string,
+    public other?: string
   ) {}
 
   static fromJSON(json: any): Address {
+    if (!json) return new Address();
     return new Address(
       json.state,
       json.city,

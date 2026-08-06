@@ -29,11 +29,13 @@ import { AboutConfig } from '../../models/AboutConfig';
 import { Social } from '../../models/Social';
 
 interface WebsiteConfig {
-  address: {
-    state: string;
-    city: string;
-    street: string;
-    other: string;
+  // Optional throughout: a business may have no premises, and the API stores
+  // an address only when it carries real values.
+  address?: {
+    state?: string;
+    city?: string;
+    street?: string;
+    other?: string;
   };
   contact: {
     phone: string;
@@ -68,8 +70,14 @@ const About: React.FC<AboutProps> = ({ config, websiteConfig }) => {
       .filter(schedule => schedule.hours !== t('time.closed'));
   };
 
+  // See Contact.tsx — address and each of its parts are optional.
   const getFullAddress = () => {
-    return `${websiteConfig.address.street}, ${websiteConfig.address.other}, ${websiteConfig.address.city}, ${websiteConfig.address.state}`;
+    const a = websiteConfig.address;
+    if (!a) return '';
+    return [a.street, a.other, a.city, a.state]
+      .map((part) => part?.trim())
+      .filter(Boolean)
+      .join(', ');
   };
 
   const socialLinks = [
@@ -132,15 +140,18 @@ const About: React.FC<AboutProps> = ({ config, websiteConfig }) => {
     }
   ].filter(Boolean);
 
+  const fullAddress = getFullAddress();
+
   const contactInfo = [
-    {
+    // Location card only when there is an address to point at.
+    ...(fullAddress ? [{
       icon: MapPin,
       title: t('about.location'),
-      content: getFullAddress(),
-      action: `https://maps.google.com/?q=${encodeURIComponent(getFullAddress())}`,
+      content: fullAddress,
+      action: `https://maps.google.com/?q=${encodeURIComponent(fullAddress)}`,
       isLink: true,
       color: 'bg-rose-500/10 text-rose-500 dark:text-rose-400'
-    },
+    }] : []),
     {
       icon: Phone,
       title: t('about.phone'),

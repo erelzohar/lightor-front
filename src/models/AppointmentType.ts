@@ -2,7 +2,8 @@ export class AppointmentType {
   constructor(
     public _id: string,
     public name: string,
-    public price: string,
+    // Optional: services seeded at signup are unpriced until the owner sets a price.
+    public price: string | undefined,
     public user_id: string,
     public durationMS: string
   ) {}

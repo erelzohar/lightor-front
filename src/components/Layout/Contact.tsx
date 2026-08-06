@@ -7,11 +7,13 @@ import { ContactModal } from '../../components/ContactModal';
 import { useContactHandler } from '../../hooks/useContactHandler';
 import smsService from '../../services/SmsService';
 
+// Optional throughout: a business may have no premises, and the API stores an
+// address only when it carries real values.
 interface Address {
-  state: string;
-  city: string;
-  street: string;
-  other: string;
+  state?: string;
+  city?: string;
+  street?: string;
+  other?: string;
 }
 
 interface ContactInfo {
@@ -21,7 +23,7 @@ interface ContactInfo {
 
 interface ContactProps {
   config: ContactConfig;
-  address: Address;
+  address?: Address;
   contact: ContactInfo;
   workingDays: (string | null)[];
   isPreview?: boolean;
@@ -103,8 +105,15 @@ const Contact: React.FC<ContactProps> = ({ config, address, contact, workingDays
   const { t, language } = useLanguage();
   const { isModalOpen, setIsModalOpen, modalType, handleContactClick } = useContactHandler();
 
+  // Address is optional and any individual part may be missing — a business
+  // can have no premises at all. Join only what exists, so an absent address
+  // yields '' rather than ", , , " plus a maps link to nowhere.
   const getFullAddress = () => {
-    return `${address.street}, ${address.other}, ${address.city}, ${address.state}`;
+    if (!address) return '';
+    return [address.street, address.other, address.city, address.state]
+      .map((part) => part?.trim())
+      .filter(Boolean)
+      .join(', ');
   };
 
   const formatWorkingHours = () => {
@@ -204,15 +213,18 @@ const Contact: React.FC<ContactProps> = ({ config, address, contact, workingDays
     setError(null);
   };
 
+  const fullAddress = getFullAddress();
+
   const contactInfo = [
-    {
+    // Location card only when there is an address to point at.
+    ...(fullAddress ? [{
       icon: MapPin,
       title: t('about.location'),
-      content: getFullAddress(),
-      action: `https://maps.google.com/?q=${encodeURIComponent(getFullAddress())}`,
+      content: fullAddress,
+      action: `https://maps.google.com/?q=${encodeURIComponent(fullAddress)}`,
       isLink: true,
       color: 'bg-rose-500/10 text-rose-500 dark:text-rose-400'
-    },
+    }] : []),
     {
       icon: Phone,
       title: t('about.phone'),

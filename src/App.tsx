@@ -25,6 +25,40 @@ import ImagesService from './services/ImagesService';
 import { useTheme } from './hooks/useTheme';
 import { reportError } from './services/ErrorReportingService';
 
+// Origins permitted to drive this app through a PREVIEW_DATA postMessage.
+// Only the register and dashboard apps embed the public site in an iframe for
+// live preview; no other page may inject a config.
+const PREVIEW_PARENT_HOSTNAMES = new Set([
+  'register.lightor.app',
+  'dashboard.lightor.app',
+]);
+
+const LOCAL_DEV_HOSTNAMES = new Set(['localhost', '127.0.0.1', '[::1]']);
+
+// The origin is parsed and compared by hostname rather than string-matched.
+// A naive check such as origin.endsWith('.lightor.app') is defeated by
+// look-alike hosts like "https://evil-lightor.app" or
+// "https://register.lightor.app.attacker.com".
+const isAllowedPreviewOrigin = (origin: string): boolean => {
+  let url: URL;
+  try {
+    url = new URL(origin);
+  } catch {
+    // Opaque origins (sandboxed iframes, file://) arrive as the string "null".
+    return false;
+  }
+
+  // Trusted parents are always served over TLS in production.
+  if (PREVIEW_PARENT_HOSTNAMES.has(url.hostname)) return url.protocol === 'https:';
+
+  // Local development: any port, http or https. Gated on the dev build so a
+  // production bundle never trusts a locally-served page — Vite statically
+  // replaces import.meta.env.DEV, so this branch is dropped entirely at build.
+  if (!import.meta.env.DEV) return false;
+  if (url.protocol !== 'http:' && url.protocol !== 'https:') return false;
+  return LOCAL_DEV_HOSTNAMES.has(url.hostname);
+};
+
 function MainContent() {
   const [config, setConfig] = useState<WebsiteConfig | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
@@ -45,6 +79,11 @@ function MainContent() {
   useEffect(() => {
     const handleMessage = (event: MessageEvent) => {
       if (event.data?.type === 'PREVIEW_DATA') {
+        // Reject config injected by any page that is not a trusted preview parent.
+        if (!isAllowedPreviewOrigin(event.origin)) {
+          console.warn('[lightor-front] Ignored PREVIEW_DATA from untrusted origin:', event.origin);
+          return;
+        }
         isPreviewRef.current = true;
         const cfg = event.data.config as WebsiteConfig;
         setConfig(cfg);

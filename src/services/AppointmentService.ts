@@ -1,6 +1,7 @@
 import axios from 'axios';
 import globals from './globals';
 import { Appointment } from '../models/Appointment';
+import { BusySlot } from '../models/BusySlot';
 
 class AppointmentService {
   private static instance: AppointmentService;
@@ -17,15 +18,25 @@ class AppointmentService {
     return AppointmentService.instance;
   }
 
-  public async getAppointments(params: string): Promise<Appointment[]> {
-    // try {
-    if (!params) throw new Error("params required");
-    const response = await axios.get<any>(this.baseUrl + params);
-    return response.data?.data.map((appointment: any) => Appointment.fromJSON(appointment));
-    // } catch (error) {
-    //   console.error('Error fetching appointments:', error);
-    //   throw error;
-    // }
+  /**
+   * Busy slots for the business whose site we are currently on.
+   *
+   * The business is identified server-side from the subdomain, so there is no
+   * user_id to pass — and no way for this call to reach another tenant's data.
+   * Replaces the old getAppointments() query, which returned whole appointment
+   * documents (customer names and phone numbers included) to every visitor.
+   */
+  public async getAvailability(startDate?: number): Promise<BusySlot[]> {
+    const subdomain = window.location.hostname.split('.')[0];
+
+    const response = await axios.get<any>(`${this.baseUrl}/availability`, {
+      params: {
+        subdomain,
+        ...(startDate !== undefined ? { startDate: String(startDate) } : {}),
+      },
+    });
+
+    return response.data?.data.map((slot: any) => BusySlot.fromJSON(slot));
   }
 
   public async getAppointmentById(id: string): Promise<Appointment> {
