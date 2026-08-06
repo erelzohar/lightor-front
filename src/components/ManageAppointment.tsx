@@ -35,7 +35,7 @@ const ManageAppointment: React.FC = () => {
 
   useTheme(config);
 
-  document.title = t('manage.manage.title');
+  document.title = t('manage.manage_title');
 
   useEffect(() => {
     if (!appointmentId) return;
@@ -46,7 +46,11 @@ const ManageAppointment: React.FC = () => {
           throw new Error('Appointment not found');
         }
         setAppointment(response);
-        const config = await configService.getWebConfigByUserId(response.user_id);
+        // Resolve the business from the subdomain we are already on, not by
+        // user_id. The by-user_id endpoint is owner-scoped and needs an
+        // account; a customer following an SMS manage link has only a manage
+        // token, so that call rejected and the page fell through to its 404.
+        const config = await configService.getWebConfig(window.location.hostname.split('.')[0]);
         if (!config) throw new Error('Error loading config');
         setConfig(config);
         setMinCancelTime(config.minCancelTimeMS);
@@ -79,7 +83,7 @@ const ManageAppointment: React.FC = () => {
       setIsSuccess(true);
       try {
         const service = WebConfigService.getInstance();
-        const res = await service.getWebConfigByUserId(appointment.user_id);
+        const res = await service.getWebConfig(window.location.hostname.split('.')[0]);
         const businessPhone = res.contact.phone;
         const msg = t('manage.notifications.business_cancel', {
           name: appointment.name,
@@ -160,7 +164,7 @@ const ManageAppointment: React.FC = () => {
       <Schedule
         config={{
           title: t('manage.update.title'),
-          description: t('manage.new.time.title')
+          description: t('manage.new_time_title')
         }}
         workingDays={config.workingDays}
         vacations={config.vacations}
@@ -206,7 +210,7 @@ const ManageAppointment: React.FC = () => {
             </div>
           )}
           <h2 className="text-2xl font-bold text-light-text dark:text-dark-text mb-2">
-            {t('manage.manage.title')}
+            {t('manage.manage_title')}
           </h2>
           <p className="text-light-text/70 dark:text-dark-text/70">
             {isCancellable
@@ -360,7 +364,7 @@ const ManageAppointment: React.FC = () => {
                   {isCancelling ? (
                     <Loader2 className="w-5 h-5 animate-spin mx-auto" />
                   ) : (
-                    t('manage.modal.button.confirm')
+                    t('manage.modal.button_confirm')
                   )}
                 </motion.button>
               </div>
@@ -419,7 +423,7 @@ const ManageAppointment: React.FC = () => {
                 </div>
               )}
               <h3 className="text-2xl font-bold text-light-text dark:text-dark-text mb-2">
-                {lastAction === 'update' ? t('manage.update.success.title') : t('manage.success.title')}
+                {lastAction === 'update' ? t('manage.update.success_title') : t('manage.success_title')}
               </h3>
             </motion.div>
           </motion.div>
