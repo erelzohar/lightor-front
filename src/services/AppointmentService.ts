@@ -39,10 +39,21 @@ class AppointmentService {
     return response.data?.data.map((slot: any) => BusySlot.fromJSON(slot));
   }
 
+  /**
+   * The manage link we SMS carries `?manageToken=…` naming this appointment.
+   * Forwarded here because possession of the id alone is no longer authority
+   * to read or change a booking. (LT-013)
+   */
+  private static manageTokenFromUrl(): string | null {
+    return new URLSearchParams(window.location.search).get('manageToken');
+  }
+
   public async getAppointmentById(id: string): Promise<Appointment> {
     try {
-      // const response = await axios.get<any>(`${this.baseUrl}/${id}`, { headers: { Authorization: process.env.NODE_ENV !== "production" ? "Bearer " + import.meta.env.VITE_CLIENT_TOKEN : '' } });
-      const response = await axios.get<any>(`${this.baseUrl}/${id}`);
+      const manageToken = AppointmentService.manageTokenFromUrl();
+      const response = await axios.get<any>(`${this.baseUrl}/${id}`, {
+        params: manageToken ? { manageToken } : undefined,
+      });
 
       return Appointment.fromJSON(response.data.data);
     } catch (error) {
@@ -51,9 +62,20 @@ class AppointmentService {
     }
   }
 
-  public async createAppointment(appointment: Partial<Appointment>): Promise<Appointment> {
+  /**
+   * `phoneToken` is the proof returned by /messaging/otp/verify. The API
+   * requires it from anonymous bookers and checks it against the number being
+   * booked, so a booking cannot skip phone verification. (LT-005)
+   */
+  public async createAppointment(
+    appointment: Partial<Appointment>,
+    phoneToken?: string | null
+  ): Promise<Appointment> {
     try {
-      const response = await axios.post<any>(this.baseUrl, appointment);
+      const response = await axios.post<any>(this.baseUrl, {
+        ...appointment,
+        ...(phoneToken ? { phoneToken } : {}),
+      });
       // if (!response.data.success) return 
       return Appointment.fromJSON(response.data.data);
     } catch (error: any) {
@@ -67,7 +89,10 @@ class AppointmentService {
 
   public async updateAppointment(app: Partial<Appointment>): Promise<Appointment> {
     try {
-      const response = await axios.put<any>(`${this.baseUrl}/${app._id}`, app);
+      const manageToken = AppointmentService.manageTokenFromUrl();
+      const response = await axios.put<any>(`${this.baseUrl}/${app._id}`, app, {
+        params: manageToken ? { manageToken } : undefined,
+      });
       return Appointment.fromJSON(response.data?.data);
     } catch (error) {
       console.error(`Error updating appointment with id ${app._id}:`, error);

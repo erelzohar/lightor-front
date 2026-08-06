@@ -24,13 +24,18 @@ class SMSService {
         }
     }
 
-    public async verifyOtp(phoneNumber: string, otp: string): Promise<boolean> {
+    /**
+     * Verifies the code and returns a short-lived proof that this number was
+     * verified, which createAppointment requires. Null means "not verified" —
+     * there is no booking without it.
+     */
+    public async verifyOtp(phoneNumber: string, otp: string): Promise<string | null> {
         try {
             const res = await axios.post<any>(globals.messagingUrl + "/otp/verify", { phoneNumber, otp });
-            return res.data?.success;
+            return res.data?.success ? (res.data.phoneToken ?? null) : null;
         } catch (err) {
             console.error(err);
-            return false;
+            return null;
         }
     }
 }

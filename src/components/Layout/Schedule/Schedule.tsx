@@ -177,7 +177,7 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
         setResendTimer(30);
         setBookingStep('verification');
       } else {
-        const success = true//await smsService.sendOtp(formData.phone, channelType);
+        const success = await smsService.sendOtp(formData.phone, channelType);
         if (success) {
           setError(null);
           setResendTimer(30);
@@ -197,7 +197,7 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
     setResendTimer(30);
     if (isPreview) return;
     try {
-      //await smsService.sendOtp(formData.phone, channelType);
+      await smsService.sendOtp(formData.phone, channelType);
     } catch (error) {
       console.error("Failed to resend code");
     }
@@ -212,9 +212,15 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
 
     setIsSubmitting(true);
     try {
+      // The verification code is now genuinely checked. Both this call and the
+      // send above used to be commented out, so the code in the SMS was never
+      // validated for anyone. On success the API returns a short-lived token
+      // proving this number was verified; createAppointment requires it and
+      // matches it against the number being booked. (LT-005)
+      let phoneToken: string | null = null;
       if (!isPreview) {
-        const verified = true //await smsService.verifyOtp(formData.phone, formData.verificationCode);
-        if (!verified) {
+        phoneToken = await smsService.verifyOtp(formData.phone, formData.verificationCode);
+        if (!phoneToken) {
           setError(t('schedule.error.invalidOtp'));
           setIsSubmitting(false);
           formData.verificationCode = "";
@@ -242,7 +248,7 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
         const service = AppointmentService.getInstance();
         const res = isUpdating && appointmentToUpdate
           ? await service.updateAppointment({ ...appointmentToUpdate, ...appointmentToCreate })
-          : await service.createAppointment(appointmentToCreate);
+          : await service.createAppointment(appointmentToCreate, phoneToken);
 
         // Refetch rather than patching local state: busy slots are anonymous
         // (no id to match on for the reschedule case), and a refetch also picks
