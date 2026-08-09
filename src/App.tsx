@@ -11,6 +11,7 @@ import Contact from './components/Layout/Contact';
 import Footer from './components/Layout/Footer';
 import IntroPopup from './components/IntroPopup';
 import ContactButton from './components/ContactButton';
+import LightorBadge from './components/LightorBadge';
 import ErrorBoundary from './components/ErrorBoundary';
 import NotFound from './components/NotFound';
 import ManageAppointment from './components/ManageAppointment';
@@ -291,6 +292,12 @@ function MainContent() {
             websiteConfig={config.components}
           />
         </ErrorBoundary>
+      )}
+
+      {/* Free-plan badge — deliberately outside the footer conditional, so
+          hiding the footer does not hide it (LT-032). */}
+      {config.branding && (
+        <ErrorBoundary><LightorBadge /></ErrorBoundary>
       )}
 
       {config.components?.contactButton.visible && (

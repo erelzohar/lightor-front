@@ -163,7 +163,9 @@ export class WebsiteConfig {
     public social: Social,
     public pallete: Palette,
     public components: Components,
-    public design: DesignConfig
+    public design: DesignConfig,
+    /** "Built with Lightor" badge — true for free-plan tenants (LT-032). */
+    public branding: boolean = false
   ) {}
 
   static fromJSON(json: any): WebsiteConfig {
@@ -183,7 +185,8 @@ export class WebsiteConfig {
       Social.fromJSON(json.social),
       Palette.fromJSON(json.pallete),
       Components.fromJSON(json.components),
-      DesignConfig.fromJSON(json.design)
+      DesignConfig.fromJSON(json.design),
+      json.branding === true
     );
   }
 }
