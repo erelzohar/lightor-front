@@ -174,12 +174,10 @@ const Contact: React.FC<ContactProps> = ({ config, address, contact, workingDays
     setIsSubmitting(true);
     try {
       if (!isPreview) {
-        const msg = t('contact.notification.business_message', {
-          name: formData.name,
-          phone: formData.phone,
-          message: formData.message
-        });
-        const res = await smsService.sendSMS(contact.phone, msg);
+        // The server finds the owner by subdomain and emails them; nothing
+        // about the recipient travels from the browser. (LT-035)
+        const subdomain = window.location.hostname.split('.')[0];
+        const res = await smsService.sendContactMessage(subdomain, formData);
 
         if (!res) throw "";
       }

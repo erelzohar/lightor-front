@@ -3,9 +3,16 @@ import globals from "./globals";
 import i18n from "../i18n/config";
 
 class SMSService {
-    public async sendSMS(to: string, message: string): Promise<boolean> {
+    /**
+     * Contact-form submission. The server resolves the business owner from
+     * the subdomain and emails them — the caller never names a recipient.
+     * Replaces the old sendSMS, which had been dying with 401 since /sms was
+     * locked to real accounts (LT-003); email also costs nothing per send.
+     * (LT-035)
+     */
+    public async sendContactMessage(subdomain: string, form: { name: string; phone: string; message: string }): Promise<boolean> {
         try {
-            const res = await axios.post<any>(globals.messagingUrl + "/sms", { to, message });
+            const res = await axios.post<any>(globals.messagingUrl + "/contact", { subdomain, ...form });
             return res.data?.success;
         }
         catch (err) {
