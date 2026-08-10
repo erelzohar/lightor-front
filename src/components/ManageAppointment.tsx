@@ -8,7 +8,6 @@ import Schedule from './Layout/Schedule/Schedule';
 import AppointmentService from '../services/AppointmentService';
 import NotFound from './NotFound';
 import { useTheme } from '../hooks/useTheme';
-import smsService from '../services/SmsService';
 import WebConfigService from '../services/WebConfigService';
 import { WebsiteConfig } from '../models/WebsiteConfig';
 import Loading from './Loading';
@@ -92,7 +91,6 @@ const ManageAppointment: React.FC = () => {
           time: formatTime(appointment.timestamp)
         });
 
-        // await smsService.sendSMS(businessPhone, msg);
       }
       catch (err) {
 
