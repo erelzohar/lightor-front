@@ -93,11 +93,6 @@
       "vacation": "De vacaciones",
       "closed": "Completo / Cerrado"
     },
-    "notifications": {
-      "user": "Hola {{name}}, tu cita en {{businessName}} ha sido programada para el {{day}} {{date}} a las {{time}}. Enlace de cancelación {{timeUntilLabel}}: {{link}}",
-      "user_update": "Hola {{name}}, tu cita en {{businessName}} ha sido actualizada para el {{day}} {{date}} a las {{time}}. Enlace de cancelación {{timeUntilLabel}}: {{link}}",
-      "business": "¡Nueva cita reservada!\nNombre: {{name}}\nTel: {{phone}}\nFecha: {{day}} {{date}} a las {{time}}\nEZ-lines"
-    },
     "original": {
       "appointment": "Tu cita"
     },

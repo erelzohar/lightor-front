@@ -93,11 +93,6 @@
       "vacation": "בחופשה",
       "closed": "סגור / מלא"
     },
-    "notifications": {
-      "user": "היי {{name}}, התור שלך ב-{{businessName}} נקבע ליום {{day}} ה-{{date}} בשעה {{time}}. קישור לביטול {{timeUntilLabel}}: {{link}}",
-      "user_update": "היי {{name}}, התור שלך ב-{{businessName}} עודכן ליום {{day}} ה-{{date}} בשעה {{time}}. קישור לביטול {{timeUntilLabel}}: {{link}}",
-      "business": "תור חדש נקבע!\nשם: {{name}}\nטלפון: {{phone}}\nתאריך: יום {{day}} ה-{{date}} בשעה {{time}}\nEZ-lines"
-    },
     "original": {
       "appointment": "התור שלך"
     },

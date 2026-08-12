@@ -24,7 +24,6 @@ dist-ssr
 *.sw?
 .agents/*
 .claude/*
-src/test/
 *.sh
 # the deploy script belongs with the app it deploys
 !deploy.sh

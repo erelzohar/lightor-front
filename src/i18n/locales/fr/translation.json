@@ -93,11 +93,6 @@
       "vacation": "En vacances",
       "closed": "Complet / Fermé"
     },
-    "notifications": {
-      "user": "Bonjour {{name}}, votre rendez-vous chez {{businessName}} est prévu pour le {{day}} {{date}} à {{time}}. Lien d'annulation {{timeUntilLabel}}: {{link}}",
-      "user_update": "Bonjour {{name}}, votre rendez-vous chez {{businessName}} a été mis à jour pour le {{day}} {{date}} à {{time}}. Lien d'annulation {{timeUntilLabel}}: {{link}}",
-      "business": "Nouveau rendez-vous réservé !\nNom : {{name}}\nTél : {{phone}}\nDate : {{day}} {{date}} à {{time}}\nEZ-lines"
-    },
     "original": {
       "appointment": "Votre rendez-vous"
     },

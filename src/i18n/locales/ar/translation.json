@@ -93,11 +93,6 @@
       "vacation": "في إجازة",
       "closed": "مغلق / محجوز بالكامل"
     },
-    "notifications": {
-      "user": "مرحباً {{name}}، تم حجز موعدك في {{businessName}} ليوم {{day}} الموافق {{date}} الساعة {{time}}. رابط الإلغاء {{timeUntilLabel}}: {{link}}",
-      "user_update": "مرحباً {{name}}، تم تحديث موعدك في {{businessName}} ليوم {{day}} الموافق {{date}} الساعة {{time}}. رابط الإلغاء {{timeUntilLabel}}: {{link}}",
-      "business": "تم حجز موعد جديد!\nالاسم: {{name}}\nالهاتف: {{phone}}\nالتاريخ: يوم {{day}} الموافق {{date}} الساعة {{time}}\nEZ-lines"
-    },
     "original": {
       "appointment": "موعدك"
     },

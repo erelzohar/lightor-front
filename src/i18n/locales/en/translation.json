@@ -97,11 +97,6 @@
       "sms": "Send code & updates via SMS",
       "whatsapp": "Send code & updates via WhatsApp"
     },
-    "confirmation": {
-      "user": "Hi {{name}}, your appointment at {{businessName}} has been scheduled for {{day}} {{date}} at {{time}}. Cancellation link {{timeUntilLabel}}: {{link}}",
-      "user_update": "Hi {{name}}, your appointment at {{businessName}} has been updated to {{day}} {{date}} at {{time}}. Cancellation link {{timeUntilLabel}}: {{link}}",
-      "business": "New appointment scheduled!\nName: {{name}}\nPhone: {{phone}}\nDate: {{day}} {{date}} at {{time}}\nEZ-lines"
-    },
     "original": {
       "appointment": "Your Appointment"
     }

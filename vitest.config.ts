@@ -7,6 +7,10 @@ export default defineConfig({
     environment: 'jsdom',
     globals: true,
     setupFiles: ['./src/test/setup.ts'],
+    // Scoped so `npm test` never tries to run the Playwright specs, which
+    // need a browser and a served site.
+    include: ['src/test/**/*.test.{ts,tsx}'],
+    exclude: ['**/node_modules/**', '**/dist/**', 'e2e/**'],
     coverage: {
       provider: 'v8',
       reporter: ['text', 'lcov'],
