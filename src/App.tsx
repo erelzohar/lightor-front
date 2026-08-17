@@ -86,7 +86,17 @@ function MainContent() {
           return;
         }
         isPreviewRef.current = true;
-        const cfg = event.data.config as WebsiteConfig;
+        // The parent posts a plain JSON config. Run it through fromJSON so a
+        // stylePreset expands into concrete design tokens exactly as it does
+        // for a real site — previously the raw cast skipped expansion and
+        // previews rendered with default tokens instead of the preset (LT-039).
+        let cfg: WebsiteConfig;
+        try {
+          cfg = WebsiteConfig.fromJSON(event.data.config);
+        } catch {
+          // Tolerate partial preview payloads rather than blanking the preview.
+          cfg = event.data.config as WebsiteConfig;
+        }
         setConfig(cfg);
         setIsPreview(true);
         setLoading(false);

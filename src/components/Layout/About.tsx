@@ -150,7 +150,7 @@ const About: React.FC<AboutProps> = ({ config, websiteConfig }) => {
       content: fullAddress,
       action: `https://maps.google.com/?q=${encodeURIComponent(fullAddress)}`,
       isLink: true,
-      color: 'bg-rose-500/10 text-rose-500 dark:text-rose-400'
+      color: 'bg-primary/10 text-primary dark:bg-primary-dark/10 dark:text-primary-dark'
     }] : []),
     {
       icon: Phone,
@@ -158,7 +158,7 @@ const About: React.FC<AboutProps> = ({ config, websiteConfig }) => {
       content: websiteConfig.contact.phone,
       action: () => handleContactClick('phone', `tel:${websiteConfig.contact.phone.replace(/[^0-9+]/g, '')}`),
       isLink: false,
-      color: 'bg-emerald-500/10 text-emerald-500 dark:text-emerald-400'
+      color: 'bg-primary/10 text-primary dark:bg-primary-dark/10 dark:text-primary-dark'
     },
     {
       icon: Mail,
@@ -166,14 +166,14 @@ const About: React.FC<AboutProps> = ({ config, websiteConfig }) => {
       content: websiteConfig.contact.mail,
       action: `mailto:${websiteConfig.contact.mail}`,
       isLink: true,
-      color: 'bg-blue-500/10 text-blue-500 dark:text-blue-400'
+      color: 'bg-primary/10 text-primary dark:bg-primary-dark/10 dark:text-primary-dark'
     },
     {
       icon: Clock,
       title: t('about.hours'),
       content: formatWorkingHours(),
       isLink: false,
-      color: 'bg-amber-500/10 text-amber-500 dark:text-amber-400',
+      color: 'bg-primary/10 text-primary dark:bg-primary-dark/10 dark:text-primary-dark',
       isHours: true
     }
   ];
@@ -208,7 +208,7 @@ const About: React.FC<AboutProps> = ({ config, websiteConfig }) => {
         >
           <motion.div variants={itemVariants} className="text-center mb-20">
             <h2 className="text-4xl font-bold text-light-text dark:text-dark-text mb-6">{config.title}</h2>
-            <div className="w-24 h-1 bg-primary dark:bg-primary-dark mx-auto mb-8"></div>
+            <div className="heading-accent mx-auto mb-8" aria-hidden="true"></div>
             <p className="text-xl text-light-text/80 dark:text-dark-text/80">{config.description}</p>
           </motion.div>
 
@@ -238,7 +238,7 @@ const About: React.FC<AboutProps> = ({ config, websiteConfig }) => {
               >
                 <div className="absolute inset-0 bg-primary/10 dark:bg-primary-dark/10 rounded-design transform -rotate-6 group-hover:rotate-0 transition-transform"></div>
                 <div className="card-design relative p-8 h-full flex flex-col">
-                  <div className="w-16 h-16 mx-auto mb-6 bg-primary/10 dark:bg-primary-dark/10 rounded-2xl flex items-center justify-center transform group-hover:scale-110 transition-transform">
+                  <div className="w-16 h-16 mx-auto mb-6 bg-primary/10 dark:bg-primary-dark/10 rounded-design-sm flex items-center justify-center transform group-hover:scale-110 transition-transform">
                     {feature.icon === 'Star' && <Star className="h-8 w-8 text-primary dark:text-primary-dark" />}
                     {feature.icon === 'Award' && <Award className="h-8 w-8 text-primary dark:text-primary-dark" />}
                     {feature.icon === 'Users' && <Users className="h-8 w-8 text-primary dark:text-primary-dark" />}
@@ -269,7 +269,7 @@ const About: React.FC<AboutProps> = ({ config, websiteConfig }) => {
             <div className="card-design relative p-12">
               <h3 className="text-3xl font-bold text-center mb-12 text-light-text dark:text-dark-text">
                 {t('about.visit')}
-                <div className="w-20 h-1 bg-primary dark:bg-primary-dark mx-auto mt-4"></div>
+                <div className="heading-accent mx-auto mt-4" aria-hidden="true"></div>
               </h3>
 
               <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
@@ -287,7 +287,7 @@ const About: React.FC<AboutProps> = ({ config, websiteConfig }) => {
                       }}
                     >
                       <motion.div
-                        className={`w-12 h-12 ${item.color} rounded-2xl flex items-center justify-center mb-4`}
+                        className={`w-12 h-12 ${item.color} rounded-design-sm flex items-center justify-center mb-4`}
                         whileHover={{ scale: 1.1 }}
                         transition={{ type: "spring", stiffness: 400 }}
                       >

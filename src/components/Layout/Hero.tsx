@@ -125,6 +125,7 @@ const Hero: React.FC<HeroProps> = ({ config, social, phone, isContactVisible, is
   const buttonStyle = design?.buttonStyle ?? 'gradient';
   const heroLayout = design?.heroLayout ?? 'image-right';
   const animLevel = design?.animLevel ?? 'full';
+  const imageTreatment = design?.imageTreatment ?? 'rounded';
   const animD = (base: number) => animLevel === 'none' ? 0 : animLevel === 'minimal' ? base * 0.25 : base;
 
   const vantaKey = [
@@ -385,33 +386,52 @@ const Hero: React.FC<HeroProps> = ({ config, social, phone, isContactVisible, is
     );
   };
 
-  const renderImage = (sizeClass = 'w-full aspect-square') => (
-    <div className="relative">
-      <motion.div
-        className="absolute inset-0 bg-gradient-to-br from-primary/20 to-accent-teal/20 dark:from-primary-dark/10 dark:to-accent-cyan/10 rounded-full blur-3xl"
-        animate={{ scale: [1, 1.2, 1], rotate: [0, 90, 0], opacity: [0.5, 0.8, 0.5] }}
-        transition={{ duration: animD(20), repeat: Infinity, repeatType: "reverse", ease: "linear" }}
-        aria-hidden="true"
-      />
-      <motion.div
-        className="relative"
-        animate={{ y: animLevel === 'none' ? 0 : [-8, 8, -8] }}
-        transition={{ duration: animD(5), repeat: Infinity, repeatType: "reverse", ease: "easeInOut" }}
-      >
-        <motion.img
-          src={ImagesService.getInstance().getImage(config.heroImageSrc)}
-          alt="intro"
-          onError={(e) => {
-            e.currentTarget.onerror = null;
-            e.currentTarget.src = "/lightor.png";
-          }}
-          className={`relative ${sizeClass} object-cover ${imgRadius} shadow-2xl`}
-          whileHover={{ scale: 1.02 }}
-          transition={{ type: "spring", stiffness: 300 }}
+  const renderImage = (sizeClass = 'w-full aspect-square') => {
+    // Shape per the imageTreatment token. 'circle' forces a square aspect so
+    // non-square layout slots (split's 4:5) don't degrade into an ellipse.
+    const shapedSize = imageTreatment === 'circle'
+      ? sizeClass.replace(/aspect-\S+/g, 'aspect-square')
+      : sizeClass;
+    const shapeClass =
+      imageTreatment === 'circle' ? 'rounded-full'
+      : imageTreatment === 'arch' ? 'img-arch'
+      : imageTreatment === 'blob' ? 'img-blob'
+      : imgRadius; // 'rounded' and 'framed' follow the radius token
+
+    return (
+      <div className="relative">
+        <motion.div
+          className="absolute inset-0 bg-gradient-to-br from-primary/20 to-accent-teal/20 dark:from-primary-dark/10 dark:to-accent-cyan/10 rounded-full blur-3xl"
+          animate={{ scale: [1, 1.2, 1], rotate: [0, 90, 0], opacity: [0.5, 0.8, 0.5] }}
+          transition={{ duration: animD(20), repeat: Infinity, repeatType: "reverse", ease: "linear" }}
+          aria-hidden="true"
         />
-      </motion.div>
-    </div>
-  );
+        <motion.div
+          className="relative"
+          animate={{ y: animLevel === 'none' ? 0 : [-8, 8, -8] }}
+          transition={{ duration: animD(5), repeat: Infinity, repeatType: "reverse", ease: "easeInOut" }}
+        >
+          {imageTreatment === 'framed' && (
+            <div
+              className={`absolute inset-0 translate-x-3 translate-y-3 border-2 border-primary dark:border-primary-dark ${imgRadius}`}
+              aria-hidden="true"
+            />
+          )}
+          <motion.img
+            src={ImagesService.getInstance().getImage(config.heroImageSrc)}
+            alt="intro"
+            onError={(e) => {
+              e.currentTarget.onerror = null;
+              e.currentTarget.src = "/lightor.png";
+            }}
+            className={`relative ${shapedSize} object-cover ${shapeClass} shadow-2xl`}
+            whileHover={{ scale: 1.02 }}
+            transition={{ type: "spring", stiffness: 300 }}
+          />
+        </motion.div>
+      </div>
+    );
+  };
 
   // ── Layout variants ───────────────────────────────────────────────────────
 

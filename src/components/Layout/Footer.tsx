@@ -193,7 +193,7 @@ const Footer: React.FC<FooterProps> = ({ config, social, businessName, logoImage
                     <motion.button
                       key={index}
                       onClick={() => window.open(social.href, '_blank')}
-                      className={`w-10 h-10 rounded-lg flex items-center justify-center transition-colors ${social.color}`}
+                      className={`w-10 h-10 rounded-design-sm flex items-center justify-center transition-colors ${social.color}`}
                       whileHover={{ scale: 1.1, rotate: 5 }}
                       whileTap={{ scale: 0.9 }}
                       role="listitem"

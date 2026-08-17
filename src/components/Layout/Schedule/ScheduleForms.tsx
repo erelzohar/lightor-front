@@ -62,7 +62,7 @@ export const MaterialInput = memo(({
             className={`w-full ps-10 pe-4 py-3 bg-transparent border-2 ${error
                 ? 'border-red-500 dark:border-red-500'
                 : 'border-primary/30 dark:border-primary-dark/30 focus:border-primary dark:focus:border-primary-dark'
-                } rounded-lg transition-all outline-none text-light-text dark:text-dark-text placeholder-light-text/50 dark:placeholder-dark-text/50`}
+                } rounded-design-sm transition-all outline-none text-light-text dark:text-dark-text placeholder-light-text/50 dark:placeholder-dark-text/50`}
             aria-required={required}
             aria-invalid={!!error}
         />

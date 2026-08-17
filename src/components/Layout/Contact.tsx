@@ -62,7 +62,7 @@ const MaterialInput = ({
         className={`w-full ps-10 pe-4 py-3 bg-transparent border-2 ${error
           ? 'border-red-500 dark:border-red-500'
           : 'border-primary/30 dark:border-primary-dark/30 focus:border-primary dark:focus:border-primary-dark'
-          } rounded-lg transition-all outline-none text-light-text dark:text-dark-text resize-none`}
+          } rounded-design-sm transition-all outline-none text-light-text dark:text-dark-text resize-none`}
         aria-required={required}
         aria-invalid={!!error}
       />
@@ -77,7 +77,7 @@ const MaterialInput = ({
         className={`w-full ps-10 pe-4 py-3 bg-transparent border-2 ${error
           ? 'border-red-500 dark:border-red-500'
           : 'border-primary/30 dark:border-primary-dark/30 focus:border-primary dark:focus:border-primary-dark'
-          } rounded-lg transition-all outline-none text-light-text dark:text-dark-text`}
+          } rounded-design-sm transition-all outline-none text-light-text dark:text-dark-text`}
         aria-required={required}
         aria-invalid={!!error}
       />
@@ -221,7 +221,7 @@ const Contact: React.FC<ContactProps> = ({ config, address, contact, workingDays
       content: fullAddress,
       action: `https://maps.google.com/?q=${encodeURIComponent(fullAddress)}`,
       isLink: true,
-      color: 'bg-rose-500/10 text-rose-500 dark:text-rose-400'
+      color: 'bg-primary/10 text-primary dark:bg-primary-dark/10 dark:text-primary-dark'
     }] : []),
     {
       icon: Phone,
@@ -229,7 +229,7 @@ const Contact: React.FC<ContactProps> = ({ config, address, contact, workingDays
       content: contact.phone,
       action: () => handleContactClick('phone', `tel:${contact.phone.replace(/[^0-9+]/g, '')}`),
       isLink: false,
-      color: 'bg-emerald-500/10 text-emerald-500 dark:text-emerald-400'
+      color: 'bg-primary/10 text-primary dark:bg-primary-dark/10 dark:text-primary-dark'
     },
     {
       icon: Mail,
@@ -237,7 +237,7 @@ const Contact: React.FC<ContactProps> = ({ config, address, contact, workingDays
       content: contact.mail,
       action: `mailto:${contact.mail}`,
       isLink: true,
-      color: 'bg-blue-500/10 text-blue-500 dark:text-blue-400'
+      color: 'bg-primary/10 text-primary dark:bg-primary-dark/10 dark:text-primary-dark'
     }
   ];
 
@@ -280,7 +280,9 @@ const Contact: React.FC<ContactProps> = ({ config, address, contact, workingDays
             repeatType: "reverse"
           }}
           style={{
-            backgroundImage: 'radial-gradient(circle at center, rgba(139, 92, 246, 0.2) 0%, transparent 50%)',
+            // Glow follows the site's palette — this was a hardcoded violet
+            // that ignored the configured colors entirely.
+            backgroundImage: 'radial-gradient(circle at center, rgb(var(--color-primary) / 0.18) 0%, transparent 50%)',
             backgroundSize: '100% 100%',
           }}
         />
@@ -299,7 +301,7 @@ const Contact: React.FC<ContactProps> = ({ config, address, contact, workingDays
             >
               {config.title}
             </h2>
-            <div className="w-24 h-1 bg-primary dark:bg-primary-dark mx-auto mb-8" aria-hidden="true"></div>
+            <div className="heading-accent mx-auto mb-8" aria-hidden="true"></div>
             <p className="text-xl text-light-text/80 dark:text-dark-text/80 max-w-2xl mx-auto">
               {config.description}
             </p>
@@ -317,7 +319,7 @@ const Contact: React.FC<ContactProps> = ({ config, address, contact, workingDays
                     role="listitem"
                   >
                     <div
-                      className={`w-12 h-12 ${item.color} rounded-2xl flex items-center justify-center flex-shrink-0`}
+                      className={`w-12 h-12 ${item.color} rounded-design-sm flex items-center justify-center flex-shrink-0`}
                       aria-hidden="true"
                     >
                       <item.icon className="h-6 w-6" />
@@ -409,7 +411,7 @@ const Contact: React.FC<ContactProps> = ({ config, address, contact, workingDays
 
                 <motion.button
                   type="submit"
-                  className="w-full bg-primary dark:bg-primary-dark text-white dark:text-dark-surface py-4 px-6 rounded-xl transition-all relative overflow-hidden shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full bg-primary dark:bg-primary-dark text-white dark:text-dark-surface py-4 px-6 rounded-design transition-all relative overflow-hidden shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                   disabled={isSubmitting || !formData.name || !formData.phone || !formData.message}

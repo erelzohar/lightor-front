@@ -31,6 +31,8 @@ export default {
         'design': 'var(--radius)',
         'design-sm': 'calc(var(--radius) / 2)',
         'design-lg': 'calc(var(--radius) * 1.5)',
+        // For rectangular media/cards: tracks --radius but never goes pill.
+        'design-card': 'var(--radius-card)',
       },
       boxShadow: {
         'card': 'var(--card-shadow)',

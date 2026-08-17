@@ -119,7 +119,7 @@ const Portfolio: React.FC<PortfolioProps> = ({ config }) => {
             {config.title}
           </h2>
           <div
-            className="w-24 h-1 bg-primary dark:bg-primary-dark mx-auto mb-8"
+            className="heading-accent mx-auto mb-8"
             aria-hidden="true"
           />
           <p className="text-xl text-light-text/80 dark:text-dark-text/80 max-w-2xl mx-auto mb-8">
@@ -171,7 +171,7 @@ const Portfolio: React.FC<PortfolioProps> = ({ config }) => {
               {config.items.map((item, index) => (
                 <motion.div
                   key={index}
-                  className="group relative aspect-[4/3] rounded-2xl overflow-hidden shadow-lg"
+                  className="group relative aspect-[4/3] rounded-design-card overflow-hidden shadow-card"
                   role="gridcell"
                   tabIndex={0}
                   aria-label={`${item.title}: ${item.description}`}
@@ -196,7 +196,7 @@ const Portfolio: React.FC<PortfolioProps> = ({ config }) => {
           ) : (
             <div
               ref={slideRef}
-              className="relative aspect-square md:aspect-[15/10] overflow-hidden rounded-3xl shadow-2xl bg-light-surface dark:bg-dark-bg mx-2 md:mx-0"
+              className="relative aspect-square md:aspect-[15/10] overflow-hidden rounded-design-card shadow-2xl bg-light-surface dark:bg-dark-bg mx-2 md:mx-0"
               role="region"
               aria-label={t('portfolio.slideshow_label')}
               aria-roledescription="carousel"

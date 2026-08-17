@@ -1,4 +1,7 @@
 @import url('https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&family=Montserrat:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Poppins:wght@300;400;500;600;700&family=Raleway:wght@300;400;500;600;700&family=Rubik:wght@300;400;500;600;700&display=swap');
+/* Hebrew counterparts for the font tokens (LT-039) — keep RTL sites on the
+   preset's personality instead of collapsing everything to Rubik. */
+@import url('https://fonts.googleapis.com/css2?family=Assistant:wght@300;400;500;600;700&family=Frank+Ruhl+Libre:wght@400;500;700&family=Secular+One&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -27,7 +30,12 @@
     --card-bg-opacity: 1;
     --font-body: 'Inter', sans-serif;
     --font-heading: 'Raleway', sans-serif;
+    --font-body-rtl: 'Rubik', sans-serif;
+    --font-heading-rtl: 'Rubik', sans-serif;
     --anim-duration: 0.6s;
+    /* Card corners track --radius but never go full pill — a 9999px radius on
+       a rectangular card clips its content, so 'full' presets cap at 2rem. */
+    --radius-card: min(var(--radius), 2rem);
   }
 }
 
@@ -80,9 +88,11 @@ h1, h2, h3, h4, h5, h6 {
   letter-spacing: -0.025em;
 }
 
-/* RTL always uses Rubik regardless of chosen font */
+/* RTL uses the Hebrew counterpart of the configured font pair (set by
+   useTheme). Effective only when <html dir> actually reflects the language —
+   LanguageProvider keeps it in sync. */
 [dir="rtl"] body {
-  font-family: 'Rubik', sans-serif;
+  font-family: var(--font-body-rtl, 'Rubik', sans-serif);
 }
 
 [dir="rtl"] h1,
@@ -91,6 +101,18 @@ h1, h2, h3, h4, h5, h6 {
 [dir="rtl"] h4,
 [dir="rtl"] h5,
 [dir="rtl"] h6 {
+  font-family: var(--font-heading-rtl, 'Rubik', sans-serif);
+}
+
+/* The Hebrew-specific families carry no Arabic glyphs; Rubik does. Pin Arabic
+   to Rubik outright so mixed-script text doesn't render from two families. */
+html[lang="ar"] body,
+html[lang="ar"] h1,
+html[lang="ar"] h2,
+html[lang="ar"] h3,
+html[lang="ar"] h4,
+html[lang="ar"] h5,
+html[lang="ar"] h6 {
   font-family: 'Rubik', sans-serif;
 }
 
@@ -138,7 +160,7 @@ h1, h2, h3, h4, h5, h6 {
   border-color: var(--card-border-color, transparent);
   backdrop-filter: blur(var(--card-blur, 0px));
   -webkit-backdrop-filter: blur(var(--card-blur, 0px));
-  border-radius: var(--radius, 1rem);
+  border-radius: var(--radius-card, 1rem);
   transition: box-shadow 0.3s ease, border-color 0.3s ease;
 }
 
@@ -179,6 +201,52 @@ html[data-type-scale="balanced"] h2 { font-size: clamp(2rem, 1.5rem + 2vw, 3rem)
 
 html[data-type-scale="dramatic"] h1 { font-size: clamp(3rem, 2rem + 5vw, 6rem); }
 html[data-type-scale="dramatic"] h2 { font-size: clamp(2.5rem, 1.8rem + 3vw, 4.25rem); }
+
+/* h3 only nudged at the extremes; balanced keeps the utility-class sizes. */
+html[data-type-scale="modest"] h3 { font-size: clamp(1.125rem, 1rem + 0.5vw, 1.375rem); }
+html[data-type-scale="dramatic"] h3 { font-size: clamp(1.5rem, 1.2rem + 1.2vw, 2rem); }
+
+/* Heading accent — the small flourish under section titles. Shape is chosen
+   by the headingAccent design token (data attribute set in useTheme); margins
+   stay in the markup so each call site keeps its own spacing. */
+.heading-accent {
+  width: 6rem;
+  height: 0.25rem;
+  border-radius: 9999px;
+  background-color: rgb(var(--color-primary));
+}
+
+.dark .heading-accent {
+  background-color: rgb(var(--color-primary-dark));
+}
+
+html[data-heading-accent="rule"] .heading-accent {
+  width: 10rem;
+  height: 1px;
+  border-radius: 0;
+  opacity: 0.6;
+}
+
+html[data-heading-accent="dot"] .heading-accent {
+  width: 0.625rem;
+  height: 0.625rem;
+  border-radius: 0.125rem;
+  transform: rotate(45deg);
+}
+
+html[data-heading-accent="none"] .heading-accent {
+  display: none;
+}
+
+/* Image treatments — organic/architectural masks for the hero image,
+   selected by the imageTreatment design token (applied in Hero.tsx). */
+.img-arch {
+  border-radius: 50% 50% 8% 8% / 42% 42% 8% 8%;
+}
+
+.img-blob {
+  border-radius: 42% 58% 63% 37% / 45% 42% 58% 55%;
+}
 
 @keyframes blob {
   0% {

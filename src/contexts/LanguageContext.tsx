@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useCallback } from 'react';
+import React, { createContext, useContext, useCallback, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 
 export type Language = 'en' | 'he' | 'ar' | 'fr' | 'es';
@@ -30,6 +30,15 @@ export const LanguageProvider: React.FC<LanguageProviderProps> = ({ children, de
 
   // Determine direction based on normalized language
   const isRTL = currentLang === 'he' || currentLang === 'ar';
+
+  // Keep <html lang/dir> in sync with the active language. index.html ships a
+  // static lang="he" dir="rtl", which used to stick forever — so the
+  // [dir="rtl"] font override in index.css applied to EVERY site in EVERY
+  // language, silently overriding the configured font tokens (LT-039).
+  useEffect(() => {
+    document.documentElement.lang = currentLang;
+    document.documentElement.dir = isRTL ? 'rtl' : 'ltr';
+  }, [currentLang, isRTL]);
 
   return (
     <LanguageContext.Provider value={{ language: currentLang, setLanguage, t }}>

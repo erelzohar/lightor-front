@@ -14,6 +14,7 @@ import { Loader2 } from 'lucide-react';
 import { Vacation } from '../../../models/Vacation';
 import { MaterialInput } from './ScheduleForms';
 import { DateButton } from './ScheduleCalendar';
+import { CalendarEventInput, googleCalendarUrl, downloadIcs } from '../../../services/calendarLinks';
 
 interface BookingFormData {
   name: string;
@@ -79,6 +80,9 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
+  // The just-booked slot, kept for the add-to-calendar buttons after the
+  // selection state itself is reset. (LT-044)
+  const [calendarEvent, setCalendarEvent] = useState<CalendarEventInput | null>(null);
 
   useEffect(() => {
     if (isUpdating && appointmentToUpdate) {
@@ -155,6 +159,7 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
   const resetCalendar = useCallback(() => {
     setError(null);
     setIsSuccess(false);
+    setCalendarEvent(null);
     setSelectedDate(null);
     setSelectedAppointmentType(null);
     setSelectedTime(null);
@@ -263,9 +268,21 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
       setError(null);
       setSuccessMessage(isUpdating ? t('schedule.update.success') : t('schedule.success'));
       setIsSuccess(true);
+
+      // New bookings show add-to-calendar buttons with the success message, so
+      // the state lives longer before resetting. Updates keep the short reset:
+      // the manage page overlays its own confirmation and navigates away.
+      if (!isUpdating) {
+        const durationMS = parseInt(selectedAppointmentType.durationMS) || 0;
+        setCalendarEvent({
+          title: `${selectedAppointmentType.name} — ${businessName}`,
+          start: fixedDate.valueOf(),
+          end: fixedDate.valueOf() + durationMS,
+        });
+      }
       setTimeout(() => {
         resetCalendar();
-      }, 5000);
+      }, isUpdating ? 5000 : 20000);
 
     } catch (error: any) {
       if (error && error.message === "SLOT_TAKEN") {
@@ -282,7 +299,7 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
     } finally {
       setIsSubmitting(false);
     }
-  }, [formData, validateForm, selectedDate, selectedAppointmentType, selectedTime, user_id, t, resetCalendar, isPreview, isUpdating, appointmentToUpdate, channelType, onUpdateComplete]);
+  }, [formData, validateForm, selectedDate, selectedAppointmentType, selectedTime, user_id, t, resetCalendar, isPreview, isUpdating, appointmentToUpdate, channelType, onUpdateComplete, businessName]);
 
   const handleInputChange = (field: keyof BookingFormData, value: string) => {
     let processedValue = value;
@@ -775,7 +792,7 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
           </motion.div>
 
           <motion.div className="max-w-[43.75rem] mx-auto">
-            <motion.div className="bg-light-surface dark:bg-dark-surface rounded-3xl shadow-xl p-6 md:p-8">
+            <motion.div className="bg-light-surface dark:bg-dark-surface rounded-design-card shadow-card p-6 md:p-8">
               {(bookingStep !== 'date' || (isUpdating && onCancelUpdate)) && (
                 <motion.button
                   type="button"
@@ -903,7 +920,7 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
                             key={type._id}
                             type="button"
                             onClick={() => handleAppointmentTypeSelect(type)}
-                            className="p-6 rounded-xl bg-light-gray/30 dark:bg-dark-gray/30 hover:bg-primary/10 dark:hover:bg-primary-dark/10 transition-colors group"
+                            className="p-6 rounded-design-sm bg-light-gray/30 dark:bg-dark-gray/30 hover:bg-primary/10 dark:hover:bg-primary-dark/10 transition-colors group"
                             whileHover={{ scale: 1.02 }}
                             whileTap={{ scale: 0.98 }}
                           >
@@ -958,7 +975,7 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
                           key={time}
                           type="button"
                           onClick={() => handleTimeSelect(time)}
-                          className={`relative overflow-hidden p-3 rounded-xl text-sm font-medium ${selectedTime === time
+                          className={`relative overflow-hidden p-3 rounded-design-sm text-sm font-medium ${selectedTime === time
                             ? 'bg-primary dark:bg-primary-dark text-white dark:text-dark-surface shadow-lg'
                             : 'bg-primary/10 dark:bg-primary-dark/10 text-primary dark:text-primary-dark hover:shadow-md'
                             }`}
@@ -1062,7 +1079,7 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
 
                     <motion.button
                       type="submit"
-                      className="w-full mt-8 bg-primary dark:bg-primary-dark text-white dark:text-dark-surface py-4 px-6 rounded-xl transition-all relative overflow-hidden shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="w-full mt-8 bg-primary dark:bg-primary-dark text-white dark:text-dark-surface py-4 px-6 rounded-design transition-all relative overflow-hidden shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
                       disabled={isSubmitting || !formData.name || !formData.phone}
@@ -1177,7 +1194,7 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
                     </div>
                     <motion.button
                       type="submit"
-                      className="w-full mt-8 bg-primary dark:bg-primary-dark text-white dark:text-dark-surface py-4 px-6 rounded-xl transition-all relative overflow-hidden shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="w-full mt-8 bg-primary dark:bg-primary-dark text-white dark:text-dark-surface py-4 px-6 rounded-design transition-all relative overflow-hidden shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
                       disabled={isSubmitting || !formData.verificationCode}
@@ -1201,6 +1218,33 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
                   >
                     <CheckCircle className="h-5 w-5" />
                     <span>{successMessage}</span>
+                  </motion.div>
+                )}
+                {isSuccess && calendarEvent && (
+                  <motion.div
+                    key="add-to-calendar"
+                    className="mt-4 flex flex-col sm:flex-row items-center justify-center gap-3"
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0 }}
+                  >
+                    <a
+                      href={googleCalendarUrl(calendarEvent)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="w-full sm:w-auto flex items-center justify-center gap-2 py-2 px-4 rounded-xl border border-primary dark:border-primary-dark text-primary dark:text-primary-dark text-sm font-medium hover:bg-primary/10 dark:hover:bg-primary-dark/10 transition-colors"
+                    >
+                      <CalendarIcon className="h-4 w-4" />
+                      {t('calendar.addGoogle')}
+                    </a>
+                    <button
+                      type="button"
+                      onClick={() => downloadIcs(calendarEvent)}
+                      className="w-full sm:w-auto flex items-center justify-center gap-2 py-2 px-4 rounded-xl border border-primary dark:border-primary-dark text-primary dark:text-primary-dark text-sm font-medium hover:bg-primary/10 dark:hover:bg-primary-dark/10 transition-colors"
+                    >
+                      <CalendarIcon className="h-4 w-4" />
+                      {t('calendar.download')}
+                    </button>
                   </motion.div>
                 )}
                 {error && (

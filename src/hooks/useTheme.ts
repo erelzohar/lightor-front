@@ -10,6 +10,27 @@ const FONT_STACK: Record<FontFamily, string> = {
     poppins: "'Poppins', sans-serif",
 };
 
+// Hebrew-capable counterpart per family, so RTL sites keep the preset's
+// typographic personality instead of all collapsing to Rubik (LT-039).
+// Rubik stays in every stack as the fallback: it covers Arabic, which the
+// Hebrew-focused families do not, so Arabic glyphs fall through per-character.
+const RTL_HEADING_STACK: Record<FontFamily, string> = {
+    inter: "'Heebo', 'Rubik', sans-serif",
+    raleway: "'Assistant', 'Rubik', sans-serif",
+    playfair: "'Frank Ruhl Libre', 'Rubik', serif",
+    montserrat: "'Secular One', 'Rubik', sans-serif",
+    poppins: "'Rubik', sans-serif",
+};
+
+// Secular One is display-only (single weight), so montserrat bodies get Heebo.
+const RTL_BODY_STACK: Record<FontFamily, string> = {
+    inter: "'Heebo', 'Rubik', sans-serif",
+    raleway: "'Assistant', 'Rubik', sans-serif",
+    playfair: "'Frank Ruhl Libre', 'Rubik', serif",
+    montserrat: "'Heebo', 'Rubik', sans-serif",
+    poppins: "'Rubik', sans-serif",
+};
+
 // Card style → CSS-var bundle. `bgOpacity` < 1 is what makes "glass" read as
 // translucent over the blurred backdrop.
 const CARD_STYLES: Record<CardStyle, {
@@ -63,9 +84,12 @@ export const useTheme = (config: WebsiteConfig | null) => {
         root.style.setProperty('--card-blur', card.blur);
         root.style.setProperty('--card-bg-opacity', card.bgOpacity);
 
-        // Font pairing — heading and body resolved independently
+        // Font pairing — heading and body resolved independently, with a
+        // parallel RTL pair consumed by the [dir="rtl"] rules in index.css.
         root.style.setProperty('--font-heading', FONT_STACK[design.headingFont] ?? FONT_STACK.raleway);
         root.style.setProperty('--font-body', FONT_STACK[design.bodyFont] ?? FONT_STACK.inter);
+        root.style.setProperty('--font-heading-rtl', RTL_HEADING_STACK[design.headingFont] ?? RTL_HEADING_STACK.raleway);
+        root.style.setProperty('--font-body-rtl', RTL_BODY_STACK[design.bodyFont] ?? RTL_BODY_STACK.inter);
 
         // Animation duration
         const animDurationMap: Record<string, string> = { none: '0s', minimal: '0.15s', full: '0.6s' };
@@ -74,6 +98,9 @@ export const useTheme = (config: WebsiteConfig | null) => {
         // Density + type scale drive whitespace and heading sizes via CSS hooks.
         root.dataset.density = design.density;
         root.dataset.typeScale = design.typeScale;
+
+        // Heading accent shape — consumed by the .heading-accent rules.
+        root.dataset.headingAccent = design.headingAccent ?? 'bar';
 
     }, [config]);
 };
