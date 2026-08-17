@@ -6,6 +6,7 @@ import { ContactModal } from '../ContactModal';
 import { useContactHandler } from '../../hooks/useContactHandler';
 import { LegalModal } from '../LegalModal';
 import { AppointmentType } from '../../models/AppointmentType';
+import { FooterLayout } from '../../models/DesignConfig';
 import { Social } from '../../models/Social';
 import globals from '../../services/globals';
 import ImagesService from '../../services/ImagesService';
@@ -25,9 +26,10 @@ interface FooterProps {
   logoImageName: string;
   appointmentsType: AppointmentType[];
   websiteConfig: WebsiteConfig;
+  layout?: FooterLayout;
 }
 
-const Footer: React.FC<FooterProps> = ({ config, social, businessName, logoImageName, appointmentsType, websiteConfig }) => {
+const Footer: React.FC<FooterProps> = ({ config, social, businessName, logoImageName, appointmentsType, websiteConfig, layout = 'columns' }) => {
   const { t, language } = useLanguage();
   const { isModalOpen, setIsModalOpen, modalType, handleContactClick } = useContactHandler();
   const [legalModal, setLegalModal] = useState<{
@@ -159,6 +161,40 @@ const Footer: React.FC<FooterProps> = ({ config, social, businessName, logoImage
           viewport={{ once: true }}
           variants={containerVariants}
         >
+          {layout === 'minimal' ? (
+            /* Minimal bar: identity + social only; link/service columns and
+               the long description are dropped. Legal block below is shared. */
+            <motion.div variants={itemVariants} className="flex flex-col items-center gap-6 mb-12 text-center">
+              <div className="flex items-center gap-2">
+                <img
+                  src={ImagesService.getInstance().getImage(logoImageName)}
+                  alt="Logo"
+                  className="h-10 w-10 rounded-full object-cover"
+                />
+                <span className="text-2xl font-bold">{businessName}</span>
+              </div>
+              {socialLinks.length > 0 && (
+                <div className="flex justify-center gap-4" role="list" aria-label={t('footer.follow')}>
+                  {socialLinks.map((social, index) => (
+                    <motion.button
+                      key={index}
+                      onClick={() => window.open(social.href, '_blank')}
+                      className={`w-10 h-10 rounded-design-sm flex items-center justify-center transition-colors ${social.color}`}
+                      whileHover={{ scale: 1.1, rotate: 5 }}
+                      whileTap={{ scale: 0.9 }}
+                      role="listitem"
+                      aria-label={social.label}
+                    >
+                      {typeof social.icon === 'function' ?
+                        <social.icon /> :
+                        <social.icon className="h-5 w-5" aria-hidden="true" />
+                      }
+                    </motion.button>
+                  ))}
+                </div>
+              )}
+            </motion.div>
+          ) : (
           <div className="grid md:grid-cols-3 gap-12 mb-12">
             {/* Logo and Description */}
             <motion.div variants={itemVariants} className="text-center md:text-start">
@@ -268,6 +304,7 @@ const Footer: React.FC<FooterProps> = ({ config, social, businessName, logoImage
               </div>
             </motion.div>
           </div>
+          )}
 
           <motion.div
             className="border-t border-dark-bg pt-8 text-center text-dark-text/60 space-y-4"

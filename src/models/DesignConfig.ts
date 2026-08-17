@@ -10,6 +10,12 @@ export type Density = 'compact' | 'comfortable' | 'spacious';
 export type TypeScale = 'modest' | 'balanced' | 'dramatic';
 export type HeadingAccent = 'bar' | 'rule' | 'dot' | 'none';
 export type ImageTreatment = 'rounded' | 'circle' | 'arch' | 'blob' | 'framed';
+// Per-section skeletons (LT-051). The first value of each is the pre-LT-051
+// layout, and DEFAULT_TOKENS picks it, so unpresetted sites don't move.
+export type AboutLayout = 'cards' | 'split' | 'band';
+export type PortfolioLayout = 'grid' | 'masonry' | 'filmstrip';
+export type ContactLayout = 'split' | 'stacked';
+export type FooterLayout = 'columns' | 'minimal';
 
 export type StylePreset =
   | 'luxe'
@@ -38,6 +44,10 @@ export interface DesignTokens {
   typeScale: TypeScale;
   headingAccent: HeadingAccent;
   imageTreatment: ImageTreatment;
+  aboutLayout: AboutLayout;
+  portfolioLayout: PortfolioLayout;
+  contactLayout: ContactLayout;
+  footerLayout: FooterLayout;
 }
 
 // Neutral fallback used when no preset and no explicit tokens are provided.
@@ -55,6 +65,10 @@ const DEFAULT_TOKENS: DesignTokens = {
   typeScale: 'balanced',
   headingAccent: 'bar',
   imageTreatment: 'rounded',
+  aboutLayout: 'cards',
+  portfolioLayout: 'grid',
+  contactLayout: 'split',
+  footerLayout: 'columns',
 };
 
 // Opinionated, deliberately divergent bundles. Picking one of these gives a
@@ -67,6 +81,7 @@ export const STYLE_PRESETS: Record<StylePreset, DesignTokens> = {
     navbarStyle: 'transparent', heroLayout: 'centered', sectionDivider: 'curve',
     density: 'spacious', typeScale: 'dramatic',
     headingAccent: 'rule', imageTreatment: 'arch',
+    aboutLayout: 'band', portfolioLayout: 'masonry', contactLayout: 'stacked', footerLayout: 'minimal',
   },
   editorial: {
     borderRadius: 'none', cardStyle: 'flat', buttonStyle: 'ghost',
@@ -74,6 +89,7 @@ export const STYLE_PRESETS: Record<StylePreset, DesignTokens> = {
     navbarStyle: 'solid', heroLayout: 'split', sectionDivider: 'none',
     density: 'spacious', typeScale: 'dramatic',
     headingAccent: 'rule', imageTreatment: 'framed',
+    aboutLayout: 'split', portfolioLayout: 'masonry', contactLayout: 'split', footerLayout: 'minimal',
   },
   boldStartup: {
     borderRadius: 'lg', cardStyle: 'glass', buttonStyle: 'gradient',
@@ -81,6 +97,7 @@ export const STYLE_PRESETS: Record<StylePreset, DesignTokens> = {
     navbarStyle: 'floating', heroLayout: 'split', sectionDivider: 'diagonal',
     density: 'comfortable', typeScale: 'balanced',
     headingAccent: 'bar', imageTreatment: 'rounded',
+    aboutLayout: 'cards', portfolioLayout: 'grid', contactLayout: 'split', footerLayout: 'columns',
   },
   corporate: {
     borderRadius: 'sm', cardStyle: 'bordered', buttonStyle: 'solid',
@@ -88,6 +105,7 @@ export const STYLE_PRESETS: Record<StylePreset, DesignTokens> = {
     navbarStyle: 'solid', heroLayout: 'image-right', sectionDivider: 'none',
     density: 'compact', typeScale: 'modest',
     headingAccent: 'bar', imageTreatment: 'rounded',
+    aboutLayout: 'split', portfolioLayout: 'grid', contactLayout: 'split', footerLayout: 'columns',
   },
   playful: {
     borderRadius: 'full', cardStyle: 'elevated', buttonStyle: 'gradient',
@@ -95,6 +113,7 @@ export const STYLE_PRESETS: Record<StylePreset, DesignTokens> = {
     navbarStyle: 'floating', heroLayout: 'centered', sectionDivider: 'wave',
     density: 'comfortable', typeScale: 'balanced',
     headingAccent: 'dot', imageTreatment: 'blob',
+    aboutLayout: 'cards', portfolioLayout: 'grid', contactLayout: 'stacked', footerLayout: 'columns',
   },
   minimal: {
     borderRadius: 'none', cardStyle: 'flat', buttonStyle: 'outline',
@@ -102,6 +121,7 @@ export const STYLE_PRESETS: Record<StylePreset, DesignTokens> = {
     navbarStyle: 'transparent', heroLayout: 'image-right', sectionDivider: 'none',
     density: 'spacious', typeScale: 'balanced',
     headingAccent: 'none', imageTreatment: 'rounded',
+    aboutLayout: 'band', portfolioLayout: 'masonry', contactLayout: 'stacked', footerLayout: 'minimal',
   },
   warmOrganic: {
     borderRadius: 'xl', cardStyle: 'elevated', buttonStyle: 'solid',
@@ -109,6 +129,7 @@ export const STYLE_PRESETS: Record<StylePreset, DesignTokens> = {
     navbarStyle: 'floating', heroLayout: 'image-right', sectionDivider: 'curve',
     density: 'comfortable', typeScale: 'balanced',
     headingAccent: 'dot', imageTreatment: 'blob',
+    aboutLayout: 'cards', portfolioLayout: 'grid', contactLayout: 'split', footerLayout: 'columns',
   },
   brutalist: {
     borderRadius: 'none', cardStyle: 'flat', buttonStyle: 'solid',
@@ -116,6 +137,7 @@ export const STYLE_PRESETS: Record<StylePreset, DesignTokens> = {
     navbarStyle: 'solid', heroLayout: 'split', sectionDivider: 'none',
     density: 'compact', typeScale: 'dramatic',
     headingAccent: 'bar', imageTreatment: 'framed',
+    aboutLayout: 'band', portfolioLayout: 'filmstrip', contactLayout: 'split', footerLayout: 'minimal',
   },
   boutique: {
     borderRadius: 'full', cardStyle: 'glass', buttonStyle: 'outline',
@@ -123,6 +145,7 @@ export const STYLE_PRESETS: Record<StylePreset, DesignTokens> = {
     navbarStyle: 'transparent', heroLayout: 'centered', sectionDivider: 'curve',
     density: 'spacious', typeScale: 'balanced',
     headingAccent: 'dot', imageTreatment: 'circle',
+    aboutLayout: 'split', portfolioLayout: 'filmstrip', contactLayout: 'stacked', footerLayout: 'minimal',
   },
   bistro: {
     borderRadius: 'sm', cardStyle: 'bordered', buttonStyle: 'solid',
@@ -130,6 +153,7 @@ export const STYLE_PRESETS: Record<StylePreset, DesignTokens> = {
     navbarStyle: 'solid', heroLayout: 'image-right', sectionDivider: 'none',
     density: 'comfortable', typeScale: 'balanced',
     headingAccent: 'rule', imageTreatment: 'arch',
+    aboutLayout: 'split', portfolioLayout: 'grid', contactLayout: 'stacked', footerLayout: 'columns',
   },
 };
 
@@ -149,6 +173,10 @@ export class DesignConfig implements DesignTokens {
     public typeScale: TypeScale,
     public headingAccent: HeadingAccent,
     public imageTreatment: ImageTreatment,
+    public aboutLayout: AboutLayout,
+    public portfolioLayout: PortfolioLayout,
+    public contactLayout: ContactLayout,
+    public footerLayout: FooterLayout,
   ) {}
 
   // Resolution order for every token: explicit value → preset value → default.
@@ -177,6 +205,10 @@ export class DesignConfig implements DesignTokens {
       json?.typeScale ?? base.typeScale,
       json?.headingAccent ?? base.headingAccent,
       json?.imageTreatment ?? base.imageTreatment,
+      json?.aboutLayout ?? base.aboutLayout,
+      json?.portfolioLayout ?? base.portfolioLayout,
+      json?.contactLayout ?? base.contactLayout,
+      json?.footerLayout ?? base.footerLayout,
     );
   }
 }

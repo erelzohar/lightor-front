@@ -10,6 +10,7 @@ const TOKEN_KEYS = [
   'borderRadius', 'cardStyle', 'buttonStyle', 'headingFont', 'bodyFont',
   'animLevel', 'navbarStyle', 'heroLayout', 'sectionDivider', 'density',
   'typeScale', 'headingAccent', 'imageTreatment',
+  'aboutLayout', 'portfolioLayout', 'contactLayout', 'footerLayout',
 ] as const satisfies readonly (keyof DesignTokens)[];
 
 describe('DesignConfig.fromJSON', () => {

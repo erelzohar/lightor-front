@@ -3,14 +3,20 @@ import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLanguage } from '../contexts/LanguageContext';
 import { PortfolioConfig } from '../models/PortfolioConfig';
+import { PortfolioLayout } from '../models/DesignConfig';
 import globals from '../services/globals';
 import ImagesService from '../services/ImagesService';
 
 interface PortfolioProps {
   config: PortfolioConfig;
+  layout?: PortfolioLayout;
 }
 
-const Portfolio: React.FC<PortfolioProps> = ({ config }) => {
+// Masonry cycles aspect ratios so the columns stagger even when every source
+// image has the same dimensions.
+const MASONRY_ASPECTS = ['aspect-[4/3]', 'aspect-square', 'aspect-[3/4]'];
+
+const Portfolio: React.FC<PortfolioProps> = ({ config, layout = 'grid' }) => {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isGridView] = useState(config.isGrid);
   const [touchStart, setTouchStart] = useState(0);
@@ -163,15 +169,14 @@ const Portfolio: React.FC<PortfolioProps> = ({ config }) => {
 
         <div className="max-w-6xl mx-auto">
           {isGridView ? (
-            <div
-              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
-              role="grid"
-              aria-label={t('portfolio.grid_label')}
-            >
-              {config.items.map((item, index) => (
+            (() => {
+              // Shared still-image card; the portfolioLayout token picks how
+              // the cards are arranged (grid / masonry / filmstrip). The
+              // carousel below (isGrid=false) is owner-chosen and unaffected.
+              const itemCard = (item: typeof config.items[number], index: number, aspect: string, extra = '') => (
                 <motion.div
                   key={index}
-                  className="group relative aspect-[4/3] rounded-design-card overflow-hidden shadow-card"
+                  className={`group relative ${aspect} rounded-design-card overflow-hidden shadow-card ${extra}`}
                   role="gridcell"
                   tabIndex={0}
                   aria-label={`${item.title}: ${item.description}`}
@@ -179,7 +184,7 @@ const Portfolio: React.FC<PortfolioProps> = ({ config }) => {
                   <img
                     src={ImagesService.getInstance().getImage(item.url)}
                     alt={item.title}
-                    className="w-full h-full object-contain transition-transform duration-500 group-hover:scale-110"
+                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                   />
                   <div
                     className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"
@@ -191,8 +196,72 @@ const Portfolio: React.FC<PortfolioProps> = ({ config }) => {
                     </div>
                   </div>
                 </motion.div>
-              ))}
-            </div>
+              );
+
+              if (layout === 'masonry') {
+                return (
+                  <div
+                    className="columns-1 md:columns-2 lg:columns-3 gap-8"
+                    role="grid"
+                    aria-label={t('portfolio.grid_label')}
+                  >
+                    {config.items.map((item, index) =>
+                      itemCard(item, index, MASONRY_ASPECTS[index % MASONRY_ASPECTS.length], 'mb-8 break-inside-avoid')
+                    )}
+                  </div>
+                );
+              }
+
+              if (layout === 'filmstrip') {
+                return (
+                  <div
+                    className="flex overflow-x-auto gap-6 pb-4 snap-x snap-mandatory"
+                    role="grid"
+                    aria-label={t('portfolio.grid_label')}
+                  >
+                    {config.items.map((item, index) =>
+                      itemCard(item, index, 'aspect-[3/4]', 'flex-none w-64 sm:w-72 snap-center')
+                    )}
+                  </div>
+                );
+              }
+
+              // 'grid' (default): uniform three-column grid. object-contain
+              // preserved here — it predates LT-051 and owners' grid images
+              // rely on it not cropping.
+              return (
+                <div
+                  className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
+                  role="grid"
+                  aria-label={t('portfolio.grid_label')}
+                >
+                  {config.items.map((item, index) => (
+                    <motion.div
+                      key={index}
+                      className="group relative aspect-[4/3] rounded-design-card overflow-hidden shadow-card"
+                      role="gridcell"
+                      tabIndex={0}
+                      aria-label={`${item.title}: ${item.description}`}
+                    >
+                      <img
+                        src={ImagesService.getInstance().getImage(item.url)}
+                        alt={item.title}
+                        className="w-full h-full object-contain transition-transform duration-500 group-hover:scale-110"
+                      />
+                      <div
+                        className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                        aria-hidden="true"
+                      >
+                        <div className="absolute bottom-0 inset-x-0 p-4 md:p-6">
+                          <h3 className="text-lg md:text-xl font-bold text-white mb-1 md:mb-2">{item.title}</h3>
+                          <p className="text-sm md:text-base text-white/80">{item.description}</p>
+                        </div>
+                      </div>
+                    </motion.div>
+                  ))}
+                </div>
+              );
+            })()
           ) : (
             <div
               ref={slideRef}

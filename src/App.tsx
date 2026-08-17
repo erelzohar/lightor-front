@@ -229,13 +229,17 @@ function MainContent() {
             social: config.social,
             workingDays: config.workingDays
           }}
+          layout={config.design?.aboutLayout}
         />
       )
     });
   }
 
   if (config.components?.portfolio.visible) {
-    flow.push({ key: 'portfolio', tone: 'bg', node: <Portfolio config={config.components.portfolio} /> });
+    flow.push({
+      key: 'portfolio', tone: 'bg',
+      node: <Portfolio config={config.components.portfolio} layout={config.design?.portfolioLayout} />
+    });
   }
 
   // --- SENSITIVE SECTION: Turnstile protects the Schedule only ---
@@ -267,6 +271,7 @@ function MainContent() {
           address={config.address}
           contact={config.contact}
           workingDays={config.workingDays}
+          layout={config.design?.contactLayout}
         />
       )
     });
@@ -300,6 +305,7 @@ function MainContent() {
             businessName={config.businessName}
             logoImageName={config.logoImageName}
             websiteConfig={config.components}
+            layout={config.design?.footerLayout}
           />
         </ErrorBoundary>
       )}

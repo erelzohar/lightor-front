@@ -3,6 +3,7 @@ import { Mail, Phone, MapPin, Send, User, MessageSquare, CheckCircle, XCircle } 
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { ContactConfig } from '../../models/ContactConfig';
+import { ContactLayout } from '../../models/DesignConfig';
 import { ContactModal } from '../../components/ContactModal';
 import { useContactHandler } from '../../hooks/useContactHandler';
 import smsService from '../../services/SmsService';
@@ -27,6 +28,7 @@ interface ContactProps {
   contact: ContactInfo;
   workingDays: (string | null)[];
   isPreview?: boolean;
+  layout?: ContactLayout;
 }
 
 const MaterialInput = ({
@@ -88,7 +90,10 @@ const MaterialInput = ({
   </div>
 );
 
-const Contact: React.FC<ContactProps> = ({ config, address, contact, workingDays, isPreview }) => {
+const Contact: React.FC<ContactProps> = ({ config, address, contact, workingDays, isPreview, layout = 'split' }) => {
+  // 'split' = info column beside the form; 'stacked' = one narrow centered
+  // column with the info as a chip row above the form.
+  const isStacked = layout === 'stacked';
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -307,13 +312,17 @@ const Contact: React.FC<ContactProps> = ({ config, address, contact, workingDays
             </p>
           </motion.div>
 
-          <div className="grid md:grid-cols-2 gap-12 max-w-6xl mx-auto">
+          <div className={isStacked ? 'max-w-2xl mx-auto flex flex-col gap-12' : 'grid md:grid-cols-2 gap-12 max-w-6xl mx-auto'}>
             <motion.div variants={containerVariants}>
-              <div className="space-y-8" role="list" aria-label="Contact information">
+              <div
+                className={isStacked ? 'flex flex-wrap justify-center gap-x-12 gap-y-8' : 'space-y-8'}
+                role="list"
+                aria-label="Contact information"
+              >
                 {contactInfo.map((item, index) => (
                   <motion.div
                     key={index}
-                    className="flex items-start gap-8"
+                    className={isStacked ? 'flex flex-col items-center text-center gap-3' : 'flex items-start gap-8'}
                     variants={itemVariants}
                     whileHover={{ scale: 1.02 }}
                     role="listitem"

@@ -26,7 +26,14 @@ import { useLanguage } from '../../contexts/LanguageContext';
 import { ContactModal } from '../ContactModal';
 import { useContactHandler } from '../../hooks/useContactHandler';
 import { AboutConfig } from '../../models/AboutConfig';
+import { AboutLayout } from '../../models/DesignConfig';
 import { Social } from '../../models/Social';
+
+// Feature icons are stored in the config by name.
+const FEATURE_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
+  Star, Award, Users, Shield, CheckCircle, Smile, Rocket, Globe,
+  Calendar, Settings, Bell, Heart, Sparkles, Hand, Clock,
+};
 
 interface WebsiteConfig {
   // Optional throughout: a business may have no premises, and the API stores
@@ -48,9 +55,10 @@ interface WebsiteConfig {
 interface AboutProps {
   config: AboutConfig;
   websiteConfig: WebsiteConfig;
+  layout?: AboutLayout;
 }
 
-const About: React.FC<AboutProps> = ({ config, websiteConfig }) => {
+const About: React.FC<AboutProps> = ({ config, websiteConfig, layout = 'cards' }) => {
   const { t, language } = useLanguage();
   const { isModalOpen, setIsModalOpen, modalType, handleContactClick } = useContactHandler();
   const formatWorkingHours = () => {
@@ -196,6 +204,175 @@ const About: React.FC<AboutProps> = ({ config, websiteConfig }) => {
     }
   };
 
+  // ── Building blocks recomposed by the aboutLayout token ───────────────────
+
+  const paragraphs = (extraClass = 'max-w-3xl mx-auto text-center mb-20') => (
+    <motion.div className={extraClass} variants={itemVariants}>
+      <p className="text-xl text-light-text dark:text-dark-text leading-relaxed mb-8">
+        {config.paragraphs.intro}
+      </p>
+      <p className="text-lg text-light-text/80 dark:text-dark-text/80 leading-relaxed">
+        {config.paragraphs.mission}
+      </p>
+    </motion.div>
+  );
+
+  // 'cards': the tilted-card grid.
+  const featureTiles = (
+    <motion.div className="grid md:grid-cols-3 gap-12 mb-20" variants={containerVariants}>
+      {config.features.map((feature, index) => {
+        const Icon = FEATURE_ICONS[feature.icon] ?? Star;
+        return (
+          <motion.div
+            key={index}
+            className="group relative h-full"
+            variants={itemVariants}
+            whileHover={{ scale: 1.05 }}
+            transition={{ type: "spring", stiffness: 300 }}
+          >
+            <div className="absolute inset-0 bg-primary/10 dark:bg-primary-dark/10 rounded-design transform -rotate-6 group-hover:rotate-0 transition-transform"></div>
+            <div className="card-design relative p-8 h-full flex flex-col">
+              <div className="w-16 h-16 mx-auto mb-6 bg-primary/10 dark:bg-primary-dark/10 rounded-design-sm flex items-center justify-center transform group-hover:scale-110 transition-transform">
+                <Icon className="h-8 w-8 text-primary dark:text-primary-dark" />
+              </div>
+              <h3 className="text-xl font-semibold mb-4 text-light-text dark:text-dark-text text-center">{feature.title}</h3>
+              <p className="text-light-text/80 dark:text-dark-text/80 text-center flex-grow">{feature.description}</p>
+            </div>
+          </motion.div>
+        );
+      })}
+    </motion.div>
+  );
+
+  // 'band': borderless, cardless feature strip — quiet layouts (luxe, minimal).
+  const featureBand = (
+    <motion.div
+      className="grid grid-cols-1 md:grid-cols-3 gap-10 md:gap-8 mb-20 max-w-4xl mx-auto"
+      variants={containerVariants}
+    >
+      {config.features.map((feature, index) => {
+        const Icon = FEATURE_ICONS[feature.icon] ?? Star;
+        return (
+          <motion.div key={index} className="flex flex-col items-center text-center px-2" variants={itemVariants}>
+            <Icon className="h-8 w-8 text-primary dark:text-primary-dark mb-4" />
+            <h3 className="text-xl font-semibold mb-2 text-light-text dark:text-dark-text">{feature.title}</h3>
+            <p className="text-light-text/80 dark:text-dark-text/80">{feature.description}</p>
+          </motion.div>
+        );
+      })}
+    </motion.div>
+  );
+
+  // 'split': features as compact icon rows beside the text column.
+  const featureRows = (
+    <motion.div className="space-y-8" variants={containerVariants}>
+      {config.features.map((feature, index) => {
+        const Icon = FEATURE_ICONS[feature.icon] ?? Star;
+        return (
+          <motion.div key={index} className="flex items-start gap-5" variants={itemVariants}>
+            <div className="w-12 h-12 shrink-0 bg-primary/10 dark:bg-primary-dark/10 rounded-design-sm flex items-center justify-center">
+              <Icon className="h-6 w-6 text-primary dark:text-primary-dark" />
+            </div>
+            <div>
+              <h3 className="text-lg font-semibold mb-1 text-light-text dark:text-dark-text">{feature.title}</h3>
+              <p className="text-light-text/80 dark:text-dark-text/80">{feature.description}</p>
+            </div>
+          </motion.div>
+        );
+      })}
+    </motion.div>
+  );
+
+  // The visit/contact card. `compact` narrows the info grid for half-width
+  // placement in the split layout.
+  const renderVisitCard = (compact = false) => (
+    <motion.div
+      className="relative"
+      variants={itemVariants}
+    >
+      <div className={`card-design relative ${compact ? 'p-8' : 'p-12'}`}>
+        <h3 className="text-3xl font-bold text-center mb-12 text-light-text dark:text-dark-text">
+          {t('about.visit')}
+          <div className="heading-accent mx-auto mt-4" aria-hidden="true"></div>
+        </h3>
+
+        <div className={`grid gap-8 ${compact ? 'md:grid-cols-2' : 'md:grid-cols-2 lg:grid-cols-4'}`}>
+          {contactInfo.map((item, index) => (
+            <motion.div
+              key={index}
+              className="h-full"
+              variants={itemVariants}
+            >
+              <motion.div
+                className="card-design h-full p-6 flex flex-col items-center text-center"
+                whileHover={{
+                  y: -5,
+                  transition: { duration: 0.2 }
+                }}
+              >
+                <motion.div
+                  className={`w-12 h-12 ${item.color} rounded-design-sm flex items-center justify-center mb-4`}
+                  whileHover={{ scale: 1.1 }}
+                  transition={{ type: "spring", stiffness: 400 }}
+                >
+                  <item.icon className="h-6 w-6" />
+                </motion.div>
+                <h4 className="font-semibold mb-2 text-light-text dark:text-dark-text">{item.title}</h4>
+                <div className="flex-grow flex items-center justify-center">
+                  {item.isHours ? (
+                    <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm text-light-text/80 dark:text-dark-text/80">
+                      {item.content.map((schedule: { day: string; hours: string }, idx: number) => (
+                        <div key={idx} className="flex flex-col">
+                          <div className="font-medium">{schedule.day}</div>
+                          <div>{schedule.hours}</div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : item.isLink ? (
+                    <a
+                      href={item.action as string}
+                      className="text-light-text/80 dark:text-dark-text/80 hover:text-primary dark:hover:text-primary-dark transition-colors"
+                      target={item.icon === MapPin ? "_blank" : undefined}
+                      rel={item.icon === MapPin ? "noopener noreferrer" : undefined}
+                    >
+                      {item.content}
+                    </a>
+                  ) : (
+                    <button
+                      onClick={item.action}
+                      className="text-light-text/80 dark:text-dark-text/80 hover:text-primary dark:hover:text-primary-dark transition-colors"
+                    >
+                      {item.content}
+                    </button>
+                  )}
+                </div>
+              </motion.div>
+            </motion.div>
+          ))}
+        </div>
+
+        {socialLinks.length > 0 && (
+          <div className="mt-12 flex flex-wrap justify-center gap-4">
+            {socialLinks.map((social, index) => (
+              <motion.button
+                key={index}
+                onClick={social.onClick || (() => window.open(social.href, '_blank'))}
+                className={`p-3 rounded-xl transition-colors ${social.color}`}
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                {typeof social.icon === 'function' ?
+                  <social.icon /> :
+                  <social.icon className="h-6 w-6" />
+                }
+              </motion.button>
+            ))}
+          </div>
+        )}
+      </div>
+    </motion.div>
+  );
+
   return (
     <>
       <section id="about" className="section-y bg-light-surface dark:bg-dark-surface transition-colors duration-300">
@@ -212,141 +389,21 @@ const About: React.FC<AboutProps> = ({ config, websiteConfig }) => {
             <p className="text-xl text-light-text/80 dark:text-dark-text/80">{config.description}</p>
           </motion.div>
 
-          <motion.div
-            className="max-w-3xl mx-auto text-center mb-20"
-            variants={itemVariants}
-          >
-            <p className="text-xl text-light-text dark:text-dark-text leading-relaxed mb-8">
-              {config.paragraphs.intro}
-            </p>
-            <p className="text-lg text-light-text/80 dark:text-dark-text/80 leading-relaxed">
-              {config.paragraphs.mission}
-            </p>
-          </motion.div>
-
-          <motion.div
-            className="grid md:grid-cols-3 gap-12 mb-20"
-            variants={containerVariants}
-          >
-            {config.features.map((feature, index) => (
-              <motion.div
-                key={index}
-                className="group relative h-full"
-                variants={itemVariants}
-                whileHover={{ scale: 1.05 }}
-                transition={{ type: "spring", stiffness: 300 }}
-              >
-                <div className="absolute inset-0 bg-primary/10 dark:bg-primary-dark/10 rounded-design transform -rotate-6 group-hover:rotate-0 transition-transform"></div>
-                <div className="card-design relative p-8 h-full flex flex-col">
-                  <div className="w-16 h-16 mx-auto mb-6 bg-primary/10 dark:bg-primary-dark/10 rounded-design-sm flex items-center justify-center transform group-hover:scale-110 transition-transform">
-                    {feature.icon === 'Star' && <Star className="h-8 w-8 text-primary dark:text-primary-dark" />}
-                    {feature.icon === 'Award' && <Award className="h-8 w-8 text-primary dark:text-primary-dark" />}
-                    {feature.icon === 'Users' && <Users className="h-8 w-8 text-primary dark:text-primary-dark" />}
-                    {feature.icon === 'Shield' && <Shield className="h-8 w-8 text-primary dark:text-primary-dark" />}
-                    {feature.icon === 'CheckCircle' && <CheckCircle className="h-8 w-8 text-primary dark:text-primary-dark" />}
-                    {feature.icon === 'Smile' && <Smile className="h-8 w-8 text-primary dark:text-primary-dark" />}
-                    {feature.icon === 'Rocket' && <Rocket className="h-8 w-8 text-primary dark:text-primary-dark" />}
-                    {feature.icon === 'Globe' && <Globe className="h-8 w-8 text-primary dark:text-primary-dark" />}
-                    {feature.icon === 'Calendar' && <Calendar className="h-8 w-8 text-primary dark:text-primary-dark" />}
-                    {feature.icon === 'Settings' && <Settings className="h-8 w-8 text-primary dark:text-primary-dark" />}
-                    {feature.icon === 'Bell' && <Bell className="h-8 w-8 text-primary dark:text-primary-dark" />}
-                    {feature.icon === 'Heart' && <Heart className="h-8 w-8 text-primary dark:text-primary-dark" />}
-                    {feature.icon === 'Sparkles' && <Sparkles className="h-8 w-8 text-primary dark:text-primary-dark" />}
-                    {feature.icon === 'Hand' && <Hand className="h-8 w-8 text-primary dark:text-primary-dark" />}
-                    {feature.icon === 'Clock' && <Clock className="h-8 w-8 text-primary dark:text-primary-dark" />}
-                  </div>
-                  <h3 className="text-xl font-semibold mb-4 text-light-text dark:text-dark-text text-center">{feature.title}</h3>
-                  <p className="text-light-text/80 dark:text-dark-text/80 text-center flex-grow">{feature.description}</p>
-                </div>
-              </motion.div>
-            ))}
-          </motion.div>
-
-          <motion.div
-            className="relative"
-            variants={itemVariants}
-          >
-            <div className="card-design relative p-12">
-              <h3 className="text-3xl font-bold text-center mb-12 text-light-text dark:text-dark-text">
-                {t('about.visit')}
-                <div className="heading-accent mx-auto mt-4" aria-hidden="true"></div>
-              </h3>
-
-              <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
-                {contactInfo.map((item, index) => (
-                  <motion.div
-                    key={index}
-                    className="h-full"
-                    variants={itemVariants}
-                  >
-                    <motion.div
-                      className="card-design h-full p-6 flex flex-col items-center text-center"
-                      whileHover={{
-                        y: -5,
-                        transition: { duration: 0.2 }
-                      }}
-                    >
-                      <motion.div
-                        className={`w-12 h-12 ${item.color} rounded-design-sm flex items-center justify-center mb-4`}
-                        whileHover={{ scale: 1.1 }}
-                        transition={{ type: "spring", stiffness: 400 }}
-                      >
-                        <item.icon className="h-6 w-6" />
-                      </motion.div>
-                      <h4 className="font-semibold mb-2 text-light-text dark:text-dark-text">{item.title}</h4>
-                      <div className="flex-grow flex items-center justify-center">
-                        {item.isHours ? (
-                          <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm text-light-text/80 dark:text-dark-text/80">
-                            {item.content.map((schedule: { day: string; hours: string }, idx: number) => (
-                              <div key={idx} className="flex flex-col">
-                                <div className="font-medium">{schedule.day}</div>
-                                <div>{schedule.hours}</div>
-                              </div>
-                            ))}
-                          </div>
-                        ) : item.isLink ? (
-                          <a
-                            href={item.action as string}
-                            className="text-light-text/80 dark:text-dark-text/80 hover:text-primary dark:hover:text-primary-dark transition-colors"
-                            target={item.icon === MapPin ? "_blank" : undefined}
-                            rel={item.icon === MapPin ? "noopener noreferrer" : undefined}
-                          >
-                            {item.content}
-                          </a>
-                        ) : (
-                          <button
-                            onClick={item.action}
-                            className="text-light-text/80 dark:text-dark-text/80 hover:text-primary dark:hover:text-primary-dark transition-colors"
-                          >
-                            {item.content}
-                          </button>
-                        )}
-                      </div>
-                    </motion.div>
-                  </motion.div>
-                ))}
+          {layout === 'split' ? (
+            <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-start">
+              <div>
+                {paragraphs('mb-12 text-center lg:text-start')}
+                {featureRows}
               </div>
-
-              {socialLinks.length > 0 && (
-                <div className="mt-12 flex flex-wrap justify-center gap-4">
-                  {socialLinks.map((social, index) => (
-                    <motion.button
-                      key={index}
-                      onClick={social.onClick || (() => window.open(social.href, '_blank'))}
-                      className={`p-3 rounded-xl transition-colors ${social.color}`}
-                      whileHover={{ scale: 1.1 }}
-                      whileTap={{ scale: 0.95 }}
-                    >
-                      {typeof social.icon === 'function' ?
-                        <social.icon /> :
-                        <social.icon className="h-6 w-6" />
-                      }
-                    </motion.button>
-                  ))}
-                </div>
-              )}
+              {renderVisitCard(true)}
             </div>
-          </motion.div>
+          ) : (
+            <>
+              {paragraphs()}
+              {layout === 'band' ? featureBand : featureTiles}
+              {renderVisitCard()}
+            </>
+          )}
         </motion.div>
       </section>
 
