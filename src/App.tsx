@@ -22,6 +22,7 @@ import SectionDivider, { type SectionTone } from './components/SectionDivider';
 import { useLanguage, Language } from './contexts/LanguageContext';
 import { WebsiteConfig } from './models/WebsiteConfig';
 import WebConfigService from './services/WebConfigService';
+import { getSiteJitter } from './services/seed';
 import ImagesService from './services/ImagesService';
 import { useTheme } from './hooks/useTheme';
 import { reportError } from './services/ErrorReportingService';
@@ -200,6 +201,9 @@ function MainContent() {
   // The page alternates bg <-> surface; dividers are interleaved between
   // consecutive visible sections (see SectionDivider).
   const divider = config.design?.sectionDivider ?? 'none';
+  // Deterministic per-site jitter: same subdomain always renders the same,
+  // two same-preset sites still differ (LT-053).
+  const jitter = getSiteJitter(config.subDomain);
   const flow: { key: string; tone: SectionTone; node: ReactNode }[] = [];
 
   if (config.components?.hero.visible) {
@@ -213,6 +217,7 @@ function MainContent() {
           isPreview={isPreview}
           palette={config.pallete}
           design={config.design}
+          jitter={jitter}
         />
       )
     });
@@ -230,6 +235,7 @@ function MainContent() {
             workingDays: config.workingDays
           }}
           layout={config.design?.aboutLayout}
+          flipSplit={jitter.flipAboutSplit}
         />
       )
     });
@@ -238,7 +244,7 @@ function MainContent() {
   if (config.components?.portfolio.visible) {
     flow.push({
       key: 'portfolio', tone: 'bg',
-      node: <Portfolio config={config.components.portfolio} layout={config.design?.portfolioLayout} />
+      node: <Portfolio config={config.components.portfolio} layout={config.design?.portfolioLayout} masonryPhase={jitter.masonryPhase} />
     });
   }
 
@@ -290,7 +296,7 @@ function MainContent() {
       {flow.map((s, i) => (
         <Fragment key={s.key}>
           {i > 0 && (
-            <SectionDivider variant={divider} aboveTone={flow[i - 1].tone} belowTone={s.tone} />
+            <SectionDivider variant={divider} aboveTone={flow[i - 1].tone} belowTone={s.tone} mirror={jitter.mirrorDividers} />
           )}
           <ErrorBoundary>{s.node}</ErrorBoundary>
         </Fragment>

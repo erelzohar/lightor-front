@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Calendar, Phone, Instagram, Facebook } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useLanguage } from '../../contexts/LanguageContext';
@@ -9,6 +9,7 @@ import { Social } from '../../models/Social';
 import { Palette } from '../../models/WebsiteConfig';
 import { DesignConfig, BorderRadius } from '../../models/DesignConfig';
 import ImagesService from '../../services/ImagesService';
+import { SiteJitter, createRng } from '../../services/seed';
 
 function hexToRgba(hex: string, alpha: number): string {
   const clean = hex.replace('#', '');
@@ -79,6 +80,7 @@ interface HeroProps {
   isPreview?: boolean;
   palette?: Palette;
   design?: DesignConfig;
+  jitter?: SiteJitter;
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -101,7 +103,7 @@ const radiusClassMap: Record<BorderRadius, string> = {
   full: 'rounded-full',
 };
 
-const Hero: React.FC<HeroProps> = ({ config, social, phone, isContactVisible, isPreview, palette, design }) => {
+const Hero: React.FC<HeroProps> = ({ config, social, phone, isContactVisible, isPreview, palette, design, jitter }) => {
   const c1 = palette?.colorPrimary ?? '#2563eb';
   const c2 = palette?.colorPrimaryDark ?? '#14b8a6';
   const blobColors = [c1, c2, c1];
@@ -205,18 +207,21 @@ const Hero: React.FC<HeroProps> = ({ config, social, phone, isContactVisible, is
     },
   };
 
-  const particles = Array.from({ length: 30 }, (_, i) => {
-    const x = 10 + Math.random() * 80;
-    const y = 10 + Math.random() * 80;
-    return {
+  // Seeded and memoized: the field is stable per site (LT-053) instead of
+  // re-randomizing on every render (each mousemove used to reshuffle it).
+  const particles = useMemo(() => {
+    const rng = createRng(jitter?.particleSeed ?? 1);
+    return Array.from({ length: 30 }, (_, i) => ({
       id: i,
-      x,
-      y,
-      size: Math.random() * 3 + 1,
-      duration: Math.random() * 15 + 15,
-      delay: Math.random() * 2,
-    };
-  });
+      x: 10 + rng() * 80,
+      y: 10 + rng() * 80,
+      size: rng() * 3 + 1,
+      duration: rng() * 15 + 15,
+      delay: rng() * 2,
+      driftX: rng() * 10 - 5,
+      driftY: rng() * 10 - 5,
+    }));
+  }, [jitter?.particleSeed]);
 
   const socialLinks = [
     phone && {
@@ -409,7 +414,7 @@ const Hero: React.FC<HeroProps> = ({ config, social, phone, isContactVisible, is
         <motion.div
           className="relative"
           animate={{ y: animLevel === 'none' ? 0 : [-8, 8, -8] }}
-          transition={{ duration: animD(5), repeat: Infinity, repeatType: "reverse", ease: "easeInOut" }}
+          transition={{ duration: animD(jitter?.floatDuration ?? 5), repeat: Infinity, repeatType: "reverse", ease: "easeInOut" }}
         >
           {imageTreatment === 'framed' && (
             <div
@@ -597,7 +602,9 @@ const Hero: React.FC<HeroProps> = ({ config, social, phone, isContactVisible, is
                   animate={{ scale: [1, 1.2, 1], rotate: [0, 180, 0], opacity: [0.5, 0.7, 0.5] }}
                   transition={{ duration: animD(20 + i * 5), repeat: Infinity, delay: i * 5, ease: "linear" }}
                   style={{
-                    background: `radial-gradient(circle at ${50 + i * 25}% ${50 + i * 25}%, ${hexToRgba(blobColors[i], 0.3)} 0%, transparent 50%)`,
+                    // Blob anchors shift per site (LT-053) so two same-preset
+                    // heroes wash their color from different corners.
+                    background: `radial-gradient(circle at ${50 + i * 25 + (jitter?.blobOffsets[i] ?? 0)}% ${50 + i * 25 - (jitter?.blobOffsets[i] ?? 0)}%, ${hexToRgba(blobColors[i], 0.3)} 0%, transparent 50%)`,
                   }}
                 />
               ))}
@@ -635,8 +642,8 @@ const Hero: React.FC<HeroProps> = ({ config, social, phone, isContactVisible, is
                 className="absolute w-1 h-1 bg-primary/60 dark:bg-primary-dark/40 rounded-full"
                 initial={{ x: `${particle.x}%`, y: `${particle.y}%`, opacity: 0 }}
                 animate={{
-                  x: [`${particle.x}%`, `${particle.x + (Math.random() * 10 - 5)}%`, `${particle.x}%`],
-                  y: [`${particle.y}%`, `${particle.y + (Math.random() * 10 - 5)}%`, `${particle.y}%`],
+                  x: [`${particle.x}%`, `${particle.x + particle.driftX}%`, `${particle.x}%`],
+                  y: [`${particle.y}%`, `${particle.y + particle.driftY}%`, `${particle.y}%`],
                   opacity: [0, 0.8, 0],
                 }}
                 transition={{ duration: particle.duration, repeat: Infinity, delay: particle.delay, ease: "linear" }}

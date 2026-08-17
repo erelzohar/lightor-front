@@ -29,16 +29,19 @@ interface Props {
   variant: DividerVariant;
   aboveTone: SectionTone;
   belowTone: SectionTone;
+  /** Seeded per-site (LT-053): mirrors the shape horizontally, so the same
+   *  wave/diagonal leans the other way on a different site. */
+  mirror?: boolean;
 }
 
-const SectionDivider: React.FC<Props> = ({ variant, aboveTone, belowTone }) => {
+const SectionDivider: React.FC<Props> = ({ variant, aboveTone, belowTone, mirror = false }) => {
   // No shape requested, or neighbours share a tone (nothing would be visible).
   if (variant === 'none' || aboveTone === belowTone) return null;
 
   return (
     <div className={`${TONE_BG[aboveTone]} leading-[0]`} aria-hidden="true">
       <svg
-        className={`block w-full h-10 md:h-16 ${TONE_TEXT[belowTone]}`}
+        className={`block w-full h-10 md:h-16 ${TONE_TEXT[belowTone]} ${mirror ? '-scale-x-100' : ''}`}
         viewBox="0 0 1200 100"
         preserveAspectRatio="none"
       >

@@ -10,13 +10,15 @@ import ImagesService from '../services/ImagesService';
 interface PortfolioProps {
   config: PortfolioConfig;
   layout?: PortfolioLayout;
+  /** Seeded per-site (LT-053): rotates the masonry aspect cycle. */
+  masonryPhase?: number;
 }
 
 // Masonry cycles aspect ratios so the columns stagger even when every source
 // image has the same dimensions.
 const MASONRY_ASPECTS = ['aspect-[4/3]', 'aspect-square', 'aspect-[3/4]'];
 
-const Portfolio: React.FC<PortfolioProps> = ({ config, layout = 'grid' }) => {
+const Portfolio: React.FC<PortfolioProps> = ({ config, layout = 'grid', masonryPhase = 0 }) => {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isGridView] = useState(config.isGrid);
   const [touchStart, setTouchStart] = useState(0);
@@ -206,7 +208,7 @@ const Portfolio: React.FC<PortfolioProps> = ({ config, layout = 'grid' }) => {
                     aria-label={t('portfolio.grid_label')}
                   >
                     {config.items.map((item, index) =>
-                      itemCard(item, index, MASONRY_ASPECTS[index % MASONRY_ASPECTS.length], 'mb-8 break-inside-avoid')
+                      itemCard(item, index, MASONRY_ASPECTS[(index + masonryPhase) % MASONRY_ASPECTS.length], 'mb-8 break-inside-avoid')
                     )}
                   </div>
                 );

@@ -56,9 +56,11 @@ interface AboutProps {
   config: AboutConfig;
   websiteConfig: WebsiteConfig;
   layout?: AboutLayout;
+  /** Seeded per-site (LT-053): mirrors the split layout's columns. */
+  flipSplit?: boolean;
 }
 
-const About: React.FC<AboutProps> = ({ config, websiteConfig, layout = 'cards' }) => {
+const About: React.FC<AboutProps> = ({ config, websiteConfig, layout = 'cards', flipSplit = false }) => {
   const { t, language } = useLanguage();
   const { isModalOpen, setIsModalOpen, modalType, handleContactClick } = useContactHandler();
   const formatWorkingHours = () => {
@@ -391,11 +393,13 @@ const About: React.FC<AboutProps> = ({ config, websiteConfig, layout = 'cards' }
 
           {layout === 'split' ? (
             <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-start">
-              <div>
+              <div className={flipSplit ? 'lg:order-2' : ''}>
                 {paragraphs('mb-12 text-center lg:text-start')}
                 {featureRows}
               </div>
-              {renderVisitCard(true)}
+              <div className={flipSplit ? 'lg:order-1' : ''}>
+                {renderVisitCard(true)}
+              </div>
             </div>
           ) : (
             <>
