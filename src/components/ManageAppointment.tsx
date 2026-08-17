@@ -12,6 +12,7 @@ import WebConfigService from '../services/WebConfigService';
 import { WebsiteConfig } from '../models/WebsiteConfig';
 import Loading from './Loading';
 import ImagesService from '../services/ImagesService';
+import { googleCalendarUrl, downloadIcs, CalendarEventInput } from '../services/calendarLinks';
 
 
 
@@ -288,6 +289,39 @@ const ManageAppointment: React.FC = () => {
             </div>
           </div>
         </div>
+
+        {(() => {
+          // Add-to-calendar for the customer's own booking (LT-044). Built
+          // client-side from data already on this page — no extra API call.
+          const start = parseInt(appointment.timestamp);
+          const event: CalendarEventInput = {
+            title: `${appointment.type.name} — ${config.businessName}`,
+            start,
+            end: start + (parseInt(appointment.type.durationMS) || 0),
+            location: [config.address?.street, config.address?.city].filter(Boolean).join(', ') || undefined,
+          };
+          return (
+            <div className="flex flex-col sm:flex-row gap-3 mb-6">
+              <a
+                href={googleCalendarUrl(event)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-full sm:flex-1 flex items-center justify-center gap-2 py-2 px-4 rounded-xl border border-primary dark:border-primary-dark text-primary dark:text-primary-dark text-sm font-medium hover:bg-primary/10 dark:hover:bg-primary-dark/10 transition-colors"
+              >
+                <Calendar className="h-4 w-4" />
+                {t('calendar.addGoogle')}
+              </a>
+              <button
+                type="button"
+                onClick={() => downloadIcs(event)}
+                className="w-full sm:flex-1 flex items-center justify-center gap-2 py-2 px-4 rounded-xl border border-primary dark:border-primary-dark text-primary dark:text-primary-dark text-sm font-medium hover:bg-primary/10 dark:hover:bg-primary-dark/10 transition-colors"
+              >
+                <Calendar className="h-4 w-4" />
+                {t('calendar.download')}
+              </button>
+            </div>
+          );
+        })()}
 
         <div className="flex flex-col md:flex-row gap-4">
           <motion.button

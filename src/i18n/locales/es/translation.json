@@ -256,6 +256,10 @@
     "step3": "Relajándonos en la playa...",
     "step4": "Consultando con mi osito de peluche..."
   },
+  "calendar": {
+    "addGoogle": "Añadir a Google Calendar",
+    "download": "Descargar archivo de calendario (.ics)"
+  },
   "badge": {
     "builtWith": "Creado con Lightor"
   }

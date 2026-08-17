@@ -256,6 +256,10 @@
     "step3": "Détente sur la plage...",
     "step4": "Consultation avec mon ours en peluche..."
   },
+  "calendar": {
+    "addGoogle": "Ajouter à Google Agenda",
+    "download": "Télécharger le fichier calendrier (.ics)"
+  },
   "badge": {
     "builtWith": "Créé avec Lightor"
   }

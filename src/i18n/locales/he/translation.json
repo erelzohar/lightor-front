@@ -256,6 +256,10 @@
     "step3": "נרגע בחוף הים...",
     "step4": "מתייעץ עם הדובי שלי..."
   },
+  "calendar": {
+    "addGoogle": "הוספה ליומן Google",
+    "download": "הורדת קובץ יומן (.ics)"
+  },
   "badge": {
     "builtWith": "נבנה עם Lightor"
   }

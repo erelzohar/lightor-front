@@ -256,6 +256,10 @@
     "step3": "Relaxing on the beach...",
     "step4": "Consulting with my teddy bear..."
   },
+  "calendar": {
+    "addGoogle": "Add to Google Calendar",
+    "download": "Download calendar file (.ics)"
+  },
   "badge": {
     "builtWith": "Built with Lightor"
   }

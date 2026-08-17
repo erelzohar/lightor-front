@@ -256,6 +256,10 @@
     "step3": "نسترخي على الشاطئ...",
     "step4": "نستشير دبدوبي..."
   },
+  "calendar": {
+    "addGoogle": "الإضافة إلى تقويم Google",
+    "download": "تنزيل ملف التقويم (.ics)"
+  },
   "badge": {
     "builtWith": "صُنع مع Lightor"
   }
