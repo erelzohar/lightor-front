@@ -595,6 +595,20 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
     }
   }, [isPast, isAvailable, isNextMonth]);
 
+  // Each step swaps in content of a different height, and on small screens the
+  // new content (type list, time slots) can render entirely below the fold.
+  // Scroll the card back to the top on every ADVANCE — but not on the reset to
+  // 'date' after success, which would yank a user who has moved on.
+  const cardRef = useRef<HTMLDivElement>(null);
+  const prevStepRef = useRef(bookingStep);
+  useEffect(() => {
+    if (prevStepRef.current === bookingStep) return;
+    prevStepRef.current = bookingStep;
+    if (bookingStep !== 'date') {
+      cardRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }, [bookingStep]);
+
   const handleAppointmentTypeSelect = useCallback((type: AppointmentType) => {
     setSelectedAppointmentType(type);
     setSelectedTime('');
@@ -791,8 +805,24 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
             )}
           </motion.div>
 
-          <motion.div className="max-w-[43.75rem] mx-auto">
+          <motion.div ref={cardRef} className="max-w-[43.75rem] mx-auto scroll-mt-24">
             <motion.div className="bg-light-surface dark:bg-dark-surface rounded-design-card shadow-card p-6 md:p-8">
+              <AnimatePresence mode="wait">
+              {!isSuccess ? (
+              <motion.div
+                key="booking-flow"
+                // The whole flow collapses into a green dot: shrink + round +
+                // fill emerald, then the check circle springs in its place.
+                style={{ transformOrigin: 'center', backgroundColor: 'rgba(16,185,129,0)' }}
+                className="overflow-hidden"
+                exit={{
+                  scale: 0.06,
+                  borderRadius: '50%',
+                  backgroundColor: 'rgba(16,185,129,1)',
+                  opacity: 1,
+                }}
+                transition={{ duration: 0.5, ease: [0.65, 0, 0.35, 1] }}
+              >
               {(bookingStep !== 'date' || (isUpdating && onCancelUpdate)) && (
                 <motion.button
                   type="button"
@@ -1208,25 +1238,66 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
               )}
 
               <AnimatePresence>
-                {isSuccess && (
+                {error && (
                   <motion.div
-                    key="success-message"
-                    className="mt-6 text-emerald-500 dark:text-emerald-400 text-center flex items-center justify-center gap-2"
+                    key="error-message"
+                    className="mt-6 text-red-500 dark:text-red-400 text-center flex items-center justify-center gap-2"
                     initial={{ opacity: 0, y: -10 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0 }}
                   >
-                    <CheckCircle className="h-5 w-5" />
-                    <span>{successMessage}</span>
+                    <XCircle className="h-5 w-5" />
+                    {/* <span>{t('schedule.error')}</span> */}
+                    <span>{error}</span>
                   </motion.div>
                 )}
-                {isSuccess && calendarEvent && (
+              </AnimatePresence>
+              </motion.div>
+              ) : (
+              <motion.div
+                key="booking-done"
+                className="py-10 flex flex-col items-center text-center"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+              >
+                <motion.div
+                  className="w-24 h-24 rounded-full bg-emerald-500 flex items-center justify-center shadow-lg"
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  transition={{ type: 'spring', stiffness: 260, damping: 14 }}
+                >
+                  {/* Check mark draws itself once the circle has landed. */}
+                  <motion.svg
+                    viewBox="0 0 24 24"
+                    className="w-12 h-12"
+                    fill="none"
+                    stroke="white"
+                    strokeWidth={3}
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <motion.path
+                      d="M5 13l4 4L19 7"
+                      initial={{ pathLength: 0 }}
+                      animate={{ pathLength: 1 }}
+                      transition={{ delay: 0.35, duration: 0.35, ease: 'easeOut' }}
+                    />
+                  </motion.svg>
+                </motion.div>
+                <motion.span
+                  className="mt-6 text-lg font-semibold text-emerald-600 dark:text-emerald-400"
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.5 }}
+                >
+                  {successMessage}
+                </motion.span>
+                {calendarEvent && (
                   <motion.div
-                    key="add-to-calendar"
-                    className="mt-4 flex flex-col sm:flex-row items-center justify-center gap-3"
-                    initial={{ opacity: 0, y: -10 }}
+                    className="mt-6 flex flex-col sm:flex-row items-center justify-center gap-3 w-full"
+                    initial={{ opacity: 0, y: 8 }}
                     animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0 }}
+                    transition={{ delay: 0.65 }}
                   >
                     <a
                       href={googleCalendarUrl(calendarEvent)}
@@ -1247,19 +1318,8 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
                     </button>
                   </motion.div>
                 )}
-                {error && (
-                  <motion.div
-                    key="error-message"
-                    className="mt-6 text-red-500 dark:text-red-400 text-center flex items-center justify-center gap-2"
-                    initial={{ opacity: 0, y: -10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0 }}
-                  >
-                    <XCircle className="h-5 w-5" />
-                    {/* <span>{t('schedule.error')}</span> */}
-                    <span>{error}</span>
-                  </motion.div>
-                )}
+              </motion.div>
+              )}
               </AnimatePresence>
             </motion.div>
           </motion.div>
