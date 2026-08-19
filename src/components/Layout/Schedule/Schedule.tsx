@@ -609,6 +609,15 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
     }
   }, [bookingStep]);
 
+  // On success the tall verification form is replaced by a short view, so the
+  // page height collapses and the card would slide up out of the viewport —
+  // exactly when the ✓ animation plays. Pin the card back into view.
+  useEffect(() => {
+    if (isSuccess) {
+      cardRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }, [isSuccess]);
+
   const handleAppointmentTypeSelect = useCallback((type: AppointmentType) => {
     setSelectedAppointmentType(type);
     setSelectedTime('');
@@ -1256,7 +1265,9 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
               ) : (
               <motion.div
                 key="booking-done"
-                className="py-10 flex flex-col items-center text-center"
+                // min-height keeps the card from collapsing under the viewport
+                // when the tall form unmounts (the "jump" Erel reported).
+                className="py-10 min-h-[26rem] flex flex-col items-center justify-center text-center"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
               >
