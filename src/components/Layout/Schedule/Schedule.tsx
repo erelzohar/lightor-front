@@ -609,13 +609,17 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
     }
   }, [bookingStep]);
 
-  // On success the tall verification form is replaced by a short view, so the
-  // page height collapses and the card would slide up out of the viewport —
-  // exactly when the ✓ animation plays. Pin the card back into view.
+  // On success the tall verification form is replaced by a short view. The
+  // scroll must wait for that exit animation (500ms) to finish: scrolling
+  // mid-collapse computes against a layout that is about to shrink, which is
+  // what left the ✓ stranded low on the page. Once the layout has settled,
+  // center the (now short) card so the circle sits mid-viewport.
   useEffect(() => {
-    if (isSuccess) {
-      cardRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
+    if (!isSuccess) return;
+    const id = setTimeout(() => {
+      cardRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 550);
+    return () => clearTimeout(id);
   }, [isSuccess]);
 
   const handleAppointmentTypeSelect = useCallback((type: AppointmentType) => {
