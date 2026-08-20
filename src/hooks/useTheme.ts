@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { WebsiteConfig } from '../models/WebsiteConfig';
 import type { CardStyle, FontFamily } from '../models/DesignConfig';
+import { ensureReadable, bestTextOn } from '../services/contrast';
 
 const FONT_STACK: Record<FontFamily, string> = {
     inter: "'Inter', sans-serif",
@@ -67,6 +68,18 @@ export const useTheme = (config: WebsiteConfig | null) => {
         root.style.setProperty('--color-dark-surface', hexToRgb(pallete.colorDarkSurface));
         root.style.setProperty('--color-dark-gray', hexToRgb(pallete.colorDarkGray));
         root.style.setProperty('--color-dark-text', hexToRgb(pallete.colorDarkText));
+
+        // Contrast guardrails (LT-060): text roles never render raw primary.
+        // "readable" = primary nudged (hue kept) until it clears WCAG 4.5:1
+        // against the background it is drawn on; "on-primary" = the better of
+        // white/near-black for content sitting on a primary fill. Decorative
+        // fills, gradients and blobs keep the exact palette color.
+        const primaryReadable = ensureReadable(pallete.colorPrimary, pallete.colorLightBg, 4.5);
+        const primaryDarkReadable = ensureReadable(pallete.colorPrimaryDark, pallete.colorDarkBg, 4.5);
+        root.style.setProperty('--color-primary-readable', hexToRgb(primaryReadable));
+        root.style.setProperty('--color-primary-dark-readable', hexToRgb(primaryDarkReadable));
+        root.style.setProperty('--color-on-primary', hexToRgb(bestTextOn(pallete.colorPrimary)));
+        root.style.setProperty('--color-on-primary-dark', hexToRgb(bestTextOn(pallete.colorPrimaryDark)));
 
         if (!design) return;
 

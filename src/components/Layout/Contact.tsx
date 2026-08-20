@@ -424,7 +424,7 @@ const Contact: React.FC<ContactProps> = ({ config, address, contact, workingDays
 
                 <motion.button
                   type="submit"
-                  className="w-full bg-primary dark:bg-primary-dark text-white dark:text-dark-surface py-4 px-6 rounded-design transition-all relative overflow-hidden shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full bg-primary dark:bg-primary-dark text-on-primary dark:text-on-primary-dark py-4 px-6 rounded-design transition-all relative overflow-hidden shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                   disabled={isSubmitting || !formData.name || !formData.phone || !formData.message}
@@ -449,7 +449,7 @@ const Contact: React.FC<ContactProps> = ({ config, address, contact, workingDays
                       animate={{ opacity: 1, y: 0 }}
                       aria-hidden="true"
                     >
-                      <div className="w-6 h-6 border-3 border-white dark:border-dark-surface border-t-transparent rounded-full animate-spin" />
+                      <div className="w-6 h-6 border-3 border-on-primary dark:border-on-primary-dark border-t-transparent rounded-full animate-spin" />
                     </motion.div>
                   )}
                 </motion.button>

@@ -9,6 +9,15 @@ export default {
           DEFAULT: 'rgb(var(--color-primary) / <alpha-value>)',
           light: 'rgb(var(--color-primary) / <alpha-value>)',
           dark: 'rgb(var(--color-primary-dark) / <alpha-value>)',
+          // Contrast-guaranteed variants for TEXT roles (LT-060): primary
+          // nudged by useTheme until it clears 4.5:1 on its background.
+          readable: 'rgb(var(--color-primary-readable) / <alpha-value>)',
+          'dark-readable': 'rgb(var(--color-primary-dark-readable) / <alpha-value>)',
+        },
+        // Text sitting ON a primary fill (solid/gradient buttons).
+        'on-primary': {
+          DEFAULT: 'rgb(var(--color-on-primary) / <alpha-value>)',
+          dark: 'rgb(var(--color-on-primary-dark) / <alpha-value>)',
         },
         light: {
           bg: 'rgb(var(--color-light-bg) / <alpha-value>)',

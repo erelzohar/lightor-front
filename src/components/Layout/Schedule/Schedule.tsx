@@ -1024,8 +1024,8 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
                           type="button"
                           onClick={() => handleTimeSelect(time)}
                           className={`relative overflow-hidden p-3 rounded-design-sm text-sm font-medium ${selectedTime === time
-                            ? 'bg-primary dark:bg-primary-dark text-white dark:text-dark-surface shadow-lg'
-                            : 'bg-primary/10 dark:bg-primary-dark/10 text-primary dark:text-primary-dark hover:shadow-md'
+                            ? 'bg-primary dark:bg-primary-dark text-on-primary dark:text-on-primary-dark shadow-lg'
+                            : 'bg-primary/10 dark:bg-primary-dark/10 text-primary-readable dark:text-primary-dark-readable hover:shadow-md'
                             }`}
                           whileHover={{ scale: 1.05 }}
                           whileTap={{ scale: 0.95 }}
@@ -1127,7 +1127,7 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
 
                     <motion.button
                       type="submit"
-                      className="w-full mt-8 bg-primary dark:bg-primary-dark text-white dark:text-dark-surface py-4 px-6 rounded-design transition-all relative overflow-hidden shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="w-full mt-8 bg-primary dark:bg-primary-dark text-on-primary dark:text-on-primary-dark py-4 px-6 rounded-design transition-all relative overflow-hidden shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
                       disabled={isSubmitting || !formData.name || !formData.phone}
@@ -1242,7 +1242,7 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
                     </div>
                     <motion.button
                       type="submit"
-                      className="w-full mt-8 bg-primary dark:bg-primary-dark text-white dark:text-dark-surface py-4 px-6 rounded-design transition-all relative overflow-hidden shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="w-full mt-8 bg-primary dark:bg-primary-dark text-on-primary dark:text-on-primary-dark py-4 px-6 rounded-design transition-all relative overflow-hidden shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
                       disabled={isSubmitting || !formData.verificationCode}

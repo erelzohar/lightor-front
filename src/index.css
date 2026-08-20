@@ -21,6 +21,13 @@
     --color-dark-gray: 156 163 175;
     --color-dark-text: 249 250 251;
 
+    /* Contrast guardrails (LT-060) — recomputed from the palette by useTheme;
+       these defaults simply mirror the default primary pair. */
+    --color-primary-readable: 109 40 217;
+    --color-primary-dark-readable: 34 211 238;
+    --color-on-primary: 255 255 255;
+    --color-on-primary-dark: 17 24 39;
+
     /* Design token defaults — overridden at runtime by useTheme */
     --radius: 1rem;
     --card-shadow: 0 4px 24px 0 rgba(0,0,0,0.10);

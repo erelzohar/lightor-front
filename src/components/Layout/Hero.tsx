@@ -277,7 +277,7 @@ const Hero: React.FC<HeroProps> = ({ config, social, phone, isContactVisible, is
       return (
         <motion.a
           href="#schedule"
-          className={`relative inline-flex items-center justify-center px-8 py-4 bg-primary dark:bg-primary-dark text-white ${btnRadius} ${w} shadow-lg hover:opacity-90 transition-opacity`}
+          className={`relative inline-flex items-center justify-center px-8 py-4 bg-primary dark:bg-primary-dark text-on-primary dark:text-on-primary-dark ${btnRadius} ${w} shadow-lg hover:opacity-90 transition-opacity`}
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
           aria-label={t('hero.book')}
@@ -294,7 +294,7 @@ const Hero: React.FC<HeroProps> = ({ config, social, phone, isContactVisible, is
       return (
         <motion.a
           href="#schedule"
-          className={`inline-flex items-center justify-center px-8 py-4 border-2 border-primary dark:border-primary-dark text-primary dark:text-primary-dark ${btnRadius} ${w} hover:bg-primary/10 dark:hover:bg-primary-dark/10 transition-colors shadow-lg`}
+          className={`inline-flex items-center justify-center px-8 py-4 border-2 border-primary-readable dark:border-primary-dark-readable text-primary-readable dark:text-primary-dark-readable ${btnRadius} ${w} hover:bg-primary/10 dark:hover:bg-primary-dark/10 transition-colors shadow-lg`}
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
           aria-label={t('hero.book')}
@@ -311,7 +311,7 @@ const Hero: React.FC<HeroProps> = ({ config, social, phone, isContactVisible, is
       return (
         <motion.a
           href="#schedule"
-          className={`inline-flex items-center justify-center px-8 py-4 text-primary dark:text-primary-dark ${btnRadius} ${w} hover:bg-primary/10 dark:hover:bg-primary-dark/10 transition-colors`}
+          className={`inline-flex items-center justify-center px-8 py-4 text-primary-readable dark:text-primary-dark-readable ${btnRadius} ${w} hover:bg-primary/10 dark:hover:bg-primary-dark/10 transition-colors`}
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
           aria-label={t('hero.book')}
@@ -328,7 +328,7 @@ const Hero: React.FC<HeroProps> = ({ config, social, phone, isContactVisible, is
     return (
       <motion.a
         href="#schedule"
-        className={`group relative inline-flex items-center justify-center px-8 py-4 bg-primary dark:bg-primary-dark text-white dark:text-dark-surface ${btnRadius} ${w} shadow-lg hover:shadow-xl overflow-hidden`}
+        className={`group relative inline-flex items-center justify-center px-8 py-4 bg-primary dark:bg-primary-dark text-on-primary dark:text-on-primary-dark ${btnRadius} ${w} shadow-lg hover:shadow-xl overflow-hidden`}
         whileHover={{ scale: 1.05 }}
         whileTap={{ scale: 0.95 }}
         role="button"
@@ -362,7 +362,7 @@ const Hero: React.FC<HeroProps> = ({ config, social, phone, isContactVisible, is
     return (
       <motion.a
         href="#contact"
-        className={`inline-flex text-center items-center justify-center px-8 py-4 bg-light-surface dark:bg-dark-surface border-2 border-primary dark:border-primary-dark text-primary dark:text-primary-dark ${btnRadius} ${w} hover:bg-primary/5 dark:hover:bg-primary-dark/5 transition-colors shadow-lg hover:shadow-xl`}
+        className={`inline-flex text-center items-center justify-center px-8 py-4 bg-light-surface dark:bg-dark-surface border-2 border-primary-readable dark:border-primary-dark-readable text-primary-readable dark:text-primary-dark-readable ${btnRadius} ${w} hover:bg-primary/5 dark:hover:bg-primary-dark/5 transition-colors shadow-lg hover:shadow-xl`}
         whileHover={{ scale: 1.05 }}
         whileTap={{ scale: 0.95 }}
         aria-label={t('hero.contact')}
@@ -458,7 +458,7 @@ const Hero: React.FC<HeroProps> = ({ config, social, phone, isContactVisible, is
               variants={itemVariants}
             >
               {config.title}
-              <span className="block text-primary dark:text-primary-dark">{config.subtitle}</span>
+              <span className="block text-primary-readable dark:text-primary-dark-readable">{config.subtitle}</span>
             </motion.h1>
             <motion.p
               className="text-xl text-light-text/80 dark:text-dark-text/80 mb-8 max-w-xl mx-auto"
@@ -502,7 +502,7 @@ const Hero: React.FC<HeroProps> = ({ config, social, phone, isContactVisible, is
               variants={itemVariants}
             >
               {config.title}
-              <span className="block text-primary dark:text-primary-dark">{config.subtitle}</span>
+              <span className="block text-primary-readable dark:text-primary-dark-readable">{config.subtitle}</span>
             </motion.h1>
             <motion.p
               className="text-xl text-light-text/80 dark:text-dark-text/80"
@@ -530,7 +530,7 @@ const Hero: React.FC<HeroProps> = ({ config, social, phone, isContactVisible, is
               variants={itemVariants}
             >
               {config.title}
-              <span className="block text-primary dark:text-primary-dark">{config.subtitle}</span>
+              <span className="block text-primary-readable dark:text-primary-dark-readable">{config.subtitle}</span>
             </motion.h1>
             <motion.p
               className={`text-xl text-light-text/80 dark:text-dark-text/80 mb-6 lg:mb-12 max-w-2xl ${language === 'he' || language === 'ar' ? 'md:me-0 md:ms-auto md:text-right' : 'md:ms-0 md:me-auto md:text-left'}`}
@@ -563,7 +563,7 @@ const Hero: React.FC<HeroProps> = ({ config, social, phone, isContactVisible, is
                 variants={itemVariants}
               >
                 {config.title}
-                <span className="block text-primary dark:text-primary-dark">{config.subtitle}</span>
+                <span className="block text-primary-readable dark:text-primary-dark-readable">{config.subtitle}</span>
               </motion.h1>
               <motion.p
                 className="text-lg text-light-text/80 dark:text-dark-text/80 mx-auto"
@@ -589,6 +589,18 @@ const Hero: React.FC<HeroProps> = ({ config, social, phone, isContactVisible, is
       >
         {!isVanta && (
           <div className="absolute inset-0 bg-light-bg dark:bg-dark-bg" aria-hidden="true" />
+        )}
+
+        {/* Text-protection veil over animated Vanta backgrounds (LT-060).
+            The animation is painted with palette colors, so any text —
+            especially primary-colored text — can dissolve into it. A
+            half-strength wash of the page background restores a predictable
+            backdrop while keeping the animation visible as texture, and it
+            makes the readable-primary contrast math meaningful here too.
+            Vanta injects its canvas as the section's first child, so this
+            sibling paints above the canvas and below the content. */}
+        {isVanta && (
+          <div className="absolute inset-0 bg-light-bg/50 dark:bg-dark-bg/55 pointer-events-none" aria-hidden="true" />
         )}
 
         {!isVanta && (
