@@ -167,6 +167,7 @@ const ManageAppointment: React.FC = () => {
         }}
         workingDays={config.workingDays}
         vacations={config.vacations}
+        dateOverrides={config.dateOverrides}
         appointmentTypes={config.appointmentTypes}
         businessName={config.businessName}
         phone={config.contact.phone}

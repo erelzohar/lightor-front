@@ -261,6 +261,7 @@ function MainContent() {
             businessName={config.businessName}
             timeToCancel={config.minCancelTimeMS}
             vacations={config.vacations}
+            dateOverrides={config.dateOverrides}
             appointmentTypes={config.appointmentTypes}
             isPreview={isPreview}
           />

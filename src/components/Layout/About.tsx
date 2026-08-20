@@ -67,15 +67,19 @@ const About: React.FC<AboutProps> = ({ config, websiteConfig, layout = 'cards', 
     return websiteConfig.workingDays
       .map((hours, index) => ({
         day: t(`day.${index}`),
+        // Hours may hold several comma-separated ranges (breaks, LT-057):
+        // format each range, join with ", ". Hebrew keeps the raw 24h ranges.
         hours: hours === null
           ? t('time.closed')
           : language === 'he'
-            ? hours
-            : hours.split('-').map(time => {
-              const [h, m] = time.split(':');
-              const hour = parseInt(h);
-              return `${hour > 12 ? hour - 12 : hour}:${m} ${hour >= 12 ? 'PM' : 'AM'}`;
-            }).join(' - ')
+            ? hours.split(',').map(range => range.trim()).filter(Boolean).join(', ')
+            : hours.split(',').map(range => range.trim()).filter(Boolean).map(range =>
+              range.split('-').map(time => {
+                const [h, m] = time.split(':');
+                const hour = parseInt(h);
+                return `${hour > 12 ? hour - 12 : hour}:${m} ${hour >= 12 ? 'PM' : 'AM'}`;
+              }).join(' - ')
+            ).join(', ')
       }))
       .filter(schedule => schedule.hours !== t('time.closed'));
   };

@@ -15,6 +15,7 @@ import { Vacation } from '../../../models/Vacation';
 import { MaterialInput } from './ScheduleForms';
 import { DateButton } from './ScheduleCalendar';
 import { CalendarEventInput, googleCalendarUrl, downloadIcs } from '../../../services/calendarLinks';
+import { parseIntervals, getHoursForDate, DateOverride } from '../../../utils/workingHours';
 
 interface BookingFormData {
   name: string;
@@ -36,6 +37,8 @@ interface ScheduleProps {
   businessName: string;
   timeToCancel: number;
   vacations: Vacation[];
+  /** Per-date working-hours overrides — replace the weekly hours (LT-057). */
+  dateOverrides?: DateOverride[];
   appointmentTypes: AppointmentType[];
   isUpdating?: boolean;
   appointmentToUpdate?: Appointment;
@@ -45,7 +48,7 @@ interface ScheduleProps {
 }
 
 
-const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone, businessName, timeToCancel, vacations, appointmentTypes, isUpdating, appointmentToUpdate, onUpdateComplete, onCancelUpdate, isPreview }) => {
+const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone, businessName, timeToCancel, vacations, dateOverrides = [], appointmentTypes, isUpdating, appointmentToUpdate, onUpdateComplete, onCancelUpdate, isPreview }) => {
   // if (!appointmentTypes) {
   //   throw new Error('No appointment types available');
   // }
@@ -418,17 +421,13 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
 
 
   const generateTimeSlots = useCallback((date: Date, durationMS: number) => {
-    const dayOfWeek = date.getDay();
-    const workingHours = workingDays[dayOfWeek];
+    // Resolve this date's hours: a dateOverride beats the weekly workingDays
+    // entry, and the string may hold several ranges split by breaks (LT-057).
+    const workingHours = getHoursForDate(date, workingDays, dateOverrides);
+    const intervals = parseIntervals(workingHours);
 
-    if (!workingHours) return [];
+    if (intervals.length === 0) return [];
 
-    const [start, end] = workingHours.split('-');
-    const [startHour, startMinute] = start.split(':').map(Number);
-    const [endHour, endMinute] = end.split(':').map(Number);
-
-    const startTime = startHour * 60 + startMinute;
-    const endTime = endHour * 60 + endMinute;
     const slots = [];
 
     const durationMinutes = durationMS / 60000;
@@ -437,27 +436,31 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
     const now = new Date();
     const testDurationMS = durationMS; // Duration to test against
 
-    for (let time = startTime; (time + durationMinutes) <= endTime; time += slotInterval) {
+    for (const { startMin, endMin } of intervals) {
+      // A slot must fit entirely inside ONE interval — it may not straddle
+      // the break between two intervals.
+      for (let time = startMin; (time + durationMinutes) <= endMin; time += slotInterval) {
 
-      const hour = Math.floor(time / 60);
-      const minute = time % 60;
+        const hour = Math.floor(time / 60);
+        const minute = time % 60;
 
-      const timeStr = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
-      const slotDateTime = new Date(date);
-      slotDateTime.setHours(hour, minute, 0, 0);
+        const timeStr = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
+        const slotDateTime = new Date(date);
+        slotDateTime.setHours(hour, minute, 0, 0);
 
-      if (
-        slotDateTime.getTime() > now.getTime() &&
-        // 🚨 CRITICAL FIX HERE: Pass testDurationMS to isTimeInVacation
-        !isTimeInVacation(date, timeStr, testDurationMS) &&
-        !isTimeSlotBooked(date, timeStr, testDurationMS)
-      ) {
-        slots.push(timeStr);
+        if (
+          slotDateTime.getTime() > now.getTime() &&
+          // 🚨 CRITICAL FIX HERE: Pass testDurationMS to isTimeInVacation
+          !isTimeInVacation(date, timeStr, testDurationMS) &&
+          !isTimeSlotBooked(date, timeStr, testDurationMS)
+        ) {
+          slots.push(timeStr);
+        }
       }
     }
 
     return slots;
-  }, [workingDays, isTimeInVacation, isTimeSlotBooked]);
+  }, [workingDays, dateOverrides, isTimeInVacation, isTimeSlotBooked]);
 
   const isPast = useCallback((date: Date) => {
     const today = new Date();
@@ -478,14 +481,15 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
   }, []);
 
   const isAvailable = useCallback((date: Date) => {
-    const dayIndex = date.getDay();
-    if (workingDays[dayIndex] === null) return false;
+    // Resolved per date so an override can open a normally-closed weekday
+    // (or close an open one) — never read workingDays[day] directly (LT-057).
+    if (getHoursForDate(date, workingDays, dateOverrides) === null) return false;
 
     return appointmentTypes.some(type => {
       const durationMS = parseInt(type.durationMS);
       return generateTimeSlots(date, durationMS).length > 0;
     });
-  }, [workingDays, generateTimeSlots, appointmentTypes]);
+  }, [workingDays, dateOverrides, generateTimeSlots, appointmentTypes]);
 
   const isNextMonth = useCallback((date: Date) => {
     return date.getMonth() > currentMonth.getMonth();
@@ -501,17 +505,17 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
   const getAvailabilityStatus = useCallback((date: Date): 'full' | 'limited' | 'none' | 'vacation' | 'past' => {
     if (isPast(date)) return 'past';
 
-    const dayIndex = date.getDay();
-    const workingHours = workingDays[dayIndex];
+    // Override-aware hours, possibly several ranges with breaks (LT-057).
+    const workingHours = getHoursForDate(date, workingDays, dateOverrides);
+    const intervals = parseIntervals(workingHours);
 
     // Check 1: Is it a day the business is scheduled to work?
-    const isScheduledWorkingDay = workingHours !== null;
+    const isScheduledWorkingDay = intervals.length > 0;
 
     // --- Calculate total working capacity (needed for thresholds) ---
-    const totalWorkingMinutes = workingHours
-      ? (parseInt(workingHours.split('-')[1].split(':')[0]) * 60 + parseInt(workingHours.split('-')[1].split(':')[1]))
-      - (parseInt(workingHours.split('-')[0].split(':')[0]) * 60 + parseInt(workingHours.split('-')[0].split(':')[1]))
-      : 0;
+    // Breaks don't count as capacity: sum the intervals, not first-to-last.
+    const totalWorkingMinutes = intervals.reduce(
+      (sum, { startMin, endMin }) => sum + (endMin - startMin), 0);
 
     const minDurationMS = Math.min(...appointmentTypes.map(t => parseInt(t.durationMS) || 60000));
     const minDurationMinutes = minDurationMS / 60000;
@@ -547,7 +551,8 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
       }
 
       // --- Vacation Check (Only for scheduled working days with 0 slots) ---
-      const startTimeStr = workingHours!.split('-')[0];
+      const firstStart = intervals[0].startMin;
+      const startTimeStr = `${Math.floor(firstStart / 60).toString().padStart(2, '0')}:${(firstStart % 60).toString().padStart(2, '0')}`;
 
       // Pass the duration to perform the robust overlap check for the entire day's start
       if (isTimeInVacation(date, startTimeStr, checkDurationMS)) {
@@ -566,7 +571,7 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
     } else { // availableSlots.length is > 0 and <= FULL_THRESHOLD_COUNT (i.e., <= 55% available)
       return 'limited';
     }
-  }, [isPast, workingDays, generateTimeSlots, isTimeInVacation, appointmentTypes]);
+  }, [isPast, workingDays, dateOverrides, generateTimeSlots, isTimeInVacation, appointmentTypes]);
 
   const formatSelectedDate = useCallback((date: Date) => {
     return date.toLocaleDateString(language === 'he' ? 'he-IL' : (language === 'ar' ? 'ar-SA' : (language === 'fr' ? 'fr-FR' : (language === 'es' ? 'es-ES' : 'en-US'))), {

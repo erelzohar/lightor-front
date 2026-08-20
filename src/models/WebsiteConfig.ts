@@ -7,6 +7,7 @@ import { ContactConfig } from './ContactConfig';
 import { Vacation } from './Vacation';
 import { AppointmentType } from './AppointmentType';
 import { DesignConfig } from './DesignConfig';
+import { DateOverride } from '../utils/workingHours';
 
 /**
  * Every part is optional, and the whole address may be absent — a business can
@@ -165,7 +166,12 @@ export class WebsiteConfig {
     public components: Components,
     public design: DesignConfig,
     /** "Built with Lightor" badge — true for free-plan tenants (LT-032). */
-    public branding: boolean = false
+    public branding: boolean = false,
+    /**
+     * Per-date working-hours overrides (LT-057). Each entry fully replaces
+     * workingDays[weekday] for its calendar date. Absent on older payloads.
+     */
+    public dateOverrides: DateOverride[] = []
   ) {}
 
   static fromJSON(json: any): WebsiteConfig {
@@ -186,7 +192,8 @@ export class WebsiteConfig {
       Palette.fromJSON(json.pallete),
       Components.fromJSON(json.components),
       DesignConfig.fromJSON(json.design),
-      json.branding === true
+      json.branding === true,
+      Array.isArray(json.dateOverrides) ? json.dateOverrides : []
     );
   }
 }
