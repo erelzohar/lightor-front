@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Calendar, Phone, Instagram, Facebook } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { motion, useMotionValue, useSpring } from 'framer-motion';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { ContactModal } from '../ContactModal';
 import { useContactHandler } from '../../hooks/useContactHandler';
@@ -107,7 +107,13 @@ const Hero: React.FC<HeroProps> = ({ config, social, phone, isContactVisible, is
   const c1 = palette?.colorPrimary ?? '#2563eb';
   const c2 = palette?.colorPrimaryDark ?? '#14b8a6';
   const blobColors = [c1, c2, c1];
-  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
+  // Mouse glow position as motion values: mousemove writes straight to the
+  // compositor without re-rendering the component (LT-062 — the old
+  // useState version re-rendered the entire Hero on every mouse event).
+  const glowX = useMotionValue(-10000);
+  const glowY = useMotionValue(-10000);
+  const glowSpringX = useSpring(glowX, { damping: 15 });
+  const glowSpringY = useSpring(glowY, { damping: 15 });
   const { t, language } = useLanguage();
   const { isModalOpen, setIsModalOpen, modalType, handleContactClick } = useContactHandler();
 
@@ -141,11 +147,15 @@ const Hero: React.FC<HeroProps> = ({ config, social, phone, isContactVisible, is
 
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
-      const { clientX, clientY } = e;
-      setMousePosition({ x: clientX - window.innerWidth / 2, y: clientY - window.innerHeight / 2 });
+      // Center the 80vw glow disc on the cursor (viewport coordinates —
+      // the layer is positioned against the sticky-free hero section).
+      const half = window.innerWidth * 0.4;
+      glowX.set(e.clientX - half);
+      glowY.set(e.clientY - half);
     };
     window.addEventListener('mousemove', handleMouseMove);
     return () => window.removeEventListener('mousemove', handleMouseMove);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -603,46 +613,73 @@ const Hero: React.FC<HeroProps> = ({ config, social, phone, isContactVisible, is
           <div className="absolute inset-0 bg-light-bg/50 dark:bg-dark-bg/55 pointer-events-none" aria-hidden="true" />
         )}
 
+        {/* Gradient background, rebuilt transform-only (LT-062). The old
+            version rotated full-viewport gradient rectangles (their straight
+            edges swept visibly across the screen — a rotated radial gradient
+            looks identical anyway) and animated `background` strings, which
+            fought the global background-color transition and repainted the
+            whole layer every frame (the "blinking"). Every layer below is
+            oversized to 200% with a FIXED gradient and animates only
+            transform/opacity, so nothing ever repaints and no edge can
+            enter the viewport. */}
         {!isVanta && (
           <>
-            <div className="absolute inset-0" aria-hidden="true">
-              {Array.from({ length: 3 }).map((_, i) => (
-                <motion.div
-                  key={i}
-                  className="absolute inset-0"
-                  initial={{ opacity: 0.5 }}
-                  animate={{ scale: [1, 1.2, 1], rotate: [0, 180, 0], opacity: [0.5, 0.7, 0.5] }}
-                  transition={{ duration: animD(20 + i * 5), repeat: Infinity, delay: i * 5, ease: "linear" }}
-                  style={{
-                    // Blob anchors shift per site (LT-053) so two same-preset
-                    // heroes wash their color from different corners.
-                    background: `radial-gradient(circle at ${50 + i * 25 + (jitter?.blobOffsets[i] ?? 0)}% ${50 + i * 25 - (jitter?.blobOffsets[i] ?? 0)}%, ${hexToRgba(blobColors[i], 0.3)} 0%, transparent 50%)`,
-                  }}
-                />
-              ))}
+            <div className="absolute inset-0 overflow-hidden" aria-hidden="true">
+              {Array.from({ length: 3 }).map((_, i) => {
+                // LT-053 jitter: the old viewport anchor (a% of the view)
+                // maps to 25 + a/2 % of this double-sized layer.
+                const ax = 50 + i * 25 + (jitter?.blobOffsets[i] ?? 0);
+                const ay = 50 + i * 25 - (jitter?.blobOffsets[i] ?? 0);
+                return (
+                  <motion.div
+                    key={i}
+                    className="absolute w-[200%] h-[200%] left-[-50%] top-[-50%]"
+                    initial={{ opacity: 0.5 }}
+                    animate={{
+                      x: ['0%', '4%', '-3%', '0%'],
+                      y: ['0%', '-3%', '4%', '0%'],
+                      scale: [1, 1.12, 1.04, 1],
+                      opacity: [0.5, 0.7, 0.55, 0.5],
+                    }}
+                    transition={{ duration: animD(20 + i * 5), repeat: Infinity, delay: i * 5, ease: 'easeInOut' }}
+                    style={{
+                      background: `radial-gradient(circle at ${25 + ax / 2}% ${25 + ay / 2}%, ${hexToRgba(blobColors[i], 0.3)} 0%, transparent 25%)`,
+                    }}
+                  />
+                );
+              })}
+
+              {/* The two-tone wash: one oversized layer per color, drifting
+                  between the corners the old keyframes visited. */}
+              <motion.div
+                className="absolute w-[200%] h-[200%] left-[-50%] top-[-50%] opacity-70"
+                animate={{ x: ['-25%', '-25%', '0%'], y: ['-25%', '25%', '0%'] }}
+                transition={{ duration: animD(20), repeat: Infinity, repeatType: 'reverse', ease: 'easeInOut' }}
+                style={{ background: `radial-gradient(circle at 50% 50%, ${hexToRgba(c1, 0.6)} 0%, transparent 25%)` }}
+                aria-hidden="true"
+              />
+              <motion.div
+                className="absolute w-[200%] h-[200%] left-[-50%] top-[-50%] opacity-70"
+                animate={{ x: ['25%', '25%', '-25%'], y: ['25%', '-25%', '-25%'] }}
+                transition={{ duration: animD(20), repeat: Infinity, repeatType: 'reverse', ease: 'easeInOut' }}
+                style={{ background: `radial-gradient(circle at 50% 50%, ${hexToRgba(c2, 0.6)} 0%, transparent 25%)` }}
+                aria-hidden="true"
+              />
             </div>
 
-            <motion.div
-              className="absolute inset-0 opacity-70"
-              animate={{
-                background: [
-                  `radial-gradient(circle at 0% 0%, ${hexToRgba(c1, 0.6)} 0%, transparent 50%), radial-gradient(circle at 100% 100%, ${hexToRgba(c2, 0.6)} 0%, transparent 50%)`,
-                  `radial-gradient(circle at 100% 0%, ${hexToRgba(c2, 0.6)} 0%, transparent 50%), radial-gradient(circle at 0% 100%, ${hexToRgba(c1, 0.6)} 0%, transparent 50%)`,
-                  `radial-gradient(circle at 50% 50%, ${hexToRgba(c1, 0.6)} 0%, transparent 50%), radial-gradient(circle at 0% 0%, ${hexToRgba(c2, 0.6)} 0%, transparent 50%)`,
-                ],
-              }}
-              transition={{ duration: animD(20), repeat: Infinity, repeatType: "reverse", ease: "linear" }}
-              aria-hidden="true"
-            />
-
-            <motion.div
-              className="absolute inset-0 opacity-0 dark:opacity-60 pointer-events-none"
-              animate={{
-                background: `radial-gradient(circle 40vw at ${mousePosition.x + window.innerWidth / 2}px ${mousePosition.y + window.innerHeight / 2}px, rgba(96, 165, 250, 0.25), transparent 60%)`,
-              }}
-              transition={{ type: "spring", damping: 15 }}
-              aria-hidden="true"
-            />
+            {/* Dark-mode mouse glow: a fixed-gradient disc translated to the
+                cursor via spring motion values — no React re-renders, no
+                background repaints. Starts far off-screen until first move. */}
+            <div className="absolute inset-0 overflow-hidden opacity-0 dark:opacity-60 pointer-events-none" aria-hidden="true">
+              <motion.div
+                className="absolute w-[80vw] h-[80vw]"
+                style={{
+                  x: glowSpringX,
+                  y: glowSpringY,
+                  background: 'radial-gradient(circle at 50% 50%, rgba(96, 165, 250, 0.25) 0%, transparent 60%)',
+                }}
+              />
+            </div>
           </>
         )}
 
