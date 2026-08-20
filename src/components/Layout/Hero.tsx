@@ -136,6 +136,36 @@ const Hero: React.FC<HeroProps> = ({ config, social, phone, isContactVisible, is
   const imageTreatment = design?.imageTreatment ?? 'rounded';
   const animD = (base: number) => animLevel === 'none' ? 0 : animLevel === 'minimal' ? base * 0.25 : base;
 
+  // ── Static composed gradient background (LT-064) ──────────────────────────
+  // Third iteration of this background — see the LT-062/063/064 mission-log
+  // history. The lesson: every stack of animated full-screen layers here has
+  // glitched somewhere (background-string churn → blinking; composited-layer
+  // memory → desktop flashing; multi-layer translucent overdraw → scroll
+  // glitch). So the entire composition — the two-tone wash plus the three
+  // color blobs, at the ORIGINAL 50/75/100% anchors with LT-053 jitter — is
+  // painted once into a single background, as cheap as a static image.
+  // Movement comes only from a slow opacity crossfade to a second
+  // arrangement: one animated property, on one layer, that never repaints.
+  const washAlpha = 0.42; // old dedicated wash layer: alpha .6 under opacity-70
+  const blobAlpha = 0.18; // old blob layers: alpha .3 under opacity ~.5–.7
+  const blobStops = (shift: number, flip: boolean) =>
+    [0, 1, 2].map((i) => {
+      const off = jitter?.blobOffsets[i] ?? 0;
+      const ax = 50 + i * 25 + (flip ? -off : off) + shift;
+      const ay = 50 + i * 25 - (flip ? -off : off);
+      return `radial-gradient(circle at ${ax}% ${ay}%, ${hexToRgba(blobColors[i], blobAlpha)} 0%, transparent 50%)`;
+    }).join(', ');
+  const composedBg = [
+    `radial-gradient(circle at 0% 0%, ${hexToRgba(c1, washAlpha)} 0%, transparent 50%)`,
+    `radial-gradient(circle at 100% 100%, ${hexToRgba(c2, washAlpha)} 0%, transparent 50%)`,
+    blobStops(0, false),
+  ].join(', ');
+  const composedBgAlt = [
+    `radial-gradient(circle at 100% 0%, ${hexToRgba(c2, washAlpha)} 0%, transparent 50%)`,
+    `radial-gradient(circle at 0% 100%, ${hexToRgba(c1, washAlpha)} 0%, transparent 50%)`,
+    blobStops(-8, true),
+  ].join(', ');
+
   const vantaKey = [
     bgType,
     isDarkMode ? 'dark' : 'light',
@@ -614,67 +644,23 @@ const Hero: React.FC<HeroProps> = ({ config, social, phone, isContactVisible, is
           <div className="absolute inset-0 bg-light-bg/50 dark:bg-dark-bg/55 pointer-events-none" aria-hidden="true" />
         )}
 
-        {/* Gradient background, transform-only (LT-062) with small rasters
-            (LT-063). Two invariants, both load-bearing:
-            1. No layer's painted content ever changes after mount — only
-               transform/opacity animate — so nothing repaints and nothing
-               can blink (LT-062).
-            2. Each layer is painted SMALL (a 44vw square) and statically
-               scaled up 4x by the compositor. LT-062's first cut used
-               200%-sized layers: five of them totalled ~20x the viewport in
-               composited textures, blowing Chromium's ~8x will-change
-               budget — Chrome then un-promoted the layers and repainted
-               huge gradients every frame, which flashed WORSE, and only on
-               desktop where windows are big and retina doubles the cost.
-               Small-raster + scale-up keeps the total under ~1x viewport.
-               Upscaling a soft radial gradient is visually lossless, and
-               the gradients hit zero alpha before the div edge, so no hard
-               edge can ever show. */}
+        {/* Gradient background (LT-064): one static composed layer, plus an
+            opacity-only crossfade to a second arrangement when animation is
+            enabled. Do NOT reintroduce animated layer stacks here — the
+            LT-062/063/064 log documents how each variant glitched. */}
         {!isVanta && (
           <>
-            <div className="absolute inset-0 overflow-hidden" aria-hidden="true">
-              {Array.from({ length: 3 }).map((_, i) => {
-                // LT-053 jitter: anchor as an offset from the hero center,
-                // in viewport units (translate happens in parent space, so
-                // it is not affected by the layer's own scale).
-                const dx = i * 25 - 25 + (jitter?.blobOffsets[i] ?? 0);
-                const dy = i * 25 - 25 - (jitter?.blobOffsets[i] ?? 0);
-                return (
-                  <motion.div
-                    key={i}
-                    className="absolute left-1/2 top-1/2 w-[44vw] h-[44vw] -ml-[22vw] -mt-[22vw]"
-                    initial={{ opacity: 0.5 }}
-                    animate={{
-                      x: [`${dx}vw`, `${dx + 4}vw`, `${dx - 3}vw`, `${dx}vw`],
-                      y: [`${dy}vh`, `${dy - 3}vh`, `${dy + 4}vh`, `${dy}vh`],
-                      scale: [4, 4.5, 4.15, 4],
-                      opacity: [0.5, 0.7, 0.55, 0.5],
-                    }}
-                    transition={{ duration: animD(20 + i * 5), repeat: Infinity, delay: i * 5, ease: 'easeInOut' }}
-                    style={{
-                      background: `radial-gradient(circle closest-side, ${hexToRgba(blobColors[i], 0.3)} 0%, transparent 100%)`,
-                    }}
-                  />
-                );
-              })}
-
-              {/* The two-tone wash: one small-raster layer per color at a
-                  constant 4x scale, drifting between the corners. */}
+            <div className="absolute inset-0" style={{ background: composedBg }} aria-hidden="true" />
+            {animLevel !== 'none' && (
               <motion.div
-                className="absolute left-1/2 top-1/2 w-[44vw] h-[44vw] -ml-[22vw] -mt-[22vw] opacity-70"
-                animate={{ x: ['-50vw', '-50vw', '0vw'], y: ['-50vh', '50vh', '0vh'] }}
-                transition={{ duration: animD(20), repeat: Infinity, repeatType: 'reverse', ease: 'easeInOut' }}
-                style={{ scale: 4, background: `radial-gradient(circle closest-side, ${hexToRgba(c1, 0.6)} 0%, transparent 100%)` }}
+                className="absolute inset-0"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: [0, 1, 0] }}
+                transition={{ duration: animD(26), repeat: Infinity, ease: 'easeInOut' }}
+                style={{ background: composedBgAlt }}
                 aria-hidden="true"
               />
-              <motion.div
-                className="absolute left-1/2 top-1/2 w-[44vw] h-[44vw] -ml-[22vw] -mt-[22vw] opacity-70"
-                animate={{ x: ['50vw', '50vw', '-50vw'], y: ['50vh', '-50vh', '-50vh'] }}
-                transition={{ duration: animD(20), repeat: Infinity, repeatType: 'reverse', ease: 'easeInOut' }}
-                style={{ scale: 4, background: `radial-gradient(circle closest-side, ${hexToRgba(c2, 0.6)} 0%, transparent 100%)` }}
-                aria-hidden="true"
-              />
-            </div>
+            )}
 
             {/* Dark-mode mouse glow: small raster at constant 4x scale,
                 translated to the cursor via spring motion values. Starts far
