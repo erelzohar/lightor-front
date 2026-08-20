@@ -147,9 +147,10 @@ const Hero: React.FC<HeroProps> = ({ config, social, phone, isContactVisible, is
 
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
-      // Center the 80vw glow disc on the cursor (viewport coordinates —
-      // the layer is positioned against the sticky-free hero section).
-      const half = window.innerWidth * 0.4;
+      // Center the glow on the cursor. The disc is a 20vw base scaled 4x
+      // around its own center, so the visual center sits at the base
+      // center — 10vw from the layer's top-left — plus the translation.
+      const half = window.innerWidth * 0.1;
       glowX.set(e.clientX - half);
       glowY.set(e.clientY - half);
     };
@@ -613,70 +614,79 @@ const Hero: React.FC<HeroProps> = ({ config, social, phone, isContactVisible, is
           <div className="absolute inset-0 bg-light-bg/50 dark:bg-dark-bg/55 pointer-events-none" aria-hidden="true" />
         )}
 
-        {/* Gradient background, rebuilt transform-only (LT-062). The old
-            version rotated full-viewport gradient rectangles (their straight
-            edges swept visibly across the screen — a rotated radial gradient
-            looks identical anyway) and animated `background` strings, which
-            fought the global background-color transition and repainted the
-            whole layer every frame (the "blinking"). Every layer below is
-            oversized to 200% with a FIXED gradient and animates only
-            transform/opacity, so nothing ever repaints and no edge can
-            enter the viewport. */}
+        {/* Gradient background, transform-only (LT-062) with small rasters
+            (LT-063). Two invariants, both load-bearing:
+            1. No layer's painted content ever changes after mount — only
+               transform/opacity animate — so nothing repaints and nothing
+               can blink (LT-062).
+            2. Each layer is painted SMALL (a 44vw square) and statically
+               scaled up 4x by the compositor. LT-062's first cut used
+               200%-sized layers: five of them totalled ~20x the viewport in
+               composited textures, blowing Chromium's ~8x will-change
+               budget — Chrome then un-promoted the layers and repainted
+               huge gradients every frame, which flashed WORSE, and only on
+               desktop where windows are big and retina doubles the cost.
+               Small-raster + scale-up keeps the total under ~1x viewport.
+               Upscaling a soft radial gradient is visually lossless, and
+               the gradients hit zero alpha before the div edge, so no hard
+               edge can ever show. */}
         {!isVanta && (
           <>
             <div className="absolute inset-0 overflow-hidden" aria-hidden="true">
               {Array.from({ length: 3 }).map((_, i) => {
-                // LT-053 jitter: the old viewport anchor (a% of the view)
-                // maps to 25 + a/2 % of this double-sized layer.
-                const ax = 50 + i * 25 + (jitter?.blobOffsets[i] ?? 0);
-                const ay = 50 + i * 25 - (jitter?.blobOffsets[i] ?? 0);
+                // LT-053 jitter: anchor as an offset from the hero center,
+                // in viewport units (translate happens in parent space, so
+                // it is not affected by the layer's own scale).
+                const dx = i * 25 - 25 + (jitter?.blobOffsets[i] ?? 0);
+                const dy = i * 25 - 25 - (jitter?.blobOffsets[i] ?? 0);
                 return (
                   <motion.div
                     key={i}
-                    className="absolute w-[200%] h-[200%] left-[-50%] top-[-50%]"
+                    className="absolute left-1/2 top-1/2 w-[44vw] h-[44vw] -ml-[22vw] -mt-[22vw]"
                     initial={{ opacity: 0.5 }}
                     animate={{
-                      x: ['0%', '4%', '-3%', '0%'],
-                      y: ['0%', '-3%', '4%', '0%'],
-                      scale: [1, 1.12, 1.04, 1],
+                      x: [`${dx}vw`, `${dx + 4}vw`, `${dx - 3}vw`, `${dx}vw`],
+                      y: [`${dy}vh`, `${dy - 3}vh`, `${dy + 4}vh`, `${dy}vh`],
+                      scale: [4, 4.5, 4.15, 4],
                       opacity: [0.5, 0.7, 0.55, 0.5],
                     }}
                     transition={{ duration: animD(20 + i * 5), repeat: Infinity, delay: i * 5, ease: 'easeInOut' }}
                     style={{
-                      background: `radial-gradient(circle at ${25 + ax / 2}% ${25 + ay / 2}%, ${hexToRgba(blobColors[i], 0.3)} 0%, transparent 25%)`,
+                      background: `radial-gradient(circle closest-side, ${hexToRgba(blobColors[i], 0.3)} 0%, transparent 100%)`,
                     }}
                   />
                 );
               })}
 
-              {/* The two-tone wash: one oversized layer per color, drifting
-                  between the corners the old keyframes visited. */}
+              {/* The two-tone wash: one small-raster layer per color at a
+                  constant 4x scale, drifting between the corners. */}
               <motion.div
-                className="absolute w-[200%] h-[200%] left-[-50%] top-[-50%] opacity-70"
-                animate={{ x: ['-25%', '-25%', '0%'], y: ['-25%', '25%', '0%'] }}
+                className="absolute left-1/2 top-1/2 w-[44vw] h-[44vw] -ml-[22vw] -mt-[22vw] opacity-70"
+                animate={{ x: ['-50vw', '-50vw', '0vw'], y: ['-50vh', '50vh', '0vh'] }}
                 transition={{ duration: animD(20), repeat: Infinity, repeatType: 'reverse', ease: 'easeInOut' }}
-                style={{ background: `radial-gradient(circle at 50% 50%, ${hexToRgba(c1, 0.6)} 0%, transparent 25%)` }}
+                style={{ scale: 4, background: `radial-gradient(circle closest-side, ${hexToRgba(c1, 0.6)} 0%, transparent 100%)` }}
                 aria-hidden="true"
               />
               <motion.div
-                className="absolute w-[200%] h-[200%] left-[-50%] top-[-50%] opacity-70"
-                animate={{ x: ['25%', '25%', '-25%'], y: ['25%', '-25%', '-25%'] }}
+                className="absolute left-1/2 top-1/2 w-[44vw] h-[44vw] -ml-[22vw] -mt-[22vw] opacity-70"
+                animate={{ x: ['50vw', '50vw', '-50vw'], y: ['50vh', '-50vh', '-50vh'] }}
                 transition={{ duration: animD(20), repeat: Infinity, repeatType: 'reverse', ease: 'easeInOut' }}
-                style={{ background: `radial-gradient(circle at 50% 50%, ${hexToRgba(c2, 0.6)} 0%, transparent 25%)` }}
+                style={{ scale: 4, background: `radial-gradient(circle closest-side, ${hexToRgba(c2, 0.6)} 0%, transparent 100%)` }}
                 aria-hidden="true"
               />
             </div>
 
-            {/* Dark-mode mouse glow: a fixed-gradient disc translated to the
-                cursor via spring motion values — no React re-renders, no
-                background repaints. Starts far off-screen until first move. */}
+            {/* Dark-mode mouse glow: small raster at constant 4x scale,
+                translated to the cursor via spring motion values. Starts far
+                off-screen until the first move. */}
             <div className="absolute inset-0 overflow-hidden opacity-0 dark:opacity-60 pointer-events-none" aria-hidden="true">
               <motion.div
-                className="absolute w-[80vw] h-[80vw]"
+                className="absolute w-[20vw] h-[20vw]"
                 style={{
                   x: glowSpringX,
                   y: glowSpringY,
-                  background: 'radial-gradient(circle at 50% 50%, rgba(96, 165, 250, 0.25) 0%, transparent 60%)',
+                  scale: 4,
+                  background: 'radial-gradient(circle closest-side, rgba(96, 165, 250, 0.25) 0%, transparent 60%)',
                 }}
               />
             </div>
