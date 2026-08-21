@@ -646,8 +646,12 @@ const Hero: React.FC<HeroProps> = ({ config, social, phone, isContactVisible, is
 
         {/* Gradient background (LT-064): one static composed layer, plus an
             opacity-only crossfade to a second arrangement when animation is
-            enabled. Do NOT reintroduce animated layer stacks here — the
-            LT-062/063/064 log documents how each variant glitched. */}
+            enabled. Do NOT reintroduce animated full-screen layer stacks
+            here — the LT-062/063/064 log documents how each variant
+            glitched. LT-065 adds motion back WITHIN that contract: two
+            SMALL drift orbs (transform-only, ~0.2x viewport of texture
+            combined, 'full' animLevel only) — small layers were never the
+            problem; six full-screen ones were. */}
         {!isVanta && (
           <>
             <div className="absolute inset-0" style={{ background: composedBg }} aria-hidden="true" />
@@ -656,10 +660,46 @@ const Hero: React.FC<HeroProps> = ({ config, social, phone, isContactVisible, is
                 className="absolute inset-0"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: [0, 1, 0] }}
-                transition={{ duration: animD(26), repeat: Infinity, ease: 'easeInOut' }}
+                transition={{ duration: animD(18), repeat: Infinity, ease: 'easeInOut' }}
                 style={{ background: composedBgAlt }}
                 aria-hidden="true"
               />
+            )}
+
+            {/* Gentle drift orbs (LT-065): visible motion at negligible
+                cost. Gradients hit zero alpha before the div edge, so no
+                hard edge can ever show. Anchors take LT-053 jitter. */}
+            {animLevel === 'full' && (
+              <div className="absolute inset-0 overflow-hidden pointer-events-none" aria-hidden="true">
+                <motion.div
+                  className="absolute w-[36vw] h-[36vw]"
+                  style={{
+                    left: `${6 + (jitter?.blobOffsets[0] ?? 0)}%`,
+                    top: `${48 + (jitter?.blobOffsets[1] ?? 0)}%`,
+                    background: `radial-gradient(circle closest-side, ${hexToRgba(c1, 0.22)} 0%, transparent 100%)`,
+                  }}
+                  animate={{
+                    x: ['0vw', '6vw', '-4vw', '0vw'],
+                    y: ['0vh', '-6vh', '4vh', '0vh'],
+                    scale: [1, 1.15, 1.05, 1],
+                  }}
+                  transition={{ duration: 18, repeat: Infinity, ease: 'easeInOut' }}
+                />
+                <motion.div
+                  className="absolute w-[28vw] h-[28vw]"
+                  style={{
+                    right: `${8 - (jitter?.blobOffsets[2] ?? 0)}%`,
+                    top: `${12 + (jitter?.blobOffsets[0] ?? 0)}%`,
+                    background: `radial-gradient(circle closest-side, ${hexToRgba(c2, 0.22)} 0%, transparent 100%)`,
+                  }}
+                  animate={{
+                    x: ['0vw', '-5vw', '3vw', '0vw'],
+                    y: ['0vh', '5vh', '-4vh', '0vh'],
+                    scale: [1, 1.1, 1.18, 1],
+                  }}
+                  transition={{ duration: 24, repeat: Infinity, ease: 'easeInOut', delay: 3 }}
+                />
+              </div>
             )}
 
             {/* Dark-mode mouse glow: small raster at constant 4x scale,
