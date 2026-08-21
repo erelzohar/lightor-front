@@ -160,11 +160,6 @@ const Hero: React.FC<HeroProps> = ({ config, social, phone, isContactVisible, is
     `radial-gradient(circle at 100% 100%, ${hexToRgba(c2, washAlpha)} 0%, transparent 50%)`,
     blobStops(0, false),
   ].join(', ');
-  const composedBgAlt = [
-    `radial-gradient(circle at 100% 0%, ${hexToRgba(c2, washAlpha)} 0%, transparent 50%)`,
-    `radial-gradient(circle at 0% 100%, ${hexToRgba(c1, washAlpha)} 0%, transparent 50%)`,
-    blobStops(-8, true),
-  ].join(', ');
 
   const vantaKey = [
     bgType,
@@ -644,47 +639,52 @@ const Hero: React.FC<HeroProps> = ({ config, social, phone, isContactVisible, is
           <div className="absolute inset-0 bg-light-bg/50 dark:bg-dark-bg/55 pointer-events-none" aria-hidden="true" />
         )}
 
-        {/* Gradient background (LT-064/067). The composition is painted once
-            (composedBg) and the ONLY motion is a slow transform drift of the
-            whole field plus an opacity crossfade to a second arrangement —
-            two oversized (124%) transform-only layers, ~3x viewport of
-            texture total (Chromium budget ~8x). Do NOT reintroduce a stack
-            of animated full-screen layers or animate `background` strings:
-            the LT-062/063/064 log documents how each of those glitched.
-            LT-065's drift orbs were pink-on-pink and imperceptible; the
-            visible motion now comes from drifting the base field itself. */}
+        {/* Gradient background (LT-064 static base + LT-068 motion).
+            History (see LT-062..067 in the missions log): every framer-driven
+            approach either glitched or — the last two tries — did not animate
+            at all, because framer-motion does NOT animate x/y keyframes given
+            in vw/vh units. So motion here is plain CSS @keyframes: native vw
+            support, no framer/rAF dependency, and animation-name/-duration are
+            verifiable via computed style. Two distinct traveling color pools
+            (the primary + accent, at enough alpha to read against the base)
+            move on clear diagonal paths. Radial gradients fade to transparent
+            before the box edge, so no hard edge can show; ~1.6x viewport of
+            texture total. Do NOT animate `background` strings or stack many
+            full-screen layers — that is what glitched. */}
         {!isVanta && (
           <>
-            {animLevel === 'none' ? (
-              <div className="absolute inset-0" style={{ background: composedBg }} aria-hidden="true" />
-            ) : (
-              <div className="absolute inset-0 overflow-hidden" aria-hidden="true">
-                {/* Base field: oversized so a few-vw drift never exposes an
-                    edge; the gradients also fade to transparent before the
-                    box edge. Transform-only — the paint never changes. */}
-                <motion.div
-                  className="absolute -inset-[12%]"
-                  style={{ background: composedBg, willChange: 'transform' }}
-                  animate={{
-                    x: ['-4vw', '4vw', '-2vw', '-4vw'],
-                    y: ['3vh', '-4vh', '4vh', '3vh'],
-                    scale: [1, 1.1, 1.04, 1],
+            <style>{`
+              @keyframes lhBgDriftA {
+                0%   { transform: translate(-10vw, 8vh) scale(1); }
+                50%  { transform: translate(12vw, -6vh) scale(1.18); }
+                100% { transform: translate(-10vw, 8vh) scale(1); }
+              }
+              @keyframes lhBgDriftB {
+                0%   { transform: translate(10vw, -6vh) scale(1.12); }
+                50%  { transform: translate(-12vw, 8vh) scale(1); }
+                100% { transform: translate(10vw, -6vh) scale(1.12); }
+              }
+            `}</style>
+
+            <div className="absolute inset-0" style={{ background: composedBg }} aria-hidden="true" />
+
+            {animLevel !== 'none' && (
+              <div className="absolute inset-0 overflow-hidden pointer-events-none" aria-hidden="true">
+                <div
+                  className="absolute left-1/2 top-1/2 -ml-[30vw] -mt-[30vw] w-[60vw] h-[60vw]"
+                  style={{
+                    background: `radial-gradient(circle closest-side, ${hexToRgba(c1, 0.34)} 0%, transparent 100%)`,
+                    animation: 'lhBgDriftA 19s ease-in-out infinite',
+                    willChange: 'transform',
                   }}
-                  transition={{ duration: 20, repeat: Infinity, ease: 'easeInOut' }}
                 />
-                {/* Second arrangement, drifting on its own phase and
-                    crossfading in and out for slow color variation. */}
-                <motion.div
-                  className="absolute -inset-[12%]"
-                  initial={{ opacity: 0 }}
-                  style={{ background: composedBgAlt, willChange: 'transform, opacity' }}
-                  animate={{
-                    opacity: [0, 0.9, 0],
-                    x: ['3vw', '-4vw', '3vw'],
-                    y: ['-3vh', '4vh', '-3vh'],
-                    scale: [1.06, 1, 1.06],
+                <div
+                  className="absolute left-1/2 top-1/2 -ml-[24vw] -mt-[24vw] w-[48vw] h-[48vw]"
+                  style={{
+                    background: `radial-gradient(circle closest-side, ${hexToRgba(c2, 0.30)} 0%, transparent 100%)`,
+                    animation: 'lhBgDriftB 25s ease-in-out infinite',
+                    willChange: 'transform',
                   }}
-                  transition={{ duration: 24, repeat: Infinity, ease: 'easeInOut' }}
                 />
               </div>
             )}
