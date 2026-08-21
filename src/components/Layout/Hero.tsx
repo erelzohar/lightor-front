@@ -644,60 +644,47 @@ const Hero: React.FC<HeroProps> = ({ config, social, phone, isContactVisible, is
           <div className="absolute inset-0 bg-light-bg/50 dark:bg-dark-bg/55 pointer-events-none" aria-hidden="true" />
         )}
 
-        {/* Gradient background (LT-064): one static composed layer, plus an
-            opacity-only crossfade to a second arrangement when animation is
-            enabled. Do NOT reintroduce animated full-screen layer stacks
-            here — the LT-062/063/064 log documents how each variant
-            glitched. LT-065 adds motion back WITHIN that contract: two
-            SMALL drift orbs (transform-only, ~0.2x viewport of texture
-            combined, 'full' animLevel only) — small layers were never the
-            problem; six full-screen ones were. */}
+        {/* Gradient background (LT-064/067). The composition is painted once
+            (composedBg) and the ONLY motion is a slow transform drift of the
+            whole field plus an opacity crossfade to a second arrangement —
+            two oversized (124%) transform-only layers, ~3x viewport of
+            texture total (Chromium budget ~8x). Do NOT reintroduce a stack
+            of animated full-screen layers or animate `background` strings:
+            the LT-062/063/064 log documents how each of those glitched.
+            LT-065's drift orbs were pink-on-pink and imperceptible; the
+            visible motion now comes from drifting the base field itself. */}
         {!isVanta && (
           <>
-            <div className="absolute inset-0" style={{ background: composedBg }} aria-hidden="true" />
-            {animLevel !== 'none' && (
-              <motion.div
-                className="absolute inset-0"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: [0, 1, 0] }}
-                transition={{ duration: animD(18), repeat: Infinity, ease: 'easeInOut' }}
-                style={{ background: composedBgAlt }}
-                aria-hidden="true"
-              />
-            )}
-
-            {/* Gentle drift orbs (LT-065): visible motion at negligible
-                cost. Gradients hit zero alpha before the div edge, so no
-                hard edge can ever show. Anchors take LT-053 jitter. */}
-            {animLevel === 'full' && (
-              <div className="absolute inset-0 overflow-hidden pointer-events-none" aria-hidden="true">
+            {animLevel === 'none' ? (
+              <div className="absolute inset-0" style={{ background: composedBg }} aria-hidden="true" />
+            ) : (
+              <div className="absolute inset-0 overflow-hidden" aria-hidden="true">
+                {/* Base field: oversized so a few-vw drift never exposes an
+                    edge; the gradients also fade to transparent before the
+                    box edge. Transform-only — the paint never changes. */}
                 <motion.div
-                  className="absolute w-[36vw] h-[36vw]"
-                  style={{
-                    left: `${6 + (jitter?.blobOffsets[0] ?? 0)}%`,
-                    top: `${48 + (jitter?.blobOffsets[1] ?? 0)}%`,
-                    background: `radial-gradient(circle closest-side, ${hexToRgba(c1, 0.22)} 0%, transparent 100%)`,
-                  }}
+                  className="absolute -inset-[12%]"
+                  style={{ background: composedBg, willChange: 'transform' }}
                   animate={{
-                    x: ['0vw', '6vw', '-4vw', '0vw'],
-                    y: ['0vh', '-6vh', '4vh', '0vh'],
-                    scale: [1, 1.15, 1.05, 1],
+                    x: ['-4vw', '4vw', '-2vw', '-4vw'],
+                    y: ['3vh', '-4vh', '4vh', '3vh'],
+                    scale: [1, 1.1, 1.04, 1],
                   }}
-                  transition={{ duration: 18, repeat: Infinity, ease: 'easeInOut' }}
+                  transition={{ duration: 20, repeat: Infinity, ease: 'easeInOut' }}
                 />
+                {/* Second arrangement, drifting on its own phase and
+                    crossfading in and out for slow color variation. */}
                 <motion.div
-                  className="absolute w-[28vw] h-[28vw]"
-                  style={{
-                    right: `${8 - (jitter?.blobOffsets[2] ?? 0)}%`,
-                    top: `${12 + (jitter?.blobOffsets[0] ?? 0)}%`,
-                    background: `radial-gradient(circle closest-side, ${hexToRgba(c2, 0.22)} 0%, transparent 100%)`,
-                  }}
+                  className="absolute -inset-[12%]"
+                  initial={{ opacity: 0 }}
+                  style={{ background: composedBgAlt, willChange: 'transform, opacity' }}
                   animate={{
-                    x: ['0vw', '-5vw', '3vw', '0vw'],
-                    y: ['0vh', '5vh', '-4vh', '0vh'],
-                    scale: [1, 1.1, 1.18, 1],
+                    opacity: [0, 0.9, 0],
+                    x: ['3vw', '-4vw', '3vw'],
+                    y: ['-3vh', '4vh', '-3vh'],
+                    scale: [1.06, 1, 1.06],
                   }}
-                  transition={{ duration: 24, repeat: Infinity, ease: 'easeInOut', delay: 3 }}
+                  transition={{ duration: 24, repeat: Infinity, ease: 'easeInOut' }}
                 />
               </div>
             )}
