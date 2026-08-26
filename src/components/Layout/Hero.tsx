@@ -106,7 +106,6 @@ const radiusClassMap: Record<BorderRadius, string> = {
 const Hero: React.FC<HeroProps> = ({ config, social, phone, isContactVisible, isPreview, palette, design, jitter }) => {
   const c1 = palette?.colorPrimary ?? '#2563eb';
   const c2 = palette?.colorPrimaryDark ?? '#14b8a6';
-  const blobColors = [c1, c2, c1];
   // Mouse glow position as motion values: mousemove writes straight to the
   // compositor without re-rendering the component (LT-062 — the old
   // useState version re-rendered the entire Hero on every mouse event).
@@ -136,30 +135,17 @@ const Hero: React.FC<HeroProps> = ({ config, social, phone, isContactVisible, is
   const imageTreatment = design?.imageTreatment ?? 'rounded';
   const animD = (base: number) => animLevel === 'none' ? 0 : animLevel === 'minimal' ? base * 0.25 : base;
 
-  // ── Static composed gradient background (LT-064) ──────────────────────────
-  // Third iteration of this background — see the LT-062/063/064 mission-log
-  // history. The lesson: every stack of animated full-screen layers here has
-  // glitched somewhere (background-string churn → blinking; composited-layer
-  // memory → desktop flashing; multi-layer translucent overdraw → scroll
-  // glitch). So the entire composition — the two-tone wash plus the three
-  // color blobs, at the ORIGINAL 50/75/100% anchors with LT-053 jitter — is
-  // painted once into a single background, as cheap as a static image.
-  // Movement comes only from a slow opacity crossfade to a second
-  // arrangement: one animated property, on one layer, that never repaints.
-  const washAlpha = 0.42; // old dedicated wash layer: alpha .6 under opacity-70
-  const blobAlpha = 0.18; // old blob layers: alpha .3 under opacity ~.5–.7
-  const blobStops = (shift: number, flip: boolean) =>
-    [0, 1, 2].map((i) => {
-      const off = jitter?.blobOffsets[i] ?? 0;
-      const ax = 50 + i * 25 + (flip ? -off : off) + shift;
-      const ay = 50 + i * 25 - (flip ? -off : off);
-      return `radial-gradient(circle at ${ax}% ${ay}%, ${hexToRgba(blobColors[i], blobAlpha)} 0%, transparent 50%)`;
-    }).join(', ');
-  const composedBg = [
-    `radial-gradient(circle at 0% 0%, ${hexToRgba(c1, washAlpha)} 0%, transparent 50%)`,
-    `radial-gradient(circle at 100% 100%, ${hexToRgba(c2, washAlpha)} 0%, transparent 50%)`,
-    blobStops(0, false),
-  ].join(', ');
+  // ── Animated gradient background (LT-069) ─────────────────────────────────
+  // The canonical pattern every site uses: ONE layer, a diagonal
+  // linear-gradient painted at 300% size, with `background-position` swept by
+  // a keyframes rule in index.css (`hero-gradient-shift`). No framer, no
+  // layer stacks, no cleverness — see LT-062..068 in the missions log for
+  // everything that approach replaced. Alpha stops blend over the section's
+  // bg color, so light mode reads pastel and dark mode reads deep, from the
+  // same layer. LT-053 jitter varies the angle and phase per site.
+  const gradientAngle = -45 + (jitter?.blobOffsets[0] ?? 0);
+  const gradientPhase = 10 + (jitter?.blobOffsets[1] ?? 0); // 0..20s
+  const gradientBg = `linear-gradient(${gradientAngle}deg, ${hexToRgba(c1, 0.5)}, ${hexToRgba(c2, 0.3)}, ${hexToRgba(c1, 0.18)}, ${hexToRgba(c2, 0.5)})`;
 
   const vantaKey = [
     bgType,
@@ -639,55 +625,25 @@ const Hero: React.FC<HeroProps> = ({ config, social, phone, isContactVisible, is
           <div className="absolute inset-0 bg-light-bg/50 dark:bg-dark-bg/55 pointer-events-none" aria-hidden="true" />
         )}
 
-        {/* Gradient background (LT-064 static base + LT-068 motion).
-            History (see LT-062..067 in the missions log): every framer-driven
-            approach either glitched or — the last two tries — did not animate
-            at all, because framer-motion does NOT animate x/y keyframes given
-            in vw/vh units. So motion here is plain CSS @keyframes: native vw
-            support, no framer/rAF dependency, and animation-name/-duration are
-            verifiable via computed style. Two distinct traveling color pools
-            (the primary + accent, at enough alpha to read against the base)
-            move on clear diagonal paths. Radial gradients fade to transparent
-            before the box edge, so no hard edge can show; ~1.6x viewport of
-            texture total. Do NOT animate `background` strings or stack many
-            full-screen layers — that is what glitched. */}
+        {/* The default animated gradient (LT-069): one div, the canonical
+            background-position sweep. Keyframes live in index.css
+            (hero-gradient-shift). animLevel none = same wash, no sweep. */}
         {!isVanta && (
           <>
-            <style>{`
-              @keyframes lhBgDriftA {
-                0%   { transform: translate(-10vw, 8vh) scale(1); }
-                50%  { transform: translate(12vw, -6vh) scale(1.18); }
-                100% { transform: translate(-10vw, 8vh) scale(1); }
-              }
-              @keyframes lhBgDriftB {
-                0%   { transform: translate(10vw, -6vh) scale(1.12); }
-                50%  { transform: translate(-12vw, 8vh) scale(1); }
-                100% { transform: translate(10vw, -6vh) scale(1.12); }
-              }
-            `}</style>
-
-            <div className="absolute inset-0" style={{ background: composedBg }} aria-hidden="true" />
-
-            {animLevel !== 'none' && (
-              <div className="absolute inset-0 overflow-hidden pointer-events-none" aria-hidden="true">
-                <div
-                  className="absolute left-1/2 top-1/2 -ml-[30vw] -mt-[30vw] w-[60vw] h-[60vw]"
-                  style={{
-                    background: `radial-gradient(circle closest-side, ${hexToRgba(c1, 0.34)} 0%, transparent 100%)`,
-                    animation: 'lhBgDriftA 19s ease-in-out infinite',
-                    willChange: 'transform',
-                  }}
-                />
-                <div
-                  className="absolute left-1/2 top-1/2 -ml-[24vw] -mt-[24vw] w-[48vw] h-[48vw]"
-                  style={{
-                    background: `radial-gradient(circle closest-side, ${hexToRgba(c2, 0.30)} 0%, transparent 100%)`,
-                    animation: 'lhBgDriftB 25s ease-in-out infinite',
-                    willChange: 'transform',
-                  }}
-                />
-              </div>
-            )}
+            <div
+              className="absolute inset-0"
+              aria-hidden="true"
+              style={{
+                background: gradientBg,
+                backgroundSize: '300% 300%',
+                ...(animLevel !== 'none'
+                  ? {
+                      animation: `hero-gradient-shift ${animLevel === 'full' ? 14 : 26}s ease infinite`,
+                      animationDelay: `-${gradientPhase}s`,
+                    }
+                  : { backgroundPosition: '50% 50%' }),
+              }}
+            />
 
             {/* Dark-mode mouse glow: small raster at constant 4x scale,
                 translated to the cursor via spring motion values. Starts far

@@ -255,6 +255,21 @@ html[data-heading-accent="none"] .heading-accent {
   border-radius: 42% 58% 63% 37% / 45% 42% 58% 55%;
 }
 
+/* The default hero gradient sweep (LT-069) — the canonical animated-gradient
+   pattern: the layer paints a 300%-sized linear gradient and this slides the
+   window across it. Applied inline in Hero.tsx. */
+@keyframes hero-gradient-shift {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
 @keyframes blob {
   0% {
     transform: translate(0, 0) scale(1);
