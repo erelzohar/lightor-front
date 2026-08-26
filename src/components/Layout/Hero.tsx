@@ -1,6 +1,6 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Calendar, Phone, Instagram, Facebook } from 'lucide-react';
-import { motion, useMotionValue, useSpring } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { ContactModal } from '../ContactModal';
 import { useContactHandler } from '../../hooks/useContactHandler';
@@ -9,18 +9,7 @@ import { Social } from '../../models/Social';
 import { Palette } from '../../models/WebsiteConfig';
 import { DesignConfig, BorderRadius } from '../../models/DesignConfig';
 import ImagesService from '../../services/ImagesService';
-import { SiteJitter, createRng } from '../../services/seed';
-
-function hexToRgba(hex: string, alpha: number): string {
-  const clean = hex.replace('#', '');
-  const full = clean.length === 3
-    ? clean.split('').map(c => c + c).join('')
-    : clean;
-  const r = parseInt(full.slice(0, 2), 16);
-  const g = parseInt(full.slice(2, 4), 16);
-  const b = parseInt(full.slice(4, 6), 16);
-  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
-}
+import { SiteJitter } from '../../services/seed';
 
 function hexToInt(hex: string): number {
   return parseInt(hex.replace('#', ''), 16);
@@ -104,15 +93,6 @@ const radiusClassMap: Record<BorderRadius, string> = {
 };
 
 const Hero: React.FC<HeroProps> = ({ config, social, phone, isContactVisible, isPreview, palette, design, jitter }) => {
-  const c1 = palette?.colorPrimary ?? '#2563eb';
-  const c2 = palette?.colorPrimaryDark ?? '#14b8a6';
-  // Mouse glow position as motion values: mousemove writes straight to the
-  // compositor without re-rendering the component (LT-062 — the old
-  // useState version re-rendered the entire Hero on every mouse event).
-  const glowX = useMotionValue(-10000);
-  const glowY = useMotionValue(-10000);
-  const glowSpringX = useSpring(glowX, { damping: 15 });
-  const glowSpringY = useSpring(glowY, { damping: 15 });
   const { t, language } = useLanguage();
   const { isModalOpen, setIsModalOpen, modalType, handleContactClick } = useContactHandler();
 
@@ -121,8 +101,11 @@ const Hero: React.FC<HeroProps> = ({ config, social, phone, isContactVisible, is
   const vantaInstanceRef = useRef<any>(null);
   const [isDarkMode, setIsDarkMode] = useState(document.documentElement.classList.contains('dark'));
 
-  const bgType = config.bgType ?? 'gradient';
-  const isVanta = bgType !== 'gradient';
+  // The default background is Vanta fog (LT-071, Erel's decision after the
+  // LT-062..069 animated-gradient saga — see the missions log). Stored
+  // configs may still say 'gradient'; they render fog.
+  const rawBgType = config.bgType ?? 'gradient';
+  const bgType = rawBgType === 'gradient' ? 'fog' : rawBgType;
 
   // Design tokens with fallbacks to legacy bordersType
   const btnRadius = design?.borderRadius
@@ -135,18 +118,6 @@ const Hero: React.FC<HeroProps> = ({ config, social, phone, isContactVisible, is
   const imageTreatment = design?.imageTreatment ?? 'rounded';
   const animD = (base: number) => animLevel === 'none' ? 0 : animLevel === 'minimal' ? base * 0.25 : base;
 
-  // ── Animated gradient background (LT-069) ─────────────────────────────────
-  // The canonical pattern every site uses: ONE layer, a diagonal
-  // linear-gradient painted at 300% size, with `background-position` swept by
-  // a keyframes rule in index.css (`hero-gradient-shift`). No framer, no
-  // layer stacks, no cleverness — see LT-062..068 in the missions log for
-  // everything that approach replaced. Alpha stops blend over the section's
-  // bg color, so light mode reads pastel and dark mode reads deep, from the
-  // same layer. LT-053 jitter varies the angle and phase per site.
-  const gradientAngle = -45 + (jitter?.blobOffsets[0] ?? 0);
-  const gradientPhase = 10 + (jitter?.blobOffsets[1] ?? 0); // 0..20s
-  const gradientBg = `linear-gradient(${gradientAngle}deg, ${hexToRgba(c1, 0.5)}, ${hexToRgba(c2, 0.3)}, ${hexToRgba(c1, 0.18)}, ${hexToRgba(c2, 0.5)})`;
-
   const vantaKey = [
     bgType,
     isDarkMode ? 'dark' : 'light',
@@ -157,30 +128,15 @@ const Hero: React.FC<HeroProps> = ({ config, social, phone, isContactVisible, is
   ].join('|');
 
   useEffect(() => {
-    const handleMouseMove = (e: MouseEvent) => {
-      // Center the glow on the cursor. The disc is a 20vw base scaled 4x
-      // around its own center, so the visual center sits at the base
-      // center — 10vw from the layer's top-left — plus the translation.
-      const half = window.innerWidth * 0.1;
-      glowX.set(e.clientX - half);
-      glowY.set(e.clientY - half);
-    };
-    window.addEventListener('mousemove', handleMouseMove);
-    return () => window.removeEventListener('mousemove', handleMouseMove);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  useEffect(() => {
-    if (!isVanta) return;
     const observer = new MutationObserver(() => {
       setIsDarkMode(document.documentElement.classList.contains('dark'));
     });
     observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
     return () => observer.disconnect();
-  }, [isVanta]);
+  }, []);
 
   useEffect(() => {
-    if (!isVanta || !vantaRef.current) return;
+    if (!vantaRef.current) return;
 
     if (vantaInstanceRef.current) {
       vantaInstanceRef.current.destroy();
@@ -228,22 +184,6 @@ const Hero: React.FC<HeroProps> = ({ config, social, phone, isContactVisible, is
       transition: { duration: animD(0.6), ease: "easeOut" },
     },
   };
-
-  // Seeded and memoized: the field is stable per site (LT-053) instead of
-  // re-randomizing on every render (each mousemove used to reshuffle it).
-  const particles = useMemo(() => {
-    const rng = createRng(jitter?.particleSeed ?? 1);
-    return Array.from({ length: 30 }, (_, i) => ({
-      id: i,
-      x: 10 + rng() * 80,
-      y: 10 + rng() * 80,
-      size: rng() * 3 + 1,
-      duration: rng() * 15 + 15,
-      delay: rng() * 2,
-      driftX: rng() * 10 - 5,
-      driftY: rng() * 10 - 5,
-    }));
-  }, [jitter?.particleSeed]);
 
   const socialLinks = [
     phone && {
@@ -609,77 +549,15 @@ const Hero: React.FC<HeroProps> = ({ config, social, phone, isContactVisible, is
         className="min-h-screen relative overflow-hidden bg-light-bg dark:bg-dark-bg transition-colors duration-300"
         aria-label={t('hero.welcome_label')}
       >
-        {!isVanta && (
-          <div className="absolute inset-0 bg-light-bg dark:bg-dark-bg" aria-hidden="true" />
-        )}
-
-        {/* Text-protection veil over animated Vanta backgrounds (LT-060).
-            The animation is painted with palette colors, so any text —
-            especially primary-colored text — can dissolve into it. A
-            half-strength wash of the page background restores a predictable
-            backdrop while keeping the animation visible as texture, and it
-            makes the readable-primary contrast math meaningful here too.
-            Vanta injects its canvas as the section's first child, so this
-            sibling paints above the canvas and below the content. */}
-        {isVanta && (
-          <div className="absolute inset-0 bg-light-bg/50 dark:bg-dark-bg/55 pointer-events-none" aria-hidden="true" />
-        )}
-
-        {/* The default animated gradient (LT-069): one div, the canonical
-            background-position sweep. Keyframes live in index.css
-            (hero-gradient-shift). animLevel none = same wash, no sweep. */}
-        {!isVanta && (
-          <>
-            <div
-              className="absolute inset-0"
-              aria-hidden="true"
-              style={{
-                background: gradientBg,
-                backgroundSize: '300% 300%',
-                ...(animLevel !== 'none'
-                  ? {
-                      animation: `hero-gradient-shift ${animLevel === 'full' ? 14 : 26}s ease infinite`,
-                      animationDelay: `-${gradientPhase}s`,
-                    }
-                  : { backgroundPosition: '50% 50%' }),
-              }}
-            />
-
-            {/* Dark-mode mouse glow: small raster at constant 4x scale,
-                translated to the cursor via spring motion values. Starts far
-                off-screen until the first move. */}
-            <div className="absolute inset-0 overflow-hidden opacity-0 dark:opacity-60 pointer-events-none" aria-hidden="true">
-              <motion.div
-                className="absolute w-[20vw] h-[20vw]"
-                style={{
-                  x: glowSpringX,
-                  y: glowSpringY,
-                  scale: 4,
-                  background: 'radial-gradient(circle closest-side, rgba(96, 165, 250, 0.25) 0%, transparent 60%)',
-                }}
-              />
-            </div>
-          </>
-        )}
-
-        {!isVanta && (
-          <div className="absolute inset-0 overflow-hidden pointer-events-none" aria-hidden="true">
-            {animLevel !== 'none' && particles.map((particle) => (
-              <motion.div
-                key={particle.id}
-                className="absolute w-1 h-1 bg-primary/60 dark:bg-primary-dark/40 rounded-full"
-                initial={{ x: `${particle.x}%`, y: `${particle.y}%`, opacity: 0 }}
-                animate={{
-                  x: [`${particle.x}%`, `${particle.x + particle.driftX}%`, `${particle.x}%`],
-                  y: [`${particle.y}%`, `${particle.y + particle.driftY}%`, `${particle.y}%`],
-                  opacity: [0, 0.8, 0],
-                }}
-                transition={{ duration: particle.duration, repeat: Infinity, delay: particle.delay, ease: "linear" }}
-                style={{ width: particle.size, height: particle.size, filter: 'blur(0.03125rem)' }}
-              />
-            ))}
-          </div>
-        )}
+        {/* Text-protection veil over the Vanta background (LT-060). The
+            animation is painted with palette colors, so any text — especially
+            primary-colored text — can dissolve into it. A half-strength wash
+            of the page background restores a predictable backdrop while
+            keeping the animation visible as texture, and it makes the
+            readable-primary contrast math meaningful here. Vanta injects its
+            canvas as the section's first child, so this sibling paints above
+            the canvas and below the content. */}
+        <div className="absolute inset-0 bg-light-bg/50 dark:bg-dark-bg/55 pointer-events-none" aria-hidden="true" />
 
         <motion.div
           className="container mx-auto px-4 pt-16 md:pt-20 lg:pt-32 pb-20 relative"
