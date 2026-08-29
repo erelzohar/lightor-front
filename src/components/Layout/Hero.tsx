@@ -9,7 +9,6 @@ import { Social } from '../../models/Social';
 import { Palette } from '../../models/WebsiteConfig';
 import { DesignConfig, BorderRadius } from '../../models/DesignConfig';
 import ImagesService from '../../services/ImagesService';
-import { SiteJitter } from '../../services/seed';
 
 function hexToInt(hex: string): number {
   return parseInt(hex.replace('#', ''), 16);
@@ -69,7 +68,6 @@ interface HeroProps {
   isPreview?: boolean;
   palette?: Palette;
   design?: DesignConfig;
-  jitter?: SiteJitter;
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -92,7 +90,7 @@ const radiusClassMap: Record<BorderRadius, string> = {
   full: 'rounded-full',
 };
 
-const Hero: React.FC<HeroProps> = ({ config, social, phone, isContactVisible, isPreview, palette, design, jitter }) => {
+const Hero: React.FC<HeroProps> = ({ config, social, phone, isContactVisible, isPreview, palette, design }) => {
   const { t, language } = useLanguage();
   const { isModalOpen, setIsModalOpen, modalType, handleContactClick } = useContactHandler();
 
@@ -365,37 +363,26 @@ const Hero: React.FC<HeroProps> = ({ config, social, phone, isContactVisible, is
       : imageTreatment === 'blob' ? 'img-blob'
       : imgRadius; // 'rounded' and 'framed' follow the radius token
 
+    // Fully static in every design (LT-079, Erel's direction): no float, no
+    // pulsing glow, no hover scale — and no colored halo behind the image
+    // (it read as a border). The neutral drop shadow stays.
     return (
       <div className="relative">
-        <motion.div
-          className="absolute inset-0 bg-gradient-to-br from-primary/20 to-accent-teal/20 dark:from-primary-dark/10 dark:to-accent-cyan/10 rounded-full blur-3xl"
-          animate={{ scale: [1, 1.2, 1], rotate: [0, 90, 0], opacity: [0.5, 0.8, 0.5] }}
-          transition={{ duration: animD(20), repeat: Infinity, repeatType: "reverse", ease: "linear" }}
-          aria-hidden="true"
-        />
-        <motion.div
-          className="relative"
-          animate={{ y: animLevel === 'none' ? 0 : [-8, 8, -8] }}
-          transition={{ duration: animD(jitter?.floatDuration ?? 5), repeat: Infinity, repeatType: "reverse", ease: "easeInOut" }}
-        >
-          {imageTreatment === 'framed' && (
-            <div
-              className={`absolute inset-0 translate-x-3 translate-y-3 border-2 border-primary dark:border-primary-dark ${imgRadius}`}
-              aria-hidden="true"
-            />
-          )}
-          <motion.img
-            src={ImagesService.getInstance().getImage(config.heroImageSrc)}
-            alt="intro"
-            onError={(e) => {
-              e.currentTarget.onerror = null;
-              e.currentTarget.src = "/lightor.png";
-            }}
-            className={`relative ${shapedSize} object-cover ${shapeClass} shadow-2xl`}
-            whileHover={{ scale: 1.02 }}
-            transition={{ type: "spring", stiffness: 300 }}
+        {imageTreatment === 'framed' && (
+          <div
+            className={`absolute inset-0 translate-x-3 translate-y-3 border-2 border-primary dark:border-primary-dark ${imgRadius}`}
+            aria-hidden="true"
           />
-        </motion.div>
+        )}
+        <img
+          src={ImagesService.getInstance().getImage(config.heroImageSrc)}
+          alt="intro"
+          onError={(e) => {
+            e.currentTarget.onerror = null;
+            e.currentTarget.src = "/lightor.png";
+          }}
+          className={`relative ${shapedSize} object-cover ${shapeClass} shadow-2xl`}
+        />
       </div>
     );
   };

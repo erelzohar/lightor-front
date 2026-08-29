@@ -217,7 +217,6 @@ function MainContent() {
           isPreview={isPreview}
           palette={config.pallete}
           design={config.design}
-          jitter={jitter}
         />
       )
     });
