@@ -9,7 +9,10 @@ export type SectionDivider = 'none' | 'wave' | 'diagonal' | 'curve';
 export type Density = 'compact' | 'comfortable' | 'spacious';
 export type TypeScale = 'modest' | 'balanced' | 'dramatic';
 export type HeadingAccent = 'bar' | 'rule' | 'dot' | 'none';
-export type ImageTreatment = 'rounded' | 'circle' | 'arch' | 'blob' | 'framed';
+// 'framed' was retired in LT-080/081 (its offset border read as a stray
+// line); stored configs may still carry the string — fromJSON passes it
+// through untyped and Hero renders it as 'rounded'.
+export type ImageTreatment = 'rounded' | 'circle' | 'arch' | 'blob';
 // Per-section skeletons (LT-051). The first value of each is the pre-LT-051
 // layout, and DEFAULT_TOKENS picks it, so unpresetted sites don't move.
 export type AboutLayout = 'cards' | 'split' | 'band';
@@ -88,7 +91,7 @@ export const STYLE_PRESETS: Record<StylePreset, DesignTokens> = {
     headingFont: 'playfair', bodyFont: 'inter', animLevel: 'minimal',
     navbarStyle: 'solid', heroLayout: 'split', sectionDivider: 'none',
     density: 'spacious', typeScale: 'dramatic',
-    headingAccent: 'rule', imageTreatment: 'framed',
+    headingAccent: 'rule', imageTreatment: 'rounded',
     aboutLayout: 'split', portfolioLayout: 'masonry', contactLayout: 'split', footerLayout: 'minimal',
   },
   boldStartup: {
@@ -136,7 +139,7 @@ export const STYLE_PRESETS: Record<StylePreset, DesignTokens> = {
     headingFont: 'montserrat', bodyFont: 'inter', animLevel: 'none',
     navbarStyle: 'solid', heroLayout: 'split', sectionDivider: 'none',
     density: 'compact', typeScale: 'dramatic',
-    headingAccent: 'bar', imageTreatment: 'framed',
+    headingAccent: 'bar', imageTreatment: 'rounded',
     aboutLayout: 'band', portfolioLayout: 'filmstrip', contactLayout: 'split', footerLayout: 'minimal',
   },
   boutique: {

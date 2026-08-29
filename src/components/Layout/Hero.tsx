@@ -361,13 +361,12 @@ const Hero: React.FC<HeroProps> = ({ config, social, phone, isContactVisible, is
       imageTreatment === 'circle' ? 'rounded-full'
       : imageTreatment === 'arch' ? 'img-arch'
       : imageTreatment === 'blob' ? 'img-blob'
-      : imgRadius; // 'rounded' and 'framed' follow the radius token
+      : imgRadius; // 'rounded' (and any retired value, e.g. old 'framed'
+                   // configs) follows the radius token
 
-    // Fully static in every design (LT-079, Erel's direction): no float, no
-    // pulsing glow, no hover scale. The neutral drop shadow stays. LT-080:
-    // the 'framed' treatment's offset primary-colored border is gone too
-    // (Erel: it reads as a stray border line) — 'framed' now renders the
-    // same as 'rounded'; the enum value survives for stored configs.
+    // Fully static in every design (LT-079/080/081, Erel's direction): no
+    // float, no pulsing glow, no hover scale, no offset frame border. The
+    // neutral drop shadow stays.
     return (
       <div className="relative">
         <img
