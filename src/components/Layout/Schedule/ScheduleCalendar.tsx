@@ -42,13 +42,13 @@ export const DateButton = memo(({
                 : isSelected(date)
                     ? 'bg-primary dark:bg-primary-dark text-white'
                     : isToday(date)
-                        ? `ring-2 ring-primary dark:ring-primary-dark ${isAvailable(date)
+                        ? `ring-2 ring-inset ring-primary dark:ring-primary-dark ${isAvailable(date)
                             ? 'text-primary dark:text-primary-dark hover:bg-light-gray dark:hover:bg-dark-gray'
                             : 'text-light-text/50 dark:text-dark-text/50'
                         }`
                         : isNextMonth(date)
                             ? isAvailable(date)
-                                ? 'bg-primary/5 dark:bg-primary-dark/5 hover:bg-primary/10 dark:hover:bg-primary-dark/10 text-primary dark:text-primary-dark ring-1 ring-primary/20 dark:ring-primary-dark/20'
+                                ? 'bg-primary/5 dark:bg-primary-dark/5 hover:bg-primary/10 dark:hover:bg-primary-dark/10 text-primary dark:text-primary-dark ring-1 ring-inset ring-primary/20 dark:ring-primary-dark/20'
                                 : 'bg-light-gray/30 dark:bg-dark-gray/30 text-light-text/30 dark:text-dark-text/30 cursor-not-allowed'
                             : isAvailable(date)
                                 ? 'hover:bg-light-gray dark:hover:bg-dark-gray text-light-text dark:text-dark-text'
