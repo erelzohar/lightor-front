@@ -364,16 +364,12 @@ const Hero: React.FC<HeroProps> = ({ config, social, phone, isContactVisible, is
       : imgRadius; // 'rounded' and 'framed' follow the radius token
 
     // Fully static in every design (LT-079, Erel's direction): no float, no
-    // pulsing glow, no hover scale — and no colored halo behind the image
-    // (it read as a border). The neutral drop shadow stays.
+    // pulsing glow, no hover scale. The neutral drop shadow stays. LT-080:
+    // the 'framed' treatment's offset primary-colored border is gone too
+    // (Erel: it reads as a stray border line) — 'framed' now renders the
+    // same as 'rounded'; the enum value survives for stored configs.
     return (
       <div className="relative">
-        {imageTreatment === 'framed' && (
-          <div
-            className={`absolute inset-0 translate-x-3 translate-y-3 border-2 border-primary dark:border-primary-dark ${imgRadius}`}
-            aria-hidden="true"
-          />
-        )}
         <img
           src={ImagesService.getInstance().getImage(config.heroImageSrc)}
           alt="intro"
