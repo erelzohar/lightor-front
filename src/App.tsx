@@ -7,6 +7,8 @@ import Hero from './components/Layout/Hero';
 import About from './components/Layout/About';
 import Portfolio from './components/Portfolio';
 import Schedule from './components/Layout/Schedule/Schedule';
+import Testimonials from './components/Layout/Testimonials';
+import Faq from './components/Layout/Faq';
 import Contact from './components/Layout/Contact';
 import Footer from './components/Layout/Footer';
 import IntroPopup from './components/IntroPopup';
@@ -247,6 +249,17 @@ function MainContent() {
     });
   }
 
+  // Optional sections (LT-086) — absent/invisible on older configs. Their
+  // tone is the opposite of the previous section's, so the bg/surface rhythm
+  // and the dividers keep working wherever they slot in.
+  if (config.components?.testimonials?.visible && config.components.testimonials.items.length > 0) {
+    const tone = flow.length && flow[flow.length - 1].tone === 'bg' ? 'surface' as const : 'bg' as const;
+    flow.push({
+      key: 'testimonials', tone,
+      node: <Testimonials config={config.components.testimonials} tone={tone} />
+    });
+  }
+
   // --- SENSITIVE SECTION: Turnstile protects the Schedule only ---
   if (config.components?.schedule) {
     flow.push({
@@ -266,6 +279,14 @@ function MainContent() {
           />
         </div>
       )
+    });
+  }
+
+  if (config.components?.faq?.visible && config.components.faq.items.length > 0) {
+    const tone = flow.length && flow[flow.length - 1].tone === 'bg' ? 'surface' as const : 'bg' as const;
+    flow.push({
+      key: 'faq', tone,
+      node: <Faq config={config.components.faq} tone={tone} />
     });
   }
 

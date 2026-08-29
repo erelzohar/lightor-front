@@ -7,6 +7,8 @@ import { ContactConfig } from './ContactConfig';
 import { Vacation } from './Vacation';
 import { AppointmentType } from './AppointmentType';
 import { DesignConfig } from './DesignConfig';
+import { TestimonialsConfig } from './TestimonialsConfig';
+import { FaqConfig } from './FaqConfig';
 import { DateOverride } from '../utils/workingHours';
 
 /**
@@ -129,7 +131,10 @@ export class Components {
     public contact: ContactConfig,
     public footer: { visible: boolean; description: string },
     public introPopup: IntroPopupConfig,
-    public contactButton: ContactButtonConfig
+    public contactButton: ContactButtonConfig,
+    /** Optional sections (LT-086) — absent on older configs = invisible. */
+    public testimonials: TestimonialsConfig,
+    public faq: FaqConfig
   ) {}
 
   static fromJSON(json: any): Components {
@@ -142,7 +147,9 @@ export class Components {
       ContactConfig.fromJSON(json.contact),
       json.footer,
       IntroPopupConfig.fromJSON(json.introPopup),
-      ContactButtonConfig.fromJSON(json.contactButton)
+      ContactButtonConfig.fromJSON(json.contactButton),
+      TestimonialsConfig.fromJSON(json.testimonials),
+      FaqConfig.fromJSON(json.faq)
     );
   }
 }
