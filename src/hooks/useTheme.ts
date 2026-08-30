@@ -9,27 +9,53 @@ const FONT_STACK: Record<FontFamily, string> = {
     playfair: "'Playfair Display', serif",
     montserrat: "'Montserrat', sans-serif",
     poppins: "'Poppins', sans-serif",
+    anton: "'Anton', 'Arial Narrow', sans-serif",
+    archivo: "'Archivo', 'Helvetica Neue', sans-serif",
+    cormorant: "'Cormorant Garamond', Georgia, serif",
+    bellefair: "'Bellefair', Georgia, serif",
+    secularone: "'Secular One', sans-serif",
+    varela: "'Varela Round', sans-serif",
+    sora: "'Sora', sans-serif",
+    spacemono: "'Space Mono', monospace",
 };
 
 // Hebrew-capable counterpart per family, so RTL sites keep the preset's
 // typographic personality instead of all collapsing to Rubik (LT-039).
 // Rubik stays in every stack as the fallback: it covers Arabic, which the
 // Hebrew-focused families do not, so Arabic glyphs fall through per-character.
+// Bellefair, Secular One and Varela Round ship Hebrew natively (LT-093).
 const RTL_HEADING_STACK: Record<FontFamily, string> = {
     inter: "'Heebo', 'Rubik', sans-serif",
     raleway: "'Assistant', 'Rubik', sans-serif",
     playfair: "'Frank Ruhl Libre', 'Rubik', serif",
     montserrat: "'Secular One', 'Rubik', sans-serif",
     poppins: "'Rubik', sans-serif",
+    anton: "'Karantina', 'Rubik', sans-serif",
+    archivo: "'Heebo', 'Rubik', sans-serif",
+    cormorant: "'David Libre', 'Rubik', serif",
+    bellefair: "'Bellefair', 'Rubik', serif",
+    secularone: "'Secular One', 'Rubik', sans-serif",
+    varela: "'Varela Round', 'Rubik', sans-serif",
+    sora: "'Assistant', 'Rubik', sans-serif",
+    spacemono: "'Cousine', 'Rubik', monospace",
 };
 
 // Secular One is display-only (single weight), so montserrat bodies get Heebo.
+// Same reasoning for anton bodies (Karantina is condensed display).
 const RTL_BODY_STACK: Record<FontFamily, string> = {
     inter: "'Heebo', 'Rubik', sans-serif",
     raleway: "'Assistant', 'Rubik', sans-serif",
     playfair: "'Frank Ruhl Libre', 'Rubik', serif",
     montserrat: "'Heebo', 'Rubik', sans-serif",
     poppins: "'Rubik', sans-serif",
+    anton: "'Heebo', 'Rubik', sans-serif",
+    archivo: "'Heebo', 'Rubik', sans-serif",
+    cormorant: "'David Libre', 'Rubik', serif",
+    bellefair: "'Bellefair', 'Rubik', serif",
+    secularone: "'Heebo', 'Rubik', sans-serif",
+    varela: "'Varela Round', 'Rubik', sans-serif",
+    sora: "'Assistant', 'Rubik', sans-serif",
+    spacemono: "'Cousine', 'Rubik', monospace",
 };
 
 // Card style → CSS-var bundle. `bgOpacity` < 1 is what makes "glass" read as
@@ -114,6 +140,13 @@ export const useTheme = (config: WebsiteConfig | null) => {
 
         // Heading accent shape — consumed by the .heading-accent rules.
         root.dataset.headingAccent = design.headingAccent ?? 'bar';
+
+        // Dark-first vibes (LT-093): the preset decides what a first-time
+        // visitor sees; a visitor's own toggle (localStorage) always wins,
+        // matching App's boot logic.
+        if (design.defaultTheme === 'dark' && localStorage.getItem('darkMode') === null) {
+            root.classList.add('dark');
+        }
 
     }, [config]);
 };

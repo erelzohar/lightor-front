@@ -11,6 +11,7 @@ const TOKEN_KEYS = [
   'animLevel', 'navbarStyle', 'heroLayout', 'sectionDivider', 'density',
   'typeScale', 'headingAccent', 'imageTreatment',
   'aboutLayout', 'portfolioLayout', 'contactLayout', 'footerLayout',
+  'testimonialsLayout', 'faqStyle', 'defaultTheme',
 ] as const satisfies readonly (keyof DesignTokens)[];
 
 describe('DesignConfig.fromJSON', () => {
@@ -48,6 +49,34 @@ describe('DesignConfig.fromJSON', () => {
     const cfg = DesignConfig.fromJSON({ stylePreset: 'vaporwave' });
     expect(cfg.stylePreset).toBeNull();
     expect(cfg.borderRadius).toBe('lg');
+  });
+
+  // LT-093: the vibe axes must not move any pre-existing site. Every
+  // pre-LT-093 preset and the bare default keep the old rendering values.
+  it('keeps the LT-093 axes at their legacy values for old presets and defaults', () => {
+    const legacyPresets: StylePreset[] = [
+      'luxe', 'editorial', 'boldStartup', 'corporate', 'playful',
+      'minimal', 'warmOrganic', 'brutalist', 'boutique', 'bistro',
+    ];
+    for (const name of legacyPresets) {
+      expect(STYLE_PRESETS[name].testimonialsLayout).toBe('cards');
+      expect(STYLE_PRESETS[name].faqStyle).toBe('cards');
+      expect(STYLE_PRESETS[name].defaultTheme).toBe('light');
+    }
+    const bare = DesignConfig.fromJSON({});
+    expect(bare.testimonialsLayout).toBe('cards');
+    expect(bare.faqStyle).toBe('cards');
+    expect(bare.defaultTheme).toBe('light');
+  });
+
+  it('expands a vibe preset into the full token bundle', () => {
+    const cfg = DesignConfig.fromJSON({ stylePreset: 'industrial' });
+    expect(cfg.stylePreset).toBe('industrial');
+    expect(cfg.defaultTheme).toBe('dark');
+    expect(cfg.faqStyle).toBe('numbered');
+    for (const key of TOKEN_KEYS) {
+      expect(cfg[key]).toBe(STYLE_PRESETS.industrial[key]);
+    }
   });
 
   // The presets exist to guarantee two generated sites look genuinely

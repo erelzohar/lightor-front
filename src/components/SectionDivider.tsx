@@ -23,6 +23,9 @@ const PATHS: Record<Exclude<DividerVariant, 'none'>, string> = {
   wave: 'M0,50 C300,100 900,0 1200,50 L1200,100 L0,100 Z',
   diagonal: 'M0,100 L1200,20 L1200,100 Z',
   curve: 'M0,70 Q600,10 1200,70 L1200,100 L0,100 Z',
+  // LT-093: twelve upward bumps (festive) / ten hard teeth (underground).
+  scallop: 'M0,70 q50,-50 100,0 q50,-50 100,0 q50,-50 100,0 q50,-50 100,0 q50,-50 100,0 q50,-50 100,0 q50,-50 100,0 q50,-50 100,0 q50,-50 100,0 q50,-50 100,0 q50,-50 100,0 q50,-50 100,0 L1200,100 L0,100 Z',
+  zigzag: 'M0,80 L60,30 L120,80 L180,30 L240,80 L300,30 L360,80 L420,30 L480,80 L540,30 L600,80 L660,30 L720,80 L780,30 L840,80 L900,30 L960,80 L1020,30 L1080,80 L1140,30 L1200,80 L1200,100 L0,100 Z',
 };
 
 interface Props {

@@ -256,7 +256,7 @@ function MainContent() {
     const tone = flow.length && flow[flow.length - 1].tone === 'bg' ? 'surface' as const : 'bg' as const;
     flow.push({
       key: 'testimonials', tone,
-      node: <Testimonials config={config.components.testimonials} tone={tone} />
+      node: <Testimonials config={config.components.testimonials} tone={tone} layout={config.design?.testimonialsLayout} />
     });
   }
 
@@ -286,7 +286,7 @@ function MainContent() {
     const tone = flow.length && flow[flow.length - 1].tone === 'bg' ? 'surface' as const : 'bg' as const;
     flow.push({
       key: 'faq', tone,
-      node: <Faq config={config.components.faq} tone={tone} />
+      node: <Faq config={config.components.faq} tone={tone} faqStyle={config.design?.faqStyle} />
     });
   }
 

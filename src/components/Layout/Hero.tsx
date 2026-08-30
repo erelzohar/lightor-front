@@ -421,6 +421,44 @@ const Hero: React.FC<HeroProps> = ({ config, social, phone, isContactVisible, is
       );
     }
 
+    // ── Text-first (LT-093): centered copy, large image below ─────────────
+    // The editorial-stack composition from the vibe canvas: the words lead,
+    // then a wide image (arch treatment shines here) anchors the fold.
+    if (heroLayout === 'text-first') {
+      return (
+        <motion.div
+          className="flex flex-col items-center text-center gap-8 py-8"
+          variants={containerVariants}
+        >
+          <motion.div className="max-w-3xl" variants={containerVariants}>
+            <motion.h1
+              className="text-5xl md:text-7xl font-bold text-light-text dark:text-dark-text mb-4 leading-tight"
+              variants={itemVariants}
+            >
+              {config.title}
+              <span className="block text-primary-readable dark:text-primary-dark-readable">{config.subtitle}</span>
+            </motion.h1>
+            <motion.p
+              className="text-xl text-light-text/80 dark:text-dark-text/80 mb-8 max-w-xl mx-auto"
+              variants={itemVariants}
+            >
+              {config.description}
+            </motion.p>
+            <motion.div className="flex flex-col sm:flex-row gap-4 justify-center" variants={itemVariants}>
+              {renderBookButton(false)}
+              {renderContactButton(false)}
+            </motion.div>
+          </motion.div>
+
+          <motion.div className="w-full max-w-md sm:max-w-lg md:max-w-xl mt-2" variants={itemVariants}>
+            {renderImage('w-full aspect-[4/3]')}
+          </motion.div>
+
+          {renderSocialRow('justify-center')}
+        </motion.div>
+      );
+    }
+
     // ── Split: text column | image column ─────────────────────────────────
     if (heroLayout === 'split') {
       return (
