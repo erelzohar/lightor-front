@@ -222,6 +222,16 @@ const Contact: React.FC<ContactProps> = ({ config, address, contact, workingDays
 
   const fullAddress = getFullAddress();
 
+  // The full one-line join runs long (street, floor, room, city, country), so
+  // the card shows it as two lines: premises details, then city + state. The
+  // single-line form still feeds the maps link and the aria-label.
+  const addressLines = address
+    ? [
+      [address.street, address.other].map((part) => part?.trim()).filter(Boolean).join(', '),
+      [address.city, address.state].map((part) => part?.trim()).filter(Boolean).join(', ')
+    ].filter(Boolean)
+    : [];
+
   const contactInfo = [
     // Location card only when there is an address to point at.
     ...(fullAddress ? [{
@@ -349,7 +359,11 @@ const Contact: React.FC<ContactProps> = ({ config, address, contact, workingDays
                           rel={item.icon === MapPin ? "noopener noreferrer" : undefined}
                           aria-label={`${item.title}: ${item.content}`}
                         >
-                          {item.content}
+                          {item.icon === MapPin && addressLines.length > 1
+                            ? addressLines.map((line) => (
+                              <span key={line} className="block">{line}</span>
+                            ))
+                            : item.content}
                         </a>
                       ) : (
                         <button

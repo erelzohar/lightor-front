@@ -94,6 +94,15 @@ const About: React.FC<AboutProps> = ({ config, websiteConfig, layout = 'cards', 
       .join(', ');
   };
 
+  // See Contact.tsx — the one-line join runs long, so the card shows premises
+  // details and city+state on separate lines; the join still feeds the maps link.
+  const addressLines = websiteConfig.address
+    ? [
+      [websiteConfig.address.street, websiteConfig.address.other].map((part) => part?.trim()).filter(Boolean).join(', '),
+      [websiteConfig.address.city, websiteConfig.address.state].map((part) => part?.trim()).filter(Boolean).join(', ')
+    ].filter(Boolean)
+    : [];
+
   const socialLinks = [
     websiteConfig.contact.phone && {
       icon: () => (
@@ -341,7 +350,11 @@ const About: React.FC<AboutProps> = ({ config, websiteConfig, layout = 'cards', 
                       target={item.icon === MapPin ? "_blank" : undefined}
                       rel={item.icon === MapPin ? "noopener noreferrer" : undefined}
                     >
-                      {item.content}
+                      {item.icon === MapPin && addressLines.length > 1
+                        ? addressLines.map((line) => (
+                          <span key={line} className="block">{line}</span>
+                        ))
+                        : item.content}
                     </a>
                   ) : (
                     <button
