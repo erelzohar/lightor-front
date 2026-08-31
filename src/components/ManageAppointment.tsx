@@ -12,6 +12,7 @@ import WebConfigService from '../services/WebConfigService';
 import { WebsiteConfig } from '../models/WebsiteConfig';
 import Loading from './Loading';
 import ImagesService from '../services/ImagesService';
+import { handleSquareImageError } from '../utils/imageFallback';
 import { googleCalendarUrl, downloadIcs, CalendarEventInput } from '../services/calendarLinks';
 
 
@@ -205,6 +206,7 @@ const ManageAppointment: React.FC = () => {
               <img
                 src={ImagesService.getInstance().getImage(config.logoImageName)}
                 alt={config.businessName}
+                onError={handleSquareImageError}
                 className="h-20 w-auto object-contain"
               />
             </div>

@@ -4,6 +4,7 @@ import { useLanguage } from '../../contexts/LanguageContext';
 import LanguageSwitcher from '../LanguageSwitcher';
 import globals from '../../services/globals';
 import ImagesService from '../../services/ImagesService';
+import { handleSquareImageError } from '../../utils/imageFallback';
 
 interface WebsiteConfig {
   logoImageName: string;
@@ -153,10 +154,7 @@ const Navbar: React.FC<NavbarProps> = ({ websiteConfig, isPreview }) => {
           >
             <img
               src={ImagesService.getInstance().getImage(websiteConfig.logoImageName)}
-              onError={(e) => {
-                e.currentTarget.onerror = null; // Prevent infinite loop
-                e.currentTarget.src = "/lightor.png";
-              }}
+              onError={handleSquareImageError}
               // src={isPreview && websiteConfig.logoImageName?.startsWith('blob:') ? websiteConfig.logoImageName : globals.imagesUrl + websiteConfig.logoImageName}
               alt="Logo"
               className="h-12 w-12 rounded-full object-cover flex-shrink-0"

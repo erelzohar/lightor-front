@@ -10,6 +10,7 @@ import { FooterLayout } from '../../models/DesignConfig';
 import { Social } from '../../models/Social';
 import globals from '../../services/globals';
 import ImagesService from '../../services/ImagesService';
+import { handleSquareImageError } from '../../utils/imageFallback';
 
 interface WebsiteConfig {
   about?: { visible?: boolean };
@@ -169,6 +170,7 @@ const Footer: React.FC<FooterProps> = ({ config, social, businessName, logoImage
                 <img
                   src={ImagesService.getInstance().getImage(logoImageName)}
                   alt="Logo"
+                  onError={handleSquareImageError}
                   className="h-10 w-10 rounded-full object-cover"
                 />
                 <span className="text-2xl font-bold">{businessName}</span>
@@ -202,6 +204,7 @@ const Footer: React.FC<FooterProps> = ({ config, social, businessName, logoImage
                 <img
                   src={ImagesService.getInstance().getImage(logoImageName)}
                   alt="Logo"
+                  onError={handleSquareImageError}
                   className="h-10 w-10 rounded-full object-cover"
                 />
                 <span className="text-2xl font-bold">{businessName}</span>

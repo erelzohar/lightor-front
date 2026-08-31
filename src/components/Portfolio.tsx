@@ -6,6 +6,7 @@ import { PortfolioConfig } from '../models/PortfolioConfig';
 import { PortfolioLayout } from '../models/DesignConfig';
 import globals from '../services/globals';
 import ImagesService from '../services/ImagesService';
+import { handleWideImageError } from '../utils/imageFallback';
 
 interface PortfolioProps {
   config: PortfolioConfig;
@@ -186,6 +187,7 @@ const Portfolio: React.FC<PortfolioProps> = ({ config, layout = 'grid', masonryP
                   <img
                     src={ImagesService.getInstance().getImage(item.url)}
                     alt={item.title}
+                    onError={handleWideImageError}
                     className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                   />
                   <div
@@ -248,6 +250,7 @@ const Portfolio: React.FC<PortfolioProps> = ({ config, layout = 'grid', masonryP
                       <img
                         src={ImagesService.getInstance().getImage(item.url)}
                         alt={item.title}
+                        onError={handleWideImageError}
                         className="w-full h-full object-contain transition-transform duration-500 group-hover:scale-110"
                       />
                       <div
@@ -298,6 +301,7 @@ const Portfolio: React.FC<PortfolioProps> = ({ config, layout = 'grid', masonryP
                     <img
                       src={ImagesService.getInstance().getImage(config.items[currentSlide].url)}
                       alt={config.items[currentSlide].title}
+                      onError={handleWideImageError}
                       className="w-full h-full object-contain"
                       draggable="false"
                     />

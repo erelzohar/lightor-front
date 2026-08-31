@@ -9,6 +9,7 @@ import { Social } from '../../models/Social';
 import { Palette } from '../../models/WebsiteConfig';
 import { DesignConfig, BorderRadius } from '../../models/DesignConfig';
 import ImagesService from '../../services/ImagesService';
+import { handleWideImageError } from '../../utils/imageFallback';
 
 function hexToInt(hex: string): number {
   return parseInt(hex.replace('#', ''), 16);
@@ -372,10 +373,7 @@ const Hero: React.FC<HeroProps> = ({ config, social, phone, isContactVisible, is
         <img
           src={ImagesService.getInstance().getImage(config.heroImageSrc)}
           alt="intro"
-          onError={(e) => {
-            e.currentTarget.onerror = null;
-            e.currentTarget.src = "/lightor.png";
-          }}
+          onError={handleWideImageError}
           className={`relative ${shapedSize} object-cover ${shapeClass} shadow-2xl`}
         />
       </div>
