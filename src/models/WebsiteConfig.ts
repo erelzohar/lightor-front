@@ -182,12 +182,18 @@ export class WebsiteConfig {
   ) {}
 
   static fromJSON(json: any): WebsiteConfig {
+    // Defensive on the array fields (LT-104): the register preview posts the
+    // RAW AI response, which carries no `vacations` — the old unguarded
+    // `.map` threw here, App's silent catch fell back to the unparsed object,
+    // and the stylePreset never expanded. Result: every onboarding preview
+    // rendered the generic default look while the saved site rendered its
+    // real design. Stored configs always have these arrays.
     return new WebsiteConfig(
       json.user_id,
       json.businessName,
       json.logoImageName,
-      json.vacations.map((vacation: any) => Vacation.fromJSON(vacation)),
-      json.appointmentTypes.map((type: any) => AppointmentType.fromJSON(type)),
+      (Array.isArray(json.vacations) ? json.vacations : []).map((vacation: any) => Vacation.fromJSON(vacation)),
+      (Array.isArray(json.appointmentTypes) ? json.appointmentTypes : []).map((type: any) => AppointmentType.fromJSON(type)),
       json.subDomain,
       json.minCancelTimeMS,
       // json.minsPerSlot,

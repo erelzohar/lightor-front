@@ -23,6 +23,7 @@ import SectionDivider, { type SectionTone } from './components/SectionDivider';
 // Contexts & Hooks
 import { useLanguage, Language } from './contexts/LanguageContext';
 import { WebsiteConfig } from './models/WebsiteConfig';
+import { DesignConfig } from './models/DesignConfig';
 import WebConfigService from './services/WebConfigService';
 import { getSiteJitter } from './services/seed';
 import ImagesService from './services/ImagesService';
@@ -96,9 +97,17 @@ function MainContent() {
         let cfg: WebsiteConfig;
         try {
           cfg = WebsiteConfig.fromJSON(event.data.config);
-        } catch {
-          // Tolerate partial preview payloads rather than blanking the preview.
-          cfg = event.data.config as WebsiteConfig;
+        } catch (err) {
+          // Tolerate partial preview payloads rather than blanking the
+          // preview — but NEVER silently drop the design (LT-104: a throw
+          // above used to strip preset expansion, so every onboarding
+          // preview rendered generic while the saved site rendered styled).
+          console.warn('[lightor-front] PREVIEW_DATA failed full parsing; rendering leniently:', err);
+          const raw = event.data.config as WebsiteConfig;
+          try {
+            (raw as { design: unknown }).design = DesignConfig.fromJSON((raw as { design: unknown }).design);
+          } catch { /* keep whatever design the payload carried */ }
+          cfg = raw;
         }
         setConfig(cfg);
         setIsPreview(true);
