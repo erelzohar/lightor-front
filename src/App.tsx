@@ -217,14 +217,14 @@ function MainContent() {
   const jitter = getSiteJitter(config.subDomain);
   const flow: { key: string; tone: SectionTone; node: ReactNode }[] = [];
 
-  if (config.components?.hero.visible) {
+  if (config.components?.hero?.visible) {
     flow.push({
       key: 'hero', tone: 'bg', node: (
         <Hero
           config={config.components.hero}
           social={config.social}
           phone={config.contact.phone}
-          isContactVisible={config.components.contact.visible}
+          isContactVisible={config.components?.contact?.visible ?? false}
           isPreview={isPreview}
           palette={config.pallete}
           design={config.design}
@@ -233,7 +233,7 @@ function MainContent() {
     });
   }
 
-  if (config.components?.about.visible) {
+  if (config.components?.about?.visible) {
     flow.push({
       key: 'about', tone: 'surface', node: (
         <About
@@ -251,7 +251,7 @@ function MainContent() {
     });
   }
 
-  if (config.components?.portfolio.visible) {
+  if (config.components?.portfolio?.visible) {
     flow.push({
       key: 'portfolio', tone: 'bg',
       node: <Portfolio config={config.components.portfolio} layout={config.design?.portfolioLayout} masonryPhase={jitter.masonryPhase} />
@@ -261,7 +261,7 @@ function MainContent() {
   // Optional sections (LT-086) — absent/invisible on older configs. Their
   // tone is the opposite of the previous section's, so the bg/surface rhythm
   // and the dividers keep working wherever they slot in.
-  if (config.components?.testimonials?.visible && config.components.testimonials.items.length > 0) {
+  if (config.components?.testimonials?.visible && (config.components.testimonials.items?.length ?? 0) > 0) {
     const tone = flow.length && flow[flow.length - 1].tone === 'bg' ? 'surface' as const : 'bg' as const;
     flow.push({
       key: 'testimonials', tone,
@@ -291,7 +291,7 @@ function MainContent() {
     });
   }
 
-  if (config.components?.faq?.visible && config.components.faq.items.length > 0) {
+  if (config.components?.faq?.visible && (config.components.faq.items?.length ?? 0) > 0) {
     const tone = flow.length && flow[flow.length - 1].tone === 'bg' ? 'surface' as const : 'bg' as const;
     flow.push({
       key: 'faq', tone,
@@ -299,7 +299,7 @@ function MainContent() {
     });
   }
 
-  if (config.components?.contact.visible) {
+  if (config.components?.contact?.visible) {
     flow.push({
       key: 'contact', tone: 'bg', node: (
         <Contact
@@ -319,7 +319,7 @@ function MainContent() {
         <ErrorBoundary><IntroPopup config={config.components.introPopup} /></ErrorBoundary>
       )}
 
-      {config.components?.navbar.visible && (
+      {config.components?.navbar?.visible && (
         <ErrorBoundary><Navbar websiteConfig={config} isPreview={isPreview} /></ErrorBoundary>
       )}
 
@@ -332,7 +332,7 @@ function MainContent() {
         </Fragment>
       ))}
 
-      {config.components?.footer.visible && (
+      {config.components?.footer?.visible && (
         <ErrorBoundary>
           <Footer
             config={config.components.footer}
@@ -352,7 +352,7 @@ function MainContent() {
         <ErrorBoundary><LightorBadge /></ErrorBoundary>
       )}
 
-      {config.components?.contactButton.visible && (
+      {config.components?.contactButton?.visible && (
         <ErrorBoundary><ContactButton phone={config.contact.phone} /></ErrorBoundary>
       )}
     </div>
