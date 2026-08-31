@@ -69,7 +69,7 @@ const CARD_STYLES: Record<CardStyle, {
     bordered: { shadow: 'none',                          borderWidth: '1px', borderColor: 'rgba(128,128,128,0.25)', blur: '0px',  bgOpacity: '1' },
 };
 
-export const useTheme = (config: WebsiteConfig | null) => {
+export const useTheme = (config: WebsiteConfig | null, isPreview = false) => {
     useEffect(() => {
         if (!config) return;
 
@@ -142,11 +142,17 @@ export const useTheme = (config: WebsiteConfig | null) => {
         root.dataset.headingAccent = design.headingAccent ?? 'bar';
 
         // Dark-first vibes (LT-093): the preset decides what a first-time
-        // visitor sees; a visitor's own toggle (localStorage) always wins,
-        // matching App's boot logic.
-        if (design.defaultTheme === 'dark' && localStorage.getItem('darkMode') === null) {
+        // visitor sees; a visitor's own toggle (localStorage) wins on real
+        // sites. In PREVIEW (the register/dashboard builders) the design's
+        // default always applies — the owner must see the site as a
+        // first-time visitor would, not through their own months-old toggle
+        // stored on the shared preview origin (LT-098: that toggle was
+        // silently forcing every dark-first vibe to render light).
+        if (isPreview) {
+            root.classList.toggle('dark', design.defaultTheme === 'dark');
+        } else if (design.defaultTheme === 'dark' && localStorage.getItem('darkMode') === null) {
             root.classList.add('dark');
         }
 
-    }, [config]);
+    }, [config, isPreview]);
 };

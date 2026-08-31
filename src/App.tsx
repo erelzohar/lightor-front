@@ -194,7 +194,7 @@ function MainContent() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  useTheme(config);
+  useTheme(config, isPreview);
 
   if (loading) return <Loading isLoading={true} />;
   if (!config) return <NotFound />;
