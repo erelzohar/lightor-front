@@ -69,6 +69,9 @@ interface HeroProps {
   isPreview?: boolean;
   palette?: Palette;
   design?: DesignConfig;
+  /** LT-113 seeded per-site variation (LT-053 contract): swaps the poster
+   *  template pair, mirrors the poster-split columns, moves decor corners. */
+  jitter?: { posterAlt: boolean; flipPosterSplit: boolean; decorStart: boolean };
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -91,7 +94,7 @@ const radiusClassMap: Record<BorderRadius, string> = {
   full: 'rounded-full',
 };
 
-const Hero: React.FC<HeroProps> = ({ config, social, phone, isContactVisible, isPreview, palette, design }) => {
+const Hero: React.FC<HeroProps> = ({ config, social, phone, isContactVisible, isPreview, palette, design, jitter }) => {
   const { t, language } = useLanguage();
   const { isModalOpen, setIsModalOpen, modalType, handleContactClick } = useContactHandler();
 
@@ -112,7 +115,14 @@ const Hero: React.FC<HeroProps> = ({ config, social, phone, isContactVisible, is
     : (config.bordersType ?? 'round') === 'round' ? 'rounded-full' : 'rounded-2xl';
   const imgRadius = btnRadius;
   const buttonStyle = design?.buttonStyle ?? 'gradient';
-  const heroLayout = design?.heroLayout ?? 'image-right';
+  const rawHeroLayout = design?.heroLayout ?? 'image-right';
+  // LT-113: the two poster compositions are one template family — half the
+  // sites of a poster vibe open on the split (image) fold, half on the
+  // statement (type-only) fold, seeded per site.
+  const heroLayout = jitter?.posterAlt && (rawHeroLayout === 'poster-split' || rawHeroLayout === 'poster-statement')
+    ? (rawHeroLayout === 'poster-split' ? 'poster-statement' : 'poster-split')
+    : rawHeroLayout;
+  const decorStart = jitter?.decorStart ?? false;
   const animLevel = design?.animLevel ?? 'full';
   const imageTreatment = design?.imageTreatment ?? 'rounded';
   const decor = design?.decor ?? 'none';
@@ -392,7 +402,15 @@ const Hero: React.FC<HeroProps> = ({ config, social, phone, isContactVisible, is
           variants={containerVariants}
         >
           <motion.div className="max-w-xs sm:max-w-sm" variants={itemVariants}>
-            {renderImage('w-48 h-48 sm:w-64 sm:h-64')}
+            {decor === 'monogram' ? (
+              // LT-113 (Firm artboard): the understated bordered monogram in
+              // place of a photo — classical firms lead with type, not faces.
+              <div className="w-20 h-20 mx-auto border border-primary-readable dark:border-primary-dark-readable flex items-center justify-center" aria-hidden="true">
+                <span className="text-4xl text-primary-readable dark:text-primary-dark-readable" style={{ fontFamily: 'inherit' }}>
+                  {(config.title || '·').trim().charAt(0)}
+                </span>
+              </div>
+            ) : renderImage('w-48 h-48 sm:w-64 sm:h-64')}
           </motion.div>
 
           <motion.div className="max-w-2xl" variants={containerVariants}>
@@ -416,6 +434,78 @@ const Hero: React.FC<HeroProps> = ({ config, social, phone, isContactVisible, is
           </motion.div>
 
           {renderSocialRow('justify-center mt-4')}
+        </motion.div>
+      );
+    }
+
+    // ── Poster-statement (LT-113): the Ink-artboard composition — no
+    // image, a small label line, then the title stacked over an
+    // outline-stroke subtitle. Pure type poster.
+    if (heroLayout === 'poster-statement') {
+      return (
+        <motion.div className="py-10 md:py-16" variants={containerVariants}>
+          <motion.div
+            className="text-xs md:text-sm font-semibold tracking-[0.3em] text-light-text/60 dark:text-dark-text/60 uppercase"
+            variants={itemVariants}
+          >
+            {config.description}
+          </motion.div>
+          <motion.h1
+            className="font-bold text-light-text dark:text-dark-text leading-none mt-6"
+            variants={itemVariants}
+          >
+            {config.title}
+          </motion.h1>
+          {config.subtitle && (
+            <motion.div
+              className="font-bold leading-none mt-2 text-transparent"
+              style={{ WebkitTextStroke: '2px rgb(var(--color-light-text))', fontSize: 'inherit' }}
+              variants={itemVariants}
+            >
+              <h1 className="dark:[-webkit-text-stroke-color:rgb(var(--color-dark-text))] leading-none" style={{ WebkitTextStroke: 'inherit', color: 'transparent' }}>
+                {config.subtitle}
+              </h1>
+            </motion.div>
+          )}
+          <motion.div className="flex flex-row flex-wrap items-center gap-4 mt-10" variants={itemVariants}>
+            {renderBookButton(false)}
+            {renderContactButton(false)}
+          </motion.div>
+          <motion.div className="mt-10 pt-6 border-t border-light-text/15 dark:border-dark-text/15" variants={itemVariants}>
+            {renderSocialRow('justify-start')}
+          </motion.div>
+        </motion.div>
+      );
+    }
+
+    // ── Fullbleed (LT-113): the Lens-artboard composition — the image IS
+    // the hero; title overlaid on its lower edge.
+    if (heroLayout === 'fullbleed') {
+      return (
+        <motion.div className="relative" variants={containerVariants}>
+          <motion.div className="relative h-[60vh] min-h-[24rem] overflow-hidden" variants={itemVariants}>
+            <img
+              src={ImagesService.getInstance().getImage(config.heroImageSrc)}
+              alt={config.title}
+              onError={handleWideImageError}
+              className="absolute inset-0 w-full h-full object-cover"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" aria-hidden="true" />
+            <div className="absolute bottom-6 start-6 md:bottom-10 md:start-10 text-white max-w-[70%]">
+              <div className="text-xs tracking-[0.3em] uppercase text-white/70">{config.subtitle}</div>
+              <h1 className="font-bold leading-tight mt-2">{config.title}</h1>
+            </div>
+            <div className="hidden md:block absolute bottom-10 end-10 text-xs tracking-[0.3em] uppercase text-white/70 max-w-[25%] text-end">
+              {config.description}
+            </div>
+          </motion.div>
+          <motion.div className="flex flex-row flex-wrap items-center justify-between gap-4 mt-8" variants={itemVariants}>
+            <div className="flex gap-4 flex-wrap">
+              {renderBookButton(false)}
+              {renderContactButton(false)}
+            </div>
+            {renderSocialRow('')}
+          </motion.div>
         </motion.div>
       );
     }
@@ -462,7 +552,7 @@ const Hero: React.FC<HeroProps> = ({ config, social, phone, isContactVisible, is
             </motion.div>
           </motion.div>
 
-          <motion.div className="relative w-full max-w-md md:max-w-none mx-auto md:mx-0" variants={itemVariants}>
+          <motion.div className={`relative w-full max-w-md md:max-w-none mx-auto md:mx-0 ${jitter?.flipPosterSplit ? 'md:order-first' : ''}`} variants={itemVariants}>
             <div className="relative h-full min-h-[22rem] md:min-h-[28rem]">
               <img
                 src={ImagesService.getInstance().getImage(config.heroImageSrc)}
@@ -643,7 +733,7 @@ const Hero: React.FC<HeroProps> = ({ config, social, phone, isContactVisible, is
             static and aria-hidden — identity, not content. */}
         {decor === 'stamp' && (
           <div
-            className="hidden md:flex absolute top-24 end-10 lg:end-20 w-28 h-28 rounded-full border-2 border-primary-readable dark:border-primary-dark-readable items-center justify-center -rotate-12 pointer-events-none"
+            className={`hidden md:flex absolute top-24 ${decorStart ? 'start-10 lg:start-20' : 'end-10 lg:end-20'} w-28 h-28 rounded-full border-2 border-primary-readable dark:border-primary-dark-readable items-center justify-center -rotate-12 pointer-events-none`}
             aria-hidden="true"
           >
             <div className="w-[5.5rem] h-[5.5rem] rounded-full border border-primary-readable/60 dark:border-primary-dark-readable/60 flex items-center justify-center p-2">
@@ -666,7 +756,7 @@ const Hero: React.FC<HeroProps> = ({ config, social, phone, isContactVisible, is
         {decor === 'sun' && (
           <svg
             viewBox="0 0 40 40"
-            className="hidden md:block absolute top-24 end-12 lg:end-24 w-14 h-14 text-primary-readable dark:text-primary-dark-readable pointer-events-none"
+            className={`hidden md:block absolute top-24 ${decorStart ? 'start-12 lg:start-24' : 'end-12 lg:end-24'} w-14 h-14 text-primary-readable dark:text-primary-dark-readable pointer-events-none`}
             fill="none"
             stroke="currentColor"
             strokeWidth="2"

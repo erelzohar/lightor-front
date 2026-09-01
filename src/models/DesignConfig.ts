@@ -13,7 +13,10 @@ export type NavbarStyle = 'floating' | 'solid' | 'transparent';
 // the editorial-stack composition from the vibe mockups.
 // 'poster-split' (LT-109): the Barber-artboard hero — poster headline column
 // beside a tall image block; the vibe-template composition, not a variant.
-export type HeroLayout = 'image-right' | 'centered' | 'split' | 'text-first' | 'poster-split';
+// 'poster-statement' (LT-113): the Ink-artboard hero — text-only stacked
+// poster with an outline-stroke second line, no image. 'fullbleed' (LT-113):
+// the Lens-artboard hero — edge-to-edge image with the title overlaid.
+export type HeroLayout = 'image-right' | 'centered' | 'split' | 'text-first' | 'poster-split' | 'poster-statement' | 'fullbleed';
 export type SectionDivider = 'none' | 'wave' | 'diagonal' | 'curve' | 'scallop' | 'zigzag';
 export type Density = 'compact' | 'comfortable' | 'spacious';
 // 'poster' (LT-108): the vibe-canvas hero manner — enormous condensed
@@ -42,7 +45,7 @@ export type DefaultTheme = 'light' | 'dark';
 // LT-107 vibe signatures (from the LT-092 canvas): a hero decoration —
 // repeating text strips (ticker/marquee), a rotated stamp badge, confetti
 // dots, or a line-drawn sun. 'none' = pre-LT-107 rendering.
-export type Decor = 'none' | 'ticker' | 'marquee' | 'stamp' | 'confetti' | 'sun';
+export type Decor = 'none' | 'ticker' | 'marquee' | 'stamp' | 'confetti' | 'sun' | 'monogram';
 // How About features are marked: icon tiles (legacy), big two-digit numbers
 // (industrial ledger feel), or roman numerals (heritage).
 export type FeatureStyle = 'icons' | 'numbered' | 'roman';
@@ -273,21 +276,21 @@ export const STYLE_PRESETS: Record<StylePreset, DesignTokens> = {
   electric: {
     borderRadius: 'sm', cardStyle: 'bordered', buttonStyle: 'solid',
     headingFont: 'archivo', bodyFont: 'inter', animLevel: 'full',
-    navbarStyle: 'solid', heroLayout: 'split', sectionDivider: 'diagonal',
+    navbarStyle: 'solid', heroLayout: 'poster-split', sectionDivider: 'diagonal',
     density: 'compact', typeScale: 'poster',
     headingAccent: 'bar', imageTreatment: 'rounded',
     aboutLayout: 'cards', portfolioLayout: 'grid', contactLayout: 'split', footerLayout: 'minimal',
     testimonialsLayout: 'cards', faqStyle: 'lines', defaultTheme: 'dark',
-    decor: 'marquee', featureStyle: 'icons', servicesLayout: 'none',
+    decor: 'marquee', featureStyle: 'numbered', servicesLayout: 'none',
   },
   // Tattoo / punk mono: condensed caps with monospace body.
   underground: {
     borderRadius: 'none', cardStyle: 'bordered', buttonStyle: 'solid',
     headingFont: 'anton', bodyFont: 'spacemono', animLevel: 'none',
-    navbarStyle: 'solid', heroLayout: 'centered', sectionDivider: 'zigzag',
+    navbarStyle: 'solid', heroLayout: 'poster-statement', sectionDivider: 'zigzag',
     density: 'compact', typeScale: 'poster',
     headingAccent: 'none', imageTreatment: 'rounded',
-    aboutLayout: 'split', portfolioLayout: 'flash', contactLayout: 'split', footerLayout: 'minimal',
+    aboutLayout: 'manifesto', portfolioLayout: 'flash', contactLayout: 'split', footerLayout: 'minimal',
     testimonialsLayout: 'cards', faqStyle: 'lines', defaultTheme: 'dark',
     decor: 'stamp', featureStyle: 'numbered', servicesLayout: 'none',
   },
@@ -317,7 +320,7 @@ export const STYLE_PRESETS: Record<StylePreset, DesignTokens> = {
   gallery: {
     borderRadius: 'none', cardStyle: 'flat', buttonStyle: 'ghost',
     headingFont: 'archivo', bodyFont: 'archivo', animLevel: 'none',
-    navbarStyle: 'transparent', heroLayout: 'centered', sectionDivider: 'none',
+    navbarStyle: 'transparent', heroLayout: 'fullbleed', sectionDivider: 'none',
     density: 'spacious', typeScale: 'dramatic',
     headingAccent: 'none', imageTreatment: 'rounded',
     aboutLayout: 'band', portfolioLayout: 'masonry', contactLayout: 'stacked', footerLayout: 'minimal',
@@ -333,7 +336,7 @@ export const STYLE_PRESETS: Record<StylePreset, DesignTokens> = {
     headingAccent: 'rule', imageTreatment: 'rounded',
     aboutLayout: 'split', portfolioLayout: 'grid', contactLayout: 'split', footerLayout: 'columns',
     testimonialsLayout: 'quote', faqStyle: 'numbered', defaultTheme: 'light',
-    decor: 'none', featureStyle: 'roman', servicesLayout: 'none',
+    decor: 'monogram', featureStyle: 'roman', servicesLayout: 'ledger',
   },
   // Yoga / boho earthy: arches, waves, warm serif.
   earthy: {

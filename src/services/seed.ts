@@ -51,6 +51,14 @@ export interface SiteJitter {
   flipAboutSplit: boolean;
   /** Mirror the section-divider shapes horizontally. */
   mirrorDividers: boolean;
+  /** LT-113: template vibes swap between their two poster hero compositions
+   *  (poster-split ↔ poster-statement), so two same-vibe businesses open on
+   *  structurally different folds. */
+  posterAlt: boolean;
+  /** Mirror the poster-split hero columns (image side). */
+  flipPosterSplit: boolean;
+  /** Put the stamp/sun decor on the start corner instead of the end. */
+  decorStart: boolean;
 }
 
 export const getSiteJitter = (subdomain: string | undefined | null): SiteJitter => {
@@ -67,7 +75,11 @@ export const getSiteJitter = (subdomain: string | undefined | null): SiteJitter 
   const masonryPhase = Math.floor(rng() * 3);
   const flipAboutSplit = rng() < 0.5;
   const mirrorDividers = rng() < 0.5;
-  return { blobOffsets, particleSeed, floatDuration, masonryPhase, flipAboutSplit, mirrorDividers };
+  // LT-113 draws — appended per the draw-order contract above.
+  const posterAlt = rng() < 0.5;
+  const flipPosterSplit = rng() < 0.5;
+  const decorStart = rng() < 0.5;
+  return { blobOffsets, particleSeed, floatDuration, masonryPhase, flipAboutSplit, mirrorDividers, posterAlt, flipPosterSplit, decorStart };
 };
 
 /** A ready-to-use PRNG for components that derive many values (particles). */

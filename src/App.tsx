@@ -229,6 +229,7 @@ function MainContent() {
           isPreview={isPreview}
           palette={config.pallete}
           design={config.design}
+          jitter={{ posterAlt: jitter.posterAlt, flipPosterSplit: jitter.flipPosterSplit, decorStart: jitter.decorStart }}
         />
       )
     });
