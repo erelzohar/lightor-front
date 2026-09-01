@@ -19,6 +19,7 @@ import NotFound from './components/NotFound';
 import ManageAppointment from './components/ManageAppointment';
 import Loading from './components/Loading';
 import SectionDivider, { type SectionTone } from './components/SectionDivider';
+import ServicesLedger from './components/Layout/ServicesLedger';
 
 // Contexts & Hooks
 import { useLanguage, Language } from './contexts/LanguageContext';
@@ -249,6 +250,16 @@ function MainContent() {
           flipSplit={jitter.flipAboutSplit}
         />
       )
+    });
+  }
+
+  // LT-109: the vibe-template price ledger, from the business's real
+  // services. Only when the preset asks for it and priced services exist.
+  if (config.design?.servicesLayout === 'ledger' && (config.appointmentTypes?.length ?? 0) > 0) {
+    const tone = flow.length && flow[flow.length - 1].tone === 'bg' ? 'surface' as const : 'bg' as const;
+    flow.push({
+      key: 'services', tone,
+      node: <ServicesLedger appointmentTypes={config.appointmentTypes} tone={tone} />
     });
   }
 

@@ -11,7 +11,9 @@ export type AnimLevel = 'none' | 'minimal' | 'full';
 export type NavbarStyle = 'floating' | 'solid' | 'transparent';
 // 'text-first' (LT-093): centered copy block with a large image below it —
 // the editorial-stack composition from the vibe mockups.
-export type HeroLayout = 'image-right' | 'centered' | 'split' | 'text-first';
+// 'poster-split' (LT-109): the Barber-artboard hero — poster headline column
+// beside a tall image block; the vibe-template composition, not a variant.
+export type HeroLayout = 'image-right' | 'centered' | 'split' | 'text-first' | 'poster-split';
 export type SectionDivider = 'none' | 'wave' | 'diagonal' | 'curve' | 'scallop' | 'zigzag';
 export type Density = 'compact' | 'comfortable' | 'spacious';
 // 'poster' (LT-108): the vibe-canvas hero manner — enormous condensed
@@ -24,7 +26,9 @@ export type HeadingAccent = 'bar' | 'rule' | 'dot' | 'none';
 export type ImageTreatment = 'rounded' | 'circle' | 'arch' | 'blob';
 // Per-section skeletons (LT-051). The first value of each is the pre-LT-051
 // layout, and DEFAULT_TOKENS picks it, so unpresetted sites don't move.
-export type AboutLayout = 'cards' | 'split' | 'band';
+// 'manifesto' (LT-109): big display pull-quote beside the paragraphs — the
+// artboard's statement composition.
+export type AboutLayout = 'cards' | 'split' | 'band' | 'manifesto';
 export type PortfolioLayout = 'grid' | 'masonry' | 'filmstrip' | 'polaroid' | 'flash';
 export type ContactLayout = 'split' | 'stacked';
 export type FooterLayout = 'columns' | 'minimal';
@@ -42,6 +46,9 @@ export type Decor = 'none' | 'ticker' | 'marquee' | 'stamp' | 'confetti' | 'sun'
 // How About features are marked: icon tiles (legacy), big two-digit numbers
 // (industrial ledger feel), or roman numerals (heritage).
 export type FeatureStyle = 'icons' | 'numbered' | 'roman';
+// LT-109: the numbered dotted-leader price ledger built from the business's
+// real services (the canvas 'המחירון' section). 'none' = section absent.
+export type ServicesLayout = 'none' | 'ledger';
 
 export type StylePreset =
   | 'luxe'
@@ -90,6 +97,7 @@ export interface DesignTokens {
   defaultTheme: DefaultTheme;
   decor: Decor;
   featureStyle: FeatureStyle;
+  servicesLayout: ServicesLayout;
 }
 
 // Neutral fallback used when no preset and no explicit tokens are provided.
@@ -116,6 +124,7 @@ const DEFAULT_TOKENS: DesignTokens = {
   defaultTheme: 'light',
   decor: 'none',
   featureStyle: 'icons',
+  servicesLayout: 'none',
 };
 
 // Opinionated, deliberately divergent bundles. Picking one of these gives a
@@ -132,7 +141,7 @@ export const STYLE_PRESETS: Record<StylePreset, DesignTokens> = {
     headingAccent: 'rule', imageTreatment: 'arch',
     aboutLayout: 'band', portfolioLayout: 'masonry', contactLayout: 'stacked', footerLayout: 'minimal',
     testimonialsLayout: 'cards', faqStyle: 'cards', defaultTheme: 'light',
-    decor: 'none', featureStyle: 'icons',
+    decor: 'none', featureStyle: 'icons', servicesLayout: 'none',
   },
   editorial: {
     borderRadius: 'none', cardStyle: 'flat', buttonStyle: 'ghost',
@@ -142,7 +151,7 @@ export const STYLE_PRESETS: Record<StylePreset, DesignTokens> = {
     headingAccent: 'rule', imageTreatment: 'rounded',
     aboutLayout: 'split', portfolioLayout: 'masonry', contactLayout: 'split', footerLayout: 'minimal',
     testimonialsLayout: 'cards', faqStyle: 'cards', defaultTheme: 'light',
-    decor: 'none', featureStyle: 'icons',
+    decor: 'none', featureStyle: 'icons', servicesLayout: 'none',
   },
   boldStartup: {
     borderRadius: 'lg', cardStyle: 'glass', buttonStyle: 'gradient',
@@ -152,7 +161,7 @@ export const STYLE_PRESETS: Record<StylePreset, DesignTokens> = {
     headingAccent: 'bar', imageTreatment: 'rounded',
     aboutLayout: 'cards', portfolioLayout: 'grid', contactLayout: 'split', footerLayout: 'columns',
     testimonialsLayout: 'cards', faqStyle: 'cards', defaultTheme: 'light',
-    decor: 'none', featureStyle: 'icons',
+    decor: 'none', featureStyle: 'icons', servicesLayout: 'none',
   },
   corporate: {
     borderRadius: 'sm', cardStyle: 'bordered', buttonStyle: 'solid',
@@ -162,7 +171,7 @@ export const STYLE_PRESETS: Record<StylePreset, DesignTokens> = {
     headingAccent: 'bar', imageTreatment: 'rounded',
     aboutLayout: 'split', portfolioLayout: 'grid', contactLayout: 'split', footerLayout: 'columns',
     testimonialsLayout: 'cards', faqStyle: 'cards', defaultTheme: 'light',
-    decor: 'none', featureStyle: 'icons',
+    decor: 'none', featureStyle: 'icons', servicesLayout: 'none',
   },
   playful: {
     borderRadius: 'full', cardStyle: 'elevated', buttonStyle: 'gradient',
@@ -172,7 +181,7 @@ export const STYLE_PRESETS: Record<StylePreset, DesignTokens> = {
     headingAccent: 'dot', imageTreatment: 'blob',
     aboutLayout: 'cards', portfolioLayout: 'grid', contactLayout: 'stacked', footerLayout: 'columns',
     testimonialsLayout: 'cards', faqStyle: 'cards', defaultTheme: 'light',
-    decor: 'none', featureStyle: 'icons',
+    decor: 'none', featureStyle: 'icons', servicesLayout: 'none',
   },
   minimal: {
     borderRadius: 'none', cardStyle: 'flat', buttonStyle: 'outline',
@@ -182,7 +191,7 @@ export const STYLE_PRESETS: Record<StylePreset, DesignTokens> = {
     headingAccent: 'none', imageTreatment: 'rounded',
     aboutLayout: 'band', portfolioLayout: 'masonry', contactLayout: 'stacked', footerLayout: 'minimal',
     testimonialsLayout: 'cards', faqStyle: 'cards', defaultTheme: 'light',
-    decor: 'none', featureStyle: 'icons',
+    decor: 'none', featureStyle: 'icons', servicesLayout: 'none',
   },
   warmOrganic: {
     borderRadius: 'xl', cardStyle: 'elevated', buttonStyle: 'solid',
@@ -192,7 +201,7 @@ export const STYLE_PRESETS: Record<StylePreset, DesignTokens> = {
     headingAccent: 'dot', imageTreatment: 'blob',
     aboutLayout: 'cards', portfolioLayout: 'grid', contactLayout: 'split', footerLayout: 'columns',
     testimonialsLayout: 'cards', faqStyle: 'cards', defaultTheme: 'light',
-    decor: 'none', featureStyle: 'icons',
+    decor: 'none', featureStyle: 'icons', servicesLayout: 'none',
   },
   brutalist: {
     borderRadius: 'none', cardStyle: 'flat', buttonStyle: 'solid',
@@ -202,7 +211,7 @@ export const STYLE_PRESETS: Record<StylePreset, DesignTokens> = {
     headingAccent: 'bar', imageTreatment: 'rounded',
     aboutLayout: 'band', portfolioLayout: 'filmstrip', contactLayout: 'split', footerLayout: 'minimal',
     testimonialsLayout: 'cards', faqStyle: 'cards', defaultTheme: 'light',
-    decor: 'none', featureStyle: 'icons',
+    decor: 'none', featureStyle: 'icons', servicesLayout: 'none',
   },
   boutique: {
     borderRadius: 'full', cardStyle: 'glass', buttonStyle: 'outline',
@@ -212,7 +221,7 @@ export const STYLE_PRESETS: Record<StylePreset, DesignTokens> = {
     headingAccent: 'dot', imageTreatment: 'circle',
     aboutLayout: 'split', portfolioLayout: 'filmstrip', contactLayout: 'stacked', footerLayout: 'minimal',
     testimonialsLayout: 'cards', faqStyle: 'cards', defaultTheme: 'light',
-    decor: 'none', featureStyle: 'icons',
+    decor: 'none', featureStyle: 'icons', servicesLayout: 'none',
   },
   bistro: {
     borderRadius: 'sm', cardStyle: 'bordered', buttonStyle: 'solid',
@@ -222,7 +231,7 @@ export const STYLE_PRESETS: Record<StylePreset, DesignTokens> = {
     headingAccent: 'rule', imageTreatment: 'arch',
     aboutLayout: 'split', portfolioLayout: 'grid', contactLayout: 'stacked', footerLayout: 'columns',
     testimonialsLayout: 'cards', faqStyle: 'cards', defaultTheme: 'light',
-    decor: 'none', featureStyle: 'icons',
+    decor: 'none', featureStyle: 'icons', servicesLayout: 'none',
   },
 
   // ── LT-093 vibe presets (from the LT-092 direction canvas) ──────────────
@@ -231,12 +240,12 @@ export const STYLE_PRESETS: Record<StylePreset, DesignTokens> = {
   industrial: {
     borderRadius: 'none', cardStyle: 'flat', buttonStyle: 'solid',
     headingFont: 'anton', bodyFont: 'inter', animLevel: 'minimal',
-    navbarStyle: 'solid', heroLayout: 'split', sectionDivider: 'none',
+    navbarStyle: 'solid', heroLayout: 'poster-split', sectionDivider: 'none',
     density: 'compact', typeScale: 'poster',
     headingAccent: 'bar', imageTreatment: 'rounded',
-    aboutLayout: 'band', portfolioLayout: 'filmstrip', contactLayout: 'split', footerLayout: 'minimal',
+    aboutLayout: 'manifesto', portfolioLayout: 'filmstrip', contactLayout: 'split', footerLayout: 'minimal',
     testimonialsLayout: 'quote', faqStyle: 'numbered', defaultTheme: 'dark',
-    decor: 'ticker', featureStyle: 'numbered',
+    decor: 'ticker', featureStyle: 'numbered', servicesLayout: 'ledger',
   },
   // Beauty boutique / luxe editorial: centered serif over an arch image.
   atelier: {
@@ -247,7 +256,7 @@ export const STYLE_PRESETS: Record<StylePreset, DesignTokens> = {
     headingAccent: 'rule', imageTreatment: 'arch',
     aboutLayout: 'split', portfolioLayout: 'masonry', contactLayout: 'split', footerLayout: 'minimal',
     testimonialsLayout: 'quote', faqStyle: 'lines', defaultTheme: 'light',
-    decor: 'none', featureStyle: 'icons',
+    decor: 'none', featureStyle: 'icons', servicesLayout: 'none',
   },
   // Therapist / calm organic: soft shapes, generous air.
   serene: {
@@ -258,7 +267,7 @@ export const STYLE_PRESETS: Record<StylePreset, DesignTokens> = {
     headingAccent: 'dot', imageTreatment: 'blob',
     aboutLayout: 'band', portfolioLayout: 'grid', contactLayout: 'stacked', footerLayout: 'minimal',
     testimonialsLayout: 'cards', faqStyle: 'cards', defaultTheme: 'light',
-    decor: 'none', featureStyle: 'icons',
+    decor: 'none', featureStyle: 'icons', servicesLayout: 'none',
   },
   // Fitness / volt energy: heavy grotesk, hard edges, dark ground.
   electric: {
@@ -269,7 +278,7 @@ export const STYLE_PRESETS: Record<StylePreset, DesignTokens> = {
     headingAccent: 'bar', imageTreatment: 'rounded',
     aboutLayout: 'cards', portfolioLayout: 'grid', contactLayout: 'split', footerLayout: 'minimal',
     testimonialsLayout: 'cards', faqStyle: 'lines', defaultTheme: 'dark',
-    decor: 'marquee', featureStyle: 'icons',
+    decor: 'marquee', featureStyle: 'icons', servicesLayout: 'none',
   },
   // Tattoo / punk mono: condensed caps with monospace body.
   underground: {
@@ -280,7 +289,7 @@ export const STYLE_PRESETS: Record<StylePreset, DesignTokens> = {
     headingAccent: 'none', imageTreatment: 'rounded',
     aboutLayout: 'split', portfolioLayout: 'flash', contactLayout: 'split', footerLayout: 'minimal',
     testimonialsLayout: 'cards', faqStyle: 'lines', defaultTheme: 'dark',
-    decor: 'stamp', featureStyle: 'numbered',
+    decor: 'stamp', featureStyle: 'numbered', servicesLayout: 'none',
   },
   // Kids / playful: round everything, scalloped edges, speech bubbles.
   festive: {
@@ -291,7 +300,7 @@ export const STYLE_PRESETS: Record<StylePreset, DesignTokens> = {
     headingAccent: 'dot', imageTreatment: 'circle',
     aboutLayout: 'cards', portfolioLayout: 'polaroid', contactLayout: 'stacked', footerLayout: 'columns',
     testimonialsLayout: 'bubbles', faqStyle: 'pills', defaultTheme: 'light',
-    decor: 'confetti', featureStyle: 'icons',
+    decor: 'confetti', featureStyle: 'icons', servicesLayout: 'none',
   },
   // Clinic / clean trust: structured grid, modest type, tidy cards.
   crisp: {
@@ -302,7 +311,7 @@ export const STYLE_PRESETS: Record<StylePreset, DesignTokens> = {
     headingAccent: 'bar', imageTreatment: 'rounded',
     aboutLayout: 'cards', portfolioLayout: 'grid', contactLayout: 'split', footerLayout: 'columns',
     testimonialsLayout: 'cards', faqStyle: 'cards', defaultTheme: 'light',
-    decor: 'none', featureStyle: 'icons',
+    decor: 'none', featureStyle: 'icons', servicesLayout: 'none',
   },
   // Photographer / image-first: near-invisible chrome, work up front.
   gallery: {
@@ -313,7 +322,7 @@ export const STYLE_PRESETS: Record<StylePreset, DesignTokens> = {
     headingAccent: 'none', imageTreatment: 'rounded',
     aboutLayout: 'band', portfolioLayout: 'masonry', contactLayout: 'stacked', footerLayout: 'minimal',
     testimonialsLayout: 'quote', faqStyle: 'lines', defaultTheme: 'light',
-    decor: 'none', featureStyle: 'icons',
+    decor: 'none', featureStyle: 'icons', servicesLayout: 'none',
   },
   // Law / classical: serif authority, ruled lines, no ornament.
   heritage: {
@@ -324,7 +333,7 @@ export const STYLE_PRESETS: Record<StylePreset, DesignTokens> = {
     headingAccent: 'rule', imageTreatment: 'rounded',
     aboutLayout: 'split', portfolioLayout: 'grid', contactLayout: 'split', footerLayout: 'columns',
     testimonialsLayout: 'quote', faqStyle: 'numbered', defaultTheme: 'light',
-    decor: 'none', featureStyle: 'roman',
+    decor: 'none', featureStyle: 'roman', servicesLayout: 'none',
   },
   // Yoga / boho earthy: arches, waves, warm serif.
   earthy: {
@@ -335,7 +344,7 @@ export const STYLE_PRESETS: Record<StylePreset, DesignTokens> = {
     headingAccent: 'dot', imageTreatment: 'arch',
     aboutLayout: 'split', portfolioLayout: 'grid', contactLayout: 'stacked', footerLayout: 'minimal',
     testimonialsLayout: 'quote', faqStyle: 'lines', defaultTheme: 'light',
-    decor: 'sun', featureStyle: 'icons',
+    decor: 'sun', featureStyle: 'icons', servicesLayout: 'none',
   },
 };
 
@@ -364,6 +373,7 @@ export class DesignConfig implements DesignTokens {
     public defaultTheme: DefaultTheme,
     public decor: Decor,
     public featureStyle: FeatureStyle,
+    public servicesLayout: ServicesLayout,
   ) {}
 
   // Resolution order for every token: explicit value → preset value → default.
@@ -401,6 +411,7 @@ export class DesignConfig implements DesignTokens {
       json?.defaultTheme ?? base.defaultTheme,
       json?.decor ?? base.decor,
       json?.featureStyle ?? base.featureStyle,
+      json?.servicesLayout ?? base.servicesLayout,
     );
   }
 }

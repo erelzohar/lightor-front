@@ -420,6 +420,67 @@ const Hero: React.FC<HeroProps> = ({ config, social, phone, isContactVisible, is
       );
     }
 
+    // ── Poster-split (LT-109): the Barber-artboard composition — poster
+    // headline column beside a tall image block with a solid corner tag,
+    // a rule row underneath. The vibe template, faithful to the canvas.
+    if (heroLayout === 'poster-split') {
+      return (
+        <motion.div
+          className="grid grid-cols-1 md:grid-cols-2 items-stretch gap-10 lg:gap-16"
+          variants={containerVariants}
+        >
+          <motion.div className="flex flex-col justify-center py-6" variants={containerVariants}>
+            <motion.h1
+              className="font-bold text-light-text dark:text-dark-text leading-none"
+              variants={itemVariants}
+            >
+              {config.title}
+            </motion.h1>
+            {config.subtitle && (
+              <motion.div
+                className="mt-4 text-2xl md:text-4xl font-bold text-primary-readable dark:text-primary-dark-readable"
+                variants={itemVariants}
+              >
+                {config.subtitle}
+              </motion.div>
+            )}
+            <motion.p
+              className="text-lg md:text-xl text-light-text/70 dark:text-dark-text/70 max-w-md mt-6"
+              variants={itemVariants}
+            >
+              {config.description}
+            </motion.p>
+            <motion.div className="flex flex-row flex-wrap gap-4 mt-8" variants={itemVariants}>
+              {renderBookButton(false)}
+              {renderContactButton(false)}
+            </motion.div>
+            <motion.div
+              className="mt-10 pt-6 border-t border-light-text/15 dark:border-dark-text/15"
+              variants={itemVariants}
+            >
+              {renderSocialRow('justify-start')}
+            </motion.div>
+          </motion.div>
+
+          <motion.div className="relative w-full max-w-md md:max-w-none mx-auto md:mx-0" variants={itemVariants}>
+            <div className="relative h-full min-h-[22rem] md:min-h-[28rem]">
+              <img
+                src={ImagesService.getInstance().getImage(config.heroImageSrc)}
+                alt={config.title}
+                onError={handleWideImageError}
+                className="absolute inset-0 w-full h-full object-cover shadow-2xl"
+              />
+              {config.subtitle && (
+                <span className="absolute bottom-0 start-0 bg-primary dark:bg-primary-dark text-on-primary dark:text-on-primary-dark text-xs font-bold tracking-[0.2em] px-4 py-2 max-w-full truncate">
+                  {config.subtitle}
+                </span>
+              )}
+            </div>
+          </motion.div>
+        </motion.div>
+      );
+    }
+
     // ── Text-first (LT-093): centered copy, large image below ─────────────
     // The editorial-stack composition from the vibe canvas: the words lead,
     // then a wide image (arch treatment shines here) anchors the fold.

@@ -430,7 +430,29 @@ const About: React.FC<AboutProps> = ({ config, websiteConfig, layout = 'cards', 
             <p className="text-xl text-light-text/80 dark:text-dark-text/80">{config.description}</p>
           </motion.div>
 
-          {layout === 'split' ? (
+          {layout === 'manifesto' ? (
+            // LT-109: the artboard's statement composition — the intro as a
+            // big display pull-quote beside the mission text, features as a
+            // quiet band below.
+            <>
+              <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-start mb-20">
+                <motion.blockquote
+                  className="font-bold leading-tight text-3xl md:text-5xl text-light-text dark:text-dark-text"
+                  style={{ fontFamily: 'inherit' }}
+                  variants={itemVariants}
+                >
+                  <h3 className="leading-tight">"{config.paragraphs.intro}"</h3>
+                </motion.blockquote>
+                <motion.div variants={itemVariants}>
+                  <p className="text-lg text-light-text/80 dark:text-dark-text/80 leading-loose">
+                    {config.paragraphs.mission}
+                  </p>
+                </motion.div>
+              </div>
+              {featureBand}
+              {renderVisitCard()}
+            </>
+          ) : layout === 'split' ? (
             <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-start">
               <div className={flipSplit ? 'lg:order-2' : ''}>
                 {paragraphs('mb-12 text-center lg:text-start')}
