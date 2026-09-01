@@ -14,7 +14,9 @@ export type NavbarStyle = 'floating' | 'solid' | 'transparent';
 export type HeroLayout = 'image-right' | 'centered' | 'split' | 'text-first';
 export type SectionDivider = 'none' | 'wave' | 'diagonal' | 'curve' | 'scallop' | 'zigzag';
 export type Density = 'compact' | 'comfortable' | 'spacious';
-export type TypeScale = 'modest' | 'balanced' | 'dramatic';
+// 'poster' (LT-108): the vibe-canvas hero manner — enormous condensed
+// display type; only sane with condensed heading faces (anton).
+export type TypeScale = 'modest' | 'balanced' | 'dramatic' | 'poster';
 export type HeadingAccent = 'bar' | 'rule' | 'dot' | 'none';
 // 'framed' was retired in LT-080/081 (its offset border read as a stray
 // line); stored configs may still carry the string — fromJSON passes it
@@ -230,7 +232,7 @@ export const STYLE_PRESETS: Record<StylePreset, DesignTokens> = {
     borderRadius: 'none', cardStyle: 'flat', buttonStyle: 'solid',
     headingFont: 'anton', bodyFont: 'inter', animLevel: 'minimal',
     navbarStyle: 'solid', heroLayout: 'split', sectionDivider: 'none',
-    density: 'compact', typeScale: 'dramatic',
+    density: 'compact', typeScale: 'poster',
     headingAccent: 'bar', imageTreatment: 'rounded',
     aboutLayout: 'band', portfolioLayout: 'filmstrip', contactLayout: 'split', footerLayout: 'minimal',
     testimonialsLayout: 'quote', faqStyle: 'numbered', defaultTheme: 'dark',
@@ -263,7 +265,7 @@ export const STYLE_PRESETS: Record<StylePreset, DesignTokens> = {
     borderRadius: 'sm', cardStyle: 'bordered', buttonStyle: 'solid',
     headingFont: 'archivo', bodyFont: 'inter', animLevel: 'full',
     navbarStyle: 'solid', heroLayout: 'split', sectionDivider: 'diagonal',
-    density: 'compact', typeScale: 'dramatic',
+    density: 'compact', typeScale: 'poster',
     headingAccent: 'bar', imageTreatment: 'rounded',
     aboutLayout: 'cards', portfolioLayout: 'grid', contactLayout: 'split', footerLayout: 'minimal',
     testimonialsLayout: 'cards', faqStyle: 'lines', defaultTheme: 'dark',
@@ -274,7 +276,7 @@ export const STYLE_PRESETS: Record<StylePreset, DesignTokens> = {
     borderRadius: 'none', cardStyle: 'bordered', buttonStyle: 'solid',
     headingFont: 'anton', bodyFont: 'spacemono', animLevel: 'none',
     navbarStyle: 'solid', heroLayout: 'centered', sectionDivider: 'zigzag',
-    density: 'compact', typeScale: 'dramatic',
+    density: 'compact', typeScale: 'poster',
     headingAccent: 'none', imageTreatment: 'rounded',
     aboutLayout: 'split', portfolioLayout: 'flash', contactLayout: 'split', footerLayout: 'minimal',
     testimonialsLayout: 'cards', faqStyle: 'lines', defaultTheme: 'dark',
