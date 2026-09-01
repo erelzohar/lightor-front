@@ -245,6 +245,7 @@ function MainContent() {
             workingDays: config.workingDays
           }}
           layout={config.design?.aboutLayout}
+          featureStyle={config.design?.featureStyle}
           flipSplit={jitter.flipAboutSplit}
         />
       )

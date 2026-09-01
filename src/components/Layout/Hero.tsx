@@ -115,6 +115,7 @@ const Hero: React.FC<HeroProps> = ({ config, social, phone, isContactVisible, is
   const heroLayout = design?.heroLayout ?? 'image-right';
   const animLevel = design?.animLevel ?? 'full';
   const imageTreatment = design?.imageTreatment ?? 'rounded';
+  const decor = design?.decor ?? 'none';
   const animD = (base: number) => animLevel === 'none' ? 0 : animLevel === 'minimal' ? base * 0.25 : base;
 
   const vantaKey = [
@@ -577,6 +578,45 @@ const Hero: React.FC<HeroProps> = ({ config, social, phone, isContactVisible, is
             the canvas and below the content. */}
         <div className="absolute inset-0 bg-light-bg/50 dark:bg-dark-bg/55 pointer-events-none" aria-hidden="true" />
 
+        {/* Vibe signature decorations (LT-107, from the LT-092 canvas). All
+            static and aria-hidden — identity, not content. */}
+        {decor === 'stamp' && (
+          <div
+            className="hidden md:flex absolute top-24 end-10 lg:end-20 w-28 h-28 rounded-full border-2 border-primary-readable dark:border-primary-dark-readable items-center justify-center -rotate-12 pointer-events-none"
+            aria-hidden="true"
+          >
+            <div className="w-[5.5rem] h-[5.5rem] rounded-full border border-primary-readable/60 dark:border-primary-dark-readable/60 flex items-center justify-center p-2">
+              <span className="text-[11px] font-bold tracking-widest text-center leading-tight text-primary-readable dark:text-primary-dark-readable line-clamp-3">
+                {config.title}
+              </span>
+            </div>
+          </div>
+        )}
+        {decor === 'confetti' && (
+          <div className="absolute inset-0 pointer-events-none" aria-hidden="true">
+            <span className="absolute top-[14%] start-[12%] w-3 h-3 rounded-full bg-primary/70 dark:bg-primary-dark/70" />
+            <span className="absolute top-[26%] end-[9%] w-2 h-2 rounded-full bg-primary-dark/60 dark:bg-primary/60" />
+            <span className="absolute top-[62%] start-[7%] w-2.5 h-2.5 rounded-full bg-primary/50 dark:bg-primary-dark/50" />
+            <span className="absolute top-[10%] end-[28%] w-2 h-2 rounded-full bg-primary/40 dark:bg-primary-dark/40" />
+            <span className="absolute bottom-[18%] end-[14%] w-3 h-3 rounded-full bg-primary-dark/50 dark:bg-primary/50" />
+            <span className="absolute bottom-[30%] start-[22%] w-2 h-2 rounded-full bg-primary/60 dark:bg-primary-dark/60" />
+          </div>
+        )}
+        {decor === 'sun' && (
+          <svg
+            viewBox="0 0 40 40"
+            className="hidden md:block absolute top-24 end-12 lg:end-24 w-14 h-14 text-primary-readable dark:text-primary-dark-readable pointer-events-none"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            aria-hidden="true"
+          >
+            <circle cx="20" cy="20" r="8" />
+            <path d="M20 4v5M20 31v5M4 20h5M31 20h5M8.7 8.7l3.5 3.5M27.8 27.8l3.5 3.5M31.3 8.7l-3.5 3.5M12.2 27.8l-3.5 3.5" />
+          </svg>
+        )}
+
         <motion.div
           className="container mx-auto px-4 pt-16 md:pt-20 lg:pt-32 pb-20 relative"
           initial="hidden"
@@ -605,6 +645,17 @@ const Hero: React.FC<HeroProps> = ({ config, social, phone, isContactVisible, is
             </motion.div>
           )}
         </motion.div>
+
+        {/* Repeating-text strip (LT-107): the industrial ticker / electric
+            marquee band along the hero's bottom edge. Static on purpose. */}
+        {(decor === 'ticker' || decor === 'marquee') && (
+          <div
+            className={`absolute bottom-0 inset-x-0 overflow-hidden whitespace-nowrap py-2 bg-primary dark:bg-primary-dark text-on-primary dark:text-on-primary-dark select-none ${decor === 'marquee' ? 'font-bold uppercase italic tracking-widest text-sm' : 'tracking-[0.25em] text-xs font-semibold'}`}
+            aria-hidden="true"
+          >
+            {Array.from({ length: 14 }, () => config.title).join('  ·  ')}
+          </div>
+        )}
       </section>
 
       <ContactModal

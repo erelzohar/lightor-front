@@ -216,6 +216,77 @@ const Portfolio: React.FC<PortfolioProps> = ({ config, layout = 'grid', masonryP
                 );
               }
 
+              // 'polaroid' (LT-107, festive): tilted white-framed prints with
+              // a visible caption — frames stay white in dark mode, that IS
+              // the polaroid.
+              if (layout === 'polaroid') {
+                const tilts = ['-rotate-3', 'rotate-2', '-rotate-1', 'rotate-3', 'rotate-1', '-rotate-2'];
+                return (
+                  <div
+                    className="flex flex-wrap justify-center gap-8"
+                    role="grid"
+                    aria-label={t('portfolio.grid_label')}
+                  >
+                    {config.items.map((item, index) => (
+                      <motion.div
+                        key={index}
+                        className={`group bg-white p-3 pb-4 shadow-xl ${tilts[index % tilts.length]} hover:rotate-0 transition-transform w-64`}
+                        role="gridcell"
+                        tabIndex={0}
+                        aria-label={`${item.title}: ${item.description}`}
+                      >
+                        <div className="aspect-square overflow-hidden">
+                          <img
+                            src={ImagesService.getInstance().getImage(item.url)}
+                            alt={item.title}
+                            onError={handleWideImageError}
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                        <p className="mt-3 text-center font-semibold text-neutral-800">{item.title}</p>
+                      </motion.div>
+                    ))}
+                  </div>
+                );
+              }
+
+              // 'flash' (LT-107, underground): the dense bordered flash-wall
+              // grid — square cells, hard edges, no radius.
+              if (layout === 'flash') {
+                return (
+                  <div
+                    className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2"
+                    role="grid"
+                    aria-label={t('portfolio.grid_label')}
+                  >
+                    {config.items.map((item, index) => (
+                      <motion.div
+                        key={index}
+                        className="group relative aspect-square overflow-hidden border border-light-text/25 dark:border-dark-text/25"
+                        role="gridcell"
+                        tabIndex={0}
+                        aria-label={`${item.title}: ${item.description}`}
+                      >
+                        <img
+                          src={ImagesService.getInstance().getImage(item.url)}
+                          alt={item.title}
+                          onError={handleWideImageError}
+                          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                        />
+                        <div
+                          className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                          aria-hidden="true"
+                        >
+                          <div className="absolute bottom-0 inset-x-0 p-3">
+                            <h3 className="text-base font-bold text-white">{item.title}</h3>
+                          </div>
+                        </div>
+                      </motion.div>
+                    ))}
+                  </div>
+                );
+              }
+
               if (layout === 'filmstrip') {
                 return (
                   <div

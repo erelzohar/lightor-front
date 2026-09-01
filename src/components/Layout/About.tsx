@@ -26,7 +26,7 @@ import { useLanguage } from '../../contexts/LanguageContext';
 import { ContactModal } from '../ContactModal';
 import { useContactHandler } from '../../hooks/useContactHandler';
 import { AboutConfig } from '../../models/AboutConfig';
-import { AboutLayout } from '../../models/DesignConfig';
+import { AboutLayout, FeatureStyle } from '../../models/DesignConfig';
 import { Social } from '../../models/Social';
 
 // Feature icons are stored in the config by name.
@@ -58,9 +58,13 @@ interface AboutProps {
   layout?: AboutLayout;
   /** Seeded per-site (LT-053): mirrors the split layout's columns. */
   flipSplit?: boolean;
+  /** LT-107 vibe signature: how features are marked (icons is legacy). */
+  featureStyle?: FeatureStyle;
 }
 
-const About: React.FC<AboutProps> = ({ config, websiteConfig, layout = 'cards', flipSplit = false }) => {
+const ROMAN_NUMERALS = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII'];
+
+const About: React.FC<AboutProps> = ({ config, websiteConfig, layout = 'cards', flipSplit = false, featureStyle = 'icons' }) => {
   const { t, language } = useLanguage();
   const { isModalOpen, setIsModalOpen, modalType, handleContactClick } = useContactHandler();
   const formatWorkingHours = () => {
@@ -233,6 +237,18 @@ const About: React.FC<AboutProps> = ({ config, websiteConfig, layout = 'cards', 
   );
 
   // 'cards': the tilted-card grid.
+  // LT-107: numbered / roman markers replace the icon inside each feature
+  // block builder — the ledger look (industrial) and the classical practice
+  // list (heritage) from the vibe canvas.
+  const featureMark = (index: number, sizeClass: string) => (
+    <span
+      className={`font-bold tracking-widest text-primary-readable dark:text-primary-dark-readable ${sizeClass}`}
+      aria-hidden="true"
+    >
+      {featureStyle === 'roman' ? (ROMAN_NUMERALS[index] ?? String(index + 1)) : String(index + 1).padStart(2, '0')}
+    </span>
+  );
+
   const featureTiles = (
     <motion.div className="grid md:grid-cols-3 gap-12 mb-20" variants={containerVariants}>
       {config.features.map((feature, index) => {
@@ -248,7 +264,9 @@ const About: React.FC<AboutProps> = ({ config, websiteConfig, layout = 'cards', 
             <div className="absolute inset-0 bg-primary/10 dark:bg-primary-dark/10 rounded-design transform -rotate-6 group-hover:rotate-0 transition-transform"></div>
             <div className="card-design relative p-8 h-full flex flex-col">
               <div className="w-16 h-16 mx-auto mb-6 bg-primary/10 dark:bg-primary-dark/10 rounded-design-sm flex items-center justify-center transform group-hover:scale-110 transition-transform">
-                <Icon className="h-8 w-8 text-primary dark:text-primary-dark" />
+                {featureStyle === 'icons'
+                  ? <Icon className="h-8 w-8 text-primary dark:text-primary-dark" />
+                  : featureMark(index, 'text-2xl')}
               </div>
               <h3 className="text-xl font-semibold mb-4 text-light-text dark:text-dark-text text-center">{feature.title}</h3>
               <p className="text-light-text/80 dark:text-dark-text/80 text-center flex-grow">{feature.description}</p>
@@ -269,7 +287,9 @@ const About: React.FC<AboutProps> = ({ config, websiteConfig, layout = 'cards', 
         const Icon = FEATURE_ICONS[feature.icon] ?? Star;
         return (
           <motion.div key={index} className="flex flex-col items-center text-center px-2" variants={itemVariants}>
-            <Icon className="h-8 w-8 text-primary dark:text-primary-dark mb-4" />
+            {featureStyle === 'icons'
+              ? <Icon className="h-8 w-8 text-primary dark:text-primary-dark mb-4" />
+              : <span className="mb-4">{featureMark(index, 'text-3xl')}</span>}
             <h3 className="text-xl font-semibold mb-2 text-light-text dark:text-dark-text">{feature.title}</h3>
             <p className="text-light-text/80 dark:text-dark-text/80">{feature.description}</p>
           </motion.div>
@@ -286,7 +306,9 @@ const About: React.FC<AboutProps> = ({ config, websiteConfig, layout = 'cards', 
         return (
           <motion.div key={index} className="flex items-start gap-5" variants={itemVariants}>
             <div className="w-12 h-12 shrink-0 bg-primary/10 dark:bg-primary-dark/10 rounded-design-sm flex items-center justify-center">
-              <Icon className="h-6 w-6 text-primary dark:text-primary-dark" />
+              {featureStyle === 'icons'
+                ? <Icon className="h-6 w-6 text-primary dark:text-primary-dark" />
+                : featureMark(index, 'text-lg')}
             </div>
             <div>
               <h3 className="text-lg font-semibold mb-1 text-light-text dark:text-dark-text">{feature.title}</h3>

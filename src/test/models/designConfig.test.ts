@@ -11,7 +11,7 @@ const TOKEN_KEYS = [
   'animLevel', 'navbarStyle', 'heroLayout', 'sectionDivider', 'density',
   'typeScale', 'headingAccent', 'imageTreatment',
   'aboutLayout', 'portfolioLayout', 'contactLayout', 'footerLayout',
-  'testimonialsLayout', 'faqStyle', 'defaultTheme',
+  'testimonialsLayout', 'faqStyle', 'defaultTheme', 'decor', 'featureStyle',
 ] as const satisfies readonly (keyof DesignTokens)[];
 
 describe('DesignConfig.fromJSON', () => {
@@ -62,11 +62,16 @@ describe('DesignConfig.fromJSON', () => {
       expect(STYLE_PRESETS[name].testimonialsLayout).toBe('cards');
       expect(STYLE_PRESETS[name].faqStyle).toBe('cards');
       expect(STYLE_PRESETS[name].defaultTheme).toBe('light');
+      // LT-107 signature axes stay off for the original catalog.
+      expect(STYLE_PRESETS[name].decor).toBe('none');
+      expect(STYLE_PRESETS[name].featureStyle).toBe('icons');
     }
     const bare = DesignConfig.fromJSON({});
     expect(bare.testimonialsLayout).toBe('cards');
     expect(bare.faqStyle).toBe('cards');
     expect(bare.defaultTheme).toBe('light');
+    expect(bare.decor).toBe('none');
+    expect(bare.featureStyle).toBe('icons');
   });
 
   it('expands a vibe preset into the full token bundle', () => {
