@@ -355,7 +355,7 @@ const About: React.FC<AboutProps> = ({ config, websiteConfig, layout = 'cards', 
                   <item.icon className="h-6 w-6" />
                 </motion.div>
                 <h4 className="font-semibold mb-2 text-light-text dark:text-dark-text">{item.title}</h4>
-                <div className="flex-grow flex items-center justify-center">
+                <div className="w-full min-w-0 flex-grow flex items-center justify-center">
                   {item.isHours ? (
                     <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm text-light-text/80 dark:text-dark-text/80">
                       {item.content.map((schedule: { day: string; hours: string }, idx: number) => (
@@ -368,7 +368,7 @@ const About: React.FC<AboutProps> = ({ config, websiteConfig, layout = 'cards', 
                   ) : item.isLink ? (
                     <a
                       href={item.action as string}
-                      className="text-light-text/80 dark:text-dark-text/80 hover:text-primary dark:hover:text-primary-dark transition-colors"
+                      className="max-w-full break-words text-light-text/80 dark:text-dark-text/80 hover:text-primary dark:hover:text-primary-dark transition-colors"
                       target={item.icon === MapPin ? "_blank" : undefined}
                       rel={item.icon === MapPin ? "noopener noreferrer" : undefined}
                     >
@@ -381,7 +381,7 @@ const About: React.FC<AboutProps> = ({ config, websiteConfig, layout = 'cards', 
                   ) : (
                     <button
                       onClick={item.action}
-                      className="text-light-text/80 dark:text-dark-text/80 hover:text-primary dark:hover:text-primary-dark transition-colors"
+                      className="max-w-full break-words text-light-text/80 dark:text-dark-text/80 hover:text-primary dark:hover:text-primary-dark transition-colors"
                     >
                       {item.content}
                     </button>
