@@ -26,7 +26,8 @@ import { useLanguage } from '../../contexts/LanguageContext';
 import { ContactModal } from '../ContactModal';
 import { useContactHandler } from '../../hooks/useContactHandler';
 import { AboutConfig } from '../../models/AboutConfig';
-import { AboutLayout, FeatureStyle } from '../../models/DesignConfig';
+import { AboutLayout, FeatureStyle, SectionHeader } from '../../models/DesignConfig';
+import SectionHeading from './SectionHeading';
 import { Social } from '../../models/Social';
 
 // Feature icons are stored in the config by name.
@@ -60,11 +61,17 @@ interface AboutProps {
   flipSplit?: boolean;
   /** LT-107 vibe signature: how features are marked (icons is legacy). */
   featureStyle?: FeatureStyle;
+  /** LT-115 page-rhythm chrome + this section's 1-based position. */
+  header?: SectionHeader;
+  sectionIndex?: number;
+  /** LT-115: painted background tone — the seeded order shuffle keeps tones
+   *  position-stable, so a reordered About may paint 'bg'. Default = legacy. */
+  tone?: 'bg' | 'surface';
 }
 
 const ROMAN_NUMERALS = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII'];
 
-const About: React.FC<AboutProps> = ({ config, websiteConfig, layout = 'cards', flipSplit = false, featureStyle = 'icons' }) => {
+const About: React.FC<AboutProps> = ({ config, websiteConfig, layout = 'cards', flipSplit = false, featureStyle = 'icons', header, sectionIndex, tone = 'surface' }) => {
   const { t, language } = useLanguage();
   const { isModalOpen, setIsModalOpen, modalType, handleContactClick } = useContactHandler();
   const formatWorkingHours = () => {
@@ -416,7 +423,7 @@ const About: React.FC<AboutProps> = ({ config, websiteConfig, layout = 'cards', 
 
   return (
     <>
-      <section id="about" className="section-y bg-light-surface dark:bg-dark-surface transition-colors duration-300">
+      <section id="about" className={`section-y ${tone === 'bg' ? 'bg-light-bg dark:bg-dark-bg' : 'bg-light-surface dark:bg-dark-surface'} transition-colors duration-300`}>
         <motion.div
           className="container mx-auto px-4"
           initial="hidden"
@@ -424,10 +431,15 @@ const About: React.FC<AboutProps> = ({ config, websiteConfig, layout = 'cards', 
           viewport={{ once: true }}
           variants={containerVariants}
         >
-          <motion.div variants={itemVariants} className="text-center mb-20">
-            <h2 className="text-4xl font-bold text-light-text dark:text-dark-text mb-6">{config.title}</h2>
-            <div className="heading-accent mx-auto mb-8" aria-hidden="true"></div>
-            <p className="text-xl text-light-text/80 dark:text-dark-text/80">{config.description}</p>
+          <motion.div variants={itemVariants}>
+            <SectionHeading
+              title={config.title}
+              description={config.description}
+              variant={header}
+              index={sectionIndex}
+              mb="mb-20"
+              descClass="text-xl text-light-text/80 dark:text-dark-text/80"
+            />
           </motion.div>
 
           {layout === 'manifesto' ? (

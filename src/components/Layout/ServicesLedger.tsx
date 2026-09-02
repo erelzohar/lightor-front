@@ -3,11 +3,15 @@ import { motion } from 'framer-motion';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { AppointmentType } from '../../models/AppointmentType';
 import type { SectionTone } from '../SectionDivider';
+import type { SectionHeader } from '../../models/DesignConfig';
+import SectionHeading from './SectionHeading';
 
 interface ServicesLedgerProps {
   appointmentTypes: AppointmentType[];
   /** Section background tone — assigned by App's flow builder. */
   tone: SectionTone;
+  header?: SectionHeader;
+  sectionIndex?: number;
 }
 
 const TONE_BG: Record<SectionTone, string> = {
@@ -28,7 +32,7 @@ const itemVariants = {
 // LT-109: the canvas price ledger — numbered rows with dotted leaders,
 // display type, built from the business's REAL services. Rendered only when
 // the servicesLayout token asks for it and priced services exist.
-const ServicesLedger: React.FC<ServicesLedgerProps> = ({ appointmentTypes, tone }) => {
+const ServicesLedger: React.FC<ServicesLedgerProps> = ({ appointmentTypes, tone, header, sectionIndex }) => {
   const { t, language } = useLanguage();
   const rows = appointmentTypes.filter((a) => a?.name);
   if (!rows.length) return null;
@@ -52,11 +56,13 @@ const ServicesLedger: React.FC<ServicesLedgerProps> = ({ appointmentTypes, tone 
         viewport={{ once: true }}
         variants={containerVariants}
       >
-        <motion.div variants={itemVariants} className="mb-14">
-          <h2 className="text-4xl font-bold text-light-text dark:text-dark-text mb-6">
-            {t('services.ledger_title', { defaultValue: language === 'he' ? 'המחירון' : 'Services' })}
-          </h2>
-          <div className="heading-accent mb-4" aria-hidden="true"></div>
+        <motion.div variants={itemVariants}>
+          <SectionHeading
+            title={t('services.ledger_title', { defaultValue: language === 'he' ? 'המחירון' : 'Services' })}
+            variant={header}
+            index={sectionIndex}
+            mb="mb-14"
+          />
         </motion.div>
 
         <div role="list">

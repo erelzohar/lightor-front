@@ -2,7 +2,8 @@ import React from 'react';
 import { ChevronDown } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { FaqConfig } from '../../models/FaqConfig';
-import type { FaqStyle } from '../../models/DesignConfig';
+import type { FaqStyle, SectionHeader } from '../../models/DesignConfig';
+import SectionHeading from './SectionHeading';
 import type { SectionTone } from '../SectionDivider';
 
 interface FaqProps {
@@ -11,6 +12,8 @@ interface FaqProps {
   tone: SectionTone;
   /** Skeleton variant (LT-093): 'cards' is the pre-LT-093 rendering. */
   faqStyle?: FaqStyle;
+  header?: SectionHeader;
+  sectionIndex?: number;
 }
 
 const TONE_BG: Record<SectionTone, string> = {
@@ -31,7 +34,7 @@ const itemVariants = {
 // Native <details>/<summary> accordion in every variant: zero JS state,
 // keyboard and screen reader support for free, cannot glitch. The variants
 // only change the chrome around it (LT-093).
-const Faq: React.FC<FaqProps> = ({ config, tone, faqStyle = 'cards' }) => {
+const Faq: React.FC<FaqProps> = ({ config, tone, faqStyle = 'cards', header, sectionIndex }) => {
   const isLines = faqStyle === 'lines' || faqStyle === 'numbered';
 
   const renderDetails = (item: { question: string; answer: string }, i: number) => (
@@ -76,9 +79,8 @@ const Faq: React.FC<FaqProps> = ({ config, tone, faqStyle = 'cards' }) => {
         viewport={{ once: true }}
         variants={containerVariants}
       >
-        <motion.div variants={itemVariants} className="text-center mb-16">
-          <h2 className="text-4xl font-bold text-light-text dark:text-dark-text mb-6">{config.title}</h2>
-          <div className="heading-accent mx-auto mb-8" aria-hidden="true"></div>
+        <motion.div variants={itemVariants}>
+          <SectionHeading title={config.title} variant={header} index={sectionIndex} mb="mb-16" />
         </motion.div>
 
         <motion.div

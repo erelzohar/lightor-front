@@ -123,6 +123,8 @@ const Hero: React.FC<HeroProps> = ({ config, social, phone, isContactVisible, is
     ? (rawHeroLayout === 'poster-split' ? 'poster-statement' : 'poster-split')
     : rawHeroLayout;
   const decorStart = jitter?.decorStart ?? false;
+  // Arabic cursive joins break under letter-spacing (review finding).
+  const noTrack = language === 'ar';
   const animLevel = design?.animLevel ?? 'full';
   const imageTreatment = design?.imageTreatment ?? 'rounded';
   const decor = design?.decor ?? 'none';
@@ -445,7 +447,7 @@ const Hero: React.FC<HeroProps> = ({ config, social, phone, isContactVisible, is
       return (
         <motion.div className="py-10 md:py-16" variants={containerVariants}>
           <motion.div
-            className="text-xs md:text-sm font-semibold tracking-[0.3em] text-light-text/60 dark:text-dark-text/60 uppercase"
+            className={`text-xs md:text-sm font-semibold ${noTrack ? '' : 'tracking-[0.3em]'} text-light-text/60 dark:text-dark-text/60 uppercase`}
             variants={itemVariants}
           >
             {config.description}
@@ -801,7 +803,7 @@ const Hero: React.FC<HeroProps> = ({ config, social, phone, isContactVisible, is
             marquee band along the hero's bottom edge. Static on purpose. */}
         {(decor === 'ticker' || decor === 'marquee') && (
           <div
-            className={`absolute bottom-0 inset-x-0 overflow-hidden whitespace-nowrap py-2 bg-primary dark:bg-primary-dark text-on-primary dark:text-on-primary-dark select-none ${decor === 'marquee' ? 'font-bold uppercase italic tracking-widest text-sm' : 'tracking-[0.25em] text-xs font-semibold'}`}
+            className={`absolute bottom-0 inset-x-0 overflow-hidden whitespace-nowrap py-2 bg-primary dark:bg-primary-dark text-on-primary dark:text-on-primary-dark select-none ${decor === 'marquee' ? `font-bold uppercase italic ${noTrack ? '' : 'tracking-widest'} text-sm` : `${noTrack ? '' : 'tracking-[0.25em]'} text-xs font-semibold`}`}
             aria-hidden="true"
           >
             {Array.from({ length: 14 }, () => config.title).join('  ·  ')}

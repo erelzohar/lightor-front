@@ -30,6 +30,8 @@ interface FormErrors {
 }
 
 interface ScheduleProps {
+  /** LT-115: the booking band above already shows the description. */
+  hideDescription?: boolean;
   config: ScheduleConfig;
   workingDays: (string | null)[];
   user_id: string;
@@ -48,7 +50,7 @@ interface ScheduleProps {
 }
 
 
-const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone, businessName, timeToCancel, vacations, dateOverrides = [], appointmentTypes, isUpdating, appointmentToUpdate, onUpdateComplete, onCancelUpdate, isPreview }) => {
+const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone, businessName, timeToCancel, vacations, dateOverrides = [], appointmentTypes, isUpdating, appointmentToUpdate, onUpdateComplete, onCancelUpdate, isPreview, hideDescription = false }) => {
   // if (!appointmentTypes) {
   //   throw new Error('No appointment types available');
   // }
@@ -795,9 +797,11 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
             <div className="w-24 h-1 bg-primary dark:bg-primary-dark mx-auto mb-8"></div>
 
 
-            <p className="text-xl text-light-text/80 dark:text-dark-text/80 max-w-2xl mx-auto">
-              {config.description}
-            </p>
+            {!hideDescription && (
+              <p className="text-xl text-light-text/80 dark:text-dark-text/80 max-w-2xl mx-auto">
+                {config.description}
+              </p>
+            )}
 
             {isUpdating && appointmentToUpdate && (
               <motion.div

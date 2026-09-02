@@ -3,7 +3,8 @@ import { Mail, Phone, MapPin, Send, User, MessageSquare, CheckCircle, XCircle } 
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { ContactConfig } from '../../models/ContactConfig';
-import { ContactLayout } from '../../models/DesignConfig';
+import { ContactLayout, SectionHeader } from '../../models/DesignConfig';
+import SectionHeading from './SectionHeading';
 import { ContactModal } from '../../components/ContactModal';
 import { useContactHandler } from '../../hooks/useContactHandler';
 import smsService from '../../services/SmsService';
@@ -29,6 +30,8 @@ interface ContactProps {
   workingDays: (string | null)[];
   isPreview?: boolean;
   layout?: ContactLayout;
+  header?: SectionHeader;
+  sectionIndex?: number;
 }
 
 const MaterialInput = ({
@@ -90,7 +93,7 @@ const MaterialInput = ({
   </div>
 );
 
-const Contact: React.FC<ContactProps> = ({ config, address, contact, workingDays, isPreview, layout = 'split' }) => {
+const Contact: React.FC<ContactProps> = ({ config, address, contact, workingDays, isPreview, layout = 'split', header, sectionIndex }) => {
   // 'split' = info column beside the form; 'stacked' = one narrow centered
   // column with the info as a chip row above the form.
   const isStacked = layout === 'stacked';
@@ -313,17 +316,16 @@ const Contact: React.FC<ContactProps> = ({ config, address, contact, workingDays
           viewport={{ once: true }}
           variants={containerVariants}
         >
-          <motion.div className="text-center mb-20" variants={itemVariants}>
-            <h2
-              className="text-4xl font-bold text-light-text dark:text-dark-text mb-6"
-              id="contact-title"
-            >
-              {config.title}
-            </h2>
-            <div className="heading-accent mx-auto mb-8" aria-hidden="true"></div>
-            <p className="text-xl text-light-text/80 dark:text-dark-text/80 max-w-2xl mx-auto">
-              {config.description}
-            </p>
+          <motion.div variants={itemVariants}>
+            <SectionHeading
+              title={config.title}
+              description={config.description}
+              variant={header}
+              index={sectionIndex}
+              mb="mb-20"
+              descClass="text-xl text-light-text/80 dark:text-dark-text/80 max-w-2xl mx-auto"
+              titleId="contact-title"
+            />
           </motion.div>
 
           <div className={isStacked ? 'max-w-2xl mx-auto flex flex-col gap-12' : 'grid md:grid-cols-2 gap-12 max-w-6xl mx-auto'}>

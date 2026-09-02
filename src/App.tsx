@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, Fragment, type ReactNode } from 'react';
+import { useState, useEffect, useRef, Fragment, cloneElement, isValidElement, type ReactNode, type ReactElement } from 'react';
 import { Routes, Route } from 'react-router-dom';
 
 // Components & Services
@@ -20,6 +20,7 @@ import ManageAppointment from './components/ManageAppointment';
 import Loading from './components/Loading';
 import SectionDivider, { type SectionTone } from './components/SectionDivider';
 import ServicesLedger from './components/Layout/ServicesLedger';
+import BookingBand from './components/Layout/BookingBand';
 
 // Contexts & Hooks
 import { useLanguage, Language } from './contexts/LanguageContext';
@@ -256,7 +257,7 @@ function MainContent() {
 
   // LT-109: the vibe-template price ledger, from the business's real
   // services. Only when the preset asks for it and priced services exist.
-  if (config.design?.servicesLayout === 'ledger' && (config.appointmentTypes?.length ?? 0) > 0) {
+  if (config.design?.servicesLayout === 'ledger' && (config.appointmentTypes ?? []).some((a) => a?.name)) {
     const tone = flow.length && flow[flow.length - 1].tone === 'bg' ? 'surface' as const : 'bg' as const;
     flow.push({
       key: 'services', tone,
@@ -288,6 +289,7 @@ function MainContent() {
       key: 'schedule', tone: 'surface', node: (
         <div id="booking-section" className="relative min-h-[25rem]">
           <Schedule
+            hideDescription={config.design?.bookingBand === 'band' && !!config.components?.schedule?.description?.trim()}
             config={config.components.schedule}
             workingDays={config.workingDays}
             user_id={config.user_id}
@@ -336,14 +338,65 @@ function MainContent() {
         <ErrorBoundary><Navbar websiteConfig={config} isPreview={isPreview} /></ErrorBoundary>
       )}
 
-      {flow.map((s, i) => (
-        <Fragment key={s.key}>
-          {i > 0 && (
-            <SectionDivider variant={divider} aboveTone={flow[i - 1].tone} belowTone={s.tone} mirror={jitter.mirrorDividers} />
-          )}
-          <ErrorBoundary>{s.node}</ErrorBoundary>
-        </Fragment>
-      ))}
+      {(() => {
+        // LT-115: seeded page-order variation — some sites lead with the
+        // work. Vibe presets only: legacy sites must never reorder (the
+        // review caught the ungated draw touching ~40% of old sites).
+        const ordered = [...flow];
+        const isVibeSite = (config.design?.sectionHeader ?? 'centered') !== 'centered'
+          || config.design?.bookingBand === 'band';
+        if (isVibeSite && jitter.portfolioFirst) {
+          const a = ordered.findIndex((e) => e.key === 'about');
+          const p = ordered.findIndex((e) => e.key === 'portfolio');
+          if (a !== -1 && p !== -1 && a < p) {
+            [ordered[a], ordered[p]] = [ordered[p], ordered[a]];
+            // Tones stay position-stable so the bg<->surface alternation and
+            // its dividers survive the reorder; the sections repaint from the
+            // tone prop distributed below.
+            const t = ordered[a].tone;
+            ordered[a] = { ...ordered[a], tone: ordered[p].tone };
+            ordered[p] = { ...ordered[p], tone: t };
+          }
+        }
+        // The canvas full-bleed CTA band, directly above the schedule. Only
+        // with a real statement to show — an empty band heading is worse
+        // than no band.
+        if (config.design?.bookingBand === 'band' && config.components?.schedule?.description?.trim()) {
+          const sIdx = ordered.findIndex((e) => e.key === 'schedule');
+          if (sIdx > 0) {
+            ordered.splice(sIdx, 0, {
+              key: 'booking-band',
+              // Same tone as its neighbour so no divider is drawn against it —
+              // the band paints its own primary background edge to edge.
+              tone: ordered[sIdx].tone,
+              node: <BookingBand statement={config.components.schedule.description} />,
+            });
+          }
+        }
+        // Every section learns the vibe's header chrome and — for the
+        // 'label' chrome — a sequential number. The band and the schedule
+        // don't render labels, so they don't consume numbers (the canvas
+        // counts 01/02/03 with no gaps).
+        let labelNo = 0;
+        return ordered.map((s, i) => {
+          const consumesNumber = s.key !== 'booking-band' && s.key !== 'schedule' && s.key !== 'hero';
+          if (consumesNumber) labelNo += 1;
+          return (
+            <Fragment key={s.key}>
+              {/* No shaped divider against the band — it paints its own
+                  saturated primary edge to edge (review finding). */}
+              {i > 0 && s.key !== 'booking-band' && ordered[i - 1].key !== 'booking-band' && (
+                <SectionDivider variant={divider} aboveTone={ordered[i - 1].tone} belowTone={s.tone} mirror={jitter.mirrorDividers} />
+              )}
+              <ErrorBoundary>
+                {isValidElement(s.node) && typeof (s.node as ReactElement).type !== 'string'
+                  ? cloneElement(s.node as ReactElement, { sectionIndex: consumesNumber ? labelNo : undefined, header: config.design?.sectionHeader, tone: s.tone } as Record<string, unknown>)
+                  : s.node}
+              </ErrorBoundary>
+            </Fragment>
+          );
+        });
+      })()}
 
       {config.components?.footer?.visible && (
         <ErrorBoundary>

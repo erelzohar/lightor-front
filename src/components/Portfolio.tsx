@@ -3,7 +3,8 @@ import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLanguage } from '../contexts/LanguageContext';
 import { PortfolioConfig } from '../models/PortfolioConfig';
-import { PortfolioLayout } from '../models/DesignConfig';
+import { PortfolioLayout, SectionHeader } from '../models/DesignConfig';
+import SectionHeading from './Layout/SectionHeading';
 import globals from '../services/globals';
 import ImagesService from '../services/ImagesService';
 import { handleWideImageError } from '../utils/imageFallback';
@@ -13,13 +14,17 @@ interface PortfolioProps {
   layout?: PortfolioLayout;
   /** Seeded per-site (LT-053): rotates the masonry aspect cycle. */
   masonryPhase?: number;
+  header?: SectionHeader;
+  sectionIndex?: number;
+  /** LT-115: painted background tone (see About). Default = legacy 'bg'. */
+  tone?: 'bg' | 'surface';
 }
 
 // Masonry cycles aspect ratios so the columns stagger even when every source
 // image has the same dimensions.
 const MASONRY_ASPECTS = ['aspect-[4/3]', 'aspect-square', 'aspect-[3/4]'];
 
-const Portfolio: React.FC<PortfolioProps> = ({ config, layout = 'grid', masonryPhase = 0 }) => {
+const Portfolio: React.FC<PortfolioProps> = ({ config, layout = 'grid', masonryPhase = 0, header, sectionIndex, tone = 'bg' }) => {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isGridView] = useState(config.isGrid);
   const [touchStart, setTouchStart] = useState(0);
@@ -106,7 +111,7 @@ const Portfolio: React.FC<PortfolioProps> = ({ config, layout = 'grid', masonryP
   return (
     <section
       id="portfolio"
-      className="section-y bg-light-bg dark:bg-dark-bg transition-colors duration-300"
+      className={`section-y ${tone === 'surface' ? 'bg-light-surface dark:bg-dark-surface' : 'bg-light-bg dark:bg-dark-bg'} transition-colors duration-300`}
       aria-label={t('nav.portfolio')}
     >
       <motion.div
@@ -116,24 +121,19 @@ const Portfolio: React.FC<PortfolioProps> = ({ config, layout = 'grid', masonryP
         viewport={{ once: true }}
       >
         <motion.div
-          className="text-center mb-20"
           initial={{ y: 20, opacity: 0 }}
           whileInView={{ y: 0, opacity: 1 }}
           viewport={{ once: true }}
         >
-          <h2
-            className="text-4xl font-bold text-light-text dark:text-dark-text mb-6"
-            id="portfolio-title"
-          >
-            {config.title}
-          </h2>
-          <div
-            className="heading-accent mx-auto mb-8"
-            aria-hidden="true"
+          <SectionHeading
+            title={config.title}
+            description={config.description}
+            variant={header}
+            index={sectionIndex}
+            mb="mb-20"
+            descClass="text-xl text-light-text/80 dark:text-dark-text/80 max-w-2xl mx-auto mb-8"
+            titleId="portfolio-title"
           />
-          <p className="text-xl text-light-text/80 dark:text-dark-text/80 max-w-2xl mx-auto mb-8">
-            {config.description}
-          </p>
           {/* 
           <motion.div
             className="inline-flex items-center gap-2 bg-light-surface dark:bg-dark-surface p-1 rounded-lg shadow-md"

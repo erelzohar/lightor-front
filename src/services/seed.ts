@@ -59,6 +59,9 @@ export interface SiteJitter {
   flipPosterSplit: boolean;
   /** Put the stamp/sun decor on the start corner instead of the end. */
   decorStart: boolean;
+  /** LT-115: show the portfolio before the about section — a seeded
+   *  page-order variation between two same-vibe sites. */
+  portfolioFirst: boolean;
 }
 
 export const getSiteJitter = (subdomain: string | undefined | null): SiteJitter => {
@@ -79,7 +82,8 @@ export const getSiteJitter = (subdomain: string | undefined | null): SiteJitter 
   const posterAlt = rng() < 0.5;
   const flipPosterSplit = rng() < 0.5;
   const decorStart = rng() < 0.5;
-  return { blobOffsets, particleSeed, floatDuration, masonryPhase, flipAboutSplit, mirrorDividers, posterAlt, flipPosterSplit, decorStart };
+  const portfolioFirst = rng() < 0.4;
+  return { blobOffsets, particleSeed, floatDuration, masonryPhase, flipAboutSplit, mirrorDividers, posterAlt, flipPosterSplit, decorStart, portfolioFirst };
 };
 
 /** A ready-to-use PRNG for components that derive many values (particles). */

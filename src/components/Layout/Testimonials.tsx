@@ -2,7 +2,8 @@ import React from 'react';
 import { Quote } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { TestimonialsConfig } from '../../models/TestimonialsConfig';
-import type { TestimonialsLayout } from '../../models/DesignConfig';
+import type { TestimonialsLayout, SectionHeader } from '../../models/DesignConfig';
+import SectionHeading from './SectionHeading';
 import type { SectionTone } from '../SectionDivider';
 
 interface TestimonialsProps {
@@ -11,6 +12,8 @@ interface TestimonialsProps {
   tone: SectionTone;
   /** Skeleton variant (LT-093): 'cards' is the pre-LT-093 rendering. */
   layout?: TestimonialsLayout;
+  header?: SectionHeader;
+  sectionIndex?: number;
 }
 
 const TONE_BG: Record<SectionTone, string> = {
@@ -35,7 +38,7 @@ const itemVariants = {
   visible: { y: 0, opacity: 1 },
 };
 
-const Testimonials: React.FC<TestimonialsProps> = ({ config, tone, layout = 'cards' }) => (
+const Testimonials: React.FC<TestimonialsProps> = ({ config, tone, layout = 'cards', header, sectionIndex }) => (
   <section
     id="testimonials"
     className={`section-y ${TONE_BG[tone]} transition-colors duration-300`}
@@ -47,9 +50,8 @@ const Testimonials: React.FC<TestimonialsProps> = ({ config, tone, layout = 'car
       viewport={{ once: true }}
       variants={containerVariants}
     >
-      <motion.div variants={itemVariants} className="text-center mb-16">
-        <h2 className="text-4xl font-bold text-light-text dark:text-dark-text mb-6">{config.title}</h2>
-        <div className="heading-accent mx-auto mb-8" aria-hidden="true"></div>
+      <motion.div variants={itemVariants}>
+        <SectionHeading title={config.title} variant={header} index={sectionIndex} mb="mb-16" />
       </motion.div>
 
       {layout === 'quote' ? (
