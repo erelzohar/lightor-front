@@ -62,6 +62,10 @@ export interface SiteJitter {
   /** LT-115: show the portfolio before the about section — a seeded
    *  page-order variation between two same-vibe sites. */
   portfolioFirst: boolean;
+  /** LT-119: unit draw for the booking band's slot in the page flow (see
+   *  pickBandSlot) — the band used to sit right above the schedule, which
+   *  made it redundant on every site. */
+  bandSlot: number;
 }
 
 export const getSiteJitter = (subdomain: string | undefined | null): SiteJitter => {
@@ -83,7 +87,9 @@ export const getSiteJitter = (subdomain: string | undefined | null): SiteJitter 
   const flipPosterSplit = rng() < 0.5;
   const decorStart = rng() < 0.5;
   const portfolioFirst = rng() < 0.4;
-  return { blobOffsets, particleSeed, floatDuration, masonryPhase, flipAboutSplit, mirrorDividers, posterAlt, flipPosterSplit, decorStart, portfolioFirst };
+  // LT-119 draw — appended.
+  const bandSlot = rng();
+  return { blobOffsets, particleSeed, floatDuration, masonryPhase, flipAboutSplit, mirrorDividers, posterAlt, flipPosterSplit, decorStart, portfolioFirst, bandSlot };
 };
 
 /** A ready-to-use PRNG for components that derive many values (particles). */

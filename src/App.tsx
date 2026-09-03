@@ -21,6 +21,7 @@ import Loading from './components/Loading';
 import SectionDivider, { type SectionTone } from './components/SectionDivider';
 import ServicesLedger from './components/Layout/ServicesLedger';
 import BookingBand from './components/Layout/BookingBand';
+import { pickBandSlot } from './services/bandSlot';
 
 // Contexts & Hooks
 import { useLanguage, Language } from './contexts/LanguageContext';
@@ -359,17 +360,19 @@ function MainContent() {
             ordered[p] = { ...ordered[p], tone: t };
           }
         }
-        // The canvas full-bleed CTA band, directly above the schedule. Only
-        // with a real statement to show — an empty band heading is worse
-        // than no band.
+        // The canvas full-bleed CTA band. LT-119: at a seeded slot that is
+        // never directly above (or below) the schedule — there it merely
+        // announced the widget beneath it, on every site alike. Only with a
+        // real statement to show — an empty band heading is worse than no
+        // band.
         if (config.design?.bookingBand === 'band' && config.components?.schedule?.description?.trim()) {
-          const sIdx = ordered.findIndex((e) => e.key === 'schedule');
-          if (sIdx > 0) {
-            ordered.splice(sIdx, 0, {
+          const slot = pickBandSlot(ordered.map((e) => e.key), jitter.bandSlot);
+          if (slot !== null) {
+            ordered.splice(slot, 0, {
               key: 'booking-band',
               // Same tone as its neighbour so no divider is drawn against it —
               // the band paints its own primary background edge to edge.
-              tone: ordered[sIdx].tone,
+              tone: (ordered[slot] ?? ordered[slot - 1]).tone,
               node: <BookingBand statement={config.components.schedule.description} />,
             });
           }
