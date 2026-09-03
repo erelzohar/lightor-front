@@ -222,6 +222,21 @@ html[data-type-scale="dramatic"] h2 { font-size: clamp(2.5rem, 1.8rem + 3vw, 4.2
 html[data-type-scale="poster"] h1 { font-size: clamp(3.5rem, 2rem + 8vw, 9rem); line-height: 0.95; }
 html[data-type-scale="poster"] h2 { font-size: clamp(2.5rem, 1.8rem + 3.5vw, 4.5rem); line-height: 1.05; }
 
+/* The poster-statement hero's outline echo (LT-113): the subtitle repeated as
+   a hollow stroked line under the title. The stroke color has to follow the
+   theme — drawn in the light-mode text color on a dark-first vibe it is a
+   near-black headline on a near-black page (LT-117). Line-height lives here
+   too, so it beats the html[data-type-scale] h1 sizing rule. */
+.text-echo {
+  color: transparent;
+  -webkit-text-stroke: 2px rgb(var(--color-light-text));
+  line-height: 1.05;
+}
+
+.dark .text-echo {
+  -webkit-text-stroke-color: rgb(var(--color-dark-text));
+}
+
 /* The 'label' chrome (LT-115) is a small tracked label with a rule, not
    display type — the poster/dramatic h2 sizing turned it into a wall of
    72px letters. It opts out of the scale entirely and keeps its own size. */

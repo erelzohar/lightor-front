@@ -227,6 +227,7 @@ function MainContent() {
           social={config.social}
           phone={config.contact.phone}
           isContactVisible={config.components?.contact?.visible ?? false}
+          appointmentTypes={config.appointmentTypes}
           isPreview={isPreview}
           palette={config.pallete}
           design={config.design}

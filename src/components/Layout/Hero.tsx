@@ -8,6 +8,7 @@ import { HeroConfig } from '../../models/HeroConfig';
 import { Social } from '../../models/Social';
 import { Palette } from '../../models/WebsiteConfig';
 import { DesignConfig, BorderRadius } from '../../models/DesignConfig';
+import { AppointmentType } from '../../models/AppointmentType';
 import ImagesService from '../../services/ImagesService';
 import { handleWideImageError } from '../../utils/imageFallback';
 import { useIsDarkMode } from '../../hooks/useIsDarkMode';
@@ -67,6 +68,8 @@ interface HeroProps {
   social: Social;
   phone: string | null;
   isContactVisible: boolean;
+  /** The business's real services — the ticker band lists these (LT-117). */
+  appointmentTypes?: AppointmentType[];
   isPreview?: boolean;
   palette?: Palette;
   design?: DesignConfig;
@@ -95,7 +98,7 @@ const radiusClassMap: Record<BorderRadius, string> = {
   full: 'rounded-full',
 };
 
-const Hero: React.FC<HeroProps> = ({ config, social, phone, isContactVisible, isPreview, palette, design, jitter }) => {
+const Hero: React.FC<HeroProps> = ({ config, social, phone, isContactVisible, appointmentTypes, isPreview, palette, design, jitter }) => {
   const { t, language } = useLanguage();
   const { isModalOpen, setIsModalOpen, modalType, handleContactClick } = useContactHandler();
 
@@ -130,6 +133,19 @@ const Hero: React.FC<HeroProps> = ({ config, social, phone, isContactVisible, is
   const imageTreatment = design?.imageTreatment ?? 'rounded';
   const decor = design?.decor ?? 'none';
   const animD = (base: number) => animLevel === 'none' ? 0 : animLevel === 'minimal' ? base * 0.25 : base;
+
+  // The ticker band reads as a shop sign: the service list, repeated until it
+  // fills the width. Falls back to the hero title when a site has no named
+  // services yet (a fresh signup before the owner fills the menu), which is
+  // what it always showed before LT-117.
+  const tickerItems = (appointmentTypes ?? [])
+    .map((type) => type.name?.trim())
+    .filter((name): name is string => !!name);
+  const tickerSource = tickerItems.length ? tickerItems : [config.title];
+  const tickerText = Array.from(
+    { length: Math.ceil(28 / tickerSource.length) },
+    () => tickerSource,
+  ).flat().join('  ·  ');
 
   const vantaKey = [
     bgType,
@@ -456,18 +472,17 @@ const Hero: React.FC<HeroProps> = ({ config, social, phone, isContactVisible, is
               // mt-8, not the old mt-2: both blocks are display type whose
               // glyphs overflow their own (sub-1) line boxes, so a 2-line
               // title's descenders printed straight through the echo's caps.
-              className="font-bold leading-none mt-8 text-transparent"
-              style={{ WebkitTextStroke: '2px rgb(var(--color-light-text))', fontSize: 'inherit' }}
+              className="mt-8"
               variants={itemVariants}
             >
-              {/* The echo carries a 2px stroke on both sides of every glyph, so
-                  the poster scale's sub-1 leading made a wrapped subtitle
-                  collide with itself. Inline line-height, to win over the
+              {/* .text-echo (index.css) owns the stroke, in both themes. It
+                  used to be an inline `-webkit-text-stroke: 2px light-text`
+                  with a `dark:` CLASS meant to recolor it — but an inline
+                  style always beats a class, so the echo stayed near-black in
+                  dark mode: an invisible headline on every dark-first vibe.
+                  The class also carries the leading, which has to win over the
                   html[data-type-scale] h1 rule. */}
-              <h1
-                className="dark:[-webkit-text-stroke-color:rgb(var(--color-dark-text))]"
-                style={{ WebkitTextStroke: 'inherit', color: 'transparent', lineHeight: 1.05 }}
-              >
+              <h1 className="text-echo font-bold">
                 {config.subtitle}
               </h1>
             </motion.div>
@@ -803,13 +818,16 @@ const Hero: React.FC<HeroProps> = ({ config, social, phone, isContactVisible, is
         </motion.div>
 
         {/* Repeating-text strip (LT-107): the industrial ticker / electric
-            marquee band along the hero's bottom edge. Static on purpose. */}
+            marquee band along the hero's bottom edge. Static on purpose.
+            It lists what the business actually sells (LT-117) — the same
+            services the ledger and the booking form use — instead of the
+            hero title over and over. */}
         {(decor === 'ticker' || decor === 'marquee') && (
           <div
             className={`absolute bottom-0 inset-x-0 overflow-hidden whitespace-nowrap py-2 bg-primary dark:bg-primary-dark text-on-primary dark:text-on-primary-dark select-none ${decor === 'marquee' ? `font-bold uppercase italic ${noTrack ? '' : 'tracking-widest'} text-sm` : `${noTrack ? '' : 'tracking-[0.25em]'} text-xs font-semibold`}`}
             aria-hidden="true"
           >
-            {Array.from({ length: 14 }, () => config.title).join('  ·  ')}
+            {tickerText}
           </div>
         )}
       </section>
