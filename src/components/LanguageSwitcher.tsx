@@ -43,7 +43,7 @@ const LanguageSwitcher = () => {
         <span className="text-sm font-medium text-light-text dark:text-dark-text">
           {currentLang.label}
         </span>
-        <ChevronDown className={`w-4 h-4 text-light-text/50 transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`} />
+        <ChevronDown className={`w-4 h-4 text-light-text/50 dark:text-dark-text/50 transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`} />
       </motion.button>
 
       <AnimatePresence>

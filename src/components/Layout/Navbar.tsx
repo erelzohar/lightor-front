@@ -5,6 +5,7 @@ import LanguageSwitcher from '../LanguageSwitcher';
 import globals from '../../services/globals';
 import ImagesService from '../../services/ImagesService';
 import { handleSquareImageError } from '../../utils/imageFallback';
+import { useIsDarkMode } from '../../hooks/useIsDarkMode';
 
 interface WebsiteConfig {
   logoImageName: string;
@@ -32,10 +33,9 @@ interface NavbarProps {
 
 const Navbar: React.FC<NavbarProps> = ({ websiteConfig, isPreview }) => {
   const [isOpen, setIsOpen] = useState(false);
-  const [darkMode, setDarkMode] = useState(() => {
-    const savedMode = localStorage.getItem('darkMode');
-    return savedMode ? savedMode === 'true' : false;
-  });
+  // Derived from the `dark` class, never from localStorage: the design's
+  // defaultTheme (and the preview) set that class without touching storage.
+  const darkMode = useIsDarkMode();
   const [isScrolled, setIsScrolled] = useState(false);
   const [isVisible, setIsVisible] = useState(true);
   const lastScrollY = useRef(0);
@@ -112,7 +112,7 @@ const Navbar: React.FC<NavbarProps> = ({ websiteConfig, isPreview }) => {
 
   const toggleDarkMode = () => {
     const newDarkMode = !darkMode;
-    setDarkMode(newDarkMode);
+    // No local state to set — useIsDarkMode picks the class change up.
     document.documentElement.classList.toggle('dark', newDarkMode);
     localStorage.setItem('darkMode', String(newDarkMode));
   };
@@ -188,9 +188,9 @@ const Navbar: React.FC<NavbarProps> = ({ websiteConfig, isPreview }) => {
                 aria-label={t('common.toggle_dark_mode', { defaultValue: 'Toggle dark mode' })}
               >
                 {!darkMode ? (
-                  <Moon className="h-5 w-5 text-light-text" />
+                  <Moon className="h-5 w-5 text-light-text dark:text-dark-text" />
                 ) : (
-                  <Sun className="h-5 w-5 text-dark-text" />
+                  <Sun className="h-5 w-5 text-light-text dark:text-dark-text" />
                 )}
               </button>
             )}
@@ -242,9 +242,9 @@ const Navbar: React.FC<NavbarProps> = ({ websiteConfig, isPreview }) => {
                 aria-label={t('common.toggle_dark_mode', { defaultValue: 'Toggle dark mode' })}
               >
                 {!darkMode ? (
-                  <Moon className="h-5 w-5 text-light-text" />
+                  <Moon className="h-5 w-5 text-light-text dark:text-dark-text" />
                 ) : (
-                  <Sun className="h-5 w-5 text-dark-text" />
+                  <Sun className="h-5 w-5 text-light-text dark:text-dark-text" />
                 )}
               </button>
             )}

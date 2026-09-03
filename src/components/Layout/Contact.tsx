@@ -31,7 +31,6 @@ interface ContactProps {
   isPreview?: boolean;
   layout?: ContactLayout;
   header?: SectionHeader;
-  sectionIndex?: number;
 }
 
 const MaterialInput = ({
@@ -93,7 +92,7 @@ const MaterialInput = ({
   </div>
 );
 
-const Contact: React.FC<ContactProps> = ({ config, address, contact, workingDays, isPreview, layout = 'split', header, sectionIndex }) => {
+const Contact: React.FC<ContactProps> = ({ config, address, contact, workingDays, isPreview, layout = 'split', header }) => {
   // 'split' = info column beside the form; 'stacked' = one narrow centered
   // column with the info as a chip row above the form.
   const isStacked = layout === 'stacked';
@@ -321,7 +320,6 @@ const Contact: React.FC<ContactProps> = ({ config, address, contact, workingDays
               title={config.title}
               description={config.description}
               variant={header}
-              index={sectionIndex}
               mb="mb-20"
               descClass="text-xl text-light-text/80 dark:text-dark-text/80 max-w-2xl mx-auto"
               titleId="contact-title"

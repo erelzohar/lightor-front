@@ -13,7 +13,6 @@ interface TestimonialsProps {
   /** Skeleton variant (LT-093): 'cards' is the pre-LT-093 rendering. */
   layout?: TestimonialsLayout;
   header?: SectionHeader;
-  sectionIndex?: number;
 }
 
 const TONE_BG: Record<SectionTone, string> = {
@@ -38,7 +37,7 @@ const itemVariants = {
   visible: { y: 0, opacity: 1 },
 };
 
-const Testimonials: React.FC<TestimonialsProps> = ({ config, tone, layout = 'cards', header, sectionIndex }) => (
+const Testimonials: React.FC<TestimonialsProps> = ({ config, tone, layout = 'cards', header }) => (
   <section
     id="testimonials"
     className={`section-y ${TONE_BG[tone]} transition-colors duration-300`}
@@ -51,7 +50,7 @@ const Testimonials: React.FC<TestimonialsProps> = ({ config, tone, layout = 'car
       variants={containerVariants}
     >
       <motion.div variants={itemVariants}>
-        <SectionHeading title={config.title} variant={header} index={sectionIndex} mb="mb-16" />
+        <SectionHeading title={config.title} variant={header} mb="mb-16" />
       </motion.div>
 
       {layout === 'quote' ? (

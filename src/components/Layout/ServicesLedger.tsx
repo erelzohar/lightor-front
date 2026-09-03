@@ -11,7 +11,6 @@ interface ServicesLedgerProps {
   /** Section background tone — assigned by App's flow builder. */
   tone: SectionTone;
   header?: SectionHeader;
-  sectionIndex?: number;
 }
 
 const TONE_BG: Record<SectionTone, string> = {
@@ -32,7 +31,7 @@ const itemVariants = {
 // LT-109: the canvas price ledger — numbered rows with dotted leaders,
 // display type, built from the business's REAL services. Rendered only when
 // the servicesLayout token asks for it and priced services exist.
-const ServicesLedger: React.FC<ServicesLedgerProps> = ({ appointmentTypes, tone, header, sectionIndex }) => {
+const ServicesLedger: React.FC<ServicesLedgerProps> = ({ appointmentTypes, tone, header }) => {
   const { t, language } = useLanguage();
   const rows = appointmentTypes.filter((a) => a?.name);
   if (!rows.length) return null;
@@ -60,7 +59,6 @@ const ServicesLedger: React.FC<ServicesLedgerProps> = ({ appointmentTypes, tone,
           <SectionHeading
             title={t('services.ledger_title', { defaultValue: language === 'he' ? 'המחירון' : 'Services' })}
             variant={header}
-            index={sectionIndex}
             mb="mb-14"
           />
         </motion.div>

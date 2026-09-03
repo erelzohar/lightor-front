@@ -7,8 +7,6 @@ interface SectionHeadingProps {
   description?: string;
   /** Which chrome the vibe uses; 'centered' is the legacy rendering. */
   variant?: SectionHeader;
-  /** 1-based section position — the 'label' chrome shows it as 01/02/…. */
-  index?: number;
   /** Bottom margin class of the whole header block (legacy varies per section). */
   mb?: string;
   /** Classes for the description paragraph — the CENTERED variant renders it
@@ -24,15 +22,14 @@ interface SectionHeadingProps {
  * times per page — which is what made different vibes read as one product.
  * The vibe's sectionHeader token now picks the chrome:
  *  - 'centered': the legacy block, byte-compatible classes.
- *  - 'label': the canvas numbered tracked label with a rule running to the
- *    edge (industrial/underground/electric artboards).
+ *  - 'label': the canvas tracked label with a rule running to the edge
+ *    (industrial/underground/electric artboards).
  *  - 'side': start-aligned title + accent (atelier/gallery/heritage/earthy).
  */
 const SectionHeading: React.FC<SectionHeadingProps> = ({
   title,
   description,
   variant = 'centered',
-  index,
   mb = 'mb-16',
   descClass = 'text-xl text-light-text/80 dark:text-dark-text/80',
   titleId,
@@ -45,12 +42,7 @@ const SectionHeading: React.FC<SectionHeadingProps> = ({
     return (
       <div className={mb}>
         <div className="flex items-center gap-4">
-          {typeof index === 'number' && (
-            <span className={`text-sm font-bold ${track} text-primary-readable dark:text-primary-dark-readable`} aria-hidden="true">
-              {String(index).padStart(2, '0')}
-            </span>
-          )}
-          <h2 id={titleId} className={`text-base font-bold ${track} uppercase text-primary-readable dark:text-primary-dark-readable`}>
+          <h2 id={titleId} className={`section-label-title text-base font-bold ${track} uppercase text-primary-readable dark:text-primary-dark-readable`}>
             {title}
           </h2>
           <span className="flex-1 h-px bg-light-text/15 dark:bg-dark-text/15" aria-hidden="true"></span>

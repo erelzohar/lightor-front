@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { Calendar, Phone, Instagram, Facebook } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useLanguage } from '../../contexts/LanguageContext';
@@ -10,6 +10,7 @@ import { Palette } from '../../models/WebsiteConfig';
 import { DesignConfig, BorderRadius } from '../../models/DesignConfig';
 import ImagesService from '../../services/ImagesService';
 import { handleWideImageError } from '../../utils/imageFallback';
+import { useIsDarkMode } from '../../hooks/useIsDarkMode';
 
 function hexToInt(hex: string): number {
   return parseInt(hex.replace('#', ''), 16);
@@ -101,7 +102,7 @@ const Hero: React.FC<HeroProps> = ({ config, social, phone, isContactVisible, is
   const vantaRef = useRef<HTMLDivElement>(null);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const vantaInstanceRef = useRef<any>(null);
-  const [isDarkMode, setIsDarkMode] = useState(document.documentElement.classList.contains('dark'));
+  const isDarkMode = useIsDarkMode();
 
   // The default background is Vanta fog (LT-071, Erel's decision after the
   // LT-062..069 animated-gradient saga — see the missions log). Stored
@@ -138,14 +139,6 @@ const Hero: React.FC<HeroProps> = ({ config, social, phone, isContactVisible, is
     palette?.colorLightBg       ?? '',
     palette?.colorDarkBg        ?? '',
   ].join('|');
-
-  useEffect(() => {
-    const observer = new MutationObserver(() => {
-      setIsDarkMode(document.documentElement.classList.contains('dark'));
-    });
-    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
-    return () => observer.disconnect();
-  }, []);
 
   useEffect(() => {
     if (!vantaRef.current) return;
@@ -460,11 +453,21 @@ const Hero: React.FC<HeroProps> = ({ config, social, phone, isContactVisible, is
           </motion.h1>
           {config.subtitle && (
             <motion.div
-              className="font-bold leading-none mt-2 text-transparent"
+              // mt-8, not the old mt-2: both blocks are display type whose
+              // glyphs overflow their own (sub-1) line boxes, so a 2-line
+              // title's descenders printed straight through the echo's caps.
+              className="font-bold leading-none mt-8 text-transparent"
               style={{ WebkitTextStroke: '2px rgb(var(--color-light-text))', fontSize: 'inherit' }}
               variants={itemVariants}
             >
-              <h1 className="dark:[-webkit-text-stroke-color:rgb(var(--color-dark-text))] leading-none" style={{ WebkitTextStroke: 'inherit', color: 'transparent' }}>
+              {/* The echo carries a 2px stroke on both sides of every glyph, so
+                  the poster scale's sub-1 leading made a wrapped subtitle
+                  collide with itself. Inline line-height, to win over the
+                  html[data-type-scale] h1 rule. */}
+              <h1
+                className="dark:[-webkit-text-stroke-color:rgb(var(--color-dark-text))]"
+                style={{ WebkitTextStroke: 'inherit', color: 'transparent', lineHeight: 1.05 }}
+              >
                 {config.subtitle}
               </h1>
             </motion.div>

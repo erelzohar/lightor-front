@@ -63,7 +63,6 @@ interface AboutProps {
   featureStyle?: FeatureStyle;
   /** LT-115 page-rhythm chrome + this section's 1-based position. */
   header?: SectionHeader;
-  sectionIndex?: number;
   /** LT-115: painted background tone — the seeded order shuffle keeps tones
    *  position-stable, so a reordered About may paint 'bg'. Default = legacy. */
   tone?: 'bg' | 'surface';
@@ -71,7 +70,7 @@ interface AboutProps {
 
 const ROMAN_NUMERALS = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII'];
 
-const About: React.FC<AboutProps> = ({ config, websiteConfig, layout = 'cards', flipSplit = false, featureStyle = 'icons', header, sectionIndex, tone = 'surface' }) => {
+const About: React.FC<AboutProps> = ({ config, websiteConfig, layout = 'cards', flipSplit = false, featureStyle = 'icons', header, tone = 'surface' }) => {
   const { t, language } = useLanguage();
   const { isModalOpen, setIsModalOpen, modalType, handleContactClick } = useContactHandler();
   const formatWorkingHours = () => {
@@ -436,7 +435,6 @@ const About: React.FC<AboutProps> = ({ config, websiteConfig, layout = 'cards', 
               title={config.title}
               description={config.description}
               variant={header}
-              index={sectionIndex}
               mb="mb-20"
               descClass="text-xl text-light-text/80 dark:text-dark-text/80"
             />

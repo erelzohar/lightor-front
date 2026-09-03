@@ -373,14 +373,10 @@ function MainContent() {
             });
           }
         }
-        // Every section learns the vibe's header chrome and — for the
-        // 'label' chrome — a sequential number. The band and the schedule
-        // don't render labels, so they don't consume numbers (the canvas
-        // counts 01/02/03 with no gaps).
-        let labelNo = 0;
+        // Every section learns the vibe's header chrome. (Sections used to
+        // also receive a sequential 01/02/03 for the 'label' chrome; the
+        // numbers read as clutter next to the title and were dropped.)
         return ordered.map((s, i) => {
-          const consumesNumber = s.key !== 'booking-band' && s.key !== 'schedule' && s.key !== 'hero';
-          if (consumesNumber) labelNo += 1;
           return (
             <Fragment key={s.key}>
               {/* No shaped divider against the band — it paints its own
@@ -390,7 +386,7 @@ function MainContent() {
               )}
               <ErrorBoundary>
                 {isValidElement(s.node) && typeof (s.node as ReactElement).type !== 'string'
-                  ? cloneElement(s.node as ReactElement, { sectionIndex: consumesNumber ? labelNo : undefined, header: config.design?.sectionHeader, tone: s.tone } as Record<string, unknown>)
+                  ? cloneElement(s.node as ReactElement, { header: config.design?.sectionHeader, tone: s.tone } as Record<string, unknown>)
                   : s.node}
               </ErrorBoundary>
             </Fragment>

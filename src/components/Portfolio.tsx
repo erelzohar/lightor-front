@@ -15,7 +15,6 @@ interface PortfolioProps {
   /** Seeded per-site (LT-053): rotates the masonry aspect cycle. */
   masonryPhase?: number;
   header?: SectionHeader;
-  sectionIndex?: number;
   /** LT-115: painted background tone (see About). Default = legacy 'bg'. */
   tone?: 'bg' | 'surface';
 }
@@ -24,7 +23,7 @@ interface PortfolioProps {
 // image has the same dimensions.
 const MASONRY_ASPECTS = ['aspect-[4/3]', 'aspect-square', 'aspect-[3/4]'];
 
-const Portfolio: React.FC<PortfolioProps> = ({ config, layout = 'grid', masonryPhase = 0, header, sectionIndex, tone = 'bg' }) => {
+const Portfolio: React.FC<PortfolioProps> = ({ config, layout = 'grid', masonryPhase = 0, header, tone = 'bg' }) => {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isGridView] = useState(config.isGrid);
   const [touchStart, setTouchStart] = useState(0);
@@ -129,7 +128,6 @@ const Portfolio: React.FC<PortfolioProps> = ({ config, layout = 'grid', masonryP
             title={config.title}
             description={config.description}
             variant={header}
-            index={sectionIndex}
             mb="mb-20"
             descClass="text-xl text-light-text/80 dark:text-dark-text/80 max-w-2xl mx-auto mb-8"
             titleId="portfolio-title"

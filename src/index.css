@@ -204,23 +204,32 @@ html[data-density="spacious"] .section-y {
 
 /* Type scale — fluid heading sizes per design.typeScale. Higher specificity
    than Tailwind text-* utilities so it cleanly overrides inline sizing, and
-   uses clamp() to stay responsive without breakpoint classes. */
-html[data-type-scale="modest"] h1 { font-size: clamp(2rem, 1.4rem + 2.5vw, 3.25rem); }
-html[data-type-scale="modest"] h2 { font-size: clamp(1.5rem, 1.2rem + 1.5vw, 2.25rem); }
+   uses clamp() to stay responsive without breakpoint classes.
+   Each rule sets a line-height alongside the size: a Tailwind text-* utility
+   ships font-size AND line-height together, and overriding only the size left
+   a 72px heading sitting in a 24px line box — two-line titles printed on top
+   of each other (LT-116). */
+html[data-type-scale="modest"] h1 { font-size: clamp(2rem, 1.4rem + 2.5vw, 3.25rem); line-height: 1.1; }
+html[data-type-scale="modest"] h2 { font-size: clamp(1.5rem, 1.2rem + 1.5vw, 2.25rem); line-height: 1.15; }
 
-html[data-type-scale="balanced"] h1 { font-size: clamp(2.5rem, 1.8rem + 3.2vw, 4.5rem); }
-html[data-type-scale="balanced"] h2 { font-size: clamp(2rem, 1.5rem + 2vw, 3rem); }
+html[data-type-scale="balanced"] h1 { font-size: clamp(2.5rem, 1.8rem + 3.2vw, 4.5rem); line-height: 1.1; }
+html[data-type-scale="balanced"] h2 { font-size: clamp(2rem, 1.5rem + 2vw, 3rem); line-height: 1.15; }
 
-html[data-type-scale="dramatic"] h1 { font-size: clamp(3rem, 2rem + 5vw, 6rem); }
-html[data-type-scale="dramatic"] h2 { font-size: clamp(2.5rem, 1.8rem + 3vw, 4.25rem); }
+html[data-type-scale="dramatic"] h1 { font-size: clamp(3rem, 2rem + 5vw, 6rem); line-height: 1.05; }
+html[data-type-scale="dramatic"] h2 { font-size: clamp(2.5rem, 1.8rem + 3vw, 4.25rem); line-height: 1.1; }
 /* 'poster' (LT-108): the vibe-canvas hero manner — enormous condensed
    display type. Meant for condensed heading faces (Anton/Karantina). */
 html[data-type-scale="poster"] h1 { font-size: clamp(3.5rem, 2rem + 8vw, 9rem); line-height: 0.95; }
-html[data-type-scale="poster"] h2 { font-size: clamp(2.5rem, 1.8rem + 3.5vw, 4.5rem); }
+html[data-type-scale="poster"] h2 { font-size: clamp(2.5rem, 1.8rem + 3.5vw, 4.5rem); line-height: 1.05; }
+
+/* The 'label' chrome (LT-115) is a small tracked label with a rule, not
+   display type — the poster/dramatic h2 sizing turned it into a wall of
+   72px letters. It opts out of the scale entirely and keeps its own size. */
+html[data-type-scale] h2.section-label-title { font-size: 1rem; line-height: 1.5; }
 
 /* h3 only nudged at the extremes; balanced keeps the utility-class sizes. */
-html[data-type-scale="modest"] h3 { font-size: clamp(1.125rem, 1rem + 0.5vw, 1.375rem); }
-html[data-type-scale="dramatic"] h3 { font-size: clamp(1.5rem, 1.2rem + 1.2vw, 2rem); }
+html[data-type-scale="modest"] h3 { font-size: clamp(1.125rem, 1rem + 0.5vw, 1.375rem); line-height: 1.35; }
+html[data-type-scale="dramatic"] h3 { font-size: clamp(1.5rem, 1.2rem + 1.2vw, 2rem); line-height: 1.25; }
 
 /* Heading accent — the small flourish under section titles. Shape is chosen
    by the headingAccent design token (data attribute set in useTheme); margins

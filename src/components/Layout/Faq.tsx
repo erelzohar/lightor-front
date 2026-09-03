@@ -13,7 +13,6 @@ interface FaqProps {
   /** Skeleton variant (LT-093): 'cards' is the pre-LT-093 rendering. */
   faqStyle?: FaqStyle;
   header?: SectionHeader;
-  sectionIndex?: number;
 }
 
 const TONE_BG: Record<SectionTone, string> = {
@@ -34,7 +33,7 @@ const itemVariants = {
 // Native <details>/<summary> accordion in every variant: zero JS state,
 // keyboard and screen reader support for free, cannot glitch. The variants
 // only change the chrome around it (LT-093).
-const Faq: React.FC<FaqProps> = ({ config, tone, faqStyle = 'cards', header, sectionIndex }) => {
+const Faq: React.FC<FaqProps> = ({ config, tone, faqStyle = 'cards', header }) => {
   const isLines = faqStyle === 'lines' || faqStyle === 'numbered';
 
   const renderDetails = (item: { question: string; answer: string }, i: number) => (
@@ -80,7 +79,7 @@ const Faq: React.FC<FaqProps> = ({ config, tone, faqStyle = 'cards', header, sec
         variants={containerVariants}
       >
         <motion.div variants={itemVariants}>
-          <SectionHeading title={config.title} variant={header} index={sectionIndex} mb="mb-16" />
+          <SectionHeading title={config.title} variant={header} mb="mb-16" />
         </motion.div>
 
         <motion.div
