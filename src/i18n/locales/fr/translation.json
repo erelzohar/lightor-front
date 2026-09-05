@@ -58,6 +58,8 @@
       "invalidOtp": "Code de vérification invalide"
     },
     "conflictError": "Ce créneau est déjà pris, veuillez en choisir un autre",
+    "genericError": "Une erreur est survenue, veuillez réessayer",
+    "blockedError": "Cet établissement ne peut pas accepter de réservation pour ce numéro de téléphone — contactez-le directement.",
     "form": {
       "name": "Nom complet",
       "phone": "Numéro de téléphone",

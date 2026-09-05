@@ -82,6 +82,11 @@ class AppointmentService {
       if (error.response && error.response.status === 409) {
         throw new Error("SLOT_TAKEN"); // Send a specific code to the component
       }
+      // The business has blocked this phone number (LT-122). Keyed on the
+      // server's machine-readable code, never on the message text.
+      if (error.response?.status === 403 && error.response.data?.code === 'CUSTOMER_BLOCKED') {
+        throw new Error("CUSTOMER_BLOCKED");
+      }
       console.error('Error creating appointment:', error);
       throw error;
     }
@@ -94,7 +99,11 @@ class AppointmentService {
         params: manageToken ? { manageToken } : undefined,
       });
       return Appointment.fromJSON(response.data?.data);
-    } catch (error) {
+    } catch (error: any) {
+      // A blocked customer may still cancel, but a reschedule is refused (LT-122).
+      if (error?.response?.status === 403 && error.response.data?.code === 'CUSTOMER_BLOCKED') {
+        throw new Error("CUSTOMER_BLOCKED");
+      }
       console.error(`Error updating appointment with id ${app._id}:`, error);
       throw error;
     }

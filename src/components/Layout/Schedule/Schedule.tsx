@@ -176,7 +176,7 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
     e.preventDefault();
     if (!validateForm()) return;
     if (!selectedDate || !selectedAppointmentType) {
-      setError(t('schedule.error'));
+      setError(t('schedule.genericError'));
       return;
     }
 
@@ -197,7 +197,7 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
         }
       }
     } catch (error) {
-      setError(t('schedule.error'));
+      setError(t('schedule.genericError'));
     } finally {
       setIsSubmitting(false);
     }
@@ -300,7 +300,8 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
           resetCalendar();
         }, 5000);
       }
-      else setError(t('schedule.error'));
+      else if (error && error.message === "CUSTOMER_BLOCKED") setError(t('schedule.blockedError'));
+      else setError(t('schedule.genericError'));
     } finally {
       setIsSubmitting(false);
     }

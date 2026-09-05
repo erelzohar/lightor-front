@@ -58,6 +58,8 @@
       "invalidOtp": "Código de verificación inválido"
     },
     "conflictError": "Este horario ya está ocupado, por favor elige otro",
+    "genericError": "Algo salió mal, inténtalo de nuevo",
+    "blockedError": "Este negocio no puede aceptar una reserva desde este número de teléfono — contáctalo directamente.",
     "form": {
       "name": "Nombre completo",
       "phone": "Número de teléfono",

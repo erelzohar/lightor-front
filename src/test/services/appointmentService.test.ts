@@ -171,5 +171,32 @@ describe('AppointmentService', () => {
 
       expect(result.channelType).toBe('sms');
     });
+
+    it('translates a blocked customer into a code the form can act on (LT-122)', async () => {
+      // The business blocked this phone number. Keyed on the server's `code`,
+      // never on message text, so copy changes cannot break the mapping.
+      mock.onPost(base).reply(403, { success: false, error: 'blocked', code: 'CUSTOMER_BLOCKED' });
+
+      await expect(service.createAppointment(draft, 'pt_abc')).rejects.toThrow('CUSTOMER_BLOCKED');
+    });
+
+    it('leaves an ordinary 403 as a plain failure', async () => {
+      mock.onPost(base).reply(403, { success: false, error: 'Phone verification does not match' });
+
+      const error = await service.createAppointment(draft, 'pt_abc').catch((e: Error) => e);
+      expect(error).toBeInstanceOf(Error);
+      expect((error as Error).message).not.toBe('CUSTOMER_BLOCKED');
+    });
+  });
+
+  describe('updateAppointment', () => {
+    it('translates a blocked reschedule into the same code (LT-122)', async () => {
+      stubLocation('https://demo.lightor.app/manage/a1?manageToken=mt_1');
+      mock.onPut(`${base}/a1`).reply(403, { success: false, error: 'blocked', code: 'CUSTOMER_BLOCKED' });
+
+      await expect(service.updateAppointment({ _id: 'a1', timestamp: '1700003600000' })).rejects.toThrow(
+        'CUSTOMER_BLOCKED'
+      );
+    });
   });
 });

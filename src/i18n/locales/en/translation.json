@@ -58,6 +58,8 @@
       "invalidOtp": "Invalid verification code"
     },
     "conflictError": "The appointment has been taken please try another one",
+    "genericError": "Something went wrong, please try again",
+    "blockedError": "This business cannot accept a booking for this phone number — please contact them directly.",
     "form": {
       "name": "Full Name",
       "phone": "Phone Number",
