@@ -3,7 +3,8 @@ import { Mail, Phone, MapPin, Send, User, MessageSquare, CheckCircle, XCircle } 
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { ContactConfig } from '../../models/ContactConfig';
-import { ContactLayout, SectionHeader } from '../../models/DesignConfig';
+import { ContactLayout, SectionHeader, RevealStyle } from '../../models/DesignConfig';
+import { revealVariants } from '../../services/reveal';
 import SectionHeading from './SectionHeading';
 import { ContactModal } from '../../components/ContactModal';
 import { useContactHandler } from '../../hooks/useContactHandler';
@@ -31,6 +32,8 @@ interface ContactProps {
   isPreview?: boolean;
   layout?: ContactLayout;
   header?: SectionHeader;
+  /** LT-126: per-site motion profile. */
+  reveal?: RevealStyle;
 }
 
 const MaterialInput = ({
@@ -92,7 +95,7 @@ const MaterialInput = ({
   </div>
 );
 
-const Contact: React.FC<ContactProps> = ({ config, address, contact, workingDays, isPreview, layout = 'split', header }) => {
+const Contact: React.FC<ContactProps> = ({ config, address, contact, workingDays, isPreview, layout = 'split', header, reveal }) => {
   // 'split' = info column beside the form; 'stacked' = one narrow centered
   // column with the info as a chip row above the form.
   const isStacked = layout === 'stacked';
@@ -262,26 +265,27 @@ const Contact: React.FC<ContactProps> = ({ config, address, contact, workingDays
     }
   ];
 
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.2
+  const { container: containerVariants, item: itemVariants } = revealVariants(reveal, {
+    container: {
+      hidden: { opacity: 0 },
+      visible: {
+        opacity: 1,
+        transition: {
+          staggerChildren: 0.2
+        }
       }
-    }
-  };
-
-  const itemVariants = {
-    hidden: { opacity: 0, y: 20 },
-    visible: {
-      y: 0,
-      opacity: 1,
-      transition: {
-        duration: 0.5
+    },
+    item: {
+      hidden: { opacity: 0, y: 20 },
+      visible: {
+        y: 0,
+        opacity: 1,
+        transition: {
+          duration: 0.5
+        }
       }
-    }
-  };
+    },
+  });
 
 
   // LT-124: the canvas lower halves. The form is one node reused by every

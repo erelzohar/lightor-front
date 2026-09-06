@@ -314,3 +314,15 @@ html[data-heading-accent="none"] .heading-accent {
 .animation-delay-4000 {
   animation-delay: 4s;
 }
+
+/* LT-126: auto-scrolling strips (portfolio 'scroller', testimonials
+   'marquee') and the striped section backdrop. The track holds two copies
+   of its items, so a half-width translate loops seamlessly. */
+@keyframes lt-scroll { to { transform: translateX(-50%); } }
+@keyframes lt-scroll-rtl { to { transform: translateX(50%); } }
+.lt-marquee { animation: lt-scroll 45s linear infinite; }
+[dir="rtl"] .lt-marquee { animation-name: lt-scroll-rtl; }
+.lt-marquee:hover, .lt-marquee:focus-within { animation-play-state: paused; }
+@media (prefers-reduced-motion: reduce) { .lt-marquee { animation: none; } }
+.lt-pattern { background-image: repeating-linear-gradient(45deg, rgb(var(--color-primary) / 0.07) 0 2px, transparent 2px 16px); }
+.dark .lt-pattern { background-image: repeating-linear-gradient(45deg, rgb(var(--color-primary-dark) / 0.09) 0 2px, transparent 2px 16px); }

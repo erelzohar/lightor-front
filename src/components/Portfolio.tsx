@@ -26,6 +26,8 @@ const MASONRY_ASPECTS = ['aspect-[4/3]', 'aspect-square', 'aspect-[3/4]'];
 const Portfolio: React.FC<PortfolioProps> = ({ config, layout = 'grid', masonryPhase = 0, header, tone = 'bg' }) => {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isGridView] = useState(config.isGrid);
+  // LT-126 'spotlight': which item is featured.
+  const [featured, setFeatured] = useState(0);
   const [touchStart, setTouchStart] = useState(0);
   const [touchEnd, setTouchEnd] = useState(0);
   const slideRef = useRef<HTMLDivElement>(null);
@@ -199,6 +201,87 @@ const Portfolio: React.FC<PortfolioProps> = ({ config, layout = 'grid', masonryP
                   </div>
                 </motion.div>
               );
+
+              // LT-126 structural layouts.
+              // 'bento': a mosaic of mixed tile sizes — the eye reads the
+              // shape before the photos.
+              if (layout === 'bento') {
+                const spans = ['col-span-2 row-span-2', 'col-span-1 row-span-1', 'col-span-1 row-span-2', 'col-span-2 row-span-1', 'col-span-1 row-span-1', 'col-span-1 row-span-1'];
+                return (
+                  <div
+                    className="grid grid-cols-2 md:grid-cols-4 auto-rows-[9rem] md:auto-rows-[12rem] gap-3"
+                    role="grid"
+                    aria-label={t('portfolio.grid_label')}
+                  >
+                    {config.items.map((item, index) => itemCard(item, index, '', `${spans[index % spans.length]} h-full`))}
+                  </div>
+                );
+              }
+
+              // 'scroller': a cinematic strip that drifts on its own (pauses
+              // on hover; static under reduced motion). Two copies loop.
+              if (layout === 'scroller') {
+                const loops = config.items.length >= 3;
+                const track = loops ? [...config.items, ...config.items] : config.items;
+                return (
+                  <div className="overflow-hidden -mx-4 px-4" role="grid" aria-label={t('portfolio.grid_label')}>
+                    <div className={`flex gap-6 w-max ${loops ? 'lt-marquee' : ''}`}>
+                      {track.map((item, index) => itemCard(item, index, 'aspect-video', 'flex-none w-[80vw] md:w-[40rem]'))}
+                    </div>
+                  </div>
+                );
+              }
+
+              // 'spotlight': one featured frame with a visible caption and a
+              // thumb strip to swap it.
+              if (layout === 'spotlight') {
+                const active = featured % config.items.length;
+                const main = config.items[active];
+                return (
+                  <div role="grid" aria-label={t('portfolio.grid_label')}>
+                    <AnimatePresence mode="wait">
+                      <motion.div
+                        key={active}
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        transition={{ duration: 0.35 }}
+                        className="relative aspect-video rounded-design-card overflow-hidden shadow-card"
+                        role="gridcell"
+                        aria-label={`${main.title}: ${main.description}`}
+                      >
+                        <img
+                          src={ImagesService.getInstance().getImage(main.url)}
+                          alt={main.title}
+                          onError={handleWideImageError}
+                          className="w-full h-full object-cover"
+                        />
+                        <div className="absolute inset-x-0 bottom-0 p-6 md:p-10 bg-gradient-to-t from-black/70 to-transparent">
+                          <h3 className="text-2xl md:text-4xl font-bold text-white">{main.title}</h3>
+                          {main.description && <p className="text-white/80 mt-2 max-w-2xl">{main.description}</p>}
+                        </div>
+                      </motion.div>
+                    </AnimatePresence>
+                    {config.items.length > 1 && (
+                      <div className="mt-4 flex gap-3 overflow-x-auto pb-2" role="tablist">
+                        {config.items.map((item, index) => (
+                          <button
+                            key={index}
+                            type="button"
+                            role="tab"
+                            aria-selected={index === active}
+                            onClick={() => setFeatured(index)}
+                            className={`flex-none w-28 aspect-[4/3] rounded-design-sm overflow-hidden border-2 transition-opacity ${index === active ? 'border-primary dark:border-primary-dark' : 'border-transparent opacity-60 hover:opacity-100'}`}
+                            aria-label={item.title}
+                          >
+                            <img src={ImagesService.getInstance().getImage(item.url)} alt="" onError={handleWideImageError} className="w-full h-full object-cover" />
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                );
+              }
 
               if (layout === 'masonry') {
                 return (

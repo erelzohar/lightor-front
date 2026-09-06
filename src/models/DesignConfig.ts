@@ -31,8 +31,10 @@ export type ImageTreatment = 'rounded' | 'circle' | 'arch' | 'blob';
 // layout, and DEFAULT_TOKENS picks it, so unpresetted sites don't move.
 // 'manifesto' (LT-109): big display pull-quote beside the paragraphs — the
 // artboard's statement composition.
-export type AboutLayout = 'cards' | 'split' | 'band' | 'manifesto';
-export type PortfolioLayout = 'grid' | 'masonry' | 'filmstrip' | 'polaroid' | 'flash';
+// LT-126 structural layouts: 'wall' (typographic feature wall), 'timeline' (numbered rail), 'sticky' (pinned intro beside stacked rows).
+export type AboutLayout = 'cards' | 'split' | 'band' | 'manifesto' | 'wall' | 'timeline' | 'sticky';
+// LT-126: 'bento' (mosaic of mixed tile sizes), 'scroller' (auto-scrolling cinematic strip), 'spotlight' (one featured tile + thumbs).
+export type PortfolioLayout = 'grid' | 'masonry' | 'filmstrip' | 'polaroid' | 'flash' | 'bento' | 'scroller' | 'spotlight';
 // LT-124: the canvas lower halves — 'poster' (giant phone, ruled columns),
 // 'editorial' (plain lines beside the form), 'statement' (inverted block, no
 // form), 'band' (primary-painted with a card form), 'cards' (form + info
@@ -42,8 +44,9 @@ export type ContactLayout = 'split' | 'stacked' | 'poster' | 'editorial' | 'stat
 export type FooterLayout = 'columns' | 'minimal' | 'line' | 'ticker';
 // LT-093 axes. First value = the pre-LT-093 rendering, picked by
 // DEFAULT_TOKENS and by every pre-existing preset, so live sites don't move.
-export type TestimonialsLayout = 'cards' | 'quote' | 'bubbles';
-export type FaqStyle = 'cards' | 'lines' | 'numbered' | 'pills';
+// LT-126: 'marquee' (auto-scrolling row) and 'spotlight' (one rotating quote).
+export type TestimonialsLayout = 'cards' | 'quote' | 'bubbles' | 'marquee' | 'spotlight';
+export type FaqStyle = 'cards' | 'lines' | 'numbered' | 'pills' | 'split';
 // A site's out-of-the-box theme. The visitor's own choice (localStorage)
 // always wins; this only decides what a first-time visitor sees.
 export type DefaultTheme = 'light' | 'dark';
@@ -67,6 +70,11 @@ export type BookingBand = 'none' | 'band';
 // LT-124: the booking widget's chrome — legacy shadow card, ruled 'flat', or
 // a tinted 'inset' panel.
 export type ScheduleStyle = 'card' | 'flat' | 'inset';
+// LT-126 page-level rhythm: how sections enter, whether some sections get a
+// painted backdrop, and how wide the page column runs.
+export type RevealStyle = 'rise' | 'fade' | 'slide' | 'zoom';
+export type Backdrop = 'none' | 'tinted' | 'photo' | 'pattern';
+export type SectionWidth = 'contained' | 'narrow' | 'wide';
 
 export type StylePreset =
   | 'luxe'
@@ -119,6 +127,9 @@ export interface DesignTokens {
   sectionHeader: SectionHeader;
   bookingBand: BookingBand;
   scheduleStyle: ScheduleStyle;
+  revealStyle: RevealStyle;
+  backdrop: Backdrop;
+  sectionWidth: SectionWidth;
 }
 
 // Neutral fallback used when no preset and no explicit tokens are provided.
@@ -149,6 +160,9 @@ const DEFAULT_TOKENS: DesignTokens = {
   sectionHeader: 'centered',
   bookingBand: 'none',
   scheduleStyle: 'card',
+  revealStyle: 'rise',
+  backdrop: 'none',
+  sectionWidth: 'contained',
 };
 
 // Opinionated, deliberately divergent bundles. Picking one of these gives a
@@ -165,7 +179,7 @@ export const STYLE_PRESETS: Record<StylePreset, DesignTokens> = {
     headingAccent: 'rule', imageTreatment: 'arch',
     aboutLayout: 'band', portfolioLayout: 'masonry', contactLayout: 'stacked', footerLayout: 'minimal',
     testimonialsLayout: 'cards', faqStyle: 'cards', defaultTheme: 'light',
-    decor: 'none', featureStyle: 'icons', servicesLayout: 'none', sectionHeader: 'centered', bookingBand: 'none', scheduleStyle: 'card',
+    decor: 'none', featureStyle: 'icons', servicesLayout: 'none', sectionHeader: 'centered', bookingBand: 'none', scheduleStyle: 'card', revealStyle: 'rise', backdrop: 'none', sectionWidth: 'contained',
   },
   editorial: {
     borderRadius: 'none', cardStyle: 'flat', buttonStyle: 'ghost',
@@ -175,7 +189,7 @@ export const STYLE_PRESETS: Record<StylePreset, DesignTokens> = {
     headingAccent: 'rule', imageTreatment: 'rounded',
     aboutLayout: 'split', portfolioLayout: 'masonry', contactLayout: 'split', footerLayout: 'minimal',
     testimonialsLayout: 'cards', faqStyle: 'cards', defaultTheme: 'light',
-    decor: 'none', featureStyle: 'icons', servicesLayout: 'none', sectionHeader: 'centered', bookingBand: 'none', scheduleStyle: 'card',
+    decor: 'none', featureStyle: 'icons', servicesLayout: 'none', sectionHeader: 'centered', bookingBand: 'none', scheduleStyle: 'card', revealStyle: 'rise', backdrop: 'none', sectionWidth: 'contained',
   },
   boldStartup: {
     borderRadius: 'lg', cardStyle: 'glass', buttonStyle: 'gradient',
@@ -185,7 +199,7 @@ export const STYLE_PRESETS: Record<StylePreset, DesignTokens> = {
     headingAccent: 'bar', imageTreatment: 'rounded',
     aboutLayout: 'cards', portfolioLayout: 'grid', contactLayout: 'split', footerLayout: 'columns',
     testimonialsLayout: 'cards', faqStyle: 'cards', defaultTheme: 'light',
-    decor: 'none', featureStyle: 'icons', servicesLayout: 'none', sectionHeader: 'centered', bookingBand: 'none', scheduleStyle: 'card',
+    decor: 'none', featureStyle: 'icons', servicesLayout: 'none', sectionHeader: 'centered', bookingBand: 'none', scheduleStyle: 'card', revealStyle: 'rise', backdrop: 'none', sectionWidth: 'contained',
   },
   corporate: {
     borderRadius: 'sm', cardStyle: 'bordered', buttonStyle: 'solid',
@@ -195,7 +209,7 @@ export const STYLE_PRESETS: Record<StylePreset, DesignTokens> = {
     headingAccent: 'bar', imageTreatment: 'rounded',
     aboutLayout: 'split', portfolioLayout: 'grid', contactLayout: 'split', footerLayout: 'columns',
     testimonialsLayout: 'cards', faqStyle: 'cards', defaultTheme: 'light',
-    decor: 'none', featureStyle: 'icons', servicesLayout: 'none', sectionHeader: 'centered', bookingBand: 'none', scheduleStyle: 'card',
+    decor: 'none', featureStyle: 'icons', servicesLayout: 'none', sectionHeader: 'centered', bookingBand: 'none', scheduleStyle: 'card', revealStyle: 'rise', backdrop: 'none', sectionWidth: 'contained',
   },
   playful: {
     borderRadius: 'full', cardStyle: 'elevated', buttonStyle: 'gradient',
@@ -205,7 +219,7 @@ export const STYLE_PRESETS: Record<StylePreset, DesignTokens> = {
     headingAccent: 'dot', imageTreatment: 'blob',
     aboutLayout: 'cards', portfolioLayout: 'grid', contactLayout: 'stacked', footerLayout: 'columns',
     testimonialsLayout: 'cards', faqStyle: 'cards', defaultTheme: 'light',
-    decor: 'none', featureStyle: 'icons', servicesLayout: 'none', sectionHeader: 'centered', bookingBand: 'none', scheduleStyle: 'card',
+    decor: 'none', featureStyle: 'icons', servicesLayout: 'none', sectionHeader: 'centered', bookingBand: 'none', scheduleStyle: 'card', revealStyle: 'rise', backdrop: 'none', sectionWidth: 'contained',
   },
   minimal: {
     borderRadius: 'none', cardStyle: 'flat', buttonStyle: 'outline',
@@ -215,7 +229,7 @@ export const STYLE_PRESETS: Record<StylePreset, DesignTokens> = {
     headingAccent: 'none', imageTreatment: 'rounded',
     aboutLayout: 'band', portfolioLayout: 'masonry', contactLayout: 'stacked', footerLayout: 'minimal',
     testimonialsLayout: 'cards', faqStyle: 'cards', defaultTheme: 'light',
-    decor: 'none', featureStyle: 'icons', servicesLayout: 'none', sectionHeader: 'centered', bookingBand: 'none', scheduleStyle: 'card',
+    decor: 'none', featureStyle: 'icons', servicesLayout: 'none', sectionHeader: 'centered', bookingBand: 'none', scheduleStyle: 'card', revealStyle: 'rise', backdrop: 'none', sectionWidth: 'contained',
   },
   warmOrganic: {
     borderRadius: 'xl', cardStyle: 'elevated', buttonStyle: 'solid',
@@ -225,7 +239,7 @@ export const STYLE_PRESETS: Record<StylePreset, DesignTokens> = {
     headingAccent: 'dot', imageTreatment: 'blob',
     aboutLayout: 'cards', portfolioLayout: 'grid', contactLayout: 'split', footerLayout: 'columns',
     testimonialsLayout: 'cards', faqStyle: 'cards', defaultTheme: 'light',
-    decor: 'none', featureStyle: 'icons', servicesLayout: 'none', sectionHeader: 'centered', bookingBand: 'none', scheduleStyle: 'card',
+    decor: 'none', featureStyle: 'icons', servicesLayout: 'none', sectionHeader: 'centered', bookingBand: 'none', scheduleStyle: 'card', revealStyle: 'rise', backdrop: 'none', sectionWidth: 'contained',
   },
   brutalist: {
     borderRadius: 'none', cardStyle: 'flat', buttonStyle: 'solid',
@@ -235,7 +249,7 @@ export const STYLE_PRESETS: Record<StylePreset, DesignTokens> = {
     headingAccent: 'bar', imageTreatment: 'rounded',
     aboutLayout: 'band', portfolioLayout: 'filmstrip', contactLayout: 'split', footerLayout: 'minimal',
     testimonialsLayout: 'cards', faqStyle: 'cards', defaultTheme: 'light',
-    decor: 'none', featureStyle: 'icons', servicesLayout: 'none', sectionHeader: 'centered', bookingBand: 'none', scheduleStyle: 'card',
+    decor: 'none', featureStyle: 'icons', servicesLayout: 'none', sectionHeader: 'centered', bookingBand: 'none', scheduleStyle: 'card', revealStyle: 'rise', backdrop: 'none', sectionWidth: 'contained',
   },
   boutique: {
     borderRadius: 'full', cardStyle: 'glass', buttonStyle: 'outline',
@@ -245,7 +259,7 @@ export const STYLE_PRESETS: Record<StylePreset, DesignTokens> = {
     headingAccent: 'dot', imageTreatment: 'circle',
     aboutLayout: 'split', portfolioLayout: 'filmstrip', contactLayout: 'stacked', footerLayout: 'minimal',
     testimonialsLayout: 'cards', faqStyle: 'cards', defaultTheme: 'light',
-    decor: 'none', featureStyle: 'icons', servicesLayout: 'none', sectionHeader: 'centered', bookingBand: 'none', scheduleStyle: 'card',
+    decor: 'none', featureStyle: 'icons', servicesLayout: 'none', sectionHeader: 'centered', bookingBand: 'none', scheduleStyle: 'card', revealStyle: 'rise', backdrop: 'none', sectionWidth: 'contained',
   },
   bistro: {
     borderRadius: 'sm', cardStyle: 'bordered', buttonStyle: 'solid',
@@ -255,7 +269,7 @@ export const STYLE_PRESETS: Record<StylePreset, DesignTokens> = {
     headingAccent: 'rule', imageTreatment: 'arch',
     aboutLayout: 'split', portfolioLayout: 'grid', contactLayout: 'stacked', footerLayout: 'columns',
     testimonialsLayout: 'cards', faqStyle: 'cards', defaultTheme: 'light',
-    decor: 'none', featureStyle: 'icons', servicesLayout: 'none', sectionHeader: 'centered', bookingBand: 'none', scheduleStyle: 'card',
+    decor: 'none', featureStyle: 'icons', servicesLayout: 'none', sectionHeader: 'centered', bookingBand: 'none', scheduleStyle: 'card', revealStyle: 'rise', backdrop: 'none', sectionWidth: 'contained',
   },
 
   // ── LT-093 vibe presets (from the LT-092 direction canvas) ──────────────
@@ -269,7 +283,7 @@ export const STYLE_PRESETS: Record<StylePreset, DesignTokens> = {
     headingAccent: 'bar', imageTreatment: 'rounded',
     aboutLayout: 'manifesto', portfolioLayout: 'filmstrip', contactLayout: 'poster', footerLayout: 'ticker',
     testimonialsLayout: 'quote', faqStyle: 'numbered', defaultTheme: 'dark',
-    decor: 'ticker', featureStyle: 'numbered', servicesLayout: 'ledger', sectionHeader: 'label', bookingBand: 'band', scheduleStyle: 'flat',
+    decor: 'ticker', featureStyle: 'numbered', servicesLayout: 'ledger', sectionHeader: 'label', bookingBand: 'band', scheduleStyle: 'flat', revealStyle: 'slide', backdrop: 'photo', sectionWidth: 'wide',
   },
   // Beauty boutique / luxe editorial: centered serif over an arch image.
   atelier: {
@@ -280,7 +294,7 @@ export const STYLE_PRESETS: Record<StylePreset, DesignTokens> = {
     headingAccent: 'rule', imageTreatment: 'arch',
     aboutLayout: 'split', portfolioLayout: 'masonry', contactLayout: 'editorial', footerLayout: 'line',
     testimonialsLayout: 'quote', faqStyle: 'lines', defaultTheme: 'light',
-    decor: 'none', featureStyle: 'icons', servicesLayout: 'none', sectionHeader: 'side', bookingBand: 'band', scheduleStyle: 'inset',
+    decor: 'none', featureStyle: 'icons', servicesLayout: 'none', sectionHeader: 'side', bookingBand: 'band', scheduleStyle: 'inset', revealStyle: 'rise', backdrop: 'none', sectionWidth: 'narrow',
   },
   // Therapist / calm organic: soft shapes, generous air.
   serene: {
@@ -291,7 +305,7 @@ export const STYLE_PRESETS: Record<StylePreset, DesignTokens> = {
     headingAccent: 'dot', imageTreatment: 'blob',
     aboutLayout: 'band', portfolioLayout: 'grid', contactLayout: 'stacked', footerLayout: 'line',
     testimonialsLayout: 'cards', faqStyle: 'cards', defaultTheme: 'light',
-    decor: 'none', featureStyle: 'icons', servicesLayout: 'none', sectionHeader: 'centered', bookingBand: 'band', scheduleStyle: 'inset',
+    decor: 'none', featureStyle: 'icons', servicesLayout: 'none', sectionHeader: 'centered', bookingBand: 'band', scheduleStyle: 'inset', revealStyle: 'fade', backdrop: 'tinted', sectionWidth: 'narrow',
   },
   // Fitness / volt energy: heavy grotesk, hard edges, dark ground.
   electric: {
@@ -302,7 +316,7 @@ export const STYLE_PRESETS: Record<StylePreset, DesignTokens> = {
     headingAccent: 'bar', imageTreatment: 'rounded',
     aboutLayout: 'cards', portfolioLayout: 'grid', contactLayout: 'poster', footerLayout: 'ticker',
     testimonialsLayout: 'cards', faqStyle: 'lines', defaultTheme: 'dark',
-    decor: 'marquee', featureStyle: 'numbered', servicesLayout: 'none', sectionHeader: 'label', bookingBand: 'band', scheduleStyle: 'flat',
+    decor: 'marquee', featureStyle: 'numbered', servicesLayout: 'none', sectionHeader: 'label', bookingBand: 'band', scheduleStyle: 'flat', revealStyle: 'zoom', backdrop: 'tinted', sectionWidth: 'wide',
   },
   // Tattoo / punk mono: condensed caps with monospace body.
   underground: {
@@ -313,7 +327,7 @@ export const STYLE_PRESETS: Record<StylePreset, DesignTokens> = {
     headingAccent: 'none', imageTreatment: 'rounded',
     aboutLayout: 'manifesto', portfolioLayout: 'flash', contactLayout: 'poster', footerLayout: 'line',
     testimonialsLayout: 'cards', faqStyle: 'lines', defaultTheme: 'dark',
-    decor: 'stamp', featureStyle: 'numbered', servicesLayout: 'none', sectionHeader: 'label', bookingBand: 'band', scheduleStyle: 'flat',
+    decor: 'stamp', featureStyle: 'numbered', servicesLayout: 'none', sectionHeader: 'label', bookingBand: 'band', scheduleStyle: 'flat', revealStyle: 'fade', backdrop: 'pattern', sectionWidth: 'contained',
   },
   // Kids / playful: round everything, scalloped edges, speech bubbles.
   festive: {
@@ -324,7 +338,7 @@ export const STYLE_PRESETS: Record<StylePreset, DesignTokens> = {
     headingAccent: 'dot', imageTreatment: 'circle',
     aboutLayout: 'cards', portfolioLayout: 'polaroid', contactLayout: 'band', footerLayout: 'line',
     testimonialsLayout: 'bubbles', faqStyle: 'pills', defaultTheme: 'light',
-    decor: 'confetti', featureStyle: 'icons', servicesLayout: 'none', sectionHeader: 'centered', bookingBand: 'band', scheduleStyle: 'card',
+    decor: 'confetti', featureStyle: 'icons', servicesLayout: 'none', sectionHeader: 'centered', bookingBand: 'band', scheduleStyle: 'card', revealStyle: 'zoom', backdrop: 'pattern', sectionWidth: 'contained',
   },
   // Clinic / clean trust: structured grid, modest type, tidy cards.
   crisp: {
@@ -335,7 +349,7 @@ export const STYLE_PRESETS: Record<StylePreset, DesignTokens> = {
     headingAccent: 'bar', imageTreatment: 'rounded',
     aboutLayout: 'cards', portfolioLayout: 'grid', contactLayout: 'cards', footerLayout: 'line',
     testimonialsLayout: 'cards', faqStyle: 'cards', defaultTheme: 'light',
-    decor: 'none', featureStyle: 'icons', servicesLayout: 'none', sectionHeader: 'centered', bookingBand: 'band', scheduleStyle: 'card',
+    decor: 'none', featureStyle: 'icons', servicesLayout: 'none', sectionHeader: 'centered', bookingBand: 'band', scheduleStyle: 'card', revealStyle: 'rise', backdrop: 'tinted', sectionWidth: 'contained',
   },
   // Photographer / image-first: near-invisible chrome, work up front.
   gallery: {
@@ -346,7 +360,7 @@ export const STYLE_PRESETS: Record<StylePreset, DesignTokens> = {
     headingAccent: 'none', imageTreatment: 'rounded',
     aboutLayout: 'band', portfolioLayout: 'masonry', contactLayout: 'statement', footerLayout: 'line',
     testimonialsLayout: 'quote', faqStyle: 'lines', defaultTheme: 'light',
-    decor: 'none', featureStyle: 'icons', servicesLayout: 'none', sectionHeader: 'side', bookingBand: 'band', scheduleStyle: 'flat',
+    decor: 'none', featureStyle: 'icons', servicesLayout: 'none', sectionHeader: 'side', bookingBand: 'band', scheduleStyle: 'flat', revealStyle: 'fade', backdrop: 'photo', sectionWidth: 'wide',
   },
   // Law / classical: serif authority, ruled lines, no ornament.
   heritage: {
@@ -357,7 +371,7 @@ export const STYLE_PRESETS: Record<StylePreset, DesignTokens> = {
     headingAccent: 'rule', imageTreatment: 'rounded',
     aboutLayout: 'split', portfolioLayout: 'grid', contactLayout: 'editorial', footerLayout: 'line',
     testimonialsLayout: 'quote', faqStyle: 'numbered', defaultTheme: 'light',
-    decor: 'monogram', featureStyle: 'roman', servicesLayout: 'ledger', sectionHeader: 'side', bookingBand: 'band', scheduleStyle: 'card',
+    decor: 'monogram', featureStyle: 'roman', servicesLayout: 'ledger', sectionHeader: 'side', bookingBand: 'band', scheduleStyle: 'card', revealStyle: 'rise', backdrop: 'none', sectionWidth: 'narrow',
   },
   // Yoga / boho earthy: arches, waves, warm serif.
   earthy: {
@@ -368,7 +382,7 @@ export const STYLE_PRESETS: Record<StylePreset, DesignTokens> = {
     headingAccent: 'dot', imageTreatment: 'arch',
     aboutLayout: 'split', portfolioLayout: 'grid', contactLayout: 'editorial', footerLayout: 'line',
     testimonialsLayout: 'quote', faqStyle: 'lines', defaultTheme: 'light',
-    decor: 'sun', featureStyle: 'icons', servicesLayout: 'none', sectionHeader: 'side', bookingBand: 'band', scheduleStyle: 'inset',
+    decor: 'sun', featureStyle: 'icons', servicesLayout: 'none', sectionHeader: 'side', bookingBand: 'band', scheduleStyle: 'inset', revealStyle: 'slide', backdrop: 'tinted', sectionWidth: 'contained',
   },
 };
 
@@ -401,6 +415,9 @@ export class DesignConfig implements DesignTokens {
     public sectionHeader: SectionHeader,
     public bookingBand: BookingBand,
     public scheduleStyle: ScheduleStyle,
+    public revealStyle: RevealStyle,
+    public backdrop: Backdrop,
+    public sectionWidth: SectionWidth,
   ) {}
 
   // Resolution order for every token: explicit value → preset value → default.
@@ -442,6 +459,9 @@ export class DesignConfig implements DesignTokens {
       json?.sectionHeader ?? base.sectionHeader,
       json?.bookingBand ?? base.bookingBand,
       json?.scheduleStyle ?? base.scheduleStyle,
+      json?.revealStyle ?? base.revealStyle,
+      json?.backdrop ?? base.backdrop,
+      json?.sectionWidth ?? base.sectionWidth,
     );
   }
 }

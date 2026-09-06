@@ -66,6 +66,10 @@ export interface SiteJitter {
    *  pickBandSlot) — the band used to sit right above the schedule, which
    *  made it redundant on every site. */
   bandSlot: number;
+  /** LT-126: unit draw seeding the middle-section permutation. */
+  orderSeed: number;
+  /** LT-126: unit draw picking which sections carry the page backdrop. */
+  backdropPick: number;
 }
 
 export const getSiteJitter = (subdomain: string | undefined | null): SiteJitter => {
@@ -89,7 +93,10 @@ export const getSiteJitter = (subdomain: string | undefined | null): SiteJitter 
   const portfolioFirst = rng() < 0.4;
   // LT-119 draw — appended.
   const bandSlot = rng();
-  return { blobOffsets, particleSeed, floatDuration, masonryPhase, flipAboutSplit, mirrorDividers, posterAlt, flipPosterSplit, decorStart, portfolioFirst, bandSlot };
+  // LT-126 draws — appended.
+  const orderSeed = rng();
+  const backdropPick = rng();
+  return { blobOffsets, particleSeed, floatDuration, masonryPhase, flipAboutSplit, mirrorDividers, posterAlt, flipPosterSplit, decorStart, portfolioFirst, bandSlot, orderSeed, backdropPick };
 };
 
 /** A ready-to-use PRNG for components that derive many values (particles). */

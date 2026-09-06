@@ -28,7 +28,7 @@ import { useLanguage, Language } from './contexts/LanguageContext';
 import { WebsiteConfig } from './models/WebsiteConfig';
 import { DesignConfig } from './models/DesignConfig';
 import WebConfigService from './services/WebConfigService';
-import { getSiteJitter } from './services/seed';
+import { getSiteJitter, createRng } from './services/seed';
 import ImagesService from './services/ImagesService';
 import { useTheme } from './hooks/useTheme';
 import { reportError } from './services/ErrorReportingService';
@@ -349,17 +349,40 @@ function MainContent() {
         const ordered = [...flow];
         const isVibeSite = (config.design?.sectionHeader ?? 'centered') !== 'centered'
           || config.design?.bookingBand === 'band';
-        if (isVibeSite && jitter.portfolioFirst) {
-          const a = ordered.findIndex((e) => e.key === 'about');
-          const p = ordered.findIndex((e) => e.key === 'portfolio');
-          if (a !== -1 && p !== -1 && a < p) {
-            [ordered[a], ordered[p]] = [ordered[p], ordered[a]];
-            // Tones stay position-stable so the bg<->surface alternation and
-            // its dividers survive the reorder; the sections repaint from the
-            // tone prop distributed below.
-            const t = ordered[a].tone;
-            ordered[a] = { ...ordered[a], tone: ordered[p].tone };
-            ordered[p] = { ...ordered[p], tone: t };
+        if (isVibeSite) {
+          // LT-126: a seeded permutation of the middle sections, so the page
+          // skeleton itself differs between two same-vibe sites (supersedes
+          // the LT-115 about/portfolio swap on vibe sites). The business
+          // introduction stays within the first two middle slots; tones stay
+          // position-stable so the bg/surface rhythm and dividers survive.
+          const MIDDLE = new Set(['about', 'services', 'portfolio', 'testimonials']);
+          const slots = ordered.map((e, i) => (MIDDLE.has(e.key) ? i : -1)).filter((i) => i !== -1);
+          if (slots.length > 1) {
+            const rng = createRng(Math.floor(jitter.orderSeed * 4294967296));
+            const perm = slots.map((i) => ordered[i]);
+            for (let i = perm.length - 1; i > 0; i--) {
+              const j = Math.floor(rng() * (i + 1));
+              [perm[i], perm[j]] = [perm[j], perm[i]];
+            }
+            const a = perm.findIndex((e) => e.key === 'about');
+            if (a > 1) {
+              const [about] = perm.splice(a, 1);
+              perm.splice(rng() < 0.5 ? 0 : 1, 0, about);
+            }
+            slots.forEach((slot, k) => { ordered[slot] = { ...perm[k], tone: ordered[slot].tone }; });
+          }
+        }
+        // LT-126: one or two middle sections carry the page backdrop (a
+        // tinted band, a faded photo bleed, or a stripe pattern) so the page
+        // stops being a stack of same-width blocks. Vibe sites only.
+        const backdrop = isVibeSite ? (config.design?.backdrop ?? 'none') : 'none';
+        const backdropKeys = new Set<string>();
+        if (backdrop !== 'none') {
+          const candidates = ordered.map((e) => e.key).filter((k) => ['about', 'services', 'portfolio', 'testimonials', 'faq'].includes(k));
+          if (candidates.length) {
+            const first = Math.floor(jitter.backdropPick * candidates.length) % candidates.length;
+            backdropKeys.add(candidates[first]);
+            if (candidates.length >= 4) backdropKeys.add(candidates[(first + 2) % candidates.length]);
           }
         }
         // The canvas full-bleed CTA band. LT-119: at a seeded slot that is
@@ -382,22 +405,54 @@ function MainContent() {
         // Every section learns the vibe's header chrome. (Sections used to
         // also receive a sequential 01/02/03 for the 'label' chrome; the
         // numbers read as clutter next to the title and were dropped.)
-        return ordered.map((s, i) => {
+        // LT-126: page column width — narrow editorial or wide poster runs.
+        const WIDTH_CLASS: Record<string, string> = {
+          contained: '',
+          narrow: '[&_.container]:max-w-5xl',
+          wide: '[&_.container]:max-w-none [&_.container]:px-6 lg:[&_.container]:px-16',
+        };
+        const widthClass = isVibeSite ? (WIDTH_CLASS[config.design?.sectionWidth ?? 'contained'] ?? '') : '';
+        const rendered = ordered.map((s, i) => {
           return (
             <Fragment key={s.key}>
               {/* No shaped divider against the band — it paints its own
                   saturated primary edge to edge (review finding). */}
-              {i > 0 && s.key !== 'booking-band' && ordered[i - 1].key !== 'booking-band' && (
+              {i > 0 && s.key !== 'booking-band' && ordered[i - 1].key !== 'booking-band'
+                && !backdropKeys.has(s.key) && !backdropKeys.has(ordered[i - 1].key) && (
                 <SectionDivider variant={divider} aboveTone={ordered[i - 1].tone} belowTone={s.tone} mirror={jitter.mirrorDividers} />
               )}
-              <ErrorBoundary>
-                {isValidElement(s.node) && typeof (s.node as ReactElement).type !== 'string'
-                  ? cloneElement(s.node as ReactElement, { header: config.design?.sectionHeader, tone: s.tone } as Record<string, unknown>)
-                  : s.node}
-              </ErrorBoundary>
+              {(() => {
+                const inner = (
+                  <ErrorBoundary>
+                    {isValidElement(s.node) && typeof (s.node as ReactElement).type !== 'string'
+                      ? cloneElement(s.node as ReactElement, { header: config.design?.sectionHeader, tone: s.tone, reveal: config.design?.revealStyle } as Record<string, unknown>)
+                      : s.node}
+                  </ErrorBoundary>
+                );
+                if (!backdropKeys.has(s.key)) return inner;
+                // The section paints its own tone; the wrapper overrides it to
+                // transparent and supplies the backdrop underneath (isolate
+                // keeps -z-10 inside this stacking context).
+                return (
+                  <div className="relative isolate bg-light-bg dark:bg-dark-bg [&>section]:!bg-transparent">
+                    {backdrop === 'photo' && config.components?.hero?.heroImageSrc && (
+                      <img
+                        src={ImagesService.getInstance().getImage(config.components.hero.heroImageSrc)}
+                        alt=""
+                        aria-hidden="true"
+                        className="absolute inset-0 -z-10 w-full h-full object-cover opacity-[0.08] dark:opacity-[0.12]"
+                      />
+                    )}
+                    {backdrop === 'tinted' && <div className="absolute inset-0 -z-10 bg-primary/[0.06] dark:bg-primary-dark/[0.09]" aria-hidden="true" />}
+                    {backdrop === 'pattern' && <div className="absolute inset-0 -z-10 lt-pattern" aria-hidden="true" />}
+                    {inner}
+                  </div>
+                );
+              })()}
             </Fragment>
           );
         });
+        return widthClass ? <div className={widthClass}>{rendered}</div> : rendered;
       })()}
 
       {config.components?.footer?.visible && (

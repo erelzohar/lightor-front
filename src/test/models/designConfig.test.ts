@@ -13,6 +13,7 @@ const TOKEN_KEYS = [
   'aboutLayout', 'portfolioLayout', 'contactLayout', 'footerLayout',
   'testimonialsLayout', 'faqStyle', 'defaultTheme', 'decor', 'featureStyle',
   'servicesLayout', 'sectionHeader', 'bookingBand', 'scheduleStyle',
+  'revealStyle', 'backdrop', 'sectionWidth',
 ] as const satisfies readonly (keyof DesignTokens)[];
 
 describe('DesignConfig.fromJSON', () => {
@@ -80,6 +81,9 @@ describe('DesignConfig.fromJSON', () => {
     expect(bare.sectionHeader).toBe('centered');
     expect(bare.bookingBand).toBe('none');
     expect(bare.scheduleStyle).toBe('card');
+    expect(bare.revealStyle).toBe('rise');
+    expect(bare.backdrop).toBe('none');
+    expect(bare.sectionWidth).toBe('contained');
   });
 
   it('expands a vibe preset into the full token bundle', () => {

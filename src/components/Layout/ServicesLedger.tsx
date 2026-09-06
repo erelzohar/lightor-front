@@ -3,7 +3,8 @@ import { motion } from 'framer-motion';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { AppointmentType } from '../../models/AppointmentType';
 import type { SectionTone } from '../SectionDivider';
-import type { SectionHeader } from '../../models/DesignConfig';
+import type { SectionHeader, RevealStyle } from '../../models/DesignConfig';
+import { revealVariants } from '../../services/reveal';
 import SectionHeading from './SectionHeading';
 
 interface ServicesLedgerProps {
@@ -11,6 +12,7 @@ interface ServicesLedgerProps {
   /** Section background tone — assigned by App's flow builder. */
   tone: SectionTone;
   header?: SectionHeader;
+  reveal?: RevealStyle;
 }
 
 const TONE_BG: Record<SectionTone, string> = {
@@ -18,21 +20,23 @@ const TONE_BG: Record<SectionTone, string> = {
   surface: 'bg-light-surface dark:bg-dark-surface',
 };
 
-const containerVariants = {
-  hidden: { opacity: 0 },
-  visible: { opacity: 1, transition: { staggerChildren: 0.08 } },
-};
-
-const itemVariants = {
-  hidden: { y: 12, opacity: 0 },
-  visible: { y: 0, opacity: 1 },
+const LEGACY_VARIANTS = {
+  container: {
+    hidden: { opacity: 0 },
+    visible: { opacity: 1, transition: { staggerChildren: 0.08 } },
+  },
+  item: {
+    hidden: { y: 12, opacity: 0 },
+    visible: { y: 0, opacity: 1 },
+  },
 };
 
 // LT-109: the canvas price ledger — numbered rows with dotted leaders,
 // display type, built from the business's REAL services. Rendered only when
 // the servicesLayout token asks for it and priced services exist.
-const ServicesLedger: React.FC<ServicesLedgerProps> = ({ appointmentTypes, tone, header }) => {
+const ServicesLedger: React.FC<ServicesLedgerProps> = ({ appointmentTypes, tone, header, reveal }) => {
   const { t, language } = useLanguage();
+  const { container: containerVariants, item: itemVariants } = revealVariants(reveal, LEGACY_VARIANTS);
   const rows = appointmentTypes.filter((a) => a?.name);
   if (!rows.length) return null;
 

@@ -22,6 +22,8 @@ import {
   Facebook
 } from "lucide-react";
 import { motion } from 'framer-motion';
+import { revealVariants } from '../../services/reveal';
+import type { RevealStyle } from '../../models/DesignConfig';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { ContactModal } from '../ContactModal';
 import { useContactHandler } from '../../hooks/useContactHandler';
@@ -63,6 +65,8 @@ interface AboutProps {
   featureStyle?: FeatureStyle;
   /** LT-115 page-rhythm chrome + this section's 1-based position. */
   header?: SectionHeader;
+  /** LT-126: per-site motion profile. */
+  reveal?: RevealStyle;
   /** LT-115: painted background tone — the seeded order shuffle keeps tones
    *  position-stable, so a reordered About may paint 'bg'. Default = legacy. */
   tone?: 'bg' | 'surface';
@@ -70,7 +74,7 @@ interface AboutProps {
 
 const ROMAN_NUMERALS = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII'];
 
-const About: React.FC<AboutProps> = ({ config, websiteConfig, layout = 'cards', flipSplit = false, featureStyle = 'icons', header, tone = 'surface' }) => {
+const About: React.FC<AboutProps> = ({ config, websiteConfig, layout = 'cards', flipSplit = false, featureStyle = 'icons', header, tone = 'surface', reveal }) => {
   const { t, language } = useLanguage();
   const { isModalOpen, setIsModalOpen, modalType, handleContactClick } = useContactHandler();
   const formatWorkingHours = () => {
@@ -211,23 +215,24 @@ const About: React.FC<AboutProps> = ({ config, websiteConfig, layout = 'cards', 
     }
   ];
 
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.2
+  const { container: containerVariants, item: itemVariants } = revealVariants(reveal, {
+    container: {
+      hidden: { opacity: 0 },
+      visible: {
+        opacity: 1,
+        transition: {
+          staggerChildren: 0.2
+        }
       }
-    }
-  };
-
-  const itemVariants = {
-    hidden: { y: 20, opacity: 0 },
-    visible: {
-      y: 0,
-      opacity: 1
-    }
-  };
+    },
+    item: {
+      hidden: { y: 20, opacity: 0 },
+      visible: {
+        y: 0,
+        opacity: 1
+      }
+    },
+  });
 
   // ── Building blocks recomposed by the aboutLayout token ───────────────────
 
@@ -323,6 +328,65 @@ const About: React.FC<AboutProps> = ({ config, websiteConfig, layout = 'cards', 
           </motion.div>
         );
       })}
+    </motion.div>
+  );
+
+
+  // ── LT-126 structural layouts ─────────────────────────────────────────────
+  // 'wall': the features as a typographic wall — display-size titles in
+  // ruled columns, no tiles, no icons.
+  const featureWall = (
+    <motion.div className="grid md:grid-cols-3 mb-20" variants={containerVariants}>
+      {config.features.map((feature, index) => (
+        <motion.div
+          key={index}
+          className={`py-8 md:py-2 md:px-8 md:first:ps-0 md:last:pe-0 ${index > 0 ? 'border-t md:border-t-0 md:border-s border-light-text/15 dark:border-dark-text/15' : ''}`}
+          variants={itemVariants}
+        >
+          <div className="mb-4">{featureMark(index, 'text-sm')}</div>
+          <h3 className="font-bold leading-tight text-light-text dark:text-dark-text" style={{ fontSize: 'clamp(1.75rem, 3vw, 2.75rem)' }}>{feature.title}</h3>
+          <p className="mt-4 text-light-text/80 dark:text-dark-text/80">{feature.description}</p>
+        </motion.div>
+      ))}
+    </motion.div>
+  );
+
+  // 'timeline': a numbered vertical rail beside the (pinned) intro.
+  const featureRail = (
+    <motion.ol className="relative border-s-2 border-primary/30 dark:border-primary-dark/30 ms-5 space-y-12" variants={containerVariants}>
+      {config.features.map((feature, index) => {
+        const Icon = FEATURE_ICONS[feature.icon] ?? Star;
+        return (
+          <motion.li key={index} className="relative ps-10" variants={itemVariants}>
+            <span
+              className="absolute -start-[1.3rem] top-0 w-10 h-10 rounded-full bg-primary dark:bg-primary-dark text-on-primary dark:text-on-primary-dark flex items-center justify-center font-bold"
+              aria-hidden="true"
+            >
+              {featureStyle === 'icons' ? <Icon className="h-5 w-5" /> : String(index + 1)}
+            </span>
+            <h3 className="text-xl font-semibold mb-2 text-light-text dark:text-dark-text">{feature.title}</h3>
+            <p className="text-light-text/80 dark:text-dark-text/80">{feature.description}</p>
+          </motion.li>
+        );
+      })}
+    </motion.ol>
+  );
+
+  // 'sticky': stacked ruled rows with big index numbers, the intro pinned
+  // beside them while they scroll.
+  const featureRowsBig = (
+    <motion.div className="divide-y divide-light-text/15 dark:divide-dark-text/15 border-y border-light-text/15 dark:border-dark-text/15" variants={containerVariants}>
+      {config.features.map((feature, index) => (
+        <motion.div key={index} className="grid grid-cols-[4rem_1fr] gap-4 py-8" variants={itemVariants}>
+          <span className="font-bold text-4xl leading-none text-primary-readable dark:text-primary-dark-readable" aria-hidden="true">
+            {String(index + 1).padStart(2, '0')}
+          </span>
+          <div>
+            <h3 className="text-2xl font-semibold mb-2 text-light-text dark:text-dark-text">{feature.title}</h3>
+            <p className="text-light-text/80 dark:text-dark-text/80">{feature.description}</p>
+          </div>
+        </motion.div>
+      ))}
     </motion.div>
   );
 
@@ -440,7 +504,36 @@ const About: React.FC<AboutProps> = ({ config, websiteConfig, layout = 'cards', 
             />
           </motion.div>
 
-          {layout === 'manifesto' ? (
+          {layout === 'wall' ? (
+            <>
+              <div className="grid lg:grid-cols-2 gap-8 lg:gap-16 mb-16">
+                <motion.p className="text-2xl md:text-3xl leading-snug text-light-text dark:text-dark-text" variants={itemVariants}>
+                  {config.paragraphs.intro}
+                </motion.p>
+                <motion.p className="text-lg text-light-text/80 dark:text-dark-text/80 leading-loose" variants={itemVariants}>
+                  {config.paragraphs.mission}
+                </motion.p>
+              </div>
+              {featureWall}
+              {renderVisitCard()}
+            </>
+          ) : layout === 'timeline' ? (
+            <>
+              <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-start mb-20">
+                <div className="lg:sticky lg:top-28">{paragraphs('text-center lg:text-start')}</div>
+                {featureRail}
+              </div>
+              {renderVisitCard()}
+            </>
+          ) : layout === 'sticky' ? (
+            <>
+              <div className="grid lg:grid-cols-[2fr_3fr] gap-12 lg:gap-16 items-start mb-20">
+                <div className="lg:sticky lg:top-28">{paragraphs('text-center lg:text-start')}</div>
+                {featureRowsBig}
+              </div>
+              {renderVisitCard()}
+            </>
+          ) : layout === 'manifesto' ? (
             // LT-109: the artboard's statement composition — the intro as a
             // big display pull-quote beside the mission text, features as a
             // quiet band below.
