@@ -12,6 +12,15 @@ import AuthService from '../../../services/AuthService';
 import smsService from '../../../services/SmsService';
 import { Loader2 } from 'lucide-react';
 import { Vacation } from '../../../models/Vacation';
+import SectionHeading from '../SectionHeading';
+import type { SectionHeader, ScheduleStyle } from '../../../models/DesignConfig';
+
+// LT-124: the widget's chrome per vibe. 'card' is the legacy string, byte-identical.
+const CARD_CLASS: Record<ScheduleStyle, string> = {
+  card: 'bg-light-surface dark:bg-dark-surface rounded-design-card shadow-card p-6 md:p-8',
+  flat: 'border-y border-light-text/15 dark:border-dark-text/15 py-8 md:py-10',
+  inset: 'bg-primary/5 dark:bg-primary-dark/5 border border-primary/15 dark:border-primary-dark/15 rounded-design-card p-6 md:p-8',
+};
 import { MaterialInput } from './ScheduleForms';
 import { DateButton } from './ScheduleCalendar';
 import { CalendarEventInput, googleCalendarUrl, downloadIcs } from '../../../services/calendarLinks';
@@ -32,6 +41,9 @@ interface FormErrors {
 interface ScheduleProps {
   /** LT-115: the booking band above already shows the description. */
   hideDescription?: boolean;
+  /** LT-124: the vibe's section chrome and widget frame. */
+  header?: SectionHeader;
+  scheduleStyle?: ScheduleStyle;
   config: ScheduleConfig;
   workingDays: (string | null)[];
   user_id: string;
@@ -50,7 +62,7 @@ interface ScheduleProps {
 }
 
 
-const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone, businessName, timeToCancel, vacations, dateOverrides = [], appointmentTypes, isUpdating, appointmentToUpdate, onUpdateComplete, onCancelUpdate, isPreview, hideDescription = false }) => {
+const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone, businessName, timeToCancel, vacations, dateOverrides = [], appointmentTypes, isUpdating, appointmentToUpdate, onUpdateComplete, onCancelUpdate, isPreview, hideDescription = false, header, scheduleStyle = 'card' }) => {
   // if (!appointmentTypes) {
   //   throw new Error('No appointment types available');
   // }
@@ -791,17 +803,29 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
           viewport={{ once: true, margin: "-20%" }}
           transition={{ duration: 0.6, ease: 'easeOut' }}
         >
-          <motion.div className="text-center mb-20">
-            <h2 className="text-4xl font-bold text-light-text dark:text-dark-text mb-6">
-              {config.title}
-            </h2>
-            <div className="w-24 h-1 bg-primary dark:bg-primary-dark mx-auto mb-8"></div>
+          <motion.div className={header && header !== 'centered' ? 'mb-12' : 'text-center mb-20'}>
+            {header && header !== 'centered' ? (
+              <SectionHeading
+                title={config.title}
+                description={hideDescription ? undefined : config.description}
+                variant={header}
+                mb="mb-0"
+                titleId="schedule-title"
+              />
+            ) : (
+              <>
+                <h2 className="text-4xl font-bold text-light-text dark:text-dark-text mb-6">
+                  {config.title}
+                </h2>
+                <div className="w-24 h-1 bg-primary dark:bg-primary-dark mx-auto mb-8"></div>
 
 
-            {!hideDescription && (
-              <p className="text-xl text-light-text/80 dark:text-dark-text/80 max-w-2xl mx-auto">
-                {config.description}
-              </p>
+                {!hideDescription && (
+                  <p className="text-xl text-light-text/80 dark:text-dark-text/80 max-w-2xl mx-auto">
+                    {config.description}
+                  </p>
+                )}
+              </>
             )}
 
             {isUpdating && appointmentToUpdate && (
@@ -829,7 +853,7 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
           </motion.div>
 
           <motion.div ref={cardRef} className="max-w-[43.75rem] mx-auto scroll-mt-24">
-            <motion.div className="bg-light-surface dark:bg-dark-surface rounded-design-card shadow-card p-6 md:p-8">
+            <motion.div className={CARD_CLASS[scheduleStyle]}>
               <AnimatePresence mode="wait">
               {!isSuccess ? (
               <motion.div

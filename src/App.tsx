@@ -302,6 +302,8 @@ function MainContent() {
             dateOverrides={config.dateOverrides}
             appointmentTypes={config.appointmentTypes}
             isPreview={isPreview}
+            header={config.design?.sectionHeader}
+            scheduleStyle={config.design?.scheduleStyle}
           />
         </div>
       )
@@ -408,6 +410,7 @@ function MainContent() {
             logoImageName={config.logoImageName}
             websiteConfig={config.components}
             layout={config.design?.footerLayout}
+            city={config.address?.city}
           />
         </ErrorBoundary>
       )}

@@ -28,9 +28,11 @@ interface FooterProps {
   appointmentsType: AppointmentType[];
   websiteConfig: WebsiteConfig;
   layout?: FooterLayout;
+  /** LT-124: the 'line'/'ticker' rows name the city beside the business. */
+  city?: string;
 }
 
-const Footer: React.FC<FooterProps> = ({ config, social, businessName, logoImageName, appointmentsType, websiteConfig, layout = 'columns' }) => {
+const Footer: React.FC<FooterProps> = ({ config, social, businessName, logoImageName, appointmentsType, websiteConfig, layout = 'columns', city }) => {
   const { t, language } = useLanguage();
   const { isModalOpen, setIsModalOpen, modalType, handleContactClick } = useContactHandler();
   const [legalModal, setLegalModal] = useState<{
@@ -151,6 +153,89 @@ const Footer: React.FC<FooterProps> = ({ config, social, businessName, logoImage
       behavior: 'smooth'
     });
   };
+
+
+  // LT-124: the canvas footers are a single ruled row (light, on the page
+  // ground) or a repeating strip; both keep the legal links in one compact
+  // line. Legacy 'columns'/'minimal' are untouched below.
+  const modals = (
+    <>
+      <ContactModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        contactLink={modalType === 'whatsapp'
+          ? `https://wa.me/${websiteConfig.contact?.phone?.replace(/[^0-9+]/g, '')}`
+          : `tel:${websiteConfig.contact?.phone?.replace(/[^0-9+]/g, '')}`}
+        type={modalType}
+      />
+
+      <LegalModal
+        isOpen={legalModal.isOpen}
+        onClose={() => setLegalModal(prev => ({ ...prev, isOpen: false }))}
+        title={legalModal.title}
+        content={legalModal.content}
+      />
+    </>
+  );
+  const year = new Date().getFullYear();
+  const compactLegal = (
+    <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-xs opacity-60">
+      <span>&copy; {year} {businessName}. {t('footer.rights')}</span>
+      <button onClick={() => openLegalModal('privacy')} className="hover:opacity-100 hover:underline">{t('footer.policy.privacy')}</button>
+      <button onClick={() => openLegalModal('terms')} className="hover:opacity-100 hover:underline">{t('footer.policy.terms')}</button>
+      <button onClick={() => openLegalModal('security')} className="hover:opacity-100 hover:underline">{t('footer.policy.security')}</button>
+      <a href="https://register.lightor.app" target="_blank" rel="noopener noreferrer" className="hover:opacity-100 hover:underline">{t('footer.business_link')}</a>
+    </div>
+  );
+  const tagline = [businessName, city].filter((x) => x && x.trim()).join(' · ');
+
+  if (layout === 'line') {
+    return (
+      <>
+        <footer className="bg-light-bg dark:bg-dark-bg text-light-text dark:text-dark-text border-t border-light-text/15 dark:border-dark-text/15 py-8 transition-colors duration-300">
+          <div className="container mx-auto px-4 flex flex-col gap-5">
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 text-sm">
+              <span className="font-semibold">{tagline}</span>
+              {config.description && <span className="opacity-70 md:max-w-md md:truncate">{config.description}</span>}
+              {socialLinks.length > 0 && (
+                <div className="flex gap-2">
+                  {socialLinks.map((social, index) => (
+                    <button
+                      key={index}
+                      onClick={() => window.open(social.href, '_blank')}
+                      className="w-8 h-8 rounded-design-sm flex items-center justify-center border border-light-text/15 dark:border-dark-text/15 hover:border-primary transition-colors"
+                      aria-label={social.label}
+                    >
+                      {typeof social.icon === 'function' ? <social.icon /> : <social.icon className="h-4 w-4" aria-hidden="true" />}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+            {compactLegal}
+          </div>
+        </footer>
+        {modals}
+      </>
+    );
+  }
+
+  if (layout === 'ticker') {
+    const items = [businessName, city, ...appointmentsType.slice(0, 3).map((a) => a?.name)].filter((x): x is string => !!x && !!x.trim());
+    const strip = Array.from({ length: Math.ceil(24 / items.length) }, () => items).flat().join(' · ');
+    const track = language === 'ar' ? '' : 'tracking-[0.25em]';
+    return (
+      <>
+        <footer className="bg-dark-surface text-dark-text">
+          <div className={`overflow-hidden whitespace-nowrap py-3 border-t border-dark-text/15 text-xs font-semibold ${track} text-dark-text/60 select-none`} aria-hidden="true">
+            {strip}
+          </div>
+          <div className="container mx-auto px-4 py-6">{compactLegal}</div>
+        </footer>
+        {modals}
+      </>
+    );
+  }
 
   return (
     <>
@@ -352,21 +437,7 @@ const Footer: React.FC<FooterProps> = ({ config, social, businessName, logoImage
         </motion.div>
       </footer>
 
-      <ContactModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        contactLink={modalType === 'whatsapp'
-          ? `https://wa.me/${websiteConfig.contact?.phone?.replace(/[^0-9+]/g, '')}`
-          : `tel:${websiteConfig.contact?.phone?.replace(/[^0-9+]/g, '')}`}
-        type={modalType}
-      />
-
-      <LegalModal
-        isOpen={legalModal.isOpen}
-        onClose={() => setLegalModal(prev => ({ ...prev, isOpen: false }))}
-        title={legalModal.title}
-        content={legalModal.content}
-      />
+      {modals}
     </>
   );
 };
