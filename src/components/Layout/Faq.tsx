@@ -5,6 +5,7 @@ import { revealVariants } from '../../services/reveal';
 import { FaqConfig } from '../../models/FaqConfig';
 import type { FaqStyle, SectionHeader, RevealStyle } from '../../models/DesignConfig';
 import SectionHeading from './SectionHeading';
+import type { HeadingScale } from '../../services/artDirection';
 import type { SectionTone } from '../SectionDivider';
 
 interface FaqProps {
@@ -14,6 +15,8 @@ interface FaqProps {
   /** Skeleton variant (LT-093): 'cards' is the pre-LT-093 rendering. */
   faqStyle?: FaqStyle;
   header?: SectionHeader;
+  /** LT-131: per-section heading scale (seeded). */
+  headerScale?: HeadingScale;
   /** LT-126: per-site motion profile. */
   reveal?: RevealStyle;
 }
@@ -37,7 +40,7 @@ const LEGACY_VARIANTS = {
 // Native <details>/<summary> accordion in every variant: zero JS state,
 // keyboard and screen reader support for free, cannot glitch. The variants
 // only change the chrome around it (LT-093).
-const Faq: React.FC<FaqProps> = ({ config, tone, faqStyle = 'cards', header, reveal }) => {
+const Faq: React.FC<FaqProps> = ({ config, tone, faqStyle = 'cards', header, headerScale, reveal }) => {
   const { container: containerVariants, item: itemVariants } = revealVariants(reveal, LEGACY_VARIANTS);
   // LT-126 'split': the title pinned in a side column, questions as ruled lines beside it.
   const isSplit = faqStyle === 'split';
@@ -84,7 +87,7 @@ const Faq: React.FC<FaqProps> = ({ config, tone, faqStyle = 'cards', header, rev
           variants={containerVariants}
         >
           <motion.div className="md:sticky md:top-28" variants={itemVariants}>
-            <SectionHeading title={config.title} variant={header === 'centered' || !header ? 'side' : header} mb="mb-0" />
+            <SectionHeading title={config.title} variant={header === 'centered' || !header ? 'side' : header} scale={headerScale} mb="mb-0" />
           </motion.div>
           <motion.div
             className="divide-y divide-light-text/15 dark:divide-dark-text/15 border-t border-b border-light-text/15 dark:border-dark-text/15"
@@ -114,7 +117,7 @@ const Faq: React.FC<FaqProps> = ({ config, tone, faqStyle = 'cards', header, rev
         variants={containerVariants}
       >
         <motion.div variants={itemVariants}>
-          <SectionHeading title={config.title} variant={header} mb="mb-16" />
+          <SectionHeading title={config.title} variant={header} scale={headerScale} mb="mb-16" />
         </motion.div>
 
         <motion.div

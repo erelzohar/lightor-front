@@ -5,6 +5,7 @@ import { revealVariants } from '../../services/reveal';
 import { TestimonialsConfig } from '../../models/TestimonialsConfig';
 import type { TestimonialsLayout, SectionHeader, RevealStyle } from '../../models/DesignConfig';
 import SectionHeading from './SectionHeading';
+import type { HeadingScale } from '../../services/artDirection';
 import type { SectionTone } from '../SectionDivider';
 
 interface TestimonialsProps {
@@ -14,6 +15,8 @@ interface TestimonialsProps {
   /** Skeleton variant (LT-093): 'cards' is the pre-LT-093 rendering. */
   layout?: TestimonialsLayout;
   header?: SectionHeader;
+  /** LT-131: per-section heading scale (seeded). */
+  headerScale?: HeadingScale;
   /** LT-126: per-site motion profile. */
   reveal?: RevealStyle;
 }
@@ -41,7 +44,7 @@ const LEGACY_VARIANTS = {
   },
 };
 
-const Testimonials: React.FC<TestimonialsProps> = ({ config, tone, layout = 'cards', header, reveal }) => {
+const Testimonials: React.FC<TestimonialsProps> = ({ config, tone, layout = 'cards', header, headerScale, reveal }) => {
   const { container: containerVariants, item: itemVariants } = revealVariants(reveal, LEGACY_VARIANTS);
   // LT-126 'spotlight': one voice at a time, rotating on its own.
   const [spot, setSpot] = useState(0);
@@ -59,7 +62,7 @@ const Testimonials: React.FC<TestimonialsProps> = ({ config, tone, layout = 'car
     return (
       <section id="testimonials" className={`section-y ${TONE_BG[tone]} transition-colors duration-300 overflow-hidden`}>
         <div className="container mx-auto px-4">
-          <SectionHeading title={config.title} variant={header} mb="mb-12" />
+          <SectionHeading title={config.title} variant={header} scale={headerScale} mb="mb-12" />
         </div>
         <div className={`flex gap-6 w-max px-4 ${loops ? 'lt-marquee' : ''}`}>
           {track.map((item, i) => (
@@ -79,7 +82,7 @@ const Testimonials: React.FC<TestimonialsProps> = ({ config, tone, layout = 'car
     return (
       <section id="testimonials" className={`section-y ${TONE_BG[tone]} transition-colors duration-300`}>
         <div className="container mx-auto px-4 max-w-4xl text-center">
-          <SectionHeading title={config.title} variant={header} mb="mb-12" />
+          <SectionHeading title={config.title} variant={header} scale={headerScale} mb="mb-12" />
           <Quote className="h-10 w-10 text-primary-readable dark:text-primary-dark-readable mx-auto mb-8" aria-hidden="true" />
           <div className="min-h-[10rem]" aria-live="polite">
             <AnimatePresence mode="wait">
@@ -128,7 +131,7 @@ const Testimonials: React.FC<TestimonialsProps> = ({ config, tone, layout = 'car
       variants={containerVariants}
     >
       <motion.div variants={itemVariants}>
-        <SectionHeading title={config.title} variant={header} mb="mb-16" />
+        <SectionHeading title={config.title} variant={header} scale={headerScale} mb="mb-16" />
       </motion.div>
 
       {layout === 'quote' ? (

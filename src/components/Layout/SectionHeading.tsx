@@ -1,6 +1,7 @@
 import React from 'react';
 import type { SectionHeader } from '../../models/DesignConfig';
 import { useLanguage } from '../../contexts/LanguageContext';
+import type { HeadingScale } from '../../services/artDirection';
 
 interface SectionHeadingProps {
   title: string;
@@ -14,6 +15,9 @@ interface SectionHeadingProps {
   descClass?: string;
   /** Optional id on the h2 (some sections are aria-labelledby it). */
   titleId?: string;
+  /** LT-131: per-section heading scale — 'giant' display title, 'micro'
+   *  label-only. Unset/'normal' renders exactly as before. */
+  scale?: HeadingScale;
 }
 
 /**
@@ -33,11 +37,36 @@ const SectionHeading: React.FC<SectionHeadingProps> = ({
   mb = 'mb-16',
   descClass = 'text-xl text-light-text/80 dark:text-dark-text/80',
   titleId,
+  scale,
 }) => {
   // Arabic cursive joins break under letter-spacing — the label chrome drops
   // its tracking there (review finding).
   const { language } = useLanguage();
   const track = language === 'ar' ? '' : 'tracking-[0.3em]';
+  const displayFont = language === 'he' || language === 'ar' ? 'var(--font-heading-rtl)' : 'var(--font-heading)';
+  const giantStyle = { fontFamily: displayFont, fontSize: 'clamp(2.75rem, 6vw, 5.5rem)', lineHeight: 1 } as const;
+  const microClass = `text-sm font-bold ${track} uppercase text-primary-readable dark:text-primary-dark-readable`;
+
+  if (scale === 'giant') {
+    // A display-size title, whatever the chrome; the label chrome keeps its
+    // rule above it.
+    return (
+      <div className={`${variant === 'centered' ? 'text-center' : ''} ${mb}`}>
+        {variant === 'label' && <span className="block h-px bg-light-text/15 dark:bg-dark-text/15 mb-8" aria-hidden="true"></span>}
+        <h2 id={titleId} className="font-bold text-light-text dark:text-dark-text mb-6" style={giantStyle}>{title}</h2>
+        {description && <p className={`text-lg text-light-text/70 dark:text-dark-text/70 ${variant === 'centered' ? 'max-w-2xl mx-auto' : 'max-w-2xl'}`}>{description}</p>}
+      </div>
+    );
+  }
+  if (scale === 'micro' && variant !== 'label') {
+    return (
+      <div className={`${variant === 'centered' ? 'text-center' : ''} ${mb}`}>
+        <h2 id={titleId} className={microClass}>{title}</h2>
+        {description && <p className={`mt-4 text-lg text-light-text/70 dark:text-dark-text/70 ${variant === 'centered' ? 'max-w-2xl mx-auto' : 'max-w-2xl'}`}>{description}</p>}
+      </div>
+    );
+  }
+
   if (variant === 'label') {
     return (
       <div className={mb}>

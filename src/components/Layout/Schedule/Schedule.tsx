@@ -13,6 +13,7 @@ import smsService from '../../../services/SmsService';
 import { Loader2 } from 'lucide-react';
 import { Vacation } from '../../../models/Vacation';
 import SectionHeading from '../SectionHeading';
+import type { HeadingScale } from '../../../services/artDirection';
 import type { SectionHeader, ScheduleStyle } from '../../../models/DesignConfig';
 
 // LT-124: the widget's chrome per vibe. 'card' is the legacy string, byte-identical.
@@ -43,6 +44,8 @@ interface ScheduleProps {
   hideDescription?: boolean;
   /** LT-124: the vibe's section chrome and widget frame. */
   header?: SectionHeader;
+  /** LT-131: per-section heading scale (seeded). */
+  headerScale?: HeadingScale;
   scheduleStyle?: ScheduleStyle;
   config: ScheduleConfig;
   workingDays: (string | null)[];
@@ -62,7 +65,7 @@ interface ScheduleProps {
 }
 
 
-const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone, businessName, timeToCancel, vacations, dateOverrides = [], appointmentTypes, isUpdating, appointmentToUpdate, onUpdateComplete, onCancelUpdate, isPreview, hideDescription = false, header, scheduleStyle = 'card' }) => {
+const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone, businessName, timeToCancel, vacations, dateOverrides = [], appointmentTypes, isUpdating, appointmentToUpdate, onUpdateComplete, onCancelUpdate, isPreview, hideDescription = false, header, headerScale, scheduleStyle = 'card' }) => {
   // if (!appointmentTypes) {
   //   throw new Error('No appointment types available');
   // }
@@ -808,7 +811,7 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
               <SectionHeading
                 title={config.title}
                 description={hideDescription ? undefined : config.description}
-                variant={header}
+                variant={header} scale={headerScale}
                 mb="mb-0"
                 titleId="schedule-title"
               />

@@ -5,6 +5,7 @@ import { useLanguage } from '../contexts/LanguageContext';
 import { PortfolioConfig } from '../models/PortfolioConfig';
 import { PortfolioLayout, SectionHeader } from '../models/DesignConfig';
 import SectionHeading from './Layout/SectionHeading';
+import type { HeadingScale } from '../services/artDirection';
 import globals from '../services/globals';
 import ImagesService from '../services/ImagesService';
 import { handleWideImageError } from '../utils/imageFallback';
@@ -15,6 +16,8 @@ interface PortfolioProps {
   /** Seeded per-site (LT-053): rotates the masonry aspect cycle. */
   masonryPhase?: number;
   header?: SectionHeader;
+  /** LT-131: per-section heading scale (seeded). */
+  headerScale?: HeadingScale;
   /** LT-115: painted background tone (see About). Default = legacy 'bg'. */
   tone?: 'bg' | 'surface';
 }
@@ -23,7 +26,7 @@ interface PortfolioProps {
 // image has the same dimensions.
 const MASONRY_ASPECTS = ['aspect-[4/3]', 'aspect-square', 'aspect-[3/4]'];
 
-const Portfolio: React.FC<PortfolioProps> = ({ config, layout = 'grid', masonryPhase = 0, header, tone = 'bg' }) => {
+const Portfolio: React.FC<PortfolioProps> = ({ config, layout = 'grid', masonryPhase = 0, header, headerScale, tone = 'bg' }) => {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isGridView] = useState(config.isGrid);
   // LT-126 'spotlight': which item is featured.
@@ -129,7 +132,7 @@ const Portfolio: React.FC<PortfolioProps> = ({ config, layout = 'grid', masonryP
           <SectionHeading
             title={config.title}
             description={config.description}
-            variant={header}
+            variant={header} scale={headerScale}
             mb="mb-20"
             descClass="text-xl text-light-text/80 dark:text-dark-text/80 max-w-2xl mx-auto mb-8"
             titleId="portfolio-title"

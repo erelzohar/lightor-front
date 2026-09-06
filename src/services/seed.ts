@@ -70,6 +70,15 @@ export interface SiteJitter {
   orderSeed: number;
   /** LT-126: unit draw picking which sections carry the page backdrop. */
   backdropPick: number;
+  /** LT-131: per-section unit draws for heading scale and breathing room
+   *  (indexed by section key, see artDirection.ts). */
+  sectionScales: number[];
+  sectionSpacings: number[];
+  /** LT-131: which section inverts into a dark block; where the photo
+   *  interlude goes and which composition it uses. */
+  invertPick: number;
+  interludePick: number;
+  interludeVariant: number;
 }
 
 export const getSiteJitter = (subdomain: string | undefined | null): SiteJitter => {
@@ -96,7 +105,13 @@ export const getSiteJitter = (subdomain: string | undefined | null): SiteJitter 
   // LT-126 draws — appended.
   const orderSeed = rng();
   const backdropPick = rng();
-  return { blobOffsets, particleSeed, floatDuration, masonryPhase, flipAboutSplit, mirrorDividers, posterAlt, flipPosterSplit, decorStart, portfolioFirst, bandSlot, orderSeed, backdropPick };
+  // LT-131 draws — appended.
+  const sectionScales = Array.from({ length: 8 }, () => rng());
+  const sectionSpacings = Array.from({ length: 8 }, () => rng());
+  const invertPick = rng();
+  const interludePick = rng();
+  const interludeVariant = rng();
+  return { blobOffsets, particleSeed, floatDuration, masonryPhase, flipAboutSplit, mirrorDividers, posterAlt, flipPosterSplit, decorStart, portfolioFirst, bandSlot, orderSeed, backdropPick, sectionScales, sectionSpacings, invertPick, interludePick, interludeVariant };
 };
 
 /** A ready-to-use PRNG for components that derive many values (particles). */

@@ -30,6 +30,7 @@ import { useContactHandler } from '../../hooks/useContactHandler';
 import { AboutConfig } from '../../models/AboutConfig';
 import { AboutLayout, FeatureStyle, SectionHeader } from '../../models/DesignConfig';
 import SectionHeading from './SectionHeading';
+import type { HeadingScale } from '../../services/artDirection';
 import { Social } from '../../models/Social';
 
 // Feature icons are stored in the config by name.
@@ -65,6 +66,11 @@ interface AboutProps {
   featureStyle?: FeatureStyle;
   /** LT-115 page-rhythm chrome + this section's 1-based position. */
   header?: SectionHeader;
+  /** LT-131: per-section heading scale (seeded). */
+  headerScale?: HeadingScale;
+  /** LT-131: vibe sites with a contact section drop the visit card here —
+   *  it repeated the same block on every page. */
+  showVisit?: boolean;
   /** LT-126: per-site motion profile. */
   reveal?: RevealStyle;
   /** LT-115: painted background tone — the seeded order shuffle keeps tones
@@ -74,7 +80,7 @@ interface AboutProps {
 
 const ROMAN_NUMERALS = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII'];
 
-const About: React.FC<AboutProps> = ({ config, websiteConfig, layout = 'cards', flipSplit = false, featureStyle = 'icons', header, tone = 'surface', reveal }) => {
+const About: React.FC<AboutProps> = ({ config, websiteConfig, layout = 'cards', flipSplit = false, featureStyle = 'icons', header, headerScale, showVisit = true, tone = 'surface', reveal }) => {
   const { t, language } = useLanguage();
   const { isModalOpen, setIsModalOpen, modalType, handleContactClick } = useContactHandler();
   const formatWorkingHours = () => {
@@ -498,7 +504,7 @@ const About: React.FC<AboutProps> = ({ config, websiteConfig, layout = 'cards', 
             <SectionHeading
               title={config.title}
               description={config.description}
-              variant={header}
+              variant={header} scale={headerScale}
               mb="mb-20"
               descClass="text-xl text-light-text/80 dark:text-dark-text/80"
             />
@@ -515,7 +521,7 @@ const About: React.FC<AboutProps> = ({ config, websiteConfig, layout = 'cards', 
                 </motion.p>
               </div>
               {featureWall}
-              {renderVisitCard()}
+              {showVisit && renderVisitCard()}
             </>
           ) : layout === 'timeline' ? (
             <>
@@ -523,7 +529,7 @@ const About: React.FC<AboutProps> = ({ config, websiteConfig, layout = 'cards', 
                 <div className="lg:sticky lg:top-28">{paragraphs('text-center lg:text-start')}</div>
                 {featureRail}
               </div>
-              {renderVisitCard()}
+              {showVisit && renderVisitCard()}
             </>
           ) : layout === 'sticky' ? (
             <>
@@ -531,7 +537,7 @@ const About: React.FC<AboutProps> = ({ config, websiteConfig, layout = 'cards', 
                 <div className="lg:sticky lg:top-28">{paragraphs('text-center lg:text-start')}</div>
                 {featureRowsBig}
               </div>
-              {renderVisitCard()}
+              {showVisit && renderVisitCard()}
             </>
           ) : layout === 'manifesto' ? (
             // LT-109: the artboard's statement composition — the intro as a
@@ -553,23 +559,23 @@ const About: React.FC<AboutProps> = ({ config, websiteConfig, layout = 'cards', 
                 </motion.div>
               </div>
               {featureBand}
-              {renderVisitCard()}
+              {showVisit && renderVisitCard()}
             </>
           ) : layout === 'split' ? (
             <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-start">
               <div className={flipSplit ? 'lg:order-2' : ''}>
                 {paragraphs('mb-12 text-center lg:text-start')}
-                {featureRows}
+                {showVisit && featureRows}
               </div>
               <div className={flipSplit ? 'lg:order-1' : ''}>
-                {renderVisitCard(true)}
+                {showVisit ? renderVisitCard(true) : featureRows}
               </div>
             </div>
           ) : (
             <>
               {paragraphs()}
               {layout === 'band' ? featureBand : featureTiles}
-              {renderVisitCard()}
+              {showVisit && renderVisitCard()}
             </>
           )}
         </motion.div>

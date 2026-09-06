@@ -29,6 +29,8 @@ import { WebsiteConfig } from './models/WebsiteConfig';
 import { DesignConfig } from './models/DesignConfig';
 import WebConfigService from './services/WebConfigService';
 import { getSiteJitter, createRng } from './services/seed';
+import { scaleOf, spacingOf, SPACING_CLASS, pickInvert, pickInterludeSlot } from './services/artDirection';
+import Interlude from './components/Layout/Interlude';
 import ImagesService from './services/ImagesService';
 import { useTheme } from './hooks/useTheme';
 import { reportError } from './services/ErrorReportingService';
@@ -219,6 +221,10 @@ function MainContent() {
   // two same-preset sites still differ (LT-053).
   const jitter = getSiteJitter(config.subDomain);
   const flow: { key: string; tone: SectionTone; node: ReactNode }[] = [];
+  // Vibe sites (LT-093+) opt into every seeded page-level variation; legacy
+  // presets and unpresetted sites never reorder or restyle.
+  const isVibeSite = (config.design?.sectionHeader ?? 'centered') !== 'centered'
+    || config.design?.bookingBand === 'band';
 
   if (config.components?.hero?.visible) {
     flow.push({
@@ -252,6 +258,7 @@ function MainContent() {
           layout={config.design?.aboutLayout}
           featureStyle={config.design?.featureStyle}
           flipSplit={jitter.flipAboutSplit}
+          showVisit={!isVibeSite || !config.components?.contact?.visible}
         />
       )
     });
@@ -304,6 +311,7 @@ function MainContent() {
             isPreview={isPreview}
             header={config.design?.sectionHeader}
             scheduleStyle={config.design?.scheduleStyle}
+            headerScale={isVibeSite ? scaleOf('schedule', jitter) : undefined}
           />
         </div>
       )
@@ -347,8 +355,6 @@ function MainContent() {
         // work. Vibe presets only: legacy sites must never reorder (the
         // review caught the ungated draw touching ~40% of old sites).
         const ordered = [...flow];
-        const isVibeSite = (config.design?.sectionHeader ?? 'centered') !== 'centered'
-          || config.design?.bookingBand === 'band';
         if (isVibeSite) {
           // LT-126: a seeded permutation of the middle sections, so the page
           // skeleton itself differs between two same-vibe sites (supersedes
@@ -385,6 +391,33 @@ function MainContent() {
             if (candidates.length >= 4) backdropKeys.add(candidates[(first + 2) % candidates.length]);
           }
         }
+        // LT-131: one middle section inverts into a dark color block on light
+        // pages (a nested `dark` class flips every dark: utility inside it).
+        const invertKey = isVibeSite && config.design?.defaultTheme !== 'dark'
+          ? pickInvert(ordered.map((e) => e.key), jitter.invertPick, backdropKeys)
+          : null;
+        // LT-131: a photo interlude between sections — the mission line over
+        // a full-bleed photo, or a split photo/statement block.
+        if (isVibeSite) {
+          const interludeImage = config.components?.portfolio?.items?.[1]?.url || config.components?.hero?.heroImageSrc;
+          const slot = interludeImage ? pickInterludeSlot(ordered.map((e) => e.key), jitter.interludePick) : null;
+          if (slot !== null && interludeImage) {
+            const tone = (ordered[slot] ?? ordered[slot - 1]).tone;
+            ordered.splice(slot, 0, {
+              key: 'interlude',
+              tone,
+              node: (
+                <Interlude
+                  image={interludeImage}
+                  statement={config.components?.about?.paragraphs?.mission?.trim() || config.components?.hero?.subtitle?.trim() || undefined}
+                  variant={jitter.interludeVariant < 0.5 ? 0 : 1}
+                  tone={tone}
+                />
+              ),
+            });
+          }
+        }
+        const noDivider = (key: string) => key === 'booking-band' || key === 'interlude' || backdropKeys.has(key) || key === invertKey;
         // The canvas full-bleed CTA band. LT-119: at a seeded slot that is
         // never directly above (or below) the schedule — there it merely
         // announced the widget beneath it, on every site alike. Only with a
@@ -417,24 +450,29 @@ function MainContent() {
             <Fragment key={s.key}>
               {/* No shaped divider against the band — it paints its own
                   saturated primary edge to edge (review finding). */}
-              {i > 0 && s.key !== 'booking-band' && ordered[i - 1].key !== 'booking-band'
-                && !backdropKeys.has(s.key) && !backdropKeys.has(ordered[i - 1].key) && (
+              {i > 0 && !noDivider(s.key) && !noDivider(ordered[i - 1].key) && (
                 <SectionDivider variant={divider} aboveTone={ordered[i - 1].tone} belowTone={s.tone} mirror={jitter.mirrorDividers} />
               )}
               {(() => {
                 const inner = (
                   <ErrorBoundary>
                     {isValidElement(s.node) && typeof (s.node as ReactElement).type !== 'string'
-                      ? cloneElement(s.node as ReactElement, { header: config.design?.sectionHeader, tone: s.tone, reveal: config.design?.revealStyle } as Record<string, unknown>)
+                      ? cloneElement(s.node as ReactElement, { header: config.design?.sectionHeader, tone: s.tone, reveal: config.design?.revealStyle, headerScale: isVibeSite ? scaleOf(s.key, jitter) : undefined } as Record<string, unknown>)
                       : s.node}
                   </ErrorBoundary>
                 );
-                if (!backdropKeys.has(s.key)) return inner;
+                // LT-131: breathing room and the inverted color block wrap the
+                // section too (the same wrapper carries the backdrop below).
+                const extra = [
+                  isVibeSite && s.key !== 'interlude' ? SPACING_CLASS[spacingOf(s.key, jitter)] : '',
+                  invertKey === s.key ? 'dark' : '',
+                ].filter(Boolean).join(' ');
+                if (!backdropKeys.has(s.key)) return extra ? <div className={extra}>{inner}</div> : inner;
                 // The section paints its own tone; the wrapper overrides it to
                 // transparent and supplies the backdrop underneath (isolate
                 // keeps -z-10 inside this stacking context).
                 return (
-                  <div className="relative isolate bg-light-bg dark:bg-dark-bg [&>section]:!bg-transparent">
+                  <div className={`relative isolate bg-light-bg dark:bg-dark-bg [&>section]:!bg-transparent ${extra}`}>
                     {backdrop === 'photo' && config.components?.hero?.heroImageSrc && (
                       <img
                         src={ImagesService.getInstance().getImage(config.components.hero.heroImageSrc)}

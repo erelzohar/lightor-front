@@ -6,12 +6,15 @@ import type { SectionTone } from '../SectionDivider';
 import type { SectionHeader, RevealStyle } from '../../models/DesignConfig';
 import { revealVariants } from '../../services/reveal';
 import SectionHeading from './SectionHeading';
+import type { HeadingScale } from '../../services/artDirection';
 
 interface ServicesLedgerProps {
   appointmentTypes: AppointmentType[];
   /** Section background tone — assigned by App's flow builder. */
   tone: SectionTone;
   header?: SectionHeader;
+  /** LT-131: per-section heading scale (seeded). */
+  headerScale?: HeadingScale;
   reveal?: RevealStyle;
 }
 
@@ -34,7 +37,7 @@ const LEGACY_VARIANTS = {
 // LT-109: the canvas price ledger — numbered rows with dotted leaders,
 // display type, built from the business's REAL services. Rendered only when
 // the servicesLayout token asks for it and priced services exist.
-const ServicesLedger: React.FC<ServicesLedgerProps> = ({ appointmentTypes, tone, header, reveal }) => {
+const ServicesLedger: React.FC<ServicesLedgerProps> = ({ appointmentTypes, tone, header, headerScale, reveal }) => {
   const { t, language } = useLanguage();
   const { container: containerVariants, item: itemVariants } = revealVariants(reveal, LEGACY_VARIANTS);
   const rows = appointmentTypes.filter((a) => a?.name);
@@ -62,7 +65,7 @@ const ServicesLedger: React.FC<ServicesLedgerProps> = ({ appointmentTypes, tone,
         <motion.div variants={itemVariants}>
           <SectionHeading
             title={t('services.ledger_title', { defaultValue: language === 'he' ? 'המחירון' : 'Services' })}
-            variant={header}
+            variant={header} scale={headerScale}
             mb="mb-14"
           />
         </motion.div>

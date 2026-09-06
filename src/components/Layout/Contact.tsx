@@ -6,6 +6,7 @@ import { ContactConfig } from '../../models/ContactConfig';
 import { ContactLayout, SectionHeader, RevealStyle } from '../../models/DesignConfig';
 import { revealVariants } from '../../services/reveal';
 import SectionHeading from './SectionHeading';
+import type { HeadingScale } from '../../services/artDirection';
 import { ContactModal } from '../../components/ContactModal';
 import { useContactHandler } from '../../hooks/useContactHandler';
 import smsService from '../../services/SmsService';
@@ -32,6 +33,8 @@ interface ContactProps {
   isPreview?: boolean;
   layout?: ContactLayout;
   header?: SectionHeader;
+  /** LT-131: per-section heading scale (seeded). */
+  headerScale?: HeadingScale;
   /** LT-126: per-site motion profile. */
   reveal?: RevealStyle;
 }
@@ -95,7 +98,7 @@ const MaterialInput = ({
   </div>
 );
 
-const Contact: React.FC<ContactProps> = ({ config, address, contact, workingDays, isPreview, layout = 'split', header, reveal }) => {
+const Contact: React.FC<ContactProps> = ({ config, address, contact, workingDays, isPreview, layout = 'split', header, headerScale, reveal }) => {
   // 'split' = info column beside the form; 'stacked' = one narrow centered
   // column with the info as a chip row above the form.
   const isStacked = layout === 'stacked';
@@ -434,7 +437,7 @@ const Contact: React.FC<ContactProps> = ({ config, address, contact, workingDays
       <>
         <section id="contact" aria-label="Contact us" className="section-y bg-light-surface dark:bg-dark-surface transition-colors duration-300">
           <div className="container mx-auto px-4">
-            <SectionHeading title={config.title} description={config.description || undefined} variant={header} mb="mb-10" titleId="contact-title" />
+            <SectionHeading title={config.title} description={config.description || undefined} variant={header} scale={headerScale} mb="mb-10" titleId="contact-title" />
             <div className="grid md:grid-cols-2 border-t border-light-text/15 dark:border-dark-text/15">
               <div className="py-12 md:pe-12 md:border-e border-light-text/15 dark:border-dark-text/15">
                 <button
@@ -461,7 +464,7 @@ const Contact: React.FC<ContactProps> = ({ config, address, contact, workingDays
       <>
         <section id="contact" aria-label="Contact us" className="section-y bg-light-bg dark:bg-dark-bg transition-colors duration-300">
           <div className="container mx-auto px-4">
-            <SectionHeading title={config.title} description={config.description || undefined} variant={header} mb="mb-12" titleId="contact-title" />
+            <SectionHeading title={config.title} description={config.description || undefined} variant={header} scale={headerScale} mb="mb-12" titleId="contact-title" />
             <div className="grid md:grid-cols-2 gap-16 max-w-6xl">
               {plainLines('text-light-text/80 dark:text-dark-text/80')}
               {formNode}
@@ -527,7 +530,7 @@ const Contact: React.FC<ContactProps> = ({ config, address, contact, workingDays
       <>
         <section id="contact" aria-label="Contact us" className="section-y bg-light-bg dark:bg-dark-bg transition-colors duration-300">
           <div className="container mx-auto px-4">
-            <SectionHeading title={config.title} description={config.description || undefined} variant={header} mb="mb-12" titleId="contact-title" />
+            <SectionHeading title={config.title} description={config.description || undefined} variant={header} scale={headerScale} mb="mb-12" titleId="contact-title" />
             <div className="grid md:grid-cols-2 gap-8 max-w-6xl mx-auto">
               <div className="card-design p-6 md:p-8">{formNode}</div>
               <div className="card-design p-6 md:p-8 flex flex-col gap-6">
@@ -588,7 +591,7 @@ const Contact: React.FC<ContactProps> = ({ config, address, contact, workingDays
             <SectionHeading
               title={config.title}
               description={config.description}
-              variant={header}
+              variant={header} scale={headerScale}
               mb="mb-20"
               descClass="text-xl text-light-text/80 dark:text-dark-text/80 max-w-2xl mx-auto"
               titleId="contact-title"
