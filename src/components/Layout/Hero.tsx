@@ -750,10 +750,14 @@ const Hero: React.FC<HeroProps> = ({ config, social, phone, isContactVisible, ap
         <div className="absolute inset-0 bg-light-bg/50 dark:bg-dark-bg/55 pointer-events-none" aria-hidden="true" />
 
         {/* Vibe signature decorations (LT-107, from the LT-092 canvas). All
-            static and aria-hidden — identity, not content. */}
+            static and aria-hidden — identity, not content.
+            z-10 because they are drawn ON the fold, not under it: these are
+            siblings that precede the content container, so without it the
+            hero image simply painted over them — a stamp or sun sliced in
+            half by the photo's edge. */}
         {decor === 'stamp' && (
           <div
-            className={`hidden md:flex absolute top-24 ${decorStart ? 'start-10 lg:start-20' : 'end-10 lg:end-20'} w-28 h-28 rounded-full border-2 border-primary-readable dark:border-primary-dark-readable items-center justify-center -rotate-12 pointer-events-none`}
+            className={`hidden md:flex absolute z-10 top-24 ${decorStart ? 'start-10 lg:start-20' : 'end-10 lg:end-20'} w-28 h-28 rounded-full border-2 border-primary-readable dark:border-primary-dark-readable items-center justify-center -rotate-12 pointer-events-none`}
             aria-hidden="true"
           >
             <div className="w-[5.5rem] h-[5.5rem] rounded-full border border-primary-readable/60 dark:border-primary-dark-readable/60 flex items-center justify-center p-2">
@@ -764,7 +768,7 @@ const Hero: React.FC<HeroProps> = ({ config, social, phone, isContactVisible, ap
           </div>
         )}
         {decor === 'confetti' && (
-          <div className="absolute inset-0 pointer-events-none" aria-hidden="true">
+          <div className="absolute inset-0 z-10 pointer-events-none" aria-hidden="true">
             <span className="absolute top-[14%] start-[12%] w-3 h-3 rounded-full bg-primary/70 dark:bg-primary-dark/70" />
             <span className="absolute top-[26%] end-[9%] w-2 h-2 rounded-full bg-primary-dark/60 dark:bg-primary/60" />
             <span className="absolute top-[62%] start-[7%] w-2.5 h-2.5 rounded-full bg-primary/50 dark:bg-primary-dark/50" />
@@ -776,7 +780,7 @@ const Hero: React.FC<HeroProps> = ({ config, social, phone, isContactVisible, ap
         {decor === 'sun' && (
           <svg
             viewBox="0 0 40 40"
-            className={`hidden md:block absolute top-24 ${decorStart ? 'start-12 lg:start-24' : 'end-12 lg:end-24'} w-14 h-14 text-primary-readable dark:text-primary-dark-readable pointer-events-none`}
+            className={`hidden md:block absolute z-10 top-24 ${decorStart ? 'start-12 lg:start-24' : 'end-12 lg:end-24'} w-14 h-14 text-primary-readable dark:text-primary-dark-readable pointer-events-none`}
             fill="none"
             stroke="currentColor"
             strokeWidth="2"
