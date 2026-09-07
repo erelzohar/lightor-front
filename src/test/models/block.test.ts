@@ -30,6 +30,7 @@ describe('blocks (LT-133)', () => {
 
   it('every supported renderer type is a catalog type', () => {
     for (const t of SUPPORTED_BLOCKS) expect(BLOCK_TYPES).toContain(t);
-    expect(SUPPORTED_BLOCKS.size).toBe(13);
+    expect(SUPPORTED_BLOCKS.size).toBe(26);
+    for (const t of BLOCK_TYPES) expect(SUPPORTED_BLOCKS.has(t)).toBe(true);
   });
 });

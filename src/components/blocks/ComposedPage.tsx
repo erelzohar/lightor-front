@@ -17,6 +17,19 @@ import BookingBand from '../Layout/BookingBand';
 import Schedule from '../Layout/Schedule/Schedule';
 import Contact from '../Layout/Contact';
 import Footer from '../Layout/Footer';
+import TickerBlock from './TickerBlock';
+import Announcement from './Announcement';
+import Manifesto from './Manifesto';
+import Stats, { type StatItem } from './Stats';
+import PullQuote from './PullQuote';
+import Process, { type ProcessStep } from './Process';
+import PriceCards from './PriceCards';
+import Hours from './Hours';
+import PhotoPair from './PhotoPair';
+import BeforeAfter from './BeforeAfter';
+import MapStrip from './MapStrip';
+import LogoMark from './LogoMark';
+import SocialTiles from './SocialTiles';
 import type { AboutLayout, PortfolioLayout, TestimonialsLayout, FaqStyle, ContactLayout, FooterLayout, HeroLayout } from '../../models/DesignConfig';
 
 interface ComposedPageProps {
@@ -29,6 +42,9 @@ interface ComposedPageProps {
 export const SUPPORTED_BLOCKS = new Set<Block['type']>([
   'hero', 'intro', 'features', 'visit', 'gallery', 'quote', 'faq', 'ledger',
   'interlude', 'bookingBand', 'schedule', 'contact', 'footer',
+  // LT-136 (phase 3)
+  'ticker', 'announcement', 'manifesto', 'stats', 'pullQuote', 'process',
+  'priceCards', 'hours', 'photoPair', 'beforeAfter', 'mapStrip', 'logoMark', 'social',
 ]);
 
 const INTRO_LAYOUT: Record<string, AboutLayout> = { plain: 'cards', manifesto: 'manifesto', columns: 'wall' };
@@ -103,8 +119,40 @@ const ComposedPage: React.FC<ComposedPageProps> = ({ config, jitter, isPreview }
       }
       case 'bookingBand': {
         const statement = (typeof p.text === 'string' && p.text) || c?.schedule?.description?.trim();
-        return statement ? <BookingBand statement={statement} /> : null;
+        const chips = v === 'chips' ? (config.appointmentTypes ?? []).map((a) => a?.name).filter((n): n is string => !!n) : undefined;
+        return statement ? <BookingBand statement={statement} chips={chips} /> : null;
       }
+      // LT-136 — the fourteen phase-3 blocks.
+      case 'ticker':
+        return <TickerBlock items={(config.appointmentTypes ?? []).map((a) => a?.name).filter((n): n is string => !!n)} />;
+      case 'announcement':
+        return typeof p.text === 'string' && p.text.trim() ? <Announcement text={p.text.trim()} /> : null;
+      case 'manifesto':
+        return typeof p.text === 'string' && p.text.trim() ? <Manifesto text={p.text.trim()} /> : null;
+      case 'stats':
+        return Array.isArray(p.items) ? <Stats items={p.items as StatItem[]} /> : null;
+      case 'pullQuote':
+        return typeof p.text === 'string' && p.text.trim()
+          ? <PullQuote text={p.text.trim()} attribution={typeof p.attribution === 'string' ? p.attribution : config.businessName} />
+          : null;
+      case 'process':
+        return Array.isArray(p.steps) ? <Process steps={p.steps as ProcessStep[]} title={typeof p.title === 'string' ? p.title : undefined} variant={v} /> : null;
+      case 'priceCards':
+        return <PriceCards appointmentTypes={config.appointmentTypes ?? []} />;
+      case 'hours':
+        return <Hours workingDays={config.workingDays ?? []} variant={v} />;
+      case 'photoPair': {
+        const from = typeof p.from === 'number' ? p.from : 0;
+        return <PhotoPair items={(c?.portfolio?.items ?? []).slice(from, from + 2)} variant={v} />;
+      }
+      case 'beforeAfter':
+        return <BeforeAfter items={(c?.portfolio?.items ?? []).slice(0, 2)} />;
+      case 'mapStrip':
+        return config.address ? <MapStrip address={config.address} /> : null;
+      case 'logoMark':
+        return config.logoImageName ? <LogoMark logo={config.logoImageName} businessName={config.businessName} /> : null;
+      case 'social':
+        return config.social ? <SocialTiles social={config.social} /> : null;
       case 'schedule':
         return c?.schedule ? (
           <div id="booking-section" className="relative min-h-[25rem]">
@@ -166,7 +214,7 @@ const ComposedPage: React.FC<ComposedPageProps> = ({ config, jitter, isPreview }
   }
 
   const divider = design?.sectionDivider ?? 'none';
-  const flat = (b: Block) => b.type === 'bookingBand' || b.type === 'interlude' || b.type === 'footer' || b.type === 'hero'
+  const flat = (b: Block) => ['bookingBand', 'interlude', 'footer', 'hero', 'ticker', 'announcement', 'logoMark', 'mapStrip'].includes(b.type)
     || (b.mod?.backdrop && b.mod.backdrop !== 'none') || !!b.mod?.invert;
   const heroImg = c?.hero?.heroImageSrc;
 

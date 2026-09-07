@@ -6,6 +6,8 @@ import { useLanguage } from '../../contexts/LanguageContext';
 interface BookingBandProps {
   /** The schedule section's description doubles as the band's statement. */
   statement: string;
+  /** LT-136 'chips' variant: the services as quick picks under the statement. */
+  chips?: string[];
 }
 
 /**
@@ -14,7 +16,7 @@ interface BookingBandProps {
  * monthly."); generated pages had no color break at all. Sits directly above
  * the schedule section and anchors to it.
  */
-const BookingBand: React.FC<BookingBandProps> = ({ statement }) => {
+const BookingBand: React.FC<BookingBandProps> = ({ statement, chips }) => {
   const { t } = useLanguage();
   return (
     <section
@@ -27,9 +29,18 @@ const BookingBand: React.FC<BookingBandProps> = ({ statement }) => {
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true }}
       >
-        <h2 className="text-3xl md:text-4xl font-bold leading-tight text-center md:text-start">
-          {statement}
-        </h2>
+        <div className="text-center md:text-start">
+          <h2 className="text-3xl md:text-4xl font-bold leading-tight">
+            {statement}
+          </h2>
+          {chips && chips.length > 0 && (
+            <div className="mt-5 flex flex-wrap justify-center md:justify-start gap-2">
+              {chips.slice(0, 6).map((c) => (
+                <a key={c} href="#schedule" className="px-4 py-1.5 rounded-full border border-current/50 text-sm font-semibold hover:bg-light-bg/15 transition-colors">{c}</a>
+              ))}
+            </div>
+          )}
+        </div>
         <a
           href="#schedule"
           className="shrink-0 inline-flex items-center gap-3 bg-light-bg text-light-text dark:bg-dark-bg dark:text-dark-text font-bold px-8 py-4 rounded-design min-h-[3.25rem] hover:opacity-90 transition-opacity"
