@@ -1,4 +1,5 @@
 import { Social } from './Social';
+import { Block, parseBlocks } from './Block';
 import { HeroConfig } from './HeroConfig';
 import { AboutConfig } from './AboutConfig';
 import { PortfolioConfig } from './PortfolioConfig';
@@ -178,7 +179,9 @@ export class WebsiteConfig {
      * Per-date working-hours overrides (LT-057). Each entry fully replaces
      * workingDays[weekday] for its calendar date. Absent on older payloads.
      */
-    public dateOverrides: DateOverride[] = []
+    public dateOverrides: DateOverride[] = [],
+    /** LT-133: composed page — empty means the legacy section flow. */
+    public blocks: Block[] = []
   ) {}
 
   static fromJSON(json: any): WebsiteConfig {
@@ -206,7 +209,8 @@ export class WebsiteConfig {
       Components.fromJSON(json.components),
       DesignConfig.fromJSON(json.design),
       json.branding === true,
-      Array.isArray(json.dateOverrides) ? json.dateOverrides : []
+      Array.isArray(json.dateOverrides) ? json.dateOverrides : [],
+      parseBlocks(json.blocks)
     );
   }
 }

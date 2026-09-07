@@ -31,6 +31,7 @@ import WebConfigService from './services/WebConfigService';
 import { getSiteJitter, createRng } from './services/seed';
 import { scaleOf, spacingOf, SPACING_CLASS, pickInvert, pickInterludeSlot } from './services/artDirection';
 import Interlude from './components/Layout/Interlude';
+import ComposedPage from './components/blocks/ComposedPage';
 import ImagesService from './services/ImagesService';
 import { useTheme } from './hooks/useTheme';
 import { reportError } from './services/ErrorReportingService';
@@ -350,6 +351,11 @@ function MainContent() {
         <ErrorBoundary><Navbar websiteConfig={config} isPreview={isPreview} /></ErrorBoundary>
       )}
 
+      {/* LT-133: a composed page (blocks present) replaces the section flow
+          and the standalone footer; the legacy flow below is untouched. */}
+      {config.blocks?.length ? (
+        <ComposedPage config={config} jitter={jitter} isPreview={isPreview} />
+      ) : (<>
       {(() => {
         // LT-115: seeded page-order variation — some sites lead with the
         // work. Vibe presets only: legacy sites must never reorder (the
@@ -507,6 +513,7 @@ function MainContent() {
           />
         </ErrorBoundary>
       )}
+      </>)}
 
       {/* Free-plan badge — deliberately outside the footer conditional, so
           hiding the footer does not hide it (LT-032). */}

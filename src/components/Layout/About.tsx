@@ -56,6 +56,8 @@ interface WebsiteConfig {
   workingDays: (string | null)[];
 }
 
+export type AboutPart = 'intro' | 'features' | 'visit';
+
 interface AboutProps {
   config: AboutConfig;
   websiteConfig: WebsiteConfig;
@@ -71,6 +73,11 @@ interface AboutProps {
   /** LT-131: vibe sites with a contact section drop the visit card here —
    *  it repeated the same block on every page. */
   showVisit?: boolean;
+  /** LT-133: which parts this instance renders — the composer places intro,
+   *  features and the visit card as separate blocks. Unset = all (legacy). */
+  parts?: AboutPart[];
+  /** LT-133: section id, so split parts don't repeat #about. */
+  sectionId?: string;
   /** LT-126: per-site motion profile. */
   reveal?: RevealStyle;
   /** LT-115: painted background tone — the seeded order shuffle keeps tones
@@ -80,7 +87,9 @@ interface AboutProps {
 
 const ROMAN_NUMERALS = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII'];
 
-const About: React.FC<AboutProps> = ({ config, websiteConfig, layout = 'cards', flipSplit = false, featureStyle = 'icons', header, headerScale, showVisit = true, tone = 'surface', reveal }) => {
+const About: React.FC<AboutProps> = ({ config, websiteConfig, layout = 'cards', flipSplit = false, featureStyle = 'icons', header, headerScale, showVisit = true, tone = 'surface', reveal, parts, sectionId = 'about' }) => {
+  const showPart = (p: AboutPart) => !parts || parts.includes(p);
+  const visitOn = showVisit && showPart('visit');
   const { t, language } = useLanguage();
   const { isModalOpen, setIsModalOpen, modalType, handleContactClick } = useContactHandler();
   const formatWorkingHours = () => {
@@ -242,7 +251,7 @@ const About: React.FC<AboutProps> = ({ config, websiteConfig, layout = 'cards', 
 
   // ── Building blocks recomposed by the aboutLayout token ───────────────────
 
-  const paragraphs = (extraClass = 'max-w-3xl mx-auto text-center mb-20') => (
+  const paragraphs = (extraClass = 'max-w-3xl mx-auto text-center mb-20') => !showPart('intro') ? null : (
     <motion.div className={extraClass} variants={itemVariants}>
       <p className="text-xl text-light-text dark:text-dark-text leading-relaxed mb-8">
         {config.paragraphs.intro}
@@ -266,7 +275,7 @@ const About: React.FC<AboutProps> = ({ config, websiteConfig, layout = 'cards', 
     </span>
   );
 
-  const featureTiles = (
+  const featureTiles = !showPart('features') ? null : (
     <motion.div className="grid md:grid-cols-3 gap-12 mb-20" variants={containerVariants}>
       {config.features.map((feature, index) => {
         const Icon = FEATURE_ICONS[feature.icon] ?? Star;
@@ -295,7 +304,7 @@ const About: React.FC<AboutProps> = ({ config, websiteConfig, layout = 'cards', 
   );
 
   // 'band': borderless, cardless feature strip — quiet layouts (luxe, minimal).
-  const featureBand = (
+  const featureBand = !showPart('features') ? null : (
     <motion.div
       className="grid grid-cols-1 md:grid-cols-3 gap-10 md:gap-8 mb-20 max-w-4xl mx-auto"
       variants={containerVariants}
@@ -316,7 +325,7 @@ const About: React.FC<AboutProps> = ({ config, websiteConfig, layout = 'cards', 
   );
 
   // 'split': features as compact icon rows beside the text column.
-  const featureRows = (
+  const featureRows = !showPart('features') ? null : (
     <motion.div className="space-y-8" variants={containerVariants}>
       {config.features.map((feature, index) => {
         const Icon = FEATURE_ICONS[feature.icon] ?? Star;
@@ -341,7 +350,7 @@ const About: React.FC<AboutProps> = ({ config, websiteConfig, layout = 'cards', 
   // ── LT-126 structural layouts ─────────────────────────────────────────────
   // 'wall': the features as a typographic wall — display-size titles in
   // ruled columns, no tiles, no icons.
-  const featureWall = (
+  const featureWall = !showPart('features') ? null : (
     <motion.div className="grid md:grid-cols-3 mb-20" variants={containerVariants}>
       {config.features.map((feature, index) => (
         <motion.div
@@ -358,7 +367,7 @@ const About: React.FC<AboutProps> = ({ config, websiteConfig, layout = 'cards', 
   );
 
   // 'timeline': a numbered vertical rail beside the (pinned) intro.
-  const featureRail = (
+  const featureRail = !showPart('features') ? null : (
     <motion.ol className="relative border-s-2 border-primary/30 dark:border-primary-dark/30 ms-5 space-y-12" variants={containerVariants}>
       {config.features.map((feature, index) => {
         const Icon = FEATURE_ICONS[feature.icon] ?? Star;
@@ -380,7 +389,7 @@ const About: React.FC<AboutProps> = ({ config, websiteConfig, layout = 'cards', 
 
   // 'sticky': stacked ruled rows with big index numbers, the intro pinned
   // beside them while they scroll.
-  const featureRowsBig = (
+  const featureRowsBig = !showPart('features') ? null : (
     <motion.div className="divide-y divide-light-text/15 dark:divide-dark-text/15 border-y border-light-text/15 dark:border-dark-text/15" variants={containerVariants}>
       {config.features.map((feature, index) => (
         <motion.div key={index} className="grid grid-cols-[4rem_1fr] gap-4 py-8" variants={itemVariants}>
@@ -492,7 +501,7 @@ const About: React.FC<AboutProps> = ({ config, websiteConfig, layout = 'cards', 
 
   return (
     <>
-      <section id="about" className={`section-y ${tone === 'bg' ? 'bg-light-bg dark:bg-dark-bg' : 'bg-light-surface dark:bg-dark-surface'} transition-colors duration-300`}>
+      <section id={sectionId} className={`section-y ${tone === 'bg' ? 'bg-light-bg dark:bg-dark-bg' : 'bg-light-surface dark:bg-dark-surface'} transition-colors duration-300`}>
         <motion.div
           className="container mx-auto px-4"
           initial="hidden"
@@ -500,7 +509,7 @@ const About: React.FC<AboutProps> = ({ config, websiteConfig, layout = 'cards', 
           viewport={{ once: true }}
           variants={containerVariants}
         >
-          <motion.div variants={itemVariants}>
+          {showPart('intro') && <motion.div variants={itemVariants}>
             <SectionHeading
               title={config.title}
               description={config.description}
@@ -508,20 +517,20 @@ const About: React.FC<AboutProps> = ({ config, websiteConfig, layout = 'cards', 
               mb="mb-20"
               descClass="text-xl text-light-text/80 dark:text-dark-text/80"
             />
-          </motion.div>
+          </motion.div>}
 
           {layout === 'wall' ? (
             <>
-              <div className="grid lg:grid-cols-2 gap-8 lg:gap-16 mb-16">
+              {showPart('intro') && <div className="grid lg:grid-cols-2 gap-8 lg:gap-16 mb-16">
                 <motion.p className="text-2xl md:text-3xl leading-snug text-light-text dark:text-dark-text" variants={itemVariants}>
                   {config.paragraphs.intro}
                 </motion.p>
                 <motion.p className="text-lg text-light-text/80 dark:text-dark-text/80 leading-loose" variants={itemVariants}>
                   {config.paragraphs.mission}
                 </motion.p>
-              </div>
+              </div>}
               {featureWall}
-              {showVisit && renderVisitCard()}
+              {visitOn && renderVisitCard()}
             </>
           ) : layout === 'timeline' ? (
             <>
@@ -529,7 +538,7 @@ const About: React.FC<AboutProps> = ({ config, websiteConfig, layout = 'cards', 
                 <div className="lg:sticky lg:top-28">{paragraphs('text-center lg:text-start')}</div>
                 {featureRail}
               </div>
-              {showVisit && renderVisitCard()}
+              {visitOn && renderVisitCard()}
             </>
           ) : layout === 'sticky' ? (
             <>
@@ -537,14 +546,14 @@ const About: React.FC<AboutProps> = ({ config, websiteConfig, layout = 'cards', 
                 <div className="lg:sticky lg:top-28">{paragraphs('text-center lg:text-start')}</div>
                 {featureRowsBig}
               </div>
-              {showVisit && renderVisitCard()}
+              {visitOn && renderVisitCard()}
             </>
           ) : layout === 'manifesto' ? (
             // LT-109: the artboard's statement composition — the intro as a
             // big display pull-quote beside the mission text, features as a
             // quiet band below.
             <>
-              <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-start mb-20">
+              {showPart('intro') && <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-start mb-20">
                 <motion.blockquote
                   className="font-bold leading-tight text-3xl md:text-5xl text-light-text dark:text-dark-text"
                   style={{ fontFamily: 'inherit' }}
@@ -557,25 +566,25 @@ const About: React.FC<AboutProps> = ({ config, websiteConfig, layout = 'cards', 
                     {config.paragraphs.mission}
                   </p>
                 </motion.div>
-              </div>
+              </div>}
               {featureBand}
-              {showVisit && renderVisitCard()}
+              {visitOn && renderVisitCard()}
             </>
           ) : layout === 'split' ? (
             <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-start">
               <div className={flipSplit ? 'lg:order-2' : ''}>
                 {paragraphs('mb-12 text-center lg:text-start')}
-                {showVisit && featureRows}
+                {visitOn && featureRows}
               </div>
               <div className={flipSplit ? 'lg:order-1' : ''}>
-                {showVisit ? renderVisitCard(true) : featureRows}
+                {visitOn ? renderVisitCard(true) : featureRows}
               </div>
             </div>
           ) : (
             <>
               {paragraphs()}
               {layout === 'band' ? featureBand : featureTiles}
-              {showVisit && renderVisitCard()}
+              {visitOn && renderVisitCard()}
             </>
           )}
         </motion.div>
