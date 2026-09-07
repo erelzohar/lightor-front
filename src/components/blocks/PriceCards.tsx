@@ -20,7 +20,7 @@ const PriceCards: React.FC<Props> = ({ appointmentTypes, tone = 'bg', title }) =
   if (!rows.length) return null;
   const price = (p?: string) => (!p?.trim() ? '' : /^\d+(\.\d+)?$/.test(p.trim()) ? `₪${p.trim()}` : p.trim());
   return (
-    <section className={`section-y ${TONE_BG[tone]} transition-colors duration-300`} aria-label={title || t('services.ledger_title', { defaultValue: language === 'he' ? 'המחירון' : 'Services' })}>
+    <section id="services" className={`section-y ${TONE_BG[tone]} transition-colors duration-300`} aria-label={title || t('services.ledger_title', { defaultValue: language === 'he' ? 'המחירון' : 'Services' })}>
       <div className="container mx-auto px-4">
         <h2 className="text-4xl font-bold text-light-text dark:text-dark-text mb-12">
           {title || t('services.ledger_title', { defaultValue: language === 'he' ? 'המחירון' : 'Services' })}

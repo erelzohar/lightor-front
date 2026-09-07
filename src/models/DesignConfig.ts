@@ -8,7 +8,8 @@ export type FontFamily =
   | 'anton' | 'archivo' | 'cormorant' | 'bellefair' | 'secularone'
   | 'varela' | 'sora' | 'spacemono';
 export type AnimLevel = 'none' | 'minimal' | 'full';
-export type NavbarStyle = 'floating' | 'solid' | 'transparent';
+// LT-137: 'minimal' (logo + book button), 'centered' (logo over a links row), 'pill' (floating compact pill), 'split' (links · logo · book).
+export type NavbarStyle = 'floating' | 'solid' | 'transparent' | 'minimal' | 'centered' | 'pill' | 'split';
 // 'text-first' (LT-093): centered copy block with a large image below it —
 // the editorial-stack composition from the vibe mockups.
 // 'poster-split' (LT-109): the Barber-artboard hero — poster headline column
@@ -69,7 +70,7 @@ export type SectionHeader = 'centered' | 'label' | 'side';
 export type BookingBand = 'none' | 'band';
 // LT-124: the booking widget's chrome — legacy shadow card, ruled 'flat', or
 // a tinted 'inset' panel.
-export type ScheduleStyle = 'card' | 'flat' | 'inset';
+export type ScheduleStyle = 'card' | 'flat' | 'inset' | 'split';
 // LT-126 page-level rhythm: how sections enter, whether some sections get a
 // painted backdrop, and how wide the page column runs.
 export type RevealStyle = 'rise' | 'fade' | 'slide' | 'zoom';

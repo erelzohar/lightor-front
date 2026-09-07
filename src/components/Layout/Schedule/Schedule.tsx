@@ -21,6 +21,8 @@ const CARD_CLASS: Record<ScheduleStyle, string> = {
   card: 'bg-light-surface dark:bg-dark-surface rounded-design-card shadow-card p-6 md:p-8',
   flat: 'border-y border-light-text/15 dark:border-dark-text/15 py-8 md:py-10',
   inset: 'bg-primary/5 dark:bg-primary-dark/5 border border-primary/15 dark:border-primary-dark/15 rounded-design-card p-6 md:p-8',
+  // LT-137: the widget beside an info column (hours, phone).
+  split: 'bg-light-surface dark:bg-dark-surface rounded-design-card shadow-card p-6 md:p-8',
 };
 import { MaterialInput } from './ScheduleForms';
 import { DateButton } from './ScheduleCalendar';
@@ -800,13 +802,13 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
         </div>
       ) : (
         <motion.div
-          className="container mx-auto px-4"
+          className={scheduleStyle === 'split' ? 'container mx-auto px-4 lg:grid lg:grid-cols-[1fr_1.6fr] lg:gap-12 lg:items-start' : 'container mx-auto px-4'}
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: "-20%" }}
           transition={{ duration: 0.6, ease: 'easeOut' }}
         >
-          <motion.div className={header && header !== 'centered' ? 'mb-12' : 'text-center mb-20'}>
+          <motion.div className={`${header && header !== 'centered' ? 'mb-12' : 'text-center mb-20'} ${scheduleStyle === 'split' ? 'lg:col-span-2' : ''}`}>
             {header && header !== 'centered' ? (
               <SectionHeading
                 title={config.title}
@@ -855,7 +857,29 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
             )}
           </motion.div>
 
-          <motion.div ref={cardRef} className="max-w-[43.75rem] mx-auto scroll-mt-24">
+          {scheduleStyle === 'split' && (
+            <aside className="mb-10 lg:mb-0 lg:sticky lg:top-28 space-y-8">
+              <div>
+                <div className="text-xs font-bold uppercase tracking-widest text-primary-readable dark:text-primary-dark-readable mb-4">{t('about.hours')}</div>
+                <dl className="m-0 divide-y divide-light-text/15 dark:divide-dark-text/15 border-y border-light-text/15 dark:border-dark-text/15">
+                  {workingDays.map((h, i) => (
+                    <div key={i} className="flex justify-between gap-6 py-3 text-sm">
+                      <dt className="font-semibold text-light-text dark:text-dark-text">{t(`day.${i}`)}</dt>
+                      <dd className={`m-0 ${h ? 'text-light-text/80 dark:text-dark-text/80' : 'text-light-text/40 dark:text-dark-text/40'}`} dir={h ? 'ltr' : undefined}>
+                        {h ? h.split(',').map((r) => r.trim()).filter(Boolean).join(', ') : t('time.closed')}
+                      </dd>
+                    </div>
+                  ))}
+                </dl>
+              </div>
+              {phone && (
+                <a href={`tel:${phone.replace(/[^0-9+]/g, '')}`} className="block text-2xl font-bold text-light-text dark:text-dark-text hover:text-primary-readable dark:hover:text-primary-dark-readable transition-colors">
+                  <span dir="ltr">{phone}</span>
+                </a>
+              )}
+            </aside>
+          )}
+          <motion.div ref={cardRef} className={scheduleStyle === 'split' ? 'scroll-mt-24' : 'max-w-[43.75rem] mx-auto scroll-mt-24'}>
             <motion.div className={CARD_CLASS[scheduleStyle]}>
               <AnimatePresence mode="wait">
               {!isSuccess ? (
