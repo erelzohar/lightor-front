@@ -572,7 +572,13 @@ const Hero: React.FC<HeroProps> = ({ config, social, phone, isContactVisible, ap
             </motion.div>
           </motion.div>
 
-          <motion.div className={`relative w-full max-w-md md:max-w-none mx-auto md:mx-0 ${jitter?.flipPosterSplit ? 'md:order-first' : ''}`} variants={itemVariants}>
+          {/* order-first: stacked on a phone the photo leads, the way it does
+              in every other image layout here (split orders it up, image-right
+              flips the column). Only poster-split still dropped it under the
+              whole copy block, so the fold opened on text and the image was a
+              scroll away. Desktop order is unchanged — md:order-none restores
+              DOM order, and the seeded flip keeps its md:order-first. */}
+          <motion.div className={`relative w-full max-w-md md:max-w-none mx-auto md:mx-0 order-first ${jitter?.flipPosterSplit ? 'md:order-first' : 'md:order-none'}`} variants={itemVariants}>
             <div className="relative h-full min-h-[22rem] md:min-h-[28rem]">
               <img
                 src={ImagesService.getInstance().getImage(config.heroImageSrc)}
