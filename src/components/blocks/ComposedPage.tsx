@@ -5,6 +5,7 @@ import type { SiteJitter } from '../../services/seed';
 import { SPACING_CLASS } from '../../services/artDirection';
 import ImagesService from '../../services/ImagesService';
 import ErrorBoundary from '../ErrorBoundary';
+import GenerateReveal from '../GenerateReveal';
 import SectionDivider, { type SectionTone } from '../SectionDivider';
 import Hero from '../Layout/Hero';
 import About from '../Layout/About';
@@ -36,6 +37,8 @@ interface ComposedPageProps {
   config: WebsiteConfig;
   jitter: SiteJitter;
   isPreview: boolean;
+  /** Generation count from the preview bridge; >0 plays the section cascade. */
+  generateSeq?: number;
 }
 
 /** Block types this renderer can draw today; the rest arrive in phase 3. */
@@ -56,7 +59,7 @@ const FEATURES_LAYOUT: Record<string, AboutLayout> = { tiles: 'cards', band: 'ba
  * flow draws at render time (tone, spacing, heading scale, inversion,
  * backdrop), so a composition is fully described by the stored config.
  */
-const ComposedPage: React.FC<ComposedPageProps> = ({ config, jitter, isPreview }) => {
+const ComposedPage: React.FC<ComposedPageProps> = ({ config, jitter, isPreview, generateSeq = 0 }) => {
   const c = config.components;
   const design = config.design;
   const hasBand = config.blocks.some((b) => b.type === 'bookingBand');
@@ -225,11 +228,13 @@ const ComposedPage: React.FC<ComposedPageProps> = ({ config, jitter, isPreview }
       {items.map((it, i) => {
         const { block: b, tone, node } = it;
         const inner = (
-          <ErrorBoundary>
-            {isValidElement(node) && typeof (node as ReactElement).type !== 'string'
-              ? cloneElement(node as ReactElement, { header: design?.sectionHeader, tone, reveal: design?.revealStyle, headerScale: b.mod?.scale } as Record<string, unknown>)
-              : node}
-          </ErrorBoundary>
+          <GenerateReveal seq={generateSeq} index={i}>
+            <ErrorBoundary>
+              {isValidElement(node) && typeof (node as ReactElement).type !== 'string'
+                ? cloneElement(node as ReactElement, { header: design?.sectionHeader, tone, reveal: design?.revealStyle, headerScale: b.mod?.scale } as Record<string, unknown>)
+                : node}
+            </ErrorBoundary>
+          </GenerateReveal>
         );
         const backdrop = b.mod?.backdrop ?? 'none';
         const extra = [SPACING_CLASS[b.mod?.spacing ?? 'normal'], b.mod?.invert ? 'dark' : ''].filter(Boolean).join(' ');

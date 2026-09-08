@@ -31,6 +31,7 @@ import WebConfigService from './services/WebConfigService';
 import { getSiteJitter, createRng } from './services/seed';
 import { scaleOf, spacingOf, SPACING_CLASS, pickInvert, pickInterludeSlot } from './services/artDirection';
 import Interlude from './components/Layout/Interlude';
+import GenerateReveal from './components/GenerateReveal';
 import ComposedPage from './components/blocks/ComposedPage';
 import ImagesService from './services/ImagesService';
 import { useTheme } from './hooks/useTheme';
@@ -74,6 +75,9 @@ function MainContent() {
   const [config, setConfig] = useState<WebsiteConfig | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [isPreview, setIsPreview] = useState<boolean>(false);
+  // Counts the generations the register wizard has posted with `generate` —
+  // each one replays the section-by-section cascade (0 = never, no cascade).
+  const [generateSeq, setGenerateSeq] = useState(0);
   const isPreviewRef = useRef(false);
   const { setLanguage } = useLanguage();
 
@@ -119,6 +123,11 @@ function MainContent() {
         setIsPreview(true);
         setLoading(false);
         setLanguageRef.current(cfg.defaultLanguage as Language);
+        if (event.data.generate) {
+          // Start the show from the top — the previous preview may be scrolled.
+          window.scrollTo({ top: 0, behavior: 'instant' as ScrollBehavior });
+          setGenerateSeq((n) => n + 1);
+        }
       }
     };
     window.addEventListener('message', handleMessage);
@@ -354,7 +363,7 @@ function MainContent() {
       {/* LT-133: a composed page (blocks present) replaces the section flow
           and the standalone footer; the legacy flow below is untouched. */}
       {config.blocks?.length ? (
-        <ComposedPage config={config} jitter={jitter} isPreview={isPreview} />
+        <ComposedPage config={config} jitter={jitter} isPreview={isPreview} generateSeq={generateSeq} />
       ) : (<>
       {(() => {
         // LT-115: seeded page-order variation — some sites lead with the
@@ -461,11 +470,13 @@ function MainContent() {
               )}
               {(() => {
                 const inner = (
-                  <ErrorBoundary>
-                    {isValidElement(s.node) && typeof (s.node as ReactElement).type !== 'string'
-                      ? cloneElement(s.node as ReactElement, { header: config.design?.sectionHeader, tone: s.tone, reveal: config.design?.revealStyle, headerScale: isVibeSite ? scaleOf(s.key, jitter) : undefined } as Record<string, unknown>)
-                      : s.node}
-                  </ErrorBoundary>
+                  <GenerateReveal seq={generateSeq} index={i}>
+                    <ErrorBoundary>
+                      {isValidElement(s.node) && typeof (s.node as ReactElement).type !== 'string'
+                        ? cloneElement(s.node as ReactElement, { header: config.design?.sectionHeader, tone: s.tone, reveal: config.design?.revealStyle, headerScale: isVibeSite ? scaleOf(s.key, jitter) : undefined } as Record<string, unknown>)
+                        : s.node}
+                    </ErrorBoundary>
+                  </GenerateReveal>
                 );
                 // LT-131: breathing room and the inverted color block wrap the
                 // section too (the same wrapper carries the backdrop below).
