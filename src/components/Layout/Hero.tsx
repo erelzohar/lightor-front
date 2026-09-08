@@ -626,7 +626,11 @@ const Hero: React.FC<HeroProps> = ({ config, social, phone, isContactVisible, ap
             </motion.div>
           </motion.div>
 
-          <motion.div className="w-full max-w-md sm:max-w-lg md:max-w-xl mt-2" variants={itemVariants}>
+          {/* order-first on a phone: stacked, "words then image" put the photo
+              below the title, subtitle, paragraph AND both buttons, so the fold
+              opened on text alone. Desktop keeps the editorial stack — the copy
+              leads and the wide image anchors the fold (md:order-none). */}
+          <motion.div className="w-full max-w-md sm:max-w-lg md:max-w-xl mt-2 order-first md:order-none" variants={itemVariants}>
             {renderImage('w-full aspect-[4/3]')}
           </motion.div>
 
