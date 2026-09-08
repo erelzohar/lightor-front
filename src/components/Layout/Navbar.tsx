@@ -185,7 +185,10 @@ const Navbar: React.FC<NavbarProps> = ({ websiteConfig, isPreview }) => {
     </button>
   );
   const slide = isVisible ? 'translate-y-0' : '-translate-y-full';
-  const linkCls = 'text-light-text dark:text-dark-text hover:text-primary dark:hover:text-primary-dark transition-colors font-medium';
+  // text-center: a two-word label ("צור קשר", "תיק עבודות") wraps once the row
+  // runs out of width, and a start-aligned second line reads as a ragged
+  // column against its neighbours.
+  const linkCls = 'text-center text-light-text dark:text-dark-text hover:text-primary dark:hover:text-primary-dark transition-colors font-medium';
 
   if (navbarStyle === 'minimal') {
     // Logo and one button. Links only in the mobile menu.
@@ -308,7 +311,7 @@ const Navbar: React.FC<NavbarProps> = ({ websiteConfig, isPreview }) => {
               <a
                 key={index}
                 href={item.href}
-                className="text-light-text dark:text-dark-text hover:text-primary dark:hover:text-primary-dark transition-colors font-medium"
+                className="text-center text-light-text dark:text-dark-text hover:text-primary dark:hover:text-primary-dark transition-colors font-medium"
                 onClick={handleLinkClick}
               >
                 {item.label}
