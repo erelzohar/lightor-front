@@ -2,6 +2,7 @@ import axios from 'axios';
 import globals from './globals';
 import { Appointment } from '../models/Appointment';
 import { BusySlot } from '../models/BusySlot';
+import { ClassOccurrence } from '../models/ClassOccurrence';
 
 class AppointmentService {
   private static instance: AppointmentService;
@@ -27,6 +28,15 @@ class AppointmentService {
    * documents (customer names and phone numbers included) to every visitor.
    */
   public async getAvailability(startDate?: number): Promise<BusySlot[]> {
+    return (await this.getCalendar(startDate)).busy;
+  }
+
+  /**
+   * Busy windows AND the class timetable in one call (LT-152). The classes
+   * array is additive: an older server simply omits it and the widget behaves
+   * exactly as it did.
+   */
+  public async getCalendar(startDate?: number): Promise<{ busy: BusySlot[]; classes: ClassOccurrence[] }> {
     const subdomain = window.location.hostname.split('.')[0];
 
     const response = await axios.get<any>(`${this.baseUrl}/availability`, {
@@ -36,7 +46,10 @@ class AppointmentService {
       },
     });
 
-    return response.data?.data.map((slot: any) => BusySlot.fromJSON(slot));
+    return {
+      busy: (response.data?.data ?? []).map((slot: any) => BusySlot.fromJSON(slot)),
+      classes: (response.data?.classes ?? []).map((occurrence: any) => ClassOccurrence.fromJSON(occurrence)),
+    };
   }
 
   /**

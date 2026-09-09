@@ -101,6 +101,13 @@
     "channel": {
       "sms": "Envoyer le code et les mises à jour par SMS",
       "whatsapp": "Envoyer le code et les mises à jour via WhatsApp"
+    },
+    "class": {
+      "label": "Cours collectif",
+      "select": "Choisissez une séance",
+      "available": "Places disponibles",
+      "placesLeft": "{{count}} places restantes",
+      "full": "Complet"
     }
   },
   "common": {

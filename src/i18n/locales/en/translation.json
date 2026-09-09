@@ -101,6 +101,13 @@
     },
     "original": {
       "appointment": "Your Appointment"
+    },
+    "class": {
+      "label": "Group class",
+      "select": "Choose a session",
+      "available": "Places available",
+      "placesLeft": "{{count}} places left",
+      "full": "Full"
     }
   },
   "common": {

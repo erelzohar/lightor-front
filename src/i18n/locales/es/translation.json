@@ -101,6 +101,13 @@
     "channel": {
       "sms": "Enviar código y actualizaciones por SMS",
       "whatsapp": "Enviar código y actualizaciones por WhatsApp"
+    },
+    "class": {
+      "label": "Clase grupal",
+      "select": "Elige una sesión",
+      "available": "Plazas disponibles",
+      "placesLeft": "Quedan {{count}} plazas",
+      "full": "Completo"
     }
   },
   "common": {
