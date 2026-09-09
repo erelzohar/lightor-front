@@ -68,6 +68,9 @@ interface ScheduleProps {
 }
 
 
+/** How far ahead the widget will look for a bookable day. */
+const BOOKABLE_WINDOW_DAYS = 60;
+
 const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone, businessName, timeToCancel, vacations, dateOverrides = [], appointmentTypes, isUpdating, appointmentToUpdate, onUpdateComplete, onCancelUpdate, isPreview, hideDescription = false, header, headerScale, scheduleStyle = 'card' }) => {
   // if (!appointmentTypes) {
   //   throw new Error('No appointment types available');
@@ -92,7 +95,12 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [selectedTime, setSelectedTime] = useState('');
   const [selectedAppointmentType, setSelectedAppointmentType] = useState<AppointmentType | null>(null);
-  const [bookingStep, setBookingStep] = useState<'date' | 'type' | 'session' | 'time' | 'details' | 'verification'>('date');
+  // Service first, then the dates that service can actually be had on
+  // (LT-154). A class has no month grid at all: it runs when it runs.
+  // Rescheduling starts on the date, because the service is already decided.
+  const [bookingStep, setBookingStep] = useState<'type' | 'date' | 'session' | 'time' | 'details' | 'verification'>(
+    isUpdating ? 'date' : 'type'
+  );
   // The class occurrence being booked (LT-152). A class is sold by session,
   // not by picking a day and then a free time.
   const [selectedSession, setSelectedSession] = useState<ClassOccurrence | null>(null);
@@ -125,6 +133,9 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
       const minutes = new Date(parseInt(appointmentToUpdate.timestamp)).getMinutes().toString().padStart(2, '0');
       setSelectedTime(`${hours}:${minutes}`);
       setChannelType(appointmentToUpdate.channelType || 'sms');
+      // Moving a place in a class means picking another session, not another
+      // day: the class runs when it runs (LT-154).
+      if (appointmentToUpdate.type?.isClass) setBookingStep('session');
     }
   }, [isUpdating, appointmentToUpdate]);
   const [error, setError] = useState<string | null>(null);
@@ -193,9 +204,10 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
     setSelectedDate(null);
     setSelectedAppointmentType(null);
     setSelectedTime(null);
+    setSelectedSession(null);
     setFormData({ name: '', phone: '', verificationCode: '' });
-    setBookingStep('date');
-  }, []);
+    setBookingStep(isUpdating ? 'date' : 'type');
+  }, [isUpdating]);
 
   const handleDetailsSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
@@ -511,15 +523,6 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
       .sort((a, b) => a.startMs - b.startMs);
   }, [classOccurrences]);
 
-  /**
-   * A business that only teaches classes has no use for a month grid: it may
-   * have no working hours at all. Its widget opens on the timetable instead.
-   */
-  const classOnly = useMemo(
-    () => appointmentTypes.length > 0 && appointmentTypes.every(type => type.isClass),
-    [appointmentTypes]
-  );
-
   const isPast = useCallback((date: Date) => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -538,16 +541,48 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
       date.getFullYear() === today.getFullYear();
   }, []);
 
+  /**
+   * The duration the calendar reasons with. Since the service is chosen
+   * before the date (LT-154) this is the real one, so a 90-minute service
+   * greys out the days that only have half-hour gaps left — which the old
+   * "shortest service on the menu" guess called free.
+   */
+  const calendarDurationMS = useMemo(() => {
+    if (selectedAppointmentType) return parseInt(selectedAppointmentType.durationMS) || 60000;
+    const durations = appointmentTypes
+      .filter(type => !type.isClass)
+      .map(type => parseInt(type.durationMS) || 60000);
+    return durations.length ? Math.min(...durations) : 60000;
+  }, [selectedAppointmentType, appointmentTypes]);
+
+  /**
+   * Is there any day in the bookable window this service could fit into?
+   *
+   * With the service chosen first there is no date to filter the menu
+   * against, so this is what keeps an unbookable service off it — otherwise
+   * picking it would open a calendar with every day greyed out. Stops at the
+   * first day that works, which for a working business is today or tomorrow.
+   */
+  const hasAnyRoomFor = useCallback((durationMS: number) => {
+    const day = new Date();
+    day.setHours(0, 0, 0, 0);
+
+    for (let i = 0; i <= BOOKABLE_WINDOW_DAYS; i++) {
+      const candidate = new Date(day);
+      candidate.setDate(day.getDate() + i);
+      if (getHoursForDate(candidate, workingDays, dateOverrides) === null) continue;
+      if (generateTimeSlots(candidate, durationMS).length > 0) return true;
+    }
+    return false;
+  }, [workingDays, dateOverrides, generateTimeSlots]);
+
   const isAvailable = useCallback((date: Date) => {
     // Resolved per date so an override can open a normally-closed weekday
     // (or close an open one) — never read workingDays[day] directly (LT-057).
     if (getHoursForDate(date, workingDays, dateOverrides) === null) return false;
 
-    return appointmentTypes.some(type => {
-      const durationMS = parseInt(type.durationMS);
-      return generateTimeSlots(date, durationMS).length > 0;
-    });
-  }, [workingDays, dateOverrides, generateTimeSlots, appointmentTypes]);
+    return generateTimeSlots(date, calendarDurationMS).length > 0;
+  }, [workingDays, dateOverrides, generateTimeSlots, calendarDurationMS]);
 
   const isNextMonth = useCallback((date: Date) => {
     return date.getMonth() > currentMonth.getMonth();
@@ -575,8 +610,7 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
     const totalWorkingMinutes = intervals.reduce(
       (sum, { startMin, endMin }) => sum + (endMin - startMin), 0);
 
-    const minDurationMS = Math.min(...appointmentTypes.map(t => parseInt(t.durationMS) || 60000));
-    const minDurationMinutes = minDurationMS / 60000;
+    const minDurationMinutes = calendarDurationMS / 60000;
 
     // Total number of possible slots in the day, using the smallest interval
     const estimatedMaxSlots = Math.floor(totalWorkingMinutes / minDurationMinutes);
@@ -596,8 +630,8 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
 
 
     // --- Generate Slots ---
-    // The duration used for status checks is the minimum slot duration
-    const checkDurationMS = Math.min(...appointmentTypes.map(t => parseInt(t.durationMS) || 60000));
+    // The chosen service's own duration (LT-154).
+    const checkDurationMS = calendarDurationMS;
     const availableSlots = generateTimeSlots(date, checkDurationMS);
 
 
@@ -629,7 +663,7 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
     } else { // availableSlots.length is > 0 and <= FULL_THRESHOLD_COUNT (i.e., <= 55% available)
       return 'limited';
     }
-  }, [isPast, workingDays, dateOverrides, generateTimeSlots, isTimeInVacation, appointmentTypes]);
+  }, [isPast, workingDays, dateOverrides, generateTimeSlots, isTimeInVacation, calendarDurationMS]);
 
   const formatSelectedDate = useCallback((date: Date) => {
     return date.toLocaleDateString(language === 'he' ? 'he-IL' : (language === 'ar' ? 'ar-SA' : (language === 'fr' ? 'fr-FR' : (language === 'es' ? 'es-ES' : 'en-US'))), {
@@ -654,7 +688,7 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
         setCurrentMonth(new Date(date.getFullYear(), date.getMonth(), 1));
       }
       setSelectedDate(date);
-      setBookingStep('type');
+      setBookingStep('time');
     }
   }, [isPast, isAvailable, isNextMonth]);
 
@@ -667,10 +701,10 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
   useEffect(() => {
     if (prevStepRef.current === bookingStep) return;
     prevStepRef.current = bookingStep;
-    if (bookingStep !== 'date') {
+    if (bookingStep !== (isUpdating ? 'date' : 'type')) {
       cardRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
-  }, [bookingStep]);
+  }, [bookingStep, isUpdating]);
 
   // On success the tall verification form is replaced by a short view. The
   // scroll must wait for that exit animation (500ms) to finish: scrolling
@@ -688,9 +722,11 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
   const handleAppointmentTypeSelect = useCallback((type: AppointmentType) => {
     setSelectedAppointmentType(type);
     setSelectedTime('');
+    setSelectedDate(null);
     setSelectedSession(null);
-    // A class is sold by session; everything else by picking a free time.
-    setBookingStep(type.isClass ? 'session' : 'time');
+    // A class is sold by session; everything else by picking a day and then a
+    // free time on it.
+    setBookingStep(type.isClass ? 'session' : 'date');
   }, []);
 
   /**
@@ -719,19 +755,20 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
 
   const handleBack = useCallback(() => {
     switch (bookingStep) {
-      case 'date':
+      case 'type':
         if (isUpdating && onCancelUpdate) {
           onCancelUpdate();
         }
         break;
-      case 'type':
-        if (classOnly) {
-          // There is no date step to go back to.
-          if (isUpdating && onCancelUpdate) onCancelUpdate();
+      case 'date':
+        // Rescheduling never chose a service, so there is nothing behind this.
+        if (isUpdating && onCancelUpdate) {
+          onCancelUpdate();
           break;
         }
         setSelectedDate(null);
-        setBookingStep('date');
+        setSelectedAppointmentType(null);
+        setBookingStep('type');
         break;
       case 'session':
         setSelectedAppointmentType(null);
@@ -739,8 +776,8 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
         setBookingStep('type');
         break;
       case 'time':
-        setSelectedAppointmentType(null);
-        setBookingStep('type');
+        setSelectedTime(null);
+        setBookingStep('date');
         break;
       case 'details':
         setSelectedTime('');
@@ -755,13 +792,7 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
         setBookingStep('details');
         break;
     }
-  }, [bookingStep, classOnly, isUpdating, onCancelUpdate, selectedSession]);
-
-  // A class-only business never shows the month grid: it may keep no working
-  // hours at all, so every day would read as closed.
-  useEffect(() => {
-    if (classOnly && bookingStep === 'date' && !isUpdating) setBookingStep('type');
-  }, [classOnly, bookingStep, isUpdating]);
+  }, [bookingStep, isUpdating, onCancelUpdate, selectedSession]);
 
   const getDayNames = useCallback(() => {
     const days = [];
@@ -977,7 +1008,7 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
                 }}
                 transition={{ duration: 0.5, ease: [0.65, 0, 0.35, 1] }}
               >
-              {(bookingStep !== 'date' || (isUpdating && onCancelUpdate)) && (
+              {(bookingStep !== (isUpdating ? 'date' : 'type') || (isUpdating && onCancelUpdate)) && (
                 <motion.button
                   type="button"
                   onClick={handleBack}
@@ -990,9 +1021,9 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
               )}
 
               <div className="flex items-center justify-center gap-2 mb-8">
-                {(selectedSession || (classOnly && bookingStep !== 'date')
+                {(selectedAppointmentType?.isClass
                   ? ['type', 'session', 'details', 'verification']
-                  : ['date', 'type', 'time', 'details', 'verification']
+                  : ['type', 'date', 'time', 'details', 'verification']
                 ).map((step, index, steps) => (
                   <div
                     key={step}
@@ -1087,7 +1118,7 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
                 </>
               )}
 
-              {bookingStep === 'type' && (selectedDate || classOnly) && (
+              {bookingStep === 'type' && (
                 <motion.div
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
@@ -1101,11 +1132,13 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {appointmentTypes.map((type) => {
                       const durationMS = +type.durationMS || 0;
-                      // A class is offered on its own timetable, so it is not
-                      // filtered against the day the visitor happened to pick.
+                      // The service comes first now (LT-154), so there is no
+                      // date to filter against: a class is offered when it has
+                      // upcoming sessions, everything else whenever the
+                      // business keeps hours it could fit into.
                       const bookable = type.isClass
                         ? sessionsFor(type).length > 0
-                        : !!selectedDate && generateTimeSlots(selectedDate, durationMS).length > 0;
+                        : hasAnyRoomFor(durationMS);
                       if (bookable)
                         return (
                           <motion.button

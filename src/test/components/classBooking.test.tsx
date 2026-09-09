@@ -57,18 +57,18 @@ const occurrence = (startMs: number, booked: number) =>
     type_id: 't1', timestamp: String(startMs), durationMS: String(HOUR), capacity: 12, booked,
   });
 
-const renderWidget = () =>
+const renderWidget = (types = [klass], workingDays = [null, null, null, null, null, null, null]) =>
   render(
     <Schedule
       config={new ScheduleConfig('Book', 'Pick a session')}
-      workingDays={[null, null, null, null, null, null, null]}
+      workingDays={workingDays as (string | null)[]}
       user_id="u1"
       phone="+972500000000"
       businessName="Coach"
       timeToCancel={0}
       vacations={[]}
       dateOverrides={[]}
-      appointmentTypes={[klass]}
+      appointmentTypes={types}
       header={{ style: 'centered' } as never}
       headerScale={'default' as never}
     />
@@ -90,7 +90,38 @@ describe('booking a class from the public site', () => {
   it('opens on the services rather than the month grid', async () => {
     renderWidget();
     expect(await screen.findByText('Group training')).toBeTruthy();
-    expect(screen.queryByText('schedule.select.date')).toBeNull();
+    expect(screen.queryByText('schedule.legend.available')).toBeNull();
+  });
+
+  it('offers a class straight away at a business that also books privately', async () => {
+    // The bug Erel found (LT-154): a mixed business asked for a date first,
+    // and a class does not live on a date the visitor picks.
+    const haircut = new AppointmentType('t2', 'Haircut', '80', 'u1', '1800000');
+    const openAllWeek = ['09:00-17:00', '09:00-17:00', '09:00-17:00', '09:00-17:00', '09:00-17:00', '09:00-17:00', '09:00-17:00'];
+
+    renderWidget([klass, haircut], openAllWeek);
+
+    // Both services are on the menu before any date is chosen.
+    expect(await screen.findByText('Group training')).toBeTruthy();
+    expect(screen.getByText('Haircut')).toBeTruthy();
+
+    fireEvent.click(screen.getByText('Group training'));
+
+    // Straight to the timetable, with no month grid in between.
+    await waitFor(() => expect(screen.getByText('schedule.class.select')).toBeTruthy());
+  });
+
+  it('sends a private service to the calendar, not to a timetable', async () => {
+    const haircut = new AppointmentType('t2', 'Haircut', '80', 'u1', '1800000');
+    const openAllWeek = ['09:00-17:00', '09:00-17:00', '09:00-17:00', '09:00-17:00', '09:00-17:00', '09:00-17:00', '09:00-17:00'];
+
+    renderWidget([klass, haircut], openAllWeek);
+
+    fireEvent.click(await screen.findByText('Haircut'));
+
+    // The month grid, identified by its own legend.
+    await waitFor(() => expect(screen.getByText('schedule.legend.available')).toBeTruthy());
+    expect(screen.queryByText('schedule.class.select')).toBeNull();
   });
 
   it('lists the upcoming sessions once a class is chosen', async () => {
