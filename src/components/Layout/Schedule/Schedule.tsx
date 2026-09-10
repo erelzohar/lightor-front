@@ -29,6 +29,8 @@ import { MaterialInput } from './ScheduleForms';
 import { DateButton } from './ScheduleCalendar';
 import { CalendarEventInput, googleCalendarUrl, downloadIcs } from '../../../services/calendarLinks';
 import { parseIntervals, getHoursForDate, DateOverride } from '../../../utils/workingHours';
+import ImagesService from '../../../services/ImagesService';
+import { handleSquareImageError } from '../../../utils/imageFallback';
 
 interface BookingFormData {
   name: string;
@@ -1207,9 +1209,19 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
                             whileTap={{ scale: 0.98 }}
                           >
                             <div className="flex items-center gap-4">
-                              <div className="w-12 h-12 rounded-lg bg-primary/10 dark:bg-primary-dark/10 flex items-center justify-center group-hover:bg-primary/20 dark:group-hover:bg-primary-dark/20">
-                                <Tag className="h-6 w-6 text-primary dark:text-primary-dark" />
-                              </div>
+                              {type.image ? (
+                                <img
+                                  src={ImagesService.getInstance().getImage(type.image)}
+                                  alt={type.name}
+                                  loading="lazy"
+                                  onError={handleSquareImageError}
+                                  className="w-16 h-16 rounded-lg object-cover shrink-0"
+                                />
+                              ) : (
+                                <div className="w-12 h-12 rounded-lg bg-primary/10 dark:bg-primary-dark/10 flex items-center justify-center group-hover:bg-primary/20 dark:group-hover:bg-primary-dark/20">
+                                  <Tag className="h-6 w-6 text-primary dark:text-primary-dark" />
+                                </div>
+                              )}
                               <div className="flex-1 text-right">
                                 <h4 className="font-semibold text-light-text dark:text-dark-text mb-1">
                                   {type.name}

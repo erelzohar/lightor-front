@@ -5,6 +5,8 @@ import { useLanguage } from '../../contexts/LanguageContext';
 import type { AppointmentType } from '../../models/AppointmentType';
 import type { SectionTone } from '../SectionDivider';
 import { TONE_BG } from './blockUtils';
+import ImagesService from '../../services/ImagesService';
+import { handleWideImageError } from '../../utils/imageFallback';
 
 interface Props { appointmentTypes: AppointmentType[]; tone?: SectionTone; title?: string }
 
@@ -39,6 +41,16 @@ const PriceCards: React.FC<Props> = ({ appointmentTypes, tone = 'bg', title }) =
                 viewport={{ once: true }}
                 transition={{ delay: i * 0.06 }}
               >
+                {/* The owner's picture for this service (LT-157), when there is one. */}
+                {a.image && (
+                  <img
+                    src={ImagesService.getInstance().getImage(a.image)}
+                    alt=""
+                    loading="lazy"
+                    onError={handleWideImageError}
+                    className="w-full aspect-[4/3] object-cover rounded-design-sm mb-5"
+                  />
+                )}
                 <h3 className="text-xl font-semibold mb-4">{a.name}</h3>
                 <div className={`text-3xl font-bold ${featured ? '' : 'text-light-text dark:text-dark-text'}`} style={{ fontVariantNumeric: 'tabular-nums' }}>{price(a.price)}</div>
                 {mins && (

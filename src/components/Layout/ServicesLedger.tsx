@@ -7,6 +7,8 @@ import type { SectionHeader, RevealStyle } from '../../models/DesignConfig';
 import { revealVariants } from '../../services/reveal';
 import SectionHeading from './SectionHeading';
 import type { HeadingScale } from '../../services/artDirection';
+import ImagesService from '../../services/ImagesService';
+import { handleSquareImageError } from '../../utils/imageFallback';
 
 interface ServicesLedgerProps {
   appointmentTypes: AppointmentType[];
@@ -81,6 +83,15 @@ const ServicesLedger: React.FC<ServicesLedgerProps> = ({ appointmentTypes, tone,
               <span className="text-sm font-bold tracking-widest text-primary-readable dark:text-primary-dark-readable w-8 shrink-0" aria-hidden="true">
                 {String(i + 1).padStart(2, '0')}
               </span>
+              {item.image && (
+                <img
+                  src={ImagesService.getInstance().getImage(item.image)}
+                  alt=""
+                  loading="lazy"
+                  onError={handleSquareImageError}
+                  className="w-10 h-10 rounded-md object-cover shrink-0 self-center"
+                />
+              )}
               <h3 className="text-xl md:text-2xl text-light-text dark:text-dark-text">{item.name}</h3>
               <span className="flex-1 border-b border-dotted border-light-text/30 dark:border-dark-text/30 -translate-y-1.5" aria-hidden="true"></span>
               <span
