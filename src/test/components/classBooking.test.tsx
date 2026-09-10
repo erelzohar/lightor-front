@@ -6,7 +6,7 @@ import { ClassOccurrence } from '../../models/ClassOccurrence';
 import { ScheduleConfig } from '../../models/ScheduleConfig';
 
 const HOUR = 3_600_000;
-const SUNDAY = Date.now() + 3 * 86_400_000;
+const DAY = 86_400_000;
 
 const getCalendar = vi.fn();
 
@@ -48,6 +48,13 @@ vi.mock('../../contexts/LanguageContext', () => ({
   }),
 }));
 
+/** A local wall-clock instant on the session day, three days from now. */
+const at = (hours: number, minutes = 0): number => {
+  const day = new Date(Date.now() + 3 * DAY);
+  day.setHours(hours, minutes, 0, 0);
+  return day.getTime();
+};
+
 const klass = new AppointmentType('t1', 'Group training', '60', 'u1', String(HOUR), 'class', 12, [
   { weekday: 0, time: '19:00' },
 ]);
@@ -57,11 +64,13 @@ const occurrence = (startMs: number, booked: number) =>
     type_id: 't1', timestamp: String(startMs), durationMS: String(HOUR), capacity: 12, booked,
   });
 
-const renderWidget = (types = [klass], workingDays = [null, null, null, null, null, null, null]) =>
+const openAllWeek = ['09:00-17:00', '09:00-17:00', '09:00-17:00', '09:00-17:00', '09:00-17:00', '09:00-17:00', '09:00-17:00'];
+
+const renderWidget = (types = [klass], workingDays: (string | null)[] = [null, null, null, null, null, null, null]) =>
   render(
     <Schedule
       config={new ScheduleConfig('Book', 'Pick a session')}
-      workingDays={workingDays as (string | null)[]}
+      workingDays={workingDays}
       user_id="u1"
       phone="+972500000000"
       businessName="Coach"
@@ -74,17 +83,34 @@ const renderWidget = (types = [klass], workingDays = [null, null, null, null, nu
     />
   );
 
+/** The label DateButton builds for a day, before its availability suffix. */
+const dayLabel = (ms: number): string =>
+  new Date(ms).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+
+/** Calendar day buttons only — time buttons start with a digit. */
+const dayButtons = (): HTMLElement[] =>
+  screen.getAllByRole('button').filter((button) => {
+    const label = button.getAttribute('aria-label') ?? '';
+    return label.includes(' - ') && !/^\d/.test(label);
+  });
+
+const dayButton = (ms: number): HTMLElement | undefined =>
+  dayButtons().find((button) => button.getAttribute('aria-label')!.startsWith(`${dayLabel(ms)} - `));
+
+const chooseClass = async () => {
+  fireEvent.click(await screen.findByText('Group training'));
+  await waitFor(() => expect(screen.getByText('schedule.legend.available')).toBeTruthy());
+};
+
 /**
- * A coach who only teaches classes has no working hours, so the month grid
- * would show every day closed (LT-152). The widget opens on the timetable.
+ * One road for every service (LT-155): pick the service, pick a day on the
+ * calendar, pick a time. For a class the calendar's open days are the days it
+ * runs with room left, and the times are its sessions.
  */
 describe('booking a class from the public site', () => {
   beforeEach(() => {
     getCalendar.mockReset();
-    getCalendar.mockResolvedValue({
-      busy: [],
-      classes: [occurrence(SUNDAY, 8), occurrence(SUNDAY + 7 * 86_400_000, 12)],
-    });
+    getCalendar.mockResolvedValue({ busy: [], classes: [occurrence(at(19), 8)] });
   });
 
   it('opens on the services rather than the month grid', async () => {
@@ -93,79 +119,82 @@ describe('booking a class from the public site', () => {
     expect(screen.queryByText('schedule.legend.available')).toBeNull();
   });
 
-  it('offers a class straight away at a business that also books privately', async () => {
-    // The bug Erel found (LT-154): a mixed business asked for a date first,
-    // and a class does not live on a date the visitor picks.
-    const haircut = new AppointmentType('t2', 'Haircut', '80', 'u1', '1800000');
-    const openAllWeek = ['09:00-17:00', '09:00-17:00', '09:00-17:00', '09:00-17:00', '09:00-17:00', '09:00-17:00', '09:00-17:00'];
-
-    renderWidget([klass, haircut], openAllWeek);
-
-    // Both services are on the menu before any date is chosen.
-    expect(await screen.findByText('Group training')).toBeTruthy();
-    expect(screen.getByText('Haircut')).toBeTruthy();
-
-    fireEvent.click(screen.getByText('Group training'));
-
-    // Straight to the timetable, with no month grid in between.
-    await waitFor(() => expect(screen.getByText('schedule.class.select')).toBeTruthy());
-  });
-
-  it('sends a private service to the calendar, not to a timetable', async () => {
-    const haircut = new AppointmentType('t2', 'Haircut', '80', 'u1', '1800000');
-    const openAllWeek = ['09:00-17:00', '09:00-17:00', '09:00-17:00', '09:00-17:00', '09:00-17:00', '09:00-17:00', '09:00-17:00'];
-
-    renderWidget([klass, haircut], openAllWeek);
-
-    fireEvent.click(await screen.findByText('Haircut'));
-
-    // The month grid, identified by its own legend.
-    await waitFor(() => expect(screen.getByText('schedule.legend.available')).toBeTruthy());
-    expect(screen.queryByText('schedule.class.select')).toBeNull();
-  });
-
-  it('lists the upcoming sessions once a class is chosen', async () => {
+  it('shows the calendar once a class is chosen, like any other service', async () => {
     renderWidget();
-
-    fireEvent.click(await screen.findByText('Group training'));
-
-    await waitFor(() => expect(screen.getByText('schedule.class.select')).toBeTruthy());
-    // Four places left of twelve is not scarce enough to put a number on.
-    expect(screen.getByText('schedule.class.available')).toBeTruthy();
-    // The following week is sold out.
-    expect(screen.getByText('schedule.class.full')).toBeTruthy();
+    await chooseClass();
   });
 
-  it('names the number of places only when they are nearly gone', async () => {
-    getCalendar.mockResolvedValue({ busy: [], classes: [occurrence(SUNDAY, 10)] });
+  it('opens only the days the class runs with room left', async () => {
     renderWidget();
+    await chooseClass();
 
-    fireEvent.click(await screen.findByText('Group training'));
+    const sessionDay = dayButton(at(19));
+    expect(sessionDay).toBeTruthy();
+    expect(sessionDay!.hasAttribute('disabled')).toBe(false);
 
-    await waitFor(() => expect(screen.getByText('schedule.class.placesLeft:2')).toBeTruthy());
+    // Every other day on the grid is closed: a coach with no working hours
+    // has nothing to offer on them.
+    const others = dayButtons().filter((button) => button !== sessionDay);
+    expect(others.length).toBeGreaterThan(0);
+    expect(others.every((button) => button.hasAttribute('disabled'))).toBe(true);
+  });
+
+  it("lists that day's sessions as its times", async () => {
+    renderWidget();
+    await chooseClass();
+
+    fireEvent.click(dayButton(at(19))!);
+
+    // Four of twelve places left is not scarce, so no number is shown.
+    await waitFor(() => expect(screen.getByRole('button', { name: '19:00' })).toBeTruthy());
+  });
+
+  it('names the places left only when they are nearly gone, and greys out a full session', async () => {
+    getCalendar.mockResolvedValue({
+      busy: [],
+      classes: [occurrence(at(7), 12), occurrence(at(19), 10)],
+    });
+    renderWidget();
+    await chooseClass();
+
+    fireEvent.click(dayButton(at(19))!);
+
+    const full = await screen.findByRole('button', { name: '07:00 - schedule.class.full' });
+    expect(full.hasAttribute('disabled')).toBe(true);
+
+    const scarce = screen.getByRole('button', { name: '19:00 - schedule.class.placesLeft:2' });
+    expect(scarce.hasAttribute('disabled')).toBe(false);
   });
 
   it('takes a place and moves on to the customer details', async () => {
     renderWidget();
+    await chooseClass();
 
-    fireEvent.click(await screen.findByText('Group training'));
-    await waitFor(() => expect(screen.getByText('schedule.class.select')).toBeTruthy());
-
-    fireEvent.click(screen.getByText('schedule.class.available'));
+    fireEvent.click(dayButton(at(19))!);
+    fireEvent.click(await screen.findByRole('button', { name: '19:00' }));
 
     await waitFor(() => expect(screen.getByText('schedule.form.name')).toBeTruthy());
   });
 
-  it('refuses to open a full session', async () => {
-    getCalendar.mockResolvedValue({ busy: [], classes: [occurrence(SUNDAY, 12)] });
-    renderWidget();
+  it('does not offer a class whose every session is full', async () => {
+    const haircut = new AppointmentType('t2', 'Haircut', '80', 'u1', '1800000');
+    getCalendar.mockResolvedValue({ busy: [], classes: [occurrence(at(19), 12)] });
 
-    fireEvent.click(await screen.findByText('Group training'));
-    await waitFor(() => expect(screen.getByText('schedule.class.full')).toBeTruthy());
+    renderWidget([klass, haircut], openAllWeek);
 
-    fireEvent.click(screen.getByText('schedule.class.full'));
+    expect(await screen.findByText('Haircut')).toBeTruthy();
+    expect(screen.queryByText('Group training')).toBeNull();
+  });
 
-    // Still on the timetable; the details form never appeared.
-    expect(screen.queryByText('schedule.form.name')).toBeNull();
+  it('keeps a private service on working hours at a business that also runs classes', async () => {
+    const haircut = new AppointmentType('t2', 'Haircut', '80', 'u1', '1800000');
+    renderWidget([klass, haircut], openAllWeek);
+
+    fireEvent.click(await screen.findByText('Haircut'));
+    await waitFor(() => expect(screen.getByText('schedule.legend.available')).toBeTruthy());
+
+    // Open hours every day means far more open days than the one class day.
+    const open = dayButtons().filter((button) => !button.hasAttribute('disabled'));
+    expect(open.length).toBeGreaterThan(1);
   });
 });

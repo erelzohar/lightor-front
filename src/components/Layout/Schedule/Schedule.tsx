@@ -98,7 +98,7 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
   // Service first, then the dates that service can actually be had on
   // (LT-154). A class has no month grid at all: it runs when it runs.
   // Rescheduling starts on the date, because the service is already decided.
-  const [bookingStep, setBookingStep] = useState<'type' | 'date' | 'session' | 'time' | 'details' | 'verification'>(
+  const [bookingStep, setBookingStep] = useState<'type' | 'date' | 'time' | 'details' | 'verification'>(
     isUpdating ? 'date' : 'type'
   );
   // The class occurrence being booked (LT-152). A class is sold by session,
@@ -133,9 +133,6 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
       const minutes = new Date(parseInt(appointmentToUpdate.timestamp)).getMinutes().toString().padStart(2, '0');
       setSelectedTime(`${hours}:${minutes}`);
       setChannelType(appointmentToUpdate.channelType || 'sms');
-      // Moving a place in a class means picking another session, not another
-      // day: the class runs when it runs (LT-154).
-      if (appointmentToUpdate.type?.isClass) setBookingStep('session');
     }
   }, [isUpdating, appointmentToUpdate]);
   const [error, setError] = useState<string | null>(null);
@@ -523,6 +520,19 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
       .sort((a, b) => a.startMs - b.startMs);
   }, [classOccurrences]);
 
+  /**
+   * The runs of a class on one calendar day, soonest first (LT-155). The
+   * calendar marks a day bookable when one of these still has room, and the
+   * time step lists them the way it lists free slots for a private service.
+   */
+  const sessionsOnDate = useCallback((type: AppointmentType | null, date: Date): ClassOccurrence[] =>
+    sessionsFor(type).filter(occurrence => {
+      const start = new Date(occurrence.startMs);
+      return start.getFullYear() === date.getFullYear()
+        && start.getMonth() === date.getMonth()
+        && start.getDate() === date.getDate();
+    }), [sessionsFor]);
+
   const isPast = useCallback((date: Date) => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -577,12 +587,18 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
   }, [workingDays, dateOverrides, generateTimeSlots]);
 
   const isAvailable = useCallback((date: Date) => {
+    // A class runs on the owner's timetable, not inside working hours: a day
+    // is open when one of its sessions still has a place (LT-155).
+    if (selectedAppointmentType?.isClass) {
+      return sessionsOnDate(selectedAppointmentType, date).some(occurrence => !occurrence.isFull);
+    }
+
     // Resolved per date so an override can open a normally-closed weekday
     // (or close an open one) — never read workingDays[day] directly (LT-057).
     if (getHoursForDate(date, workingDays, dateOverrides) === null) return false;
 
     return generateTimeSlots(date, calendarDurationMS).length > 0;
-  }, [workingDays, dateOverrides, generateTimeSlots, calendarDurationMS]);
+  }, [workingDays, dateOverrides, generateTimeSlots, calendarDurationMS, selectedAppointmentType, sessionsOnDate]);
 
   const isNextMonth = useCallback((date: Date) => {
     return date.getMonth() > currentMonth.getMonth();
@@ -597,6 +613,16 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
 
   const getAvailabilityStatus = useCallback((date: Date): 'full' | 'limited' | 'none' | 'vacation' | 'past' => {
     if (isPast(date)) return 'past';
+
+    // A class day's dot reads its sessions (LT-155): green while there is
+    // room, amber when only the last few places are left — which is what the
+    // "limited" legend already says in Hebrew — and closed when every session
+    // that day is full or there is none.
+    if (selectedAppointmentType?.isClass) {
+      const open = sessionsOnDate(selectedAppointmentType, date).filter(occurrence => !occurrence.isFull);
+      if (open.length === 0) return 'none';
+      return open.every(occurrence => occurrence.placesLeft <= 3) ? 'limited' : 'full';
+    }
 
     // Override-aware hours, possibly several ranges with breaks (LT-057).
     const workingHours = getHoursForDate(date, workingDays, dateOverrides);
@@ -663,7 +689,7 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
     } else { // availableSlots.length is > 0 and <= FULL_THRESHOLD_COUNT (i.e., <= 55% available)
       return 'limited';
     }
-  }, [isPast, workingDays, dateOverrides, generateTimeSlots, isTimeInVacation, calendarDurationMS]);
+  }, [isPast, workingDays, dateOverrides, generateTimeSlots, isTimeInVacation, calendarDurationMS, selectedAppointmentType, sessionsOnDate]);
 
   const formatSelectedDate = useCallback((date: Date) => {
     return date.toLocaleDateString(language === 'he' ? 'he-IL' : (language === 'ar' ? 'ar-SA' : (language === 'fr' ? 'fr-FR' : (language === 'es' ? 'es-ES' : 'en-US'))), {
@@ -724,10 +750,19 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
     setSelectedTime('');
     setSelectedDate(null);
     setSelectedSession(null);
-    // A class is sold by session; everything else by picking a day and then a
-    // free time on it.
-    setBookingStep(type.isClass ? 'session' : 'date');
-  }, []);
+
+    // Same road for everything (LT-155): pick a day, then a time. For a class
+    // the calendar opens on the month of its first session with room, so a
+    // class that starts next month is not hidden behind an all-grey grid.
+    if (type.isClass) {
+      const first = sessionsFor(type).find(occurrence => !occurrence.isFull);
+      if (first) {
+        const start = new Date(first.startMs);
+        setCurrentMonth(new Date(start.getFullYear(), start.getMonth(), 1));
+      }
+    }
+    setBookingStep('date');
+  }, [sessionsFor]);
 
   /**
    * Taking a place in a class. The chosen occurrence also fills in the date
@@ -737,11 +772,8 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
   const handleSessionSelect = useCallback((occurrence: ClassOccurrence) => {
     if (occurrence.isFull) return;
     const start = new Date(occurrence.startMs);
-    const day = new Date(start);
-    day.setHours(0, 0, 0, 0);
 
     setSelectedSession(occurrence);
-    setSelectedDate(day);
     setSelectedTime(
       `${start.getHours().toString().padStart(2, '0')}:${start.getMinutes().toString().padStart(2, '0')}`
     );
@@ -770,29 +802,20 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
         setSelectedAppointmentType(null);
         setBookingStep('type');
         break;
-      case 'session':
-        setSelectedAppointmentType(null);
-        setSelectedSession(null);
-        setBookingStep('type');
-        break;
       case 'time':
         setSelectedTime(null);
         setBookingStep('date');
         break;
       case 'details':
         setSelectedTime('');
-        if (selectedSession) {
-          setSelectedSession(null);
-          setBookingStep('session');
-        } else {
-          setBookingStep('time');
-        }
+        setSelectedSession(null);
+        setBookingStep('time');
         break;
       case 'verification':
         setBookingStep('details');
         break;
     }
-  }, [bookingStep, isUpdating, onCancelUpdate, selectedSession]);
+  }, [bookingStep, isUpdating, onCancelUpdate]);
 
   const getDayNames = useCallback(() => {
     const days = [];
@@ -1021,10 +1044,7 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
               )}
 
               <div className="flex items-center justify-center gap-2 mb-8">
-                {(selectedAppointmentType?.isClass
-                  ? ['type', 'session', 'details', 'verification']
-                  : ['type', 'date', 'time', 'details', 'verification']
-                ).map((step, index, steps) => (
+                {['type', 'date', 'time', 'details', 'verification'].map((step, index, steps) => (
                   <div
                     key={step}
                     className={`h-2 rounded-full transition-all ${index === steps.indexOf(bookingStep)
@@ -1137,7 +1157,7 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
                       // upcoming sessions, everything else whenever the
                       // business keeps hours it could fit into.
                       const bookable = type.isClass
-                        ? sessionsFor(type).length > 0
+                        ? sessionsFor(type).some(occurrence => !occurrence.isFull)
                         : hasAnyRoomFor(durationMS);
                       if (bookable)
                         return (
@@ -1174,73 +1194,6 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
                 </motion.div>
               )}
 
-              {bookingStep === 'session' && selectedAppointmentType && (
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  className="space-y-6"
-                >
-                  <h3 className="text-xl font-semibold text-light-text dark:text-dark-text mb-6">
-                    {t('schedule.class.select')}
-                  </h3>
-
-                  <div className="space-y-3">
-                    {sessionsFor(selectedAppointmentType).map((occurrence) => {
-                      const start = new Date(occurrence.startMs);
-                      const dayName = start.toLocaleDateString(
-                        language === 'he' ? 'he-IL'
-                          : language === 'ar' ? 'ar-SA'
-                            : language === 'fr' ? 'fr-FR'
-                              : language === 'es' ? 'es-ES' : 'en-US',
-                        { weekday: 'long', day: 'numeric', month: 'long' }
-                      );
-                      const time = `${start.getHours().toString().padStart(2, '0')}:${start.getMinutes().toString().padStart(2, '0')}`;
-                      // A number only when it means something. A brand new
-                      // class would otherwise advertise an empty room.
-                      const scarce = !occurrence.isFull && occurrence.placesLeft <= 3;
-
-                      return (
-                        <motion.button
-                          key={occurrence.timestamp}
-                          type="button"
-                          disabled={occurrence.isFull}
-                          onClick={() => handleSessionSelect(occurrence)}
-                          className={`w-full p-4 rounded-design-sm flex items-center gap-4 transition-colors ${occurrence.isFull
-                            ? 'bg-light-gray/20 dark:bg-dark-gray/20 opacity-60 cursor-not-allowed'
-                            : 'bg-light-gray/30 dark:bg-dark-gray/30 hover:bg-primary/10 dark:hover:bg-primary-dark/10'
-                            }`}
-                          whileHover={occurrence.isFull ? undefined : { scale: 1.01 }}
-                          whileTap={occurrence.isFull ? undefined : { scale: 0.99 }}
-                        >
-                          <div className="w-12 h-12 rounded-lg bg-primary/10 dark:bg-primary-dark/10 flex items-center justify-center shrink-0">
-                            <Clock className="h-6 w-6 text-primary dark:text-primary-dark" />
-                          </div>
-
-                          <div className="flex-1 text-start min-w-0">
-                            <p className="font-semibold text-light-text dark:text-dark-text truncate">
-                              {dayName}
-                            </p>
-                            <p className="text-sm text-light-text/70 dark:text-dark-text/70">{time}</p>
-                          </div>
-
-                          <span className={`text-sm font-medium shrink-0 ${occurrence.isFull
-                            ? 'text-light-text/50 dark:text-dark-text/50'
-                            : 'text-primary dark:text-primary-dark'
-                            }`}>
-                            {occurrence.isFull
-                              ? t('schedule.class.full')
-                              : scarce
-                                ? t('schedule.class.placesLeft', { count: occurrence.placesLeft })
-                                : t('schedule.class.available')}
-                          </span>
-                        </motion.button>
-                      );
-                    })}
-                  </div>
-                </motion.div>
-              )}
-
               {bookingStep === 'time' && selectedDate && selectedAppointmentType && (
                 <motion.div
                   initial={{ opacity: 0 }}
@@ -1262,6 +1215,47 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
                     <h4 className="text-lg font-semibold text-light-text dark:text-dark-text mb-4">
                       {t('schedule.available.times')} {formatSelectedDate(selectedDate)}
                     </h4>
+                    {selectedAppointmentType.isClass ? (
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                        {sessionsOnDate(selectedAppointmentType, selectedDate).map((occurrence) => {
+                          const start = new Date(occurrence.startMs);
+                          const time = `${start.getHours().toString().padStart(2, '0')}:${start.getMinutes().toString().padStart(2, '0')}`;
+                          // A number only when places are nearly gone; a new
+                          // class must not advertise an empty room.
+                          const note = occurrence.isFull
+                            ? t('schedule.class.full')
+                            : occurrence.placesLeft <= 3
+                              ? t('schedule.class.placesLeft', { count: occurrence.placesLeft })
+                              : null;
+
+                          return (
+                            <motion.button
+                              key={occurrence.timestamp}
+                              type="button"
+                              disabled={occurrence.isFull}
+                              aria-label={note ? `${time} - ${note}` : time}
+                              onClick={() => handleSessionSelect(occurrence)}
+                              className={`relative overflow-hidden p-3 rounded-design-sm text-sm font-medium ${occurrence.isFull
+                                ? 'bg-light-gray/30 dark:bg-dark-gray/30 text-light-text/40 dark:text-dark-text/40 cursor-not-allowed'
+                                : selectedSession?.timestamp === occurrence.timestamp
+                                  ? 'bg-primary dark:bg-primary-dark text-on-primary dark:text-on-primary-dark shadow-lg'
+                                  : 'bg-primary/10 dark:bg-primary-dark/10 text-primary-readable dark:text-primary-dark-readable hover:shadow-md'
+                                }`}
+                              whileHover={occurrence.isFull ? undefined : { scale: 1.05 }}
+                              whileTap={occurrence.isFull ? undefined : { scale: 0.95 }}
+                            >
+                              <span className="relative flex items-center justify-center gap-2">
+                                <Clock className="h-4 w-4" />
+                                {time}
+                              </span>
+                              {note && (
+                                <span className="relative block mt-1 text-xs font-normal opacity-80">{note}</span>
+                              )}
+                            </motion.button>
+                          );
+                        })}
+                      </div>
+                    ) : (
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                       {generateTimeSlots(selectedDate, parseInt(selectedAppointmentType.durationMS)).map((time) => (
                         <motion.button
@@ -1288,6 +1282,7 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
                         </motion.button>
                       ))}
                     </div>
+                    )}
                   </div>
                 </motion.div>
               )}

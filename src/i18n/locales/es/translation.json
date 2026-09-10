@@ -104,8 +104,6 @@
     },
     "class": {
       "label": "Clase grupal",
-      "select": "Elige una sesión",
-      "available": "Plazas disponibles",
       "placesLeft": "Quedan {{count}} plazas",
       "full": "Completo"
     }

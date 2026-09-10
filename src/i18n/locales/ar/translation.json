@@ -104,8 +104,6 @@
     },
     "class": {
       "label": "حصة جماعية",
-      "select": "اختر موعدًا",
-      "available": "أماكن متاحة",
       "placesLeft": "بقي {{count}} أماكن",
       "full": "مكتمل"
     }

@@ -104,8 +104,6 @@
     },
     "class": {
       "label": "שיעור קבוצתי",
-      "select": "בחירת מועד",
-      "available": "יש מקום",
       "placesLeft": "נותרו {{count}} מקומות",
       "full": "מלא"
     }

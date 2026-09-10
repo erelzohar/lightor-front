@@ -104,8 +104,6 @@
     },
     "class": {
       "label": "Cours collectif",
-      "select": "Choisissez une séance",
-      "available": "Places disponibles",
       "placesLeft": "{{count}} places restantes",
       "full": "Complet"
     }
