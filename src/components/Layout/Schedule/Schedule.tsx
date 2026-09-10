@@ -43,6 +43,8 @@ interface FormErrors {
 }
 
 interface ScheduleProps {
+  /** How many days ahead a customer may book, chosen by the owner (LT-156). */
+  bookingHorizonDays?: number;
   /** LT-115: the booking band above already shows the description. */
   hideDescription?: boolean;
   /** LT-124: the vibe's section chrome and widget frame. */
@@ -68,10 +70,10 @@ interface ScheduleProps {
 }
 
 
-/** How far ahead the widget will look for a bookable day. */
-const BOOKABLE_WINDOW_DAYS = 60;
+/** The booking window of a business that never chose one (LT-156). */
+const DEFAULT_BOOKING_HORIZON_DAYS = 60;
 
-const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone, businessName, timeToCancel, vacations, dateOverrides = [], appointmentTypes, isUpdating, appointmentToUpdate, onUpdateComplete, onCancelUpdate, isPreview, hideDescription = false, header, headerScale, scheduleStyle = 'card' }) => {
+const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone, businessName, timeToCancel, vacations, dateOverrides = [], appointmentTypes, isUpdating, appointmentToUpdate, onUpdateComplete, onCancelUpdate, isPreview, hideDescription = false, header, headerScale, scheduleStyle = 'card', bookingHorizonDays = DEFAULT_BOOKING_HORIZON_DAYS }) => {
   // if (!appointmentTypes) {
   //   throw new Error('No appointment types available');
   // }
@@ -509,6 +511,29 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
   }, [workingDays, dateOverrides, isTimeInVacation, isTimeSlotBooked]);
 
   /**
+   * The last calendar day a customer may book, to the end of that day
+   * (LT-156). The server enforces the same window with a day of slack, so the
+   * calendar is the precise version and the server the guard.
+   */
+  const lastBookableDay = useMemo(() => {
+    const day = new Date();
+    day.setHours(23, 59, 59, 999);
+    day.setDate(day.getDate() + bookingHorizonDays);
+    return day;
+  }, [bookingHorizonDays]);
+
+  const isBeyondWindow = useCallback(
+    (date: Date) => date.getTime() > lastBookableDay.getTime(),
+    [lastBookableDay]
+  );
+
+  /** The next month holds at least one day inside the window. */
+  const canGoToNextMonth = useMemo(
+    () => new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 1).getTime() <= lastBookableDay.getTime(),
+    [currentMonth, lastBookableDay]
+  );
+
+  /**
    * Upcoming runs of one class, soonest first. Full sessions stay on the list
    * rather than vanishing — "full" is information a customer wants.
    */
@@ -516,9 +541,12 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
     if (!type) return [];
     const now = Date.now();
     return classOccurrences
-      .filter(occurrence => occurrence.type_id === type._id && occurrence.startMs > now)
+      .filter(occurrence =>
+        occurrence.type_id === type._id
+        && occurrence.startMs > now
+        && occurrence.startMs <= lastBookableDay.getTime())
       .sort((a, b) => a.startMs - b.startMs);
-  }, [classOccurrences]);
+  }, [classOccurrences, lastBookableDay]);
 
   /**
    * The runs of a class on one calendar day, soonest first (LT-155). The
@@ -577,16 +605,19 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
     const day = new Date();
     day.setHours(0, 0, 0, 0);
 
-    for (let i = 0; i <= BOOKABLE_WINDOW_DAYS; i++) {
+    for (let i = 0; i <= bookingHorizonDays; i++) {
       const candidate = new Date(day);
       candidate.setDate(day.getDate() + i);
       if (getHoursForDate(candidate, workingDays, dateOverrides) === null) continue;
       if (generateTimeSlots(candidate, durationMS).length > 0) return true;
     }
     return false;
-  }, [workingDays, dateOverrides, generateTimeSlots]);
+  }, [workingDays, dateOverrides, generateTimeSlots, bookingHorizonDays]);
 
   const isAvailable = useCallback((date: Date) => {
+    // Past the owner's booking window nothing is bookable (LT-156).
+    if (isBeyondWindow(date)) return false;
+
     // A class runs on the owner's timetable, not inside working hours: a day
     // is open when one of its sessions still has a place (LT-155).
     if (selectedAppointmentType?.isClass) {
@@ -598,7 +629,7 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
     if (getHoursForDate(date, workingDays, dateOverrides) === null) return false;
 
     return generateTimeSlots(date, calendarDurationMS).length > 0;
-  }, [workingDays, dateOverrides, generateTimeSlots, calendarDurationMS, selectedAppointmentType, sessionsOnDate]);
+  }, [workingDays, dateOverrides, generateTimeSlots, calendarDurationMS, selectedAppointmentType, sessionsOnDate, isBeyondWindow]);
 
   const isNextMonth = useCallback((date: Date) => {
     return date.getMonth() > currentMonth.getMonth();
@@ -613,6 +644,7 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
 
   const getAvailabilityStatus = useCallback((date: Date): 'full' | 'limited' | 'none' | 'vacation' | 'past' => {
     if (isPast(date)) return 'past';
+    if (isBeyondWindow(date)) return 'none';
 
     // A class day's dot reads its sessions (LT-155): green while there is
     // room, amber when only the last few places are left — which is what the
@@ -689,7 +721,7 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
     } else { // availableSlots.length is > 0 and <= FULL_THRESHOLD_COUNT (i.e., <= 55% available)
       return 'limited';
     }
-  }, [isPast, workingDays, dateOverrides, generateTimeSlots, isTimeInVacation, calendarDurationMS, selectedAppointmentType, sessionsOnDate]);
+  }, [isPast, workingDays, dateOverrides, generateTimeSlots, isTimeInVacation, calendarDurationMS, selectedAppointmentType, sessionsOnDate, isBeyondWindow]);
 
   const formatSelectedDate = useCallback((date: Date) => {
     return date.toLocaleDateString(language === 'he' ? 'he-IL' : (language === 'ar' ? 'ar-SA' : (language === 'fr' ? 'fr-FR' : (language === 'es' ? 'es-ES' : 'en-US'))), {
@@ -1079,10 +1111,15 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
                     </h3>
                     <motion.button
                       type="button"
-                      onClick={() => setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1))}
-                      className="p-2 hover:bg-light-gray dark:hover:bg-dark-gray rounded-lg transition-colors"
-                      whileHover={{ scale: 1.1 }}
-                      whileTap={{ scale: 0.9 }}
+                      onClick={() => canGoToNextMonth && setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1))}
+                      className={`p-2 rounded-lg transition-colors ${canGoToNextMonth
+                        ? 'hover:bg-light-gray dark:hover:bg-dark-gray'
+                        : 'opacity-40 cursor-not-allowed'
+                        }`}
+                      whileHover={canGoToNextMonth ? { scale: 1.1 } : undefined}
+                      whileTap={canGoToNextMonth ? { scale: 0.9 } : undefined}
+                      disabled={!canGoToNextMonth}
+                      data-testid="calendar-next-month"
                     >
                       <ChevronRight className={`h-5 w-5 text-light-text dark:text-dark-text ${language === 'he' || language === 'ar' ? 'rotate-180' : ''}`} />
                     </motion.button>

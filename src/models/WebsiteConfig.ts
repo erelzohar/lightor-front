@@ -181,7 +181,12 @@ export class WebsiteConfig {
      */
     public dateOverrides: DateOverride[] = [],
     /** LT-133: composed page — empty means the legacy section flow. */
-    public blocks: Block[] = []
+    public blocks: Block[] = [],
+    /**
+     * How many days ahead a customer may book (LT-156), chosen by the
+     * owner. Sixty when absent: what every site did before the choice existed.
+     */
+    public bookingHorizonDays: number = 60
   ) {}
 
   static fromJSON(json: any): WebsiteConfig {
@@ -210,7 +215,10 @@ export class WebsiteConfig {
       DesignConfig.fromJSON(json.design),
       json.branding === true,
       Array.isArray(json.dateOverrides) ? json.dateOverrides : [],
-      parseBlocks(json.blocks)
+      parseBlocks(json.blocks),
+      Number.isInteger(json.bookingHorizonDays) && json.bookingHorizonDays >= 1 && json.bookingHorizonDays <= 365
+        ? json.bookingHorizonDays
+        : 60
     );
   }
 }

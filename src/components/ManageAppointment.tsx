@@ -173,6 +173,7 @@ const ManageAppointment: React.FC = () => {
         businessName={config.businessName}
         phone={config.contact.phone}
         timeToCancel={minCancelTime || config.minCancelTimeMS}
+        bookingHorizonDays={config.bookingHorizonDays}
         user_id={appointment.user_id}
         isUpdating={true}
         appointmentToUpdate={appointment}

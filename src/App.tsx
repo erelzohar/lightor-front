@@ -315,6 +315,7 @@ function MainContent() {
             phone={config.contact.phone}
             businessName={config.businessName}
             timeToCancel={config.minCancelTimeMS}
+            bookingHorizonDays={config.bookingHorizonDays}
             vacations={config.vacations}
             dateOverrides={config.dateOverrides}
             appointmentTypes={config.appointmentTypes}
