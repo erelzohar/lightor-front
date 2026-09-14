@@ -7,6 +7,8 @@ import { ContactLayout, SectionHeader, RevealStyle } from '../../models/DesignCo
 import { revealVariants } from '../../services/reveal';
 import SectionHeading from './SectionHeading';
 import type { HeadingScale } from '../../services/artDirection';
+import type { SectionTone } from '../SectionDivider';
+import { TONE_BG } from '../blocks/blockUtils';
 import { ContactModal } from '../../components/ContactModal';
 import { useContactHandler } from '../../hooks/useContactHandler';
 import smsService from '../../services/SmsService';
@@ -37,6 +39,10 @@ interface ContactProps {
   headerScale?: HeadingScale;
   /** LT-126: per-site motion profile. */
   reveal?: RevealStyle;
+  /** LT-167: section background tone from the page flow. Without it each
+   *  plain layout keeps its own default (poster: surface, the rest: bg), which
+   *  is what the legacy flow draws; the composer alternates it. */
+  tone?: SectionTone;
 }
 
 const MaterialInput = ({
@@ -98,10 +104,12 @@ const MaterialInput = ({
   </div>
 );
 
-const Contact: React.FC<ContactProps> = ({ config, address, contact, workingDays, isPreview, layout = 'split', header, headerScale, reveal }) => {
+const Contact: React.FC<ContactProps> = ({ config, address, contact, workingDays, isPreview, layout = 'split', header, headerScale, reveal, tone }) => {
   // 'split' = info column beside the form; 'stacked' = one narrow centered
   // column with the info as a chip row above the form.
   const isStacked = layout === 'stacked';
+  // Plain layouts take the flow's tone; statement and band paint their own.
+  const plainBg = TONE_BG[tone ?? (layout === 'poster' ? 'surface' : 'bg')];
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -435,7 +443,7 @@ const Contact: React.FC<ContactProps> = ({ config, address, contact, workingDays
   if (layout === 'poster') {
     return (
       <>
-        <section id="contact" aria-label="Contact us" className="section-y bg-light-surface dark:bg-dark-surface transition-colors duration-300">
+        <section id="contact" aria-label="Contact us" className={`section-y ${plainBg} transition-colors duration-300`}>
           <div className="container mx-auto px-4">
             <SectionHeading title={config.title} description={config.description || undefined} variant={header} scale={headerScale} mb="mb-10" titleId="contact-title" />
             <div className="grid md:grid-cols-2 border-t border-light-text/15 dark:border-dark-text/15">
@@ -462,7 +470,7 @@ const Contact: React.FC<ContactProps> = ({ config, address, contact, workingDays
   if (layout === 'editorial') {
     return (
       <>
-        <section id="contact" aria-label="Contact us" className="section-y bg-light-bg dark:bg-dark-bg transition-colors duration-300">
+        <section id="contact" aria-label="Contact us" className={`section-y ${plainBg} transition-colors duration-300`}>
           <div className="container mx-auto px-4">
             <SectionHeading title={config.title} description={config.description || undefined} variant={header} scale={headerScale} mb="mb-12" titleId="contact-title" />
             <div className="grid md:grid-cols-2 gap-16 max-w-6xl">
@@ -528,7 +536,7 @@ const Contact: React.FC<ContactProps> = ({ config, address, contact, workingDays
   if (layout === 'cards') {
     return (
       <>
-        <section id="contact" aria-label="Contact us" className="section-y bg-light-bg dark:bg-dark-bg transition-colors duration-300">
+        <section id="contact" aria-label="Contact us" className={`section-y ${plainBg} transition-colors duration-300`}>
           <div className="container mx-auto px-4">
             <SectionHeading title={config.title} description={config.description || undefined} variant={header} scale={headerScale} mb="mb-12" titleId="contact-title" />
             <div className="grid md:grid-cols-2 gap-8 max-w-6xl mx-auto">
@@ -559,7 +567,7 @@ const Contact: React.FC<ContactProps> = ({ config, address, contact, workingDays
     <>
       <section
         id="contact"
-        className="section-y bg-light-bg dark:bg-dark-bg transition-colors duration-300 relative overflow-hidden"
+        className={`section-y ${plainBg} transition-colors duration-300 relative overflow-hidden`}
         aria-label="Contact us"
       >
         <motion.div

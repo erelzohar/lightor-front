@@ -62,6 +62,19 @@ describe('the schedule section tone in a composed page', () => {
     expect(sectionClass(container, 'schedule')).toContain('bg-light-bg');
   });
 
+  it('contact honours the flow tone too (LT-167)', () => {
+    const { container } = renderBlocks([{ type: 'faq' }, { type: 'contact' }]);
+    expect(sectionClass(container, 'faq')).toContain('bg-light-bg');
+    expect(sectionClass(container, 'contact')).toContain('bg-light-surface');
+  });
+
+  // Separate test on purpose: two mounted #contact sections trip jsdom's id
+  // lookup, which resolves the document's first match and misses the second container.
+  it('contact on a bg slot paints bg even in the poster layout, whose own default is surface', () => {
+    const { container } = renderBlocks([{ type: 'contact', variant: 'poster' }]);
+    expect(sectionClass(container, 'contact')).toContain('bg-light-bg');
+  });
+
   it('defaults to the surface outside the composer (legacy flow pins it)', () => {
     const { container } = render(
       <Schedule
