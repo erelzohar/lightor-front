@@ -37,6 +37,10 @@ interface NavbarProps {
 
 const Navbar: React.FC<NavbarProps> = ({ websiteConfig, isPreview }) => {
   const [isOpen, setIsOpen] = useState(false);
+  // The bar itself, measured so the page can clear it (LT-163).
+  const navRef = useRef<HTMLElement>(null);
+  const isOpenRef = useRef(isOpen);
+  isOpenRef.current = isOpen;
   // Derived from the `dark` class, never from localStorage: the design's
   // defaultTheme (and the preview) set that class without touching storage.
   const darkMode = useIsDarkMode();
@@ -93,7 +97,9 @@ const Navbar: React.FC<NavbarProps> = ({ websiteConfig, isPreview }) => {
     if (href) {
       const targetElement = document.querySelector(href);
       if (targetElement) {
-        const navbarHeight = 80;
+        // The bar's real bottom edge (LT-163) rather than a guessed 80px: the
+        // styles run from 57 to 109px tall, and a long name can wrap.
+        const navbarHeight = navRef.current ? navRef.current.offsetTop + navRef.current.offsetHeight : 80;
         const elementPosition = targetElement.getBoundingClientRect().top;
         const offsetPosition = elementPosition + window.pageYOffset - navbarHeight;
 
@@ -137,6 +143,38 @@ const Navbar: React.FC<NavbarProps> = ({ websiteConfig, isPreview }) => {
 
   const { visible, darkMode: showDarkMode, languageSwitcher } = websiteConfig.components.navbar;
   const navbarStyle = websiteConfig.design?.navbarStyle ?? 'floating';
+
+  /**
+   * Publish where the bar ends as `--nav-offset` on the page (LT-163), so the
+   * hero can start below it. The bar is fixed, and its height depends on the
+   * style (57 to 109px measured), the breakpoint, whether the business name
+   * wraps and when the web font lands — a fixed padding under-cleared it on
+   * phones and the hero image slid beneath it.
+   *
+   * offsetTop counts a floating bar's gap from the top; offsetHeight ignores
+   * the hide-on-scroll transform. An open phone menu is an overlay, so its
+   * extra height is deliberately not published: the page would jump.
+   */
+  useEffect(() => {
+    const root = document.documentElement;
+    const nav = navRef.current;
+    if (!nav) {
+      root.style.setProperty('--nav-offset', '0px');
+      return;
+    }
+    const publish = () => {
+      if (isOpenRef.current) return;
+      root.style.setProperty('--nav-offset', `${Math.ceil(nav.offsetTop + nav.offsetHeight)}px`);
+    };
+    publish();
+    const observer = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(publish) : null;
+    observer?.observe(nav);
+    window.addEventListener('resize', publish);
+    return () => {
+      observer?.disconnect();
+      window.removeEventListener('resize', publish);
+    };
+  }, [navbarStyle, visible]);
 
   if (!visible) return null;
 
@@ -193,7 +231,7 @@ const Navbar: React.FC<NavbarProps> = ({ websiteConfig, isPreview }) => {
   if (navbarStyle === 'minimal') {
     // Logo and one button. Links only in the mobile menu.
     return (
-      <nav className={`fixed top-0 inset-x-0 z-50 transition-all duration-300 transform ${isScrolled || isOpen ? 'bg-white/90 dark:bg-dark-surface/90 backdrop-blur-md shadow-sm' : 'bg-transparent'} ${slide}`}>
+      <nav ref={navRef} className={`fixed top-0 inset-x-0 z-50 transition-all duration-300 transform ${isScrolled || isOpen ? 'bg-white/90 dark:bg-dark-surface/90 backdrop-blur-md shadow-sm' : 'bg-transparent'} ${slide}`}>
         <div className="px-4 py-3 container mx-auto">
           <div className="flex items-center justify-between gap-4">
             {logo('h-10 w-10')}
@@ -212,7 +250,7 @@ const Navbar: React.FC<NavbarProps> = ({ websiteConfig, isPreview }) => {
   if (navbarStyle === 'centered') {
     // Logo on its own row, the links ruled beneath it.
     return (
-      <nav className={`fixed top-0 inset-x-0 z-50 transition-all duration-300 transform bg-white/95 dark:bg-dark-surface/95 backdrop-blur-md border-b border-light-text/10 dark:border-dark-text/10 ${slide}`}>
+      <nav ref={navRef} className={`fixed top-0 inset-x-0 z-50 transition-all duration-300 transform bg-white/95 dark:bg-dark-surface/95 backdrop-blur-md border-b border-light-text/10 dark:border-dark-text/10 ${slide}`}>
         <div className="px-4 py-2 container mx-auto">
           <div className="flex items-center justify-between md:justify-center relative">
             {logo('h-10 w-10')}
@@ -232,7 +270,7 @@ const Navbar: React.FC<NavbarProps> = ({ websiteConfig, isPreview }) => {
   if (navbarStyle === 'pill') {
     // A compact floating pill, centered.
     return (
-      <nav className={`fixed top-4 inset-x-4 z-50 transition-all duration-300 transform ${slide}`}>
+      <nav ref={navRef} className={`fixed top-4 inset-x-4 z-50 transition-all duration-300 transform ${slide}`}>
         <div className={`mx-auto max-w-4xl rounded-full px-4 py-2 flex items-center justify-between gap-4 bg-white/90 dark:bg-dark-surface/90 backdrop-blur-md shadow-lg ${isOpen ? 'rounded-3xl' : ''}`}>
           {logo('h-9 w-9')}
           <div className="hidden md:flex items-center gap-6 text-sm">
@@ -252,7 +290,7 @@ const Navbar: React.FC<NavbarProps> = ({ websiteConfig, isPreview }) => {
   if (navbarStyle === 'split') {
     // Links at the start, logo in the middle, the book button at the end.
     return (
-      <nav className={`fixed top-0 inset-x-0 z-50 transition-all duration-300 transform bg-white/95 dark:bg-dark-surface/95 backdrop-blur-md shadow-sm ${slide}`}>
+      <nav ref={navRef} className={`fixed top-0 inset-x-0 z-50 transition-all duration-300 transform bg-white/95 dark:bg-dark-surface/95 backdrop-blur-md shadow-sm ${slide}`}>
         <div className="px-4 py-3 container mx-auto">
           <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-4">
             <div className="hidden md:flex items-center gap-6 text-sm font-medium">{links(linkCls)}</div>
@@ -286,7 +324,7 @@ const Navbar: React.FC<NavbarProps> = ({ websiteConfig, isPreview }) => {
   })();
 
   return (
-    <nav className={navClassName}>
+    <nav ref={navRef} className={navClassName}>
       <div className="px-4 py-3">
         <div className="flex items-center justify-between">
           <button

@@ -803,7 +803,11 @@ const Hero: React.FC<HeroProps> = ({ config, social, phone, isContactVisible, ap
         )}
 
         <motion.div
-          className="container mx-auto px-4 pt-16 md:pt-20 lg:pt-32 pb-20 relative"
+          // Starts below the fixed navbar whatever its height (LT-163). The
+          // offsets over the bar keep desktop where it was for the common
+          // 72px bar (72 + 56 = the old 128px); the fallback is the tallest
+          // common bar, for the first paint before the navbar has measured.
+          className="container mx-auto px-4 pt-[calc(var(--nav-offset,5.5rem)_+_1.5rem)] md:pt-[calc(var(--nav-offset,5.5rem)_+_2rem)] lg:pt-[calc(var(--nav-offset,5.5rem)_+_3.5rem)] pb-20 relative"
           initial="hidden"
           animate="visible"
           variants={containerVariants}
