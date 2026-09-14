@@ -5,7 +5,7 @@ import { useLanguage } from '../../contexts/LanguageContext';
 import { ContactModal } from '../ContactModal';
 import { useContactHandler } from '../../hooks/useContactHandler';
 import { LegalModal } from '../LegalModal';
-import { AppointmentType } from '../../models/AppointmentType';
+import { AppointmentType, hasBookableServices } from '../../models/AppointmentType';
 import { FooterLayout } from '../../models/DesignConfig';
 import { Social } from '../../models/Social';
 import globals from '../../services/globals';
@@ -78,7 +78,7 @@ const Footer: React.FC<FooterProps> = ({ config, social, businessName, logoImage
   const menuItems = [
     { href: "#about", label: t('nav.about'), visible: websiteConfig?.about?.visible },
     { href: "#portfolio", label: t('nav.portfolio'), visible: websiteConfig?.portfolio?.visible },
-    { href: "#schedule", label: t('nav.schedule'), visible: true },
+    { href: "#schedule", label: t('nav.schedule'), visible: hasBookableServices(appointmentsType) },
     { href: "#contact", label: t('nav.contact'), visible: websiteConfig?.contact?.visible }
   ].filter(item => item.visible === undefined || item.visible);
 
@@ -366,7 +366,8 @@ const Footer: React.FC<FooterProps> = ({ config, social, businessName, logoImage
                   </nav>
                 </div>
 
-                {/* Services */}
+                {/* Services — only when there are any (LT-167). */}
+                {hasBookableServices(appointmentsType) && (
                 <div>
                   <h3
                     className="text-lg font-semibold mb-6"
@@ -387,6 +388,7 @@ const Footer: React.FC<FooterProps> = ({ config, social, businessName, logoImage
                     ))}
                   </ul>
                 </div>
+                )}
               </div>
             </motion.div>
           </div>

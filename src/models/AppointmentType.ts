@@ -43,3 +43,12 @@ export class AppointmentType {
     );
   }
 }
+
+/**
+ * Whether a customer has anything to book (LT-167). A site with no named
+ * service shows no schedule, no booking band and no "Book" links — they
+ * would all lead to an empty widget.
+ */
+export const hasBookableServices = (
+  types?: ReadonlyArray<{ name?: string | null } | null | undefined> | null
+): boolean => (types ?? []).some((t) => !!t?.name?.trim());

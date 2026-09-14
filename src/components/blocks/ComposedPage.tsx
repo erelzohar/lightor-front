@@ -1,5 +1,6 @@
 import { Fragment, cloneElement, isValidElement, type ReactElement, type ReactNode } from 'react';
 import type { WebsiteConfig } from '../../models/WebsiteConfig';
+import { hasBookableServices } from '../../models/AppointmentType';
 import type { Block } from '../../models/Block';
 import type { SiteJitter } from '../../services/seed';
 import { SPACING_CLASS } from '../../services/artDirection';
@@ -63,6 +64,8 @@ const ComposedPage: React.FC<ComposedPageProps> = ({ config, jitter, isPreview, 
   const c = config.components;
   const design = config.design;
   const hasBand = config.blocks.some((b) => b.type === 'bookingBand');
+  // LT-167: nothing to book → no schedule and no band pointing at it.
+  const bookable = hasBookableServices(config.appointmentTypes);
 
   // `tone` is passed explicitly because the flow's cloneElement below only reaches
   // component nodes, and the schedule sits inside a plain div (LT-166).
@@ -127,7 +130,7 @@ const ComposedPage: React.FC<ComposedPageProps> = ({ config, jitter, isPreview, 
       case 'bookingBand': {
         const statement = (typeof p.text === 'string' && p.text) || c?.schedule?.description?.trim();
         const chips = v === 'chips' ? (config.appointmentTypes ?? []).map((a) => a?.name).filter((n): n is string => !!n) : undefined;
-        return statement ? <BookingBand statement={statement} chips={chips} /> : null;
+        return statement && bookable ? <BookingBand statement={statement} chips={chips} /> : null;
       }
       // LT-136 — the fourteen phase-3 blocks.
       case 'ticker':
@@ -161,7 +164,7 @@ const ComposedPage: React.FC<ComposedPageProps> = ({ config, jitter, isPreview, 
       case 'social':
         return config.social ? <SocialTiles social={config.social} /> : null;
       case 'schedule':
-        return c?.schedule ? (
+        return c?.schedule && bookable ? (
           <div id="booking-section" className="relative min-h-[25rem]">
             <Schedule
               hideDescription={hasBand && !!c.schedule.description?.trim()}

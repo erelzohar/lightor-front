@@ -8,7 +8,7 @@ import { HeroConfig } from '../../models/HeroConfig';
 import { Social } from '../../models/Social';
 import { Palette } from '../../models/WebsiteConfig';
 import { DesignConfig, BorderRadius } from '../../models/DesignConfig';
-import { AppointmentType } from '../../models/AppointmentType';
+import { AppointmentType, hasBookableServices } from '../../models/AppointmentType';
 import ImagesService from '../../services/ImagesService';
 import { handleWideImageError } from '../../utils/imageFallback';
 import { useIsDarkMode } from '../../hooks/useIsDarkMode';
@@ -251,6 +251,7 @@ const Hero: React.FC<HeroProps> = ({ config, social, phone, isContactVisible, ap
   // ── Button renderers ──────────────────────────────────────────────────────
 
   const renderBookButton = (fullWidth = false) => {
+    if (!hasBookableServices(appointmentTypes)) return null; // LT-167
     const w = fullWidth ? 'w-full' : '';
 
     if (buttonStyle === 'solid') {

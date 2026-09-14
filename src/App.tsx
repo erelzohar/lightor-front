@@ -21,6 +21,7 @@ import Loading from './components/Loading';
 import SectionDivider, { type SectionTone } from './components/SectionDivider';
 import ServicesLedger from './components/Layout/ServicesLedger';
 import BookingBand from './components/Layout/BookingBand';
+import { hasBookableServices } from './models/AppointmentType';
 import { pickBandSlot } from './services/bandSlot';
 
 // Contexts & Hooks
@@ -231,6 +232,8 @@ function MainContent() {
   // two same-preset sites still differ (LT-053).
   const jitter = getSiteJitter(config.subDomain);
   const flow: { key: string; tone: SectionTone; node: ReactNode }[] = [];
+  // LT-167: nothing to book → no schedule, no booking band.
+  const bookable = hasBookableServices(config.appointmentTypes);
   // Vibe sites (LT-093+) opt into every seeded page-level variation; legacy
   // presets and unpresetted sites never reorder or restyle.
   const isVibeSite = (config.design?.sectionHeader ?? 'centered') !== 'centered'
@@ -303,7 +306,7 @@ function MainContent() {
   }
 
   // --- SENSITIVE SECTION: Turnstile protects the Schedule only ---
-  if (config.components?.schedule) {
+  if (config.components?.schedule && bookable) {
     flow.push({
       key: 'schedule', tone: 'surface', node: (
         <div id="booking-section" className="relative min-h-[25rem]">
@@ -443,7 +446,7 @@ function MainContent() {
         // announced the widget beneath it, on every site alike. Only with a
         // real statement to show — an empty band heading is worse than no
         // band.
-        if (config.design?.bookingBand === 'band' && config.components?.schedule?.description?.trim()) {
+        if (config.design?.bookingBand === 'band' && bookable && config.components?.schedule?.description?.trim()) {
           const slot = pickBandSlot(ordered.map((e) => e.key), jitter.bandSlot);
           if (slot !== null) {
             ordered.splice(slot, 0, {

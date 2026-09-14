@@ -7,6 +7,7 @@ import ImagesService from '../../services/ImagesService';
 import { handleSquareImageError } from '../../utils/imageFallback';
 import { useIsDarkMode } from '../../hooks/useIsDarkMode';
 import { navLinksFromBlocks } from '../../services/navLinks';
+import { hasBookableServices } from '../../models/AppointmentType';
 import { Calendar } from 'lucide-react';
 
 interface WebsiteConfig {
@@ -28,6 +29,8 @@ interface WebsiteConfig {
   };
   /** LT-137: a composed page — links come from these, not the section flags. */
   blocks?: { type: string; id: string }[];
+  /** LT-167: no named service → no "Book" link or button. */
+  appointmentTypes?: { name?: string | null }[];
 }
 
 interface NavbarProps {
@@ -128,8 +131,9 @@ const Navbar: React.FC<NavbarProps> = ({ websiteConfig, isPreview }) => {
   };
 
   const { language } = useLanguage();
+  const bookable = hasBookableServices(websiteConfig.appointmentTypes);
   const menuItems = websiteConfig.blocks?.length
-    ? navLinksFromBlocks(websiteConfig.blocks).map((l) => ({
+    ? navLinksFromBlocks(websiteConfig.blocks.filter((b) => bookable || b.type !== 'schedule')).map((l) => ({
       href: l.href,
       label: t(l.key, { defaultValue: language === 'he' ? l.fallbackHe : l.fallbackEn }),
       visible: true,
@@ -137,7 +141,7 @@ const Navbar: React.FC<NavbarProps> = ({ websiteConfig, isPreview }) => {
     : [
       { href: "#about", label: t('nav.about'), visible: websiteConfig.components.about.visible },
       { href: "#portfolio", label: t('nav.portfolio'), visible: websiteConfig.components.portfolio.visible },
-      { href: "#schedule", label: t('nav.schedule'), visible: true },
+      { href: "#schedule", label: t('nav.schedule'), visible: bookable },
       { href: "#contact", label: t('nav.contact'), visible: websiteConfig.components.contact.visible }
     ].filter(item => item.visible === undefined || item.visible);
 
@@ -198,12 +202,12 @@ const Navbar: React.FC<NavbarProps> = ({ websiteConfig, isPreview }) => {
       <span className="business-name font-bold text-light-text dark:text-dark-text text-lg sm:text-xl whitespace-nowrap">{websiteConfig.businessName}</span>
     </button>
   );
-  const bookButton = (
+  const bookButton = bookable ? (
     <a href="#schedule" onClick={handleLinkClick} className="inline-flex items-center gap-2 bg-primary dark:bg-primary-dark text-on-primary dark:text-on-primary-dark font-bold px-5 py-2.5 rounded-design text-sm hover:opacity-90 transition-opacity whitespace-nowrap">
       <Calendar className="h-4 w-4" aria-hidden="true" />
       {bookLabel}
     </a>
-  );
+  ) : null;
   const links = (cls: string) => menuItems.map((item) => (
     <a key={item.href} href={item.href} onClick={handleLinkClick} className={cls}>{item.label}</a>
   ));
