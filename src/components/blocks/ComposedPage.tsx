@@ -64,7 +64,9 @@ const ComposedPage: React.FC<ComposedPageProps> = ({ config, jitter, isPreview, 
   const design = config.design;
   const hasBand = config.blocks.some((b) => b.type === 'bookingBand');
 
-  const render = (b: Block): ReactNode => {
+  // `tone` is passed explicitly because the flow's cloneElement below only reaches
+  // component nodes, and the schedule sits inside a plain div (LT-166).
+  const render = (b: Block, tone: SectionTone): ReactNode => {
     const v = b.variant;
     const p = b.props ?? {};
     switch (b.type) {
@@ -177,6 +179,7 @@ const ComposedPage: React.FC<ComposedPageProps> = ({ config, jitter, isPreview, 
               header={design?.sectionHeader}
               scheduleStyle={(v as 'card' | 'flat' | 'inset' | 'split') ?? design?.scheduleStyle}
               headerScale={b.mod?.scale}
+              tone={tone}
             />
           </div>
         ) : null;
@@ -212,9 +215,9 @@ const ComposedPage: React.FC<ComposedPageProps> = ({ config, jitter, isPreview, 
   const items: { block: Block; tone: SectionTone; node: ReactNode }[] = [];
   let last: SectionTone = 'surface';
   for (const block of config.blocks) {
-    const node = render(block);
-    if (node === null) continue;
     const tone: SectionTone = block.mod?.tone ?? (last === 'bg' ? 'surface' : 'bg');
+    const node = render(block, tone);
+    if (node === null) continue; // a skipped block does not advance the alternation
     items.push({ block, tone, node });
     last = tone;
   }

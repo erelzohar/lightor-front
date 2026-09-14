@@ -16,6 +16,8 @@ import { Vacation } from '../../../models/Vacation';
 import SectionHeading from '../SectionHeading';
 import type { HeadingScale } from '../../../services/artDirection';
 import type { SectionHeader, ScheduleStyle } from '../../../models/DesignConfig';
+import type { SectionTone } from '../../SectionDivider';
+import { TONE_BG } from '../../blocks/blockUtils';
 
 // LT-124: the widget's chrome per vibe. 'card' is the legacy string, byte-identical.
 const CARD_CLASS: Record<ScheduleStyle, string> = {
@@ -54,6 +56,9 @@ interface ScheduleProps {
   /** LT-131: per-section heading scale (seeded). */
   headerScale?: HeadingScale;
   scheduleStyle?: ScheduleStyle;
+  /** LT-166: section background tone from the page flow. The legacy flow pins
+   *  'surface'; the composer alternates it like every other section. */
+  tone?: SectionTone;
   config: ScheduleConfig;
   workingDays: (string | null)[];
   user_id: string;
@@ -75,7 +80,7 @@ interface ScheduleProps {
 /** The booking window of a business that never chose one (LT-156). */
 const DEFAULT_BOOKING_HORIZON_DAYS = 60;
 
-const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone, businessName, timeToCancel, vacations, dateOverrides = [], appointmentTypes, isUpdating, appointmentToUpdate, onUpdateComplete, onCancelUpdate, isPreview, hideDescription = false, header, headerScale, scheduleStyle = 'card', bookingHorizonDays = DEFAULT_BOOKING_HORIZON_DAYS }) => {
+const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone, businessName, timeToCancel, vacations, dateOverrides = [], appointmentTypes, isUpdating, appointmentToUpdate, onUpdateComplete, onCancelUpdate, isPreview, hideDescription = false, header, headerScale, scheduleStyle = 'card', tone = 'surface', bookingHorizonDays = DEFAULT_BOOKING_HORIZON_DAYS }) => {
   // if (!appointmentTypes) {
   //   throw new Error('No appointment types available');
   // }
@@ -950,7 +955,7 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
   ]);
 
   return (
-    <section id="schedule" className="section-y bg-light-surface dark:bg-dark-surface transition-colors duration-300">
+    <section id="schedule" className={`section-y ${TONE_BG[tone]} transition-colors duration-300`}>
       {!isAuthorized ? (
         <div className="flex flex-col items-center py-20 bg-gray-50/50 dark:bg-gray-900/10">
           <div className="min-h-[25rem] flex items-center justify-center p-4">
