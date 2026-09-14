@@ -12,6 +12,7 @@ import { AppointmentType } from '../../models/AppointmentType';
 import ImagesService from '../../services/ImagesService';
 import { handleWideImageError } from '../../utils/imageFallback';
 import { useIsDarkMode } from '../../hooks/useIsDarkMode';
+import MarqueeStrip from '../MarqueeStrip';
 
 function hexToInt(hex: string): number {
   return parseInt(hex.replace('#', ''), 16);
@@ -134,18 +135,14 @@ const Hero: React.FC<HeroProps> = ({ config, social, phone, isContactVisible, ap
   const decor = design?.decor ?? 'none';
   const animD = (base: number) => animLevel === 'none' ? 0 : animLevel === 'minimal' ? base * 0.25 : base;
 
-  // The ticker band reads as a shop sign: the service list, repeated until it
-  // fills the width. Falls back to the hero title when a site has no named
-  // services yet (a fresh signup before the owner fills the menu), which is
-  // what it always showed before LT-117.
+  // The ticker band reads as a shop sign: the service list, rolling past
+  // (MarqueeStrip repeats it). Falls back to the hero title when a site has
+  // no named services yet (a fresh signup before the owner fills the menu),
+  // which is what it always showed before LT-117.
   const tickerItems = (appointmentTypes ?? [])
     .map((type) => type.name?.trim())
     .filter((name): name is string => !!name);
   const tickerSource = tickerItems.length ? tickerItems : [config.title];
-  const tickerText = Array.from(
-    { length: Math.ceil(28 / tickerSource.length) },
-    () => tickerSource,
-  ).flat().join('  ·  ');
 
   const vantaKey = [
     bgType,
@@ -836,17 +833,16 @@ const Hero: React.FC<HeroProps> = ({ config, social, phone, isContactVisible, ap
         </motion.div>
 
         {/* Repeating-text strip (LT-107): the industrial ticker / electric
-            marquee band along the hero's bottom edge. Static on purpose.
-            It lists what the business actually sells (LT-117) — the same
-            services the ledger and the booking form use — instead of the
-            hero title over and over. */}
+            marquee band along the hero's bottom edge. It lists what the
+            business actually sells (LT-117) — the same services the ledger
+            and the booking form use — and rolls continuously in the reading
+            direction (LT-164), so a long Hebrew menu is never cut at the
+            phone's edge. */}
         {(decor === 'ticker' || decor === 'marquee') && (
-          <div
-            className={`absolute bottom-0 inset-x-0 overflow-hidden whitespace-nowrap py-2 bg-primary dark:bg-primary-dark text-on-primary dark:text-on-primary-dark select-none ${decor === 'marquee' ? `font-bold uppercase italic ${noTrack ? '' : 'tracking-widest'} text-sm` : `${noTrack ? '' : 'tracking-[0.25em]'} text-xs font-semibold`}`}
-            aria-hidden="true"
-          >
-            {tickerText}
-          </div>
+          <MarqueeStrip
+            items={tickerSource}
+            className={`absolute bottom-0 inset-x-0 py-2 bg-primary dark:bg-primary-dark text-on-primary dark:text-on-primary-dark select-none ${decor === 'marquee' ? `font-bold uppercase italic ${noTrack ? '' : 'tracking-widest'} text-sm` : `${noTrack ? '' : 'tracking-[0.25em]'} text-xs font-semibold`}`}
+          />
         )}
       </section>
 

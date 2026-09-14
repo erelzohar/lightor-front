@@ -88,6 +88,9 @@ code {
 
 body {
   font-family: var(--font-body, 'Inter', sans-serif);
+  /* LT-164: the page never scrolls sideways. `clip`, not `hidden`, so body
+     doesn't become a scroll container (sticky/smooth scrolling stay intact). */
+  overflow-x: clip;
 }
 
 h1, h2, h3, h4, h5, h6 {

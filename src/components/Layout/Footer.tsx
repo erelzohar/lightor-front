@@ -10,6 +10,7 @@ import { FooterLayout } from '../../models/DesignConfig';
 import { Social } from '../../models/Social';
 import globals from '../../services/globals';
 import ImagesService from '../../services/ImagesService';
+import MarqueeStrip from '../MarqueeStrip';
 import { handleSquareImageError } from '../../utils/imageFallback';
 
 interface WebsiteConfig {
@@ -222,14 +223,11 @@ const Footer: React.FC<FooterProps> = ({ config, social, businessName, logoImage
 
   if (layout === 'ticker') {
     const items = [businessName, city, ...appointmentsType.slice(0, 3).map((a) => a?.name)].filter((x): x is string => !!x && !!x.trim());
-    const strip = Array.from({ length: Math.ceil(24 / items.length) }, () => items).flat().join(' · ');
     const track = language === 'ar' ? '' : 'tracking-[0.25em]';
     return (
       <>
         <footer className="bg-dark-surface text-dark-text">
-          <div className={`overflow-hidden whitespace-nowrap py-3 border-t border-dark-text/15 text-xs font-semibold ${track} text-dark-text/60 select-none`} aria-hidden="true">
-            {strip}
-          </div>
+          <MarqueeStrip items={items} className={`py-3 border-t border-dark-text/15 text-xs font-semibold ${track} text-dark-text/60 select-none`} />
           <div className="container mx-auto px-4 py-6">{compactLegal}</div>
         </footer>
         {modals}

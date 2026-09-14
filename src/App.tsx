@@ -351,8 +351,12 @@ function MainContent() {
     });
   }
 
+  // LT-164: `overflow-x-clip` so nothing a tenant's design does (wide
+  // containers, vw-scaled poster headings, drifting decor) can widen the page
+  // and put a horizontal scroll under it. `clip` rather than `hidden` so this
+  // never becomes a scroll container — sticky and anchors keep working.
   return (
-    <div className="min-h-screen bg-light-bg dark:bg-dark-bg transition-colors duration-300">
+    <div className="min-h-screen overflow-x-clip bg-light-bg dark:bg-dark-bg transition-colors duration-300">
       {config.components?.introPopup?.visible && (
         <ErrorBoundary><IntroPopup config={config.components.introPopup} /></ErrorBoundary>
       )}
