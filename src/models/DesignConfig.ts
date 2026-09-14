@@ -175,7 +175,7 @@ export const STYLE_PRESETS: Record<StylePreset, DesignTokens> = {
   luxe: {
     borderRadius: 'none', cardStyle: 'bordered', buttonStyle: 'outline',
     headingFont: 'playfair', bodyFont: 'raleway', animLevel: 'minimal',
-    navbarStyle: 'transparent', heroLayout: 'centered', sectionDivider: 'curve',
+    navbarStyle: 'floating', heroLayout: 'centered', sectionDivider: 'curve',
     density: 'spacious', typeScale: 'dramatic',
     headingAccent: 'rule', imageTreatment: 'arch',
     aboutLayout: 'band', portfolioLayout: 'masonry', contactLayout: 'stacked', footerLayout: 'minimal',
@@ -225,7 +225,7 @@ export const STYLE_PRESETS: Record<StylePreset, DesignTokens> = {
   minimal: {
     borderRadius: 'none', cardStyle: 'flat', buttonStyle: 'outline',
     headingFont: 'inter', bodyFont: 'inter', animLevel: 'none',
-    navbarStyle: 'transparent', heroLayout: 'image-right', sectionDivider: 'none',
+    navbarStyle: 'floating', heroLayout: 'image-right', sectionDivider: 'none',
     density: 'spacious', typeScale: 'balanced',
     headingAccent: 'none', imageTreatment: 'rounded',
     aboutLayout: 'band', portfolioLayout: 'masonry', contactLayout: 'stacked', footerLayout: 'minimal',
@@ -255,7 +255,7 @@ export const STYLE_PRESETS: Record<StylePreset, DesignTokens> = {
   boutique: {
     borderRadius: 'full', cardStyle: 'glass', buttonStyle: 'outline',
     headingFont: 'raleway', bodyFont: 'poppins', animLevel: 'minimal',
-    navbarStyle: 'transparent', heroLayout: 'centered', sectionDivider: 'curve',
+    navbarStyle: 'floating', heroLayout: 'centered', sectionDivider: 'curve',
     density: 'spacious', typeScale: 'balanced',
     headingAccent: 'dot', imageTreatment: 'circle',
     aboutLayout: 'split', portfolioLayout: 'filmstrip', contactLayout: 'stacked', footerLayout: 'minimal',
@@ -290,7 +290,7 @@ export const STYLE_PRESETS: Record<StylePreset, DesignTokens> = {
   atelier: {
     borderRadius: 'none', cardStyle: 'bordered', buttonStyle: 'outline',
     headingFont: 'playfair', bodyFont: 'raleway', animLevel: 'minimal',
-    navbarStyle: 'transparent', heroLayout: 'text-first', sectionDivider: 'none',
+    navbarStyle: 'floating', heroLayout: 'text-first', sectionDivider: 'none',
     density: 'spacious', typeScale: 'dramatic',
     headingAccent: 'rule', imageTreatment: 'arch',
     aboutLayout: 'split', portfolioLayout: 'masonry', contactLayout: 'editorial', footerLayout: 'line',
@@ -356,7 +356,7 @@ export const STYLE_PRESETS: Record<StylePreset, DesignTokens> = {
   gallery: {
     borderRadius: 'none', cardStyle: 'flat', buttonStyle: 'ghost',
     headingFont: 'archivo', bodyFont: 'archivo', animLevel: 'none',
-    navbarStyle: 'transparent', heroLayout: 'fullbleed', sectionDivider: 'none',
+    navbarStyle: 'floating', heroLayout: 'fullbleed', sectionDivider: 'none',
     density: 'spacious', typeScale: 'dramatic',
     headingAccent: 'none', imageTreatment: 'rounded',
     aboutLayout: 'band', portfolioLayout: 'masonry', contactLayout: 'statement', footerLayout: 'line',
