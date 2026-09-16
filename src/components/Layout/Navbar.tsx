@@ -152,6 +152,13 @@ const Navbar: React.FC<NavbarProps> = ({ websiteConfig, isPreview }) => {
 
   const { visible, darkMode: showDarkMode, languageSwitcher } = websiteConfig.components.navbar;
   const navbarStyle = websiteConfig.design?.navbarStyle ?? 'floating';
+  // LT-173: the desktop links row is nowrap and clipped. When its content is
+  // wider than the room it gets, the links go invisible and the burger takes
+  // over at every width. Only visibility toggles — never layout — so the
+  // measurement below cannot oscillate.
+  const [cramped, setCramped] = useState(false);
+  const linksRowRef = useRef<HTMLDivElement>(null);
+  const labelsKey = menuItems.map((m) => m.label).join('|');
 
   /**
    * Publish where the bar ends as `--nav-offset` on the page (LT-163), so the
@@ -185,6 +192,20 @@ const Navbar: React.FC<NavbarProps> = ({ websiteConfig, isPreview }) => {
     };
   }, [navbarStyle, visible]);
 
+  useEffect(() => {
+    const row = linksRowRef.current;
+    if (!row) { setCramped(false); return; }
+    const measure = () => setCramped(row.scrollWidth > row.clientWidth + 1);
+    measure();
+    const observer = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(measure) : null;
+    observer?.observe(row);
+    window.addEventListener('resize', measure);
+    return () => {
+      observer?.disconnect();
+      window.removeEventListener('resize', measure);
+    };
+  }, [navbarStyle, visible, labelsKey]);
+
   if (!visible) return null;
 
   // LT-137 variants — each is its own composition, not a class swap on the
@@ -202,9 +223,9 @@ const Navbar: React.FC<NavbarProps> = ({ websiteConfig, isPreview }) => {
     )
   );
   const logo = (cls = 'h-12 w-12') => (
-    <button onClick={handleScrollToTop} className="flex items-center gap-2 min-w-0" aria-label={t('nav.home')}>
+    <button onClick={handleScrollToTop} className="flex items-center gap-2 shrink-0" aria-label={t('nav.home')}>
       <img src={ImagesService.getInstance().getImage(websiteConfig.logoImageName)} onError={handleSquareImageError} alt="Logo" className={`${cls} rounded-full object-cover flex-shrink-0`} />
-      <span className="business-name font-bold text-light-text dark:text-dark-text text-lg sm:text-xl whitespace-nowrap">{websiteConfig.businessName}</span>
+      <span className="business-name font-bold text-light-text dark:text-dark-text text-lg sm:text-xl truncate max-w-[16rem]">{websiteConfig.businessName}</span>
     </button>
   );
   const bookButton = bookable ? (
@@ -216,8 +237,14 @@ const Navbar: React.FC<NavbarProps> = ({ websiteConfig, isPreview }) => {
   const links = (cls: string) => menuItems.map((item) => (
     <a key={item.href} href={item.href} onClick={handleLinkClick} className={cls}>{item.label}</a>
   ));
+  /** The desktop links, in the one row the overflow watcher measures. */
+  const linksRow = (rowCls: string, cls: string) => (
+    <div ref={linksRowRef} className={`${rowCls} min-w-0 overflow-hidden whitespace-nowrap ${cramped ? 'invisible' : ''}`} aria-hidden={cramped || undefined}>
+      {links(cls)}
+    </div>
+  );
   const mobileMenu = (
-    <div ref={mobileMenuRef} className={`md:hidden overflow-hidden transition-all duration-300 ${isOpen ? 'max-h-[25rem] opacity-100 visible pt-4 pb-6' : 'max-h-0 opacity-0 invisible'}`}>
+    <div ref={mobileMenuRef} className={`${cramped ? '' : 'md:hidden'} overflow-hidden transition-all duration-300 ${isOpen ? 'max-h-[25rem] opacity-100 visible pt-4 pb-6' : 'max-h-0 opacity-0 invisible'}`}>
       {links('block py-3 text-lg text-light-text dark:text-dark-text hover:text-primary dark:hover:text-primary-dark transition-colors')}
       <div className="flex items-center gap-4 pt-4 border-t border-light-gray/20 dark:border-dark-gray/20 mt-4">
         {bookButton}
@@ -227,15 +254,14 @@ const Navbar: React.FC<NavbarProps> = ({ websiteConfig, isPreview }) => {
     </div>
   );
   const burger = (
-    <button ref={menuButtonRef} onClick={() => setIsOpen(!isOpen)} className="md:hidden p-2" aria-label={isOpen ? t('nav.close_menu') : t('nav.open_menu')} aria-expanded={isOpen}>
+    <button ref={menuButtonRef} onClick={() => setIsOpen(!isOpen)} className={`${cramped ? '' : 'md:hidden'} p-2`} aria-label={isOpen ? t('nav.close_menu') : t('nav.open_menu')} aria-expanded={isOpen}>
       {isOpen ? <X className="h-6 w-6 text-light-text dark:text-dark-text" /> : <Menu className="h-6 w-6 text-light-text dark:text-dark-text" />}
     </button>
   );
   const slide = isVisible ? 'translate-y-0' : '-translate-y-full';
-  // text-center: a two-word label ("צור קשר", "תיק עבודות") wraps once the row
-  // runs out of width, and a start-aligned second line reads as a ragged
-  // column against its neighbours.
-  const linkCls = 'text-center text-light-text dark:text-dark-text hover:text-primary dark:hover:text-primary-dark transition-colors font-medium';
+  // LT-173: labels never wrap — a row that runs out of width collapses into
+  // the burger instead (see the overflow watcher above).
+  const linkCls = 'text-center whitespace-nowrap text-light-text dark:text-dark-text hover:text-primary dark:hover:text-primary-dark transition-colors font-medium';
 
   if (navbarStyle === 'minimal') {
     // Logo and one button. Links only in the mobile menu.
@@ -268,9 +294,7 @@ const Navbar: React.FC<NavbarProps> = ({ websiteConfig, isPreview }) => {
               {burger}
             </div>
           </div>
-          <div className="hidden md:flex items-center justify-center gap-8 pt-2 mt-2 border-t border-light-text/10 dark:border-dark-text/10 text-sm uppercase tracking-widest">
-            {links(linkCls)}
-          </div>
+          {linksRow(`hidden md:flex items-center justify-center gap-8 text-sm uppercase tracking-widest ${cramped ? 'h-0' : 'pt-2 mt-2 border-t border-light-text/10 dark:border-dark-text/10'}`, linkCls)}
           {mobileMenu}
         </div>
       </nav>
@@ -282,10 +306,8 @@ const Navbar: React.FC<NavbarProps> = ({ websiteConfig, isPreview }) => {
       <nav ref={navRef} className={`fixed top-4 inset-x-4 z-50 transition-all duration-300 transform ${slide}`}>
         <div className={`mx-auto max-w-4xl rounded-full px-4 py-2 flex items-center justify-between gap-4 bg-white/90 dark:bg-dark-surface/90 backdrop-blur-md shadow-lg ${isOpen ? 'rounded-3xl' : ''}`}>
           {logo('h-9 w-9')}
-          <div className="hidden md:flex items-center gap-6 text-sm">
-            {links(linkCls)}
-          </div>
-          <div className="hidden md:flex items-center gap-2">
+          {linksRow('hidden md:flex items-center gap-6 text-sm', linkCls)}
+          <div className="hidden md:flex items-center gap-2 shrink-0">
             {languageSwitcher && <LanguageSwitcher />}
             {themeButton}
             {bookButton}
@@ -302,8 +324,8 @@ const Navbar: React.FC<NavbarProps> = ({ websiteConfig, isPreview }) => {
       <nav ref={navRef} className={`fixed top-0 inset-x-0 z-50 transition-all duration-300 transform bg-white/95 dark:bg-dark-surface/95 backdrop-blur-md shadow-sm ${slide}`}>
         <div className="px-4 py-3 container mx-auto">
           <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-4">
-            <div className="hidden md:flex items-center gap-6 text-sm font-medium">{links(linkCls)}</div>
-            <div className="md:hidden">{burger}</div>
+            {linksRow('hidden md:flex items-center gap-6 text-sm font-medium', linkCls)}
+            <div className={cramped ? '' : 'md:hidden'}>{burger}</div>
             <div className="justify-self-center">{logo('h-10 w-10')}</div>
             <div className="hidden md:flex items-center justify-end gap-3">
               {languageSwitcher && <LanguageSwitcher />}
@@ -338,7 +360,7 @@ const Navbar: React.FC<NavbarProps> = ({ websiteConfig, isPreview }) => {
         <div className="flex items-center justify-between">
           <button
             onClick={handleScrollToTop}
-            className="flex items-center gap-2 min-w-0"
+            className="flex items-center gap-2 shrink-0"
             aria-label={t('nav.home')}
           >
             <img
@@ -348,22 +370,13 @@ const Navbar: React.FC<NavbarProps> = ({ websiteConfig, isPreview }) => {
               alt="Logo"
               className="h-12 w-12 rounded-full object-cover flex-shrink-0"
             />
-            <span className="business-name font-bold text-light-text dark:text-dark-text text-lg sm:text-xl lg:text-2xl whitespace-nowrap">
+            <span className="business-name font-bold text-light-text dark:text-dark-text text-lg sm:text-xl lg:text-2xl truncate max-w-[16rem]">
               {websiteConfig.businessName}
             </span>
           </button>
 
-          <div className="hidden md:flex items-center gap-8">
-            {menuItems.map((item, index) => (
-              <a
-                key={index}
-                href={item.href}
-                className="text-center text-light-text dark:text-dark-text hover:text-primary dark:hover:text-primary-dark transition-colors font-medium"
-                onClick={handleLinkClick}
-              >
-                {item.label}
-              </a>
-            ))}
+          <div className="hidden md:flex items-center gap-8 min-w-0">
+            {linksRow('flex items-center gap-8', linkCls)}
 
             {languageSwitcher && <LanguageSwitcher />}
 
@@ -388,7 +401,7 @@ const Navbar: React.FC<NavbarProps> = ({ websiteConfig, isPreview }) => {
           <button
             ref={menuButtonRef}
             onClick={() => setIsOpen(!isOpen)}
-            className="md:hidden p-2"
+            className={`${cramped ? '' : 'md:hidden'} p-2`}
             aria-label={isOpen ? t('nav.close_menu') : t('nav.open_menu')}
             aria-expanded={isOpen}
           >
@@ -402,7 +415,7 @@ const Navbar: React.FC<NavbarProps> = ({ websiteConfig, isPreview }) => {
 
         <div
           ref={mobileMenuRef}
-          className={`md:hidden overflow-hidden transition-all duration-300 ${isOpen
+          className={`${cramped ? '' : 'md:hidden'} overflow-hidden transition-all duration-300 ${isOpen
             ? 'max-h-[25rem] opacity-100 visible pt-4 pb-6'
             : 'max-h-0 opacity-0 invisible'
             }`}

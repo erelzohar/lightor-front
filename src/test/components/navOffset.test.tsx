@@ -7,8 +7,11 @@ vi.mock('../../contexts/LanguageContext', () => ({
 }));
 
 let onResize: (() => void) | null = null;
+// Every observer the bar creates gets the resize (LT-173 added a second one,
+// for the links row); keeping only the last callback starved the first.
+const callbacks: (() => void)[] = [];
 class FakeResizeObserver {
-  constructor(callback: () => void) { onResize = callback; }
+  constructor(callback: () => void) { callbacks.push(callback); onResize = () => callbacks.forEach((cb) => cb()); }
   observe() {}
   unobserve() {}
   disconnect() {}
@@ -39,6 +42,7 @@ const published = () => document.documentElement.style.getPropertyValue('--nav-o
 describe('navbar offset', () => {
   beforeEach(() => {
     onResize = null;
+    callbacks.length = 0;
     barHeight = 56;
     vi.stubGlobal('ResizeObserver', FakeResizeObserver);
     Object.defineProperty(HTMLElement.prototype, 'offsetTop', {

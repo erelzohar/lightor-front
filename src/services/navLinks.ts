@@ -18,7 +18,16 @@ interface BlockLike { type: string; id: string }
 /** The section headings a menu can borrow (LT-168). */
 export interface SectionTitles { about?: string; portfolio?: string; schedule?: string; faq?: string; contact?: string }
 
-const clean = (t: unknown): string | undefined => (typeof t === 'string' && t.trim() ? t.trim() : undefined);
+/** LT-173: a heading longer than this stays a heading; the menu keeps its generic word.
+ *  Sixteen characters is the room a bar with five links, a logo, a name and a
+ *  button has per label at tablet width; longer labels wrapped and, worse, let
+ *  the business name paint over the first link. */
+export const NAV_LABEL_MAX = 16;
+
+const clean = (t: unknown, max = NAV_LABEL_MAX): string | undefined => {
+  const s = typeof t === 'string' ? t.trim() : '';
+  return s && s.length <= max ? s : undefined;
+};
 
 /** Pull the menu-worthy headings out of a config's `components`. */
 export const sectionTitlesOf = (c?: {

@@ -23,7 +23,7 @@ const components = (titles: Partial<Record<'about' | 'portfolio' | 'schedule' | 
   contact: { visible: true, title: titles.contact },
 });
 const BLOCKS = ['hero', 'intro', 'gallery', 'schedule', 'faq', 'contact'].map((type, i) => ({ id: `b${i}`, type }));
-const TITLES = { about: 'הסיפור המתוק שלנו', portfolio: 'היצירות שלנו', schedule: 'הזמנת מארזים ואיסוף', faq: 'שאלות נפוצות', contact: 'צרו קשר להזמנות מיוחדות' };
+const TITLES = { about: 'קצת עלינו', portfolio: 'היצירות שלנו', schedule: 'הזמנת מארזים', faq: 'שאלות נפוצות', contact: 'דברו איתנו' };
 
 /** Text of the first anchor per href, whichever navbar layout rendered it. */
 const labelsByHref = (container: HTMLElement): Record<string, string> => {
@@ -49,6 +49,13 @@ describe('nav labels follow the section titles', () => {
   it('composed menu: a section without a title keeps the generic label', () => {
     const { container } = render(<Navbar websiteConfig={{ logoImageName: 'l.png', businessName: 'Z', components: components({ ...TITLES, faq: '  ' }), blocks: BLOCKS, appointmentTypes: [HAIRCUT] }} />);
     expect(labelsByHref(container)['#faq']).toBe('שאלות');
+  });
+
+  it('a heading too long for the bar keeps the generic label (LT-173)', () => {
+    const { container } = render(<Navbar websiteConfig={{ logoImageName: 'l.png', businessName: 'Z', components: components({ ...TITLES, contact: 'צרו קשר להזמנות מיוחדות', about: 'Dedicated to Basketball Culture' }), blocks: BLOCKS, appointmentTypes: [HAIRCUT] }} />);
+    const labels = labelsByHref(container);
+    expect(labels['#contact']).toBe('צור קשר');
+    expect(labels['#about']).toBe('אודות');
   });
 
   it('legacy menu: same rule', () => {
