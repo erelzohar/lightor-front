@@ -9,7 +9,9 @@ import React from 'react';
  * seamless, and `[dir="rtl"]` flips the direction, so Hebrew/Arabic roll the
  * way they read with no JS. The separators are non-breaking so nothing
  * collapses at the seam, and the duration scales with the text so the speed
- * stays near 60px/s whether the tenant has one service or twelve.
+ * stays near 60px/s whether the tenant has one service or twelve. It rolls
+ * on every device: no hover pause (touch :hover sticks after a tap) and no
+ * reduce-motion opt-out — the strip has to move everywhere.
  *
  * The visual is aria-hidden: callers that want the services announced put an
  * aria-label on their own wrapper (TickerBlock does).
@@ -34,7 +36,7 @@ const MarqueeStrip: React.FC<Props> = ({ items, className = '' }) => {
   const duration = Math.max(30, Math.round(copy.length * 0.13));
   return (
     <div className={`overflow-hidden ${className}`} aria-hidden="true">
-      <div className="flex w-max whitespace-nowrap lt-marquee" style={{ animationDuration: `${duration}s` }}>
+      <div className="flex w-max whitespace-nowrap lt-marquee lt-marquee-always" style={{ animationDuration: `${duration}s` }}>
         <span>{copy}</span>
         <span>{copy}</span>
       </div>

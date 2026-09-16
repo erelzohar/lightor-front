@@ -325,7 +325,11 @@ html[data-heading-accent="none"] .heading-accent {
 @keyframes lt-scroll-rtl { to { transform: translateX(50%); } }
 .lt-marquee { animation: lt-scroll 45s linear infinite; }
 [dir="rtl"] .lt-marquee { animation-name: lt-scroll-rtl; }
-.lt-marquee:hover, .lt-marquee:focus-within { animation-play-state: paused; }
-@media (prefers-reduced-motion: reduce) { .lt-marquee { animation: none; } }
+/* Pause on hover only where hover exists: on a touch screen :hover sticks
+   after a tap and would freeze the track. The services strip
+   (lt-marquee-always) never pauses and ignores reduce-motion — it has to
+   roll on every device and screen. */
+@media (hover: hover) { .lt-marquee:not(.lt-marquee-always):hover, .lt-marquee:not(.lt-marquee-always):focus-within { animation-play-state: paused; } }
+@media (prefers-reduced-motion: reduce) { .lt-marquee:not(.lt-marquee-always) { animation: none; } }
 .lt-pattern { background-image: repeating-linear-gradient(45deg, rgb(var(--color-primary) / 0.07) 0 2px, transparent 2px 16px); }
 .dark .lt-pattern { background-image: repeating-linear-gradient(45deg, rgb(var(--color-primary-dark) / 0.09) 0 2px, transparent 2px 16px); }
