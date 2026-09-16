@@ -35,7 +35,9 @@ export type ImageTreatment = 'rounded' | 'circle' | 'arch' | 'blob';
 // LT-126 structural layouts: 'wall' (typographic feature wall), 'timeline' (numbered rail), 'sticky' (pinned intro beside stacked rows).
 export type AboutLayout = 'cards' | 'split' | 'band' | 'manifesto' | 'wall' | 'timeline' | 'sticky';
 // LT-126: 'bento' (mosaic of mixed tile sizes), 'scroller' (auto-scrolling cinematic strip), 'spotlight' (one featured tile + thumbs).
-export type PortfolioLayout = 'grid' | 'masonry' | 'filmstrip' | 'polaroid' | 'flash' | 'bento' | 'scroller' | 'spotlight';
+// LT-169: 'carousel' is the one-frame-at-a-time slideshow (arrows, dots,
+// swipe) — once the legacy `isGrid: false` mode, now a layout like the rest.
+export type PortfolioLayout = 'grid' | 'masonry' | 'filmstrip' | 'polaroid' | 'flash' | 'bento' | 'scroller' | 'spotlight' | 'carousel';
 // LT-124: the canvas lower halves — 'poster' (giant phone, ruled columns),
 // 'editorial' (plain lines beside the form), 'statement' (inverted block, no
 // form), 'band' (primary-painted with a card form), 'cards' (form + info
@@ -178,7 +180,7 @@ export const STYLE_PRESETS: Record<StylePreset, DesignTokens> = {
     navbarStyle: 'floating', heroLayout: 'centered', sectionDivider: 'curve',
     density: 'spacious', typeScale: 'dramatic',
     headingAccent: 'rule', imageTreatment: 'arch',
-    aboutLayout: 'band', portfolioLayout: 'masonry', contactLayout: 'stacked', footerLayout: 'minimal',
+    aboutLayout: 'band', portfolioLayout: 'carousel', contactLayout: 'stacked', footerLayout: 'minimal',
     testimonialsLayout: 'cards', faqStyle: 'cards', defaultTheme: 'light',
     decor: 'none', featureStyle: 'icons', servicesLayout: 'none', sectionHeader: 'centered', bookingBand: 'none', scheduleStyle: 'card', revealStyle: 'rise', backdrop: 'none', sectionWidth: 'contained',
   },

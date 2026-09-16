@@ -5,7 +5,6 @@ export class PortfolioConfig {
     public visible: boolean,
     public title: string,
     public description: string,
-    public isGrid: boolean,
     public items: PortfolioItem[]
   ) {}
 
@@ -14,7 +13,6 @@ export class PortfolioConfig {
       json.visible,
       json.title,
       json.description,
-      json.isGrid,
       json.items.map((item: any) => PortfolioItem.fromJSON(item))
     );
   }

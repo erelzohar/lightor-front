@@ -28,7 +28,10 @@ const MASONRY_ASPECTS = ['aspect-[4/3]', 'aspect-square', 'aspect-[3/4]'];
 
 const Portfolio: React.FC<PortfolioProps> = ({ config, layout = 'grid', masonryPhase = 0, header, headerScale, tone = 'bg' }) => {
   const [currentSlide, setCurrentSlide] = useState(0);
-  const [isGridView] = useState(config.isGrid);
+  // LT-169: the slideshow is the 'carousel' layout — a design-system token
+  // like grid/masonry, no longer a per-component `isGrid` flag. With nothing
+  // to show it falls through to the (empty) grid rather than indexing item 0.
+  const isCarousel = layout === 'carousel' && config.items.length > 0;
   // LT-126 'spotlight': which item is featured.
   const [featured, setFeatured] = useState(0);
   const [touchStart, setTouchStart] = useState(0);
@@ -68,18 +71,18 @@ const Portfolio: React.FC<PortfolioProps> = ({ config, layout = 'grid', masonryP
   };
 
   const handleKeyDown = useCallback((e: KeyboardEvent) => {
-    if (!isGridView) {
+    if (isCarousel) {
       if (e.key === 'ArrowLeft') {
         prevSlide();
       } else if (e.key === 'ArrowRight') {
         nextSlide();
       }
     }
-  }, [isGridView, prevSlide, nextSlide]);
+  }, [isCarousel, prevSlide, nextSlide]);
 
   useEffect(() => {
     const slideElement = slideRef.current;
-    if (slideElement && !isGridView) {
+    if (slideElement && isCarousel) {
       slideElement.addEventListener('touchstart', handleTouchStart as any);
       slideElement.addEventListener('touchmove', handleTouchMove as any);
       slideElement.addEventListener('touchend', handleTouchEnd);
@@ -92,7 +95,7 @@ const Portfolio: React.FC<PortfolioProps> = ({ config, layout = 'grid', masonryP
         slideElement.removeEventListener('touchend', handleTouchEnd);
       };
     }
-  }, [isGridView, handleKeyDown]);
+  }, [isCarousel, handleKeyDown]);
 
   const slideVariants = {
     enter: (direction: number) => ({
@@ -137,48 +140,14 @@ const Portfolio: React.FC<PortfolioProps> = ({ config, layout = 'grid', masonryP
             descClass="text-xl text-light-text/80 dark:text-dark-text/80 max-w-2xl mx-auto mb-8"
             titleId="portfolio-title"
           />
-          {/* 
-          <motion.div
-            className="inline-flex items-center gap-2 bg-light-surface dark:bg-dark-surface p-1 rounded-lg shadow-md"
-            whileHover={{ scale: 1.05 }}
-            role="group"
-            aria-label={t('common.view_options', { defaultValue: 'View options' })}
-          >
-            <motion.button
-              onClick={() => setIsGridView(false)}
-              className={`flex items-center gap-2 px-4 py-2 rounded-md transition-colors ${!isGridView
-                  ? 'bg-primary dark:bg-primary-dark text-white dark:text-dark-surface'
-                  : 'text-light-text dark:text-dark-text hover:bg-light-gray dark:hover:bg-dark-gray'
-                }`}
-              whileTap={{ scale: 0.95 }}
-              aria-pressed={!isGridView}
-              aria-label={t('portfolio.view.slideshow')}
-            >
-              <Slideshow className="h-4 w-4" aria-hidden="true" />
-              <span>{t('portfolio.view.slideshow')}</span>
-            </motion.button>
-            <motion.button
-              onClick={() => setIsGridView(true)}
-              className={`flex items-center gap-2 px-4 py-2 rounded-md transition-colors ${isGridView
-                  ? 'bg-primary dark:bg-primary-dark text-white dark:text-dark-surface'
-                  : 'text-light-text dark:text-dark-text hover:bg-light-gray dark:hover:bg-dark-gray'
-                }`}
-              whileTap={{ scale: 0.95 }}
-              aria-pressed={isGridView}
-              aria-label={t('portfolio.view.grid')}
-            >
-              <Grid className="h-4 w-4" aria-hidden="true" />
-              <span>{t('portfolio.view.grid')}</span>
-            </motion.button>
-          </motion.div> */}
         </motion.div>
 
         <div className="max-w-6xl mx-auto">
-          {isGridView ? (
+          {!isCarousel ? (
             (() => {
               // Shared still-image card; the portfolioLayout token picks how
-              // the cards are arranged (grid / masonry / filmstrip). The
-              // carousel below (isGrid=false) is owner-chosen and unaffected.
+              // the cards are arranged (grid / masonry / filmstrip…). The
+              // 'carousel' layout is the one-frame slideshow further below.
               const itemCard = (item: typeof config.items[number], index: number, aspect: string, extra = '') => (
                 <motion.div
                   key={index}

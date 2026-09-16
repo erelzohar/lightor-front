@@ -18,7 +18,7 @@ export const RAW_AI_RESPONSE_SHAPE = {
     navbar: { visible: true, darkMode: true, languageSwitcher: false },
     hero: { visible: true, title: 't', subtitle: 's', description: 'd', heroImageSrc: 'https://x/y.jpg', bgType: 'fog', bordersType: 'square' },
     about: { visible: true, title: 't', description: 'd', paragraphs: { intro: 'i', mission: 'm' }, features: [] },
-    portfolio: { visible: true, isGrid: true, title: 't', description: 'd', items: [] },
+    portfolio: { visible: true, title: 't', description: 'd', items: [] },
     schedule: { title: 't', description: 'd' },
     contact: { visible: true, title: 't', description: 'd' },
     footer: { visible: true, description: 'd' },

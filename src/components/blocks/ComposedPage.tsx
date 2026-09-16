@@ -108,7 +108,7 @@ const ComposedPage: React.FC<ComposedPageProps> = ({ config, jitter, isPreview, 
       case 'gallery':
         // LT-137: layouts only apply in grid mode; the model's carousel flag
         // used to hide every one of them on generated sites.
-        return c?.portfolio ? <Portfolio config={{ ...c.portfolio, isGrid: true }} layout={(v as PortfolioLayout) ?? design?.portfolioLayout} masonryPhase={jitter.masonryPhase} /> : null;
+        return c?.portfolio ? <Portfolio config={c.portfolio} layout={(v as PortfolioLayout) ?? design?.portfolioLayout} masonryPhase={jitter.masonryPhase} /> : null;
       case 'quote':
         return c?.testimonials && (c.testimonials.items?.length ?? 0) > 0
           ? <Testimonials config={c.testimonials} tone="bg" layout={(v as TestimonialsLayout) ?? design?.testimonialsLayout} />
