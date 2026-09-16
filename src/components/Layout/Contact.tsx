@@ -213,7 +213,7 @@ const Contact: React.FC<ContactProps> = ({ config, address, contact, workingDays
         setFormData({ name: '', phone: '', message: '' });
       }, 3000);
     } catch (err) {
-      setError(t('schedule.error'));
+      setError(t('schedule.genericError')); // LT-169: 'schedule.error' is an object, the key itself was shown
       setTimeout(() => {
         setError(null)
       }, 3000);

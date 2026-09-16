@@ -69,14 +69,14 @@ export function ContactModal({ isOpen, onClose, contactLink, type }: ContactModa
                 className="text-xl font-bold text-light-text dark:text-dark-text mb-4"
               >
 
-                {isWhatsApp ? t('contact.modal.scan.title') : t('contact.modal.call.title')}
+                {isWhatsApp ? t('contact.modal.scan_title') : t('contact.modal.call_title')}
               </h3>
 
               {isWhatsApp ? (
                 <>
                   <div
                     className="flex justify-center mb-6"
-                    aria-label={t('contact.modal.qr.label')}
+                    aria-label={t('contact.modal.qr_label')}
                   >
                     <QRCode.QRCodeSVG
                       value={contactLink}
@@ -87,7 +87,7 @@ export function ContactModal({ isOpen, onClose, contactLink, type }: ContactModa
                     />
                   </div>
                   <p className="text-light-text/80 dark:text-dark-text/80 mb-6">
-                    {t('contact.modal.scan.message')}
+                    {t('contact.modal.scan_message')}
                   </p>
                 </>
               ) : (
@@ -101,8 +101,8 @@ export function ContactModal({ isOpen, onClose, contactLink, type }: ContactModa
               <div className="border-t border-light-gray dark:border-dark-gray pt-6">
                 <p className="text-light-text/60 dark:text-dark-text/60 mb-4">
                   {isWhatsApp
-                    ? t('contact.modal.or.whatsapp')
-                    : t('contact.modal.or.call')
+                    ? t('contact.modal.or_whatsapp')
+                    : t('contact.modal.or_call')
                   }
                 </p>
                 <motion.a
@@ -116,7 +116,7 @@ export function ContactModal({ isOpen, onClose, contactLink, type }: ContactModa
                     : 'bg-[#10B981] hover:bg-[#059669]'
                     } text-white rounded-xl transition-colors duration-300 font-medium`}
                   aria-label={
-                    isWhatsApp ? t('contact.modal.button.whatsapp') : t('contact.modal.button.call')
+                    isWhatsApp ? t('contact.modal.button_whatsapp') : t('contact.modal.button_call')
                   }
                 >
                   {isWhatsApp ? (
@@ -132,7 +132,7 @@ export function ContactModal({ isOpen, onClose, contactLink, type }: ContactModa
                     <Phone className="w-5 h-5" />
                   )}
                   <span>
-                    {isWhatsApp ? t('contact.modal.link.text.whatsapp') : t('contact.modal.link.text.call')}
+                    {isWhatsApp ? t('contact.modal.link_text_whatsapp') : t('contact.modal.link_text_call')}
                   </span>
                 </motion.a>
               </div>

@@ -1559,7 +1559,6 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
                     exit={{ opacity: 0 }}
                   >
                     <XCircle className="h-5 w-5" />
-                    {/* <span>{t('schedule.error')}</span> */}
                     <span>{error}</span>
                   </motion.div>
                 )}
