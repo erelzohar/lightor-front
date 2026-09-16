@@ -6,7 +6,7 @@ import globals from '../../services/globals';
 import ImagesService from '../../services/ImagesService';
 import { handleSquareImageError } from '../../utils/imageFallback';
 import { useIsDarkMode } from '../../hooks/useIsDarkMode';
-import { navLinksFromBlocks } from '../../services/navLinks';
+import { navLinksFromBlocks, sectionTitlesOf } from '../../services/navLinks';
 import { hasBookableServices } from '../../models/AppointmentType';
 import { Calendar } from 'lucide-react';
 
@@ -19,9 +19,12 @@ interface WebsiteConfig {
       darkMode: boolean;
       languageSwitcher: boolean;
     };
-    about: { visible: boolean };
-    portfolio: { visible: boolean };
-    contact: { visible: boolean };
+    // LT-168: section titles double as the menu labels.
+    about: { visible: boolean; title?: string };
+    portfolio: { visible: boolean; title?: string };
+    contact: { visible: boolean; title?: string };
+    schedule?: { title?: string };
+    faq?: { title?: string };
   };
   design?: {
     navbarStyle?: 'floating' | 'solid' | 'transparent' | 'minimal' | 'centered' | 'pill' | 'split';
@@ -132,17 +135,19 @@ const Navbar: React.FC<NavbarProps> = ({ websiteConfig, isPreview }) => {
 
   const { language } = useLanguage();
   const bookable = hasBookableServices(websiteConfig.appointmentTypes);
+  // LT-168: a link reads as the heading it scrolls to; the generic label only when a section has none.
+  const titles = sectionTitlesOf(websiteConfig.components);
   const menuItems = websiteConfig.blocks?.length
-    ? navLinksFromBlocks(websiteConfig.blocks.filter((b) => bookable || b.type !== 'schedule')).map((l) => ({
+    ? navLinksFromBlocks(websiteConfig.blocks.filter((b) => bookable || b.type !== 'schedule'), titles).map((l) => ({
       href: l.href,
-      label: t(l.key, { defaultValue: language === 'he' ? l.fallbackHe : l.fallbackEn }),
+      label: l.title ?? t(l.key, { defaultValue: language === 'he' ? l.fallbackHe : l.fallbackEn }),
       visible: true,
     }))
     : [
-      { href: "#about", label: t('nav.about'), visible: websiteConfig.components.about.visible },
-      { href: "#portfolio", label: t('nav.portfolio'), visible: websiteConfig.components.portfolio.visible },
-      { href: "#schedule", label: t('nav.schedule'), visible: bookable },
-      { href: "#contact", label: t('nav.contact'), visible: websiteConfig.components.contact.visible }
+      { href: "#about", label: titles.about ?? t('nav.about'), visible: websiteConfig.components.about.visible },
+      { href: "#portfolio", label: titles.portfolio ?? t('nav.portfolio'), visible: websiteConfig.components.portfolio.visible },
+      { href: "#schedule", label: titles.schedule ?? t('nav.schedule'), visible: bookable },
+      { href: "#contact", label: titles.contact ?? t('nav.contact'), visible: websiteConfig.components.contact.visible }
     ].filter(item => item.visible === undefined || item.visible);
 
   const { visible, darkMode: showDarkMode, languageSwitcher } = websiteConfig.components.navbar;

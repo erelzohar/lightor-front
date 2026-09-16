@@ -12,11 +12,15 @@ import globals from '../../services/globals';
 import ImagesService from '../../services/ImagesService';
 import MarqueeStrip from '../MarqueeStrip';
 import { handleSquareImageError } from '../../utils/imageFallback';
+import { sectionTitlesOf } from '../../services/navLinks';
 
 interface WebsiteConfig {
-  about?: { visible?: boolean };
-  portfolio?: { visible?: boolean };
-  contact?: { visible?: boolean; phone?: string };
+  // LT-168: section titles double as the quick-link labels.
+  about?: { visible?: boolean; title?: string };
+  portfolio?: { visible?: boolean; title?: string };
+  contact?: { visible?: boolean; phone?: string; title?: string };
+  schedule?: { title?: string };
+  faq?: { title?: string };
 }
 
 interface FooterProps {
@@ -75,11 +79,12 @@ const Footer: React.FC<FooterProps> = ({ config, social, businessName, logoImage
     });
   };
 
+  const titles = sectionTitlesOf(websiteConfig);
   const menuItems = [
-    { href: "#about", label: t('nav.about'), visible: websiteConfig?.about?.visible },
-    { href: "#portfolio", label: t('nav.portfolio'), visible: websiteConfig?.portfolio?.visible },
-    { href: "#schedule", label: t('nav.schedule'), visible: hasBookableServices(appointmentsType) },
-    { href: "#contact", label: t('nav.contact'), visible: websiteConfig?.contact?.visible }
+    { href: "#about", label: titles.about ?? t('nav.about'), visible: websiteConfig?.about?.visible },
+    { href: "#portfolio", label: titles.portfolio ?? t('nav.portfolio'), visible: websiteConfig?.portfolio?.visible },
+    { href: "#schedule", label: titles.schedule ?? t('nav.schedule'), visible: hasBookableServices(appointmentsType) },
+    { href: "#contact", label: titles.contact ?? t('nav.contact'), visible: websiteConfig?.contact?.visible }
   ].filter(item => item.visible === undefined || item.visible);
 
   const socialLinks = [
