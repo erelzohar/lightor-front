@@ -36,7 +36,7 @@ import GenerateReveal from './components/GenerateReveal';
 import ComposedPage from './components/blocks/ComposedPage';
 import ImagesService from './services/ImagesService';
 import { useTheme } from './hooks/useTheme';
-import { reportError } from './services/ErrorReportingService';
+import { reportClientError } from './services/ErrorReportingService';
 
 // Origins permitted to drive this app through a PREVIEW_DATA postMessage.
 // Only the register and dashboard apps embed the public site in an iframe for
@@ -208,7 +208,7 @@ function MainContent() {
         }
       } catch (err: any) {
         if (!isPreviewRef.current && err.status !== 404 && err.response?.status !== 404 && process.env.NODE_ENV === 'production') {
-          reportError({ error: err.message, stack: err.stack });
+          void reportClientError({ error: err.message, stack: err.stack, kind: 'error' });
         }
       } finally {
         if (!isPreviewRef.current) setLoading(false);

@@ -1,7 +1,7 @@
 import React, { Component, ReactNode } from 'react';
 import { motion } from 'framer-motion';
 import { useLanguage } from '../contexts/LanguageContext';
-import { reportError } from '../services/ErrorReportingService';
+import { reportClientError } from '../services/ErrorReportingService';
 
 interface ErrorBoundaryProps {
   children: ReactNode;
@@ -37,15 +37,15 @@ class ErrorBoundaryClass extends Component<ErrorBoundaryProps & { language: 'en'
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo): void {
     this.setState({ error, errorInfo });
 
-    // Automatically report the error to the backend
-
-    if (process.env.NODE_ENV == 'production'){
-      reportError({
-        error: error.message || error.toString(),
-        stack: error.stack,
-        componentStack: errorInfo.componentStack || undefined
-      });
-    }
+    // Report to the backend (LT-170). The reporter itself is production-only
+    // and de-duplicates, so a section that throws on every render is one
+    // email, not a stream.
+    void reportClientError({
+      error: error.message ? `${error.name}: ${error.message}` : error.toString(),
+      stack: error.stack,
+      componentStack: errorInfo.componentStack || undefined,
+      kind: 'boundary',
+    });
   }
 
   render() {
