@@ -247,6 +247,7 @@ function MainContent() {
           social={config.social}
           phone={config.contact.phone}
           isContactVisible={config.components?.contact?.visible ?? false}
+          businessName={config.businessName}
           appointmentTypes={config.appointmentTypes}
           isPreview={isPreview}
           palette={config.pallete}

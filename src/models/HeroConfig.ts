@@ -9,7 +9,9 @@ export class HeroConfig {
     public description: string,
     public heroImageSrc: string,
     public bgType: HeroBgType,
-    public bordersType: HeroBordersType
+    public bordersType: HeroBordersType,
+    /** LT-174: the round stamp decor's own line, written by the AI. Older configs have none. */
+    public stamp?: string
   ) {}
 
   static fromJSON(json: any): HeroConfig {
@@ -20,7 +22,8 @@ export class HeroConfig {
       json.description,
       json.heroImageSrc,
       json.bgType ?? 'gradient',
-      json.bordersType ?? 'round'
+      json.bordersType ?? 'round',
+      typeof json.stamp === 'string' && json.stamp.trim() ? json.stamp.trim() : undefined
     );
   }
 }

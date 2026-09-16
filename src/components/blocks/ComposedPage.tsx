@@ -80,6 +80,7 @@ const ComposedPage: React.FC<ComposedPageProps> = ({ config, jitter, isPreview, 
             social={config.social}
             phone={config.contact.phone}
             isContactVisible={config.blocks.some((x) => x.type === 'contact')}
+            businessName={config.businessName}
             appointmentTypes={config.appointmentTypes}
             isPreview={isPreview}
             palette={config.pallete}

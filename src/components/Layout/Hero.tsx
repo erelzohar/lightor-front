@@ -9,6 +9,7 @@ import { Social } from '../../models/Social';
 import { Palette } from '../../models/WebsiteConfig';
 import { DesignConfig, BorderRadius } from '../../models/DesignConfig';
 import { AppointmentType, hasBookableServices } from '../../models/AppointmentType';
+import { stampTextFor } from '../../services/heroStamp';
 import ImagesService from '../../services/ImagesService';
 import { handleWideImageError } from '../../utils/imageFallback';
 import { useIsDarkMode } from '../../hooks/useIsDarkMode';
@@ -69,6 +70,8 @@ interface HeroProps {
   social: Social;
   phone: string | null;
   isContactVisible: boolean;
+  /** LT-174: last-resort text for the stamp decor. */
+  businessName?: string;
   /** The business's real services — the ticker band lists these (LT-117). */
   appointmentTypes?: AppointmentType[];
   isPreview?: boolean;
@@ -99,7 +102,7 @@ const radiusClassMap: Record<BorderRadius, string> = {
   full: 'rounded-full',
 };
 
-const Hero: React.FC<HeroProps> = ({ config, social, phone, isContactVisible, appointmentTypes, isPreview, palette, design, jitter }) => {
+const Hero: React.FC<HeroProps> = ({ config, social, phone, isContactVisible, appointmentTypes, isPreview, palette, design, jitter, businessName }) => {
   const { t, language } = useLanguage();
   const { isModalOpen, setIsModalOpen, modalType, handleContactClick } = useContactHandler();
 
@@ -133,6 +136,7 @@ const Hero: React.FC<HeroProps> = ({ config, social, phone, isContactVisible, ap
   const animLevel = design?.animLevel ?? 'full';
   const imageTreatment = design?.imageTreatment ?? 'rounded';
   const decor = design?.decor ?? 'none';
+  const stampText = stampTextFor(config, businessName);
   const animD = (base: number) => animLevel === 'none' ? 0 : animLevel === 'minimal' ? base * 0.25 : base;
 
   // The ticker band reads as a shop sign: the service list, rolling past
@@ -763,14 +767,14 @@ const Hero: React.FC<HeroProps> = ({ config, social, phone, isContactVisible, ap
             siblings that precede the content container, so without it the
             hero image simply painted over them — a stamp or sun sliced in
             half by the photo's edge. */}
-        {decor === 'stamp' && (
+        {decor === 'stamp' && stampText && (
           <div
             className={`hidden md:flex absolute z-10 top-24 ${decorStart ? 'start-10 lg:start-20' : 'end-10 lg:end-20'} w-28 h-28 rounded-full border-2 border-primary-readable dark:border-primary-dark-readable items-center justify-center -rotate-12 pointer-events-none`}
             aria-hidden="true"
           >
             <div className="w-[5.5rem] h-[5.5rem] rounded-full border border-primary-readable/60 dark:border-primary-dark-readable/60 flex items-center justify-center p-2">
               <span className="text-[11px] font-bold tracking-widest text-center leading-tight text-primary-readable dark:text-primary-dark-readable line-clamp-3">
-                {config.title}
+                {stampText}
               </span>
             </div>
           </div>
