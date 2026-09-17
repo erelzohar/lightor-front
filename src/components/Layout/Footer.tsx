@@ -13,6 +13,7 @@ import ImagesService from '../../services/ImagesService';
 import MarqueeStrip from '../MarqueeStrip';
 import { handleSquareImageError } from '../../utils/imageFallback';
 import { sectionTitlesOf } from '../../services/navLinks';
+import { whatsAppHref } from '../../utils/phone';
 
 interface WebsiteConfig {
   // LT-168: section titles double as the quick-link labels.
@@ -170,7 +171,7 @@ const Footer: React.FC<FooterProps> = ({ config, social, businessName, logoImage
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         contactLink={modalType === 'whatsapp'
-          ? `https://wa.me/${websiteConfig.contact?.phone?.replace(/[^0-9+]/g, '')}`
+          ? whatsAppHref(websiteConfig.contact?.phone)
           : `tel:${websiteConfig.contact?.phone?.replace(/[^0-9+]/g, '')}`}
         type={modalType}
       />

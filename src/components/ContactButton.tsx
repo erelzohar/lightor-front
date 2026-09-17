@@ -4,6 +4,7 @@ import { Phone, AlertTriangle, X, MessageCircle } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
 import { ContactModal } from './ContactModal';
 import { useContactHandler } from '../hooks/useContactHandler';
+import { whatsAppHref } from '../utils/phone';
 
 interface ContactButtonProps {
   phone: string;
@@ -36,7 +37,7 @@ const ContactButton: React.FC<ContactButtonProps> = ({ phone }) => {
     {
       icon: WhatsAppIcon,
       label: t('contact.option.whatsapp'),
-      onClick: () => handleContactClick('whatsapp', `https://wa.me/${phone.replace(/[^0-9+]/g, '')}`),
+      onClick: () => handleContactClick('whatsapp', whatsAppHref(phone)),
       color: 'bg-[#25D366]/10 text-[#25D366] hover:bg-[#25D366] dark:text-[#25D366] dark:hover:bg-[#25D366]'
     },
     {
@@ -101,7 +102,7 @@ const ContactButton: React.FC<ContactButtonProps> = ({ phone }) => {
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         contactLink={modalType === 'whatsapp'
-          ? `https://wa.me/${phone.replace(/[^0-9+]/g, '')}`
+          ? whatsAppHref(phone)
           : `tel:${phone}`}
         type={modalType}
       />

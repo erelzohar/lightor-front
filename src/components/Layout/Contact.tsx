@@ -12,6 +12,7 @@ import { TONE_BG } from '../blocks/blockUtils';
 import { ContactModal } from '../../components/ContactModal';
 import { useContactHandler } from '../../hooks/useContactHandler';
 import smsService from '../../services/SmsService';
+import { whatsAppHref } from '../../utils/phone';
 
 // Optional throughout: a business may have no premises, and the API stores an
 // address only when it carries real values.
@@ -435,7 +436,7 @@ const Contact: React.FC<ContactProps> = ({ config, address, contact, workingDays
     <ContactModal
       isOpen={isModalOpen}
       onClose={() => setIsModalOpen(false)}
-      contactLink={modalType === 'whatsapp' ? `https://wa.me/${phoneDigits}` : `tel:${phoneDigits}`}
+      contactLink={modalType === 'whatsapp' ? whatsAppHref(phoneDigits) : `tel:${phoneDigits}`}
       type={modalType}
     />
   );
@@ -686,7 +687,7 @@ const Contact: React.FC<ContactProps> = ({ config, address, contact, workingDays
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         contactLink={modalType === 'whatsapp'
-          ? `https://wa.me/${contact.phone.replace(/[^0-9+]/g, '')}`
+          ? whatsAppHref(contact.phone)
           : `tel:${contact.phone.replace(/[^0-9+]/g, '')}`}
         type={modalType}
       />
