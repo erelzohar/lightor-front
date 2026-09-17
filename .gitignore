@@ -30,3 +30,5 @@ dist-ssr
 *playwright*
 e2e
 test-results
+# TypeScript incremental build cache
+*.tsbuildinfo
