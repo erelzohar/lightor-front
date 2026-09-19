@@ -1,10 +1,11 @@
 import React, { useState, useCallback, useEffect, useMemo, useRef } from 'react';
-import { Calendar as CalendarIcon, Clock, CheckCircle, ChevronLeft, ChevronRight, Phone, User, Shield, Tag, XCircle, MessageSquareX, MessageSquareCode, MessagesSquare } from 'lucide-react';
+import { Calendar as CalendarIcon, Clock, CheckCircle, ChevronLeft, ChevronRight, Phone, User, Shield, Tag, XCircle, MessageSquareX, MessageSquareCode, MessagesSquare, MapPin, PenLine, AlignLeft, ListChecks } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Turnstile } from '@marsidev/react-turnstile';
 import { useLanguage } from '../../../contexts/LanguageContext';
 import { AppointmentType } from '../../../models/AppointmentType';
 import { Appointment } from '../../../models/Appointment';
+import { BookingField, ANSWER_MAX_LENGTH, fieldsForService, answerProblem, answersForRequest } from '../../../models/BookingField';
 import { BusySlot } from '../../../models/BusySlot';
 import { ClassOccurrence } from '../../../models/ClassOccurrence';
 import { ScheduleConfig } from '../../../models/ScheduleConfig';
@@ -27,7 +28,7 @@ const CARD_CLASS: Record<ScheduleStyle, string> = {
   // LT-137: the widget beside an info column (hours, phone).
   split: 'bg-light-surface dark:bg-dark-surface rounded-design-card shadow-card p-6 md:p-8',
 };
-import { MaterialInput } from './ScheduleForms';
+import { MaterialInput, MaterialTextarea, MaterialSelect, MaterialCheckbox } from './ScheduleForms';
 import { DateButton } from './ScheduleCalendar';
 import { CalendarEventInput, googleCalendarUrl, downloadIcs } from '../../../services/calendarLinks';
 import { parseIntervals, getHoursForDate, DateOverride } from '../../../utils/workingHours';
@@ -38,17 +39,27 @@ interface BookingFormData {
   name: string;
   phone: string;
   verificationCode: string;
+  /**
+   * The owner's questions, by field key (LT-178). Kept apart from the
+   * fields above on purpose: these never pass through the name sanitiser,
+   * which would strip the digits and commas out of an address.
+   */
+  answers: Record<string, string | boolean>;
 }
 
 interface FormErrors {
   name?: string;
   phone?: string;
   verificationCode?: string;
+  /** By field key. */
+  answers?: Record<string, string>;
 }
 
 interface ScheduleProps {
   /** How many days ahead a customer may book, chosen by the owner (LT-156). */
   bookingHorizonDays?: number;
+  /** The owner's questions beyond name and phone (LT-178). */
+  bookingFields?: BookingField[];
   /** LT-115: the booking band above already shows the description. */
   hideDescription?: boolean;
   /** LT-124: the vibe's section chrome and widget frame. */
@@ -79,8 +90,10 @@ interface ScheduleProps {
 
 /** The booking window of a business that never chose one (LT-156). */
 const DEFAULT_BOOKING_HORIZON_DAYS = 60;
+/** A stable "no questions" so the scoped list is not recomputed every render. */
+const NO_BOOKING_FIELDS: BookingField[] = [];
 
-const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone, businessName, timeToCancel, vacations, dateOverrides = [], appointmentTypes, isUpdating, appointmentToUpdate, onUpdateComplete, onCancelUpdate, isPreview, hideDescription = false, header, headerScale, scheduleStyle = 'card', tone = 'surface', bookingHorizonDays = DEFAULT_BOOKING_HORIZON_DAYS }) => {
+const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone, businessName, timeToCancel, vacations, dateOverrides = [], appointmentTypes, isUpdating, appointmentToUpdate, onUpdateComplete, onCancelUpdate, isPreview, hideDescription = false, header, headerScale, scheduleStyle = 'card', tone = 'surface', bookingHorizonDays = DEFAULT_BOOKING_HORIZON_DAYS, bookingFields = NO_BOOKING_FIELDS }) => {
   // if (!appointmentTypes) {
   //   throw new Error('No appointment types available');
   // }
@@ -116,7 +129,8 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
   const [formData, setFormData] = useState<BookingFormData>({
     name: '',
     phone: '',
-    verificationCode: ''
+    verificationCode: '',
+    answers: {}
   });
   const [channelType, setChannelType] = useState<'sms' | 'whatsapp'>('sms');
   const [formErrors, setFormErrors] = useState<FormErrors>({});
@@ -132,7 +146,8 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
       setFormData({
         name: appointmentToUpdate.name,
         phone: appointmentToUpdate.phone,
-        verificationCode: ''
+        verificationCode: '',
+        answers: {}
       });
       setSelectedAppointmentType(appointmentToUpdate.type);
       const date = new Date(parseInt(appointmentToUpdate.timestamp));
@@ -176,6 +191,20 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
     return () => clearInterval(interval);
   }, [resendTimer]);
 
+  // The questions this service asks (LT-178), in the owner's order. A
+  // reschedule asks none: the stored answers travel back untouched, and
+  // letting the customer edit them is phase 2.
+  const scopedFields = useMemo(
+    () => (isUpdating ? NO_BOOKING_FIELDS : fieldsForService(bookingFields, selectedAppointmentType?._id)),
+    [bookingFields, selectedAppointmentType, isUpdating]
+  );
+
+  /** Every required question has an answer — the send-code button's guard. */
+  const requiredAnswersPresent = useMemo(
+    () => scopedFields.every(field => answerProblem(field, formData.answers[field.key]) !== 'required'),
+    [scopedFields, formData.answers]
+  );
+
   const validateForm = useCallback(() => {
     const errors: FormErrors = {};
 
@@ -199,9 +228,20 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
       }
     }
 
+    // The owner's questions (LT-178), checked here — before the OTP goes
+    // out — so a missing address costs nobody an SMS. The server repeats
+    // every one of these checks.
+    const answerErrors: Record<string, string> = {};
+    for (const field of scopedFields) {
+      const problem = answerProblem(field, formData.answers[field.key]);
+      if (problem === 'required') answerErrors[field.key] = t('schedule.validation.answer.required');
+      else if (problem === 'invalid') answerErrors[field.key] = t('schedule.validation.answer.invalid');
+    }
+    if (Object.keys(answerErrors).length > 0) errors.answers = answerErrors;
+
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
-  }, [formData, bookingStep, language]);
+  }, [formData, bookingStep, language, scopedFields]);
 
   const resetCalendar = useCallback(() => {
     setError(null);
@@ -211,7 +251,7 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
     setSelectedAppointmentType(null);
     setSelectedTime(null);
     setSelectedSession(null);
-    setFormData({ name: '', phone: '', verificationCode: '' });
+    setFormData({ name: '', phone: '', verificationCode: '', answers: {} });
     setBookingStep(isUpdating ? 'date' : 'type');
   }, [isUpdating]);
 
@@ -299,9 +339,16 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
       
       if (!isPreview) {
         const service = AppointmentService.getInstance();
+        // A new booking carries the answers as key and value only (LT-178):
+        // the server takes label and type from the owner's catalog. A
+        // reschedule sends the stored appointment back whole, answers
+        // included, and the server leaves them untouched.
         const res = isUpdating && appointmentToUpdate
           ? await service.updateAppointment({ ...appointmentToUpdate, ...appointmentToCreate })
-          : await service.createAppointment(appointmentToCreate, phoneToken);
+          : await service.createAppointment(
+              { ...appointmentToCreate, answers: answersForRequest(scopedFields, formData.answers) },
+              phoneToken
+            );
 
         // Refetch rather than patching local state: busy slots are anonymous
         // (no id to match on for the reschedule case), and a refetch also picks
@@ -344,13 +391,33 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
         }, 5000);
       }
       else if (error && error.message === "CUSTOMER_BLOCKED") setError(t('schedule.blockedError'));
+      else if (error && (error.code === 'ANSWER_REQUIRED' || error.code === 'ANSWER_INVALID')) {
+        // The server refused an answer after the OTP (LT-178): back to the
+        // details step with the message on the question it named. A key
+        // this form does not know (a question added while it was open)
+        // falls back to the general error line.
+        const key: string | undefined = error.details?.key;
+        const message = error.code === 'ANSWER_REQUIRED'
+          ? t('schedule.validation.answer.required')
+          : t('schedule.validation.answer.invalid');
+        if (key && scopedFields.some(field => field.key === key)) {
+          setFormErrors(prev => ({ ...prev, answers: { ...prev.answers, [key]: message } }));
+          setError(null);
+        } else {
+          setError(message);
+        }
+        // Resubmitting the details sends a fresh code.
+        setFormData(prev => ({ ...prev, verificationCode: '' }));
+        lastSubmittedCode.current = null;
+        setBookingStep('details');
+      }
       else setError(t('schedule.genericError'));
     } finally {
       setIsSubmitting(false);
     }
-  }, [formData, validateForm, selectedDate, selectedAppointmentType, selectedTime, user_id, t, resetCalendar, isPreview, isUpdating, appointmentToUpdate, channelType, onUpdateComplete, businessName]);
+  }, [formData, validateForm, selectedDate, selectedAppointmentType, selectedTime, user_id, t, resetCalendar, isPreview, isUpdating, appointmentToUpdate, channelType, onUpdateComplete, businessName, scopedFields]);
 
-  const handleInputChange = (field: keyof BookingFormData, value: string) => {
+  const handleInputChange = (field: 'name' | 'phone' | 'verificationCode', value: string) => {
     let processedValue = value;
 
     switch (field) {
@@ -368,6 +435,19 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
     setFormData(prev => ({ ...prev, [field]: processedValue }));
     setFormErrors(prev => ({ ...prev, [field]: undefined }));
   };
+
+  // An answer to one of the owner's questions (LT-178). Deliberately not
+  // routed through handleInputChange: the name sanitiser above would strip
+  // the house number and the commas out of an address.
+  const handleAnswerChange = useCallback((key: string, value: string | boolean) => {
+    setFormData(prev => ({ ...prev, answers: { ...prev.answers, [key]: value } }));
+    setFormErrors(prev => {
+      if (!prev.answers?.[key]) return prev;
+      const answers = { ...prev.answers };
+      delete answers[key];
+      return { ...prev, answers };
+    });
+  }, []);
 
   const lastSubmittedCode = useRef<string | null>(null);
   const otpInputRefs = useRef<(HTMLInputElement | null)[]>([]);
@@ -954,6 +1034,101 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
     getAvailabilityStatus
   ]);
 
+  /**
+   * One of the owner's questions on the details step (LT-178). The label
+   * and the options are the owner's own words, rendered raw — never through
+   * t(). Text and address are single-line inputs like name and phone; a
+   * note is a textarea, a choice a select, a confirm a box to tick.
+   */
+  const renderBookingField = (field: BookingField) => {
+    const value = formData.answers[field.key];
+    const text = typeof value === 'string' ? value : '';
+    const error = formErrors.answers?.[field.key];
+    // Name and phone carry no marker and are required, so on this form an
+    // unmarked question is required too; the optional ones say so.
+    const hint = field.required ? undefined : t('schedule.form.answer.optional');
+    const id = `schedule-answer-${field.key}`;
+    const name = `answer-${field.key}`;
+
+    switch (field.type) {
+      case 'confirm':
+        return (
+          <MaterialCheckbox
+            label={field.label}
+            checked={value === true}
+            onChange={(e) => handleAnswerChange(field.key, e.target.checked)}
+            error={error}
+            required={field.required}
+            name={name}
+            id={id}
+            hint={hint}
+          />
+        );
+      case 'choice':
+        return (
+          <MaterialSelect
+            icon={ListChecks}
+            label={field.label}
+            value={text}
+            options={field.options}
+            placeholder={t('schedule.form.answer.choose')}
+            onChange={(e) => handleAnswerChange(field.key, e.target.value)}
+            error={error}
+            required={field.required}
+            name={name}
+            id={id}
+            hint={hint}
+          />
+        );
+      case 'note':
+        return (
+          <MaterialTextarea
+            icon={AlignLeft}
+            label={field.label}
+            value={text}
+            onChange={(e) => handleAnswerChange(field.key, e.target.value)}
+            error={error}
+            required={field.required}
+            name={name}
+            id={id}
+            maxLength={ANSWER_MAX_LENGTH.note}
+            hint={hint}
+          />
+        );
+      case 'address':
+        return (
+          <MaterialInput
+            icon={MapPin}
+            label={field.label}
+            value={text}
+            onChange={(e) => handleAnswerChange(field.key, e.target.value)}
+            error={error}
+            required={field.required}
+            name={name}
+            id={id}
+            maxLength={ANSWER_MAX_LENGTH.address}
+            autoComplete="street-address"
+            hint={hint}
+          />
+        );
+      default:
+        return (
+          <MaterialInput
+            icon={PenLine}
+            label={field.label}
+            value={text}
+            onChange={(e) => handleAnswerChange(field.key, e.target.value)}
+            error={error}
+            required={field.required}
+            name={name}
+            id={id}
+            maxLength={ANSWER_MAX_LENGTH.text}
+            hint={hint}
+          />
+        );
+    }
+  };
+
   return (
     <section id="schedule" className={`section-y ${TONE_BG[tone]} transition-colors duration-300`}>
       {!isAuthorized ? (
@@ -1385,7 +1560,12 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
                       />
                     </div>
 
-
+                    {/* The owner's questions for this service (LT-178). */}
+                    {scopedFields.map((field) => (
+                      <div className="mt-6" key={field.key}>
+                        {renderBookingField(field)}
+                      </div>
+                    ))}
 
                     <div className="flex flex-col items-center gap-3 mt-6">
                       <span className="text-sm font-medium text-light-text/70 dark:text-dark-text/70 text-center">
@@ -1424,7 +1604,7 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
                       className="w-full mt-8 bg-primary dark:bg-primary-dark text-on-primary dark:text-on-primary-dark py-4 px-6 rounded-design transition-all relative overflow-hidden shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
-                      disabled={isSubmitting || !formData.name || !formData.phone}
+                      disabled={isSubmitting || !formData.name || !formData.phone || !requiredAnswersPresent}
                     >
 
                       <span className="relative text-center">{isSubmitting ? <Loader2 className="animate-spin m-auto" /> : t('schedule.form.send.code')}</span>

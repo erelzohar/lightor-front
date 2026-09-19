@@ -75,6 +75,10 @@
         "code": "Renvoyer le code",
         "wait": "Renvoyer dans",
         "timer": "secondes"
+      },
+      "answer": {
+        "choose": "Choisissez une option",
+        "optional": "facultatif"
       }
     },
     "validation": {
@@ -87,6 +91,10 @@
       "otp": {
         "length": "Le code doit comporter 6 chiffres",
         "digits": "Le code ne doit contenir que des chiffres"
+      },
+      "answer": {
+        "required": "Ce champ est obligatoire",
+        "invalid": "Veuillez vérifier cette réponse"
       }
     },
     "legend": {
@@ -230,7 +238,8 @@
       "time": "Heure",
       "name": "Nom",
       "phone": "Téléphone",
-      "type": "Service"
+      "type": "Service",
+      "answers": "Vos informations"
     },
     "button": {
       "back": "Retour",

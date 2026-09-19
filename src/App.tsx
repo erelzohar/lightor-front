@@ -320,6 +320,7 @@ function MainContent() {
             businessName={config.businessName}
             timeToCancel={config.minCancelTimeMS}
             bookingHorizonDays={config.bookingHorizonDays}
+            bookingFields={config.bookingFields}
             vacations={config.vacations}
             dateOverrides={config.dateOverrides}
             appointmentTypes={config.appointmentTypes}

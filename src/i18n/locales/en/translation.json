@@ -75,6 +75,10 @@
         "code": "Resend Code",
         "wait": "Resend in",
         "timer": "seconds"
+      },
+      "answer": {
+        "choose": "Choose an option",
+        "optional": "optional"
       }
     },
     "legend": {
@@ -93,6 +97,10 @@
       "otp": {
         "length": "Verification code must be 6 digits long",
         "digits": "Verification code must contain only digits"
+      },
+      "answer": {
+        "required": "This field is required",
+        "invalid": "Please check this answer"
       }
     },
     "channel": {
@@ -230,7 +238,8 @@
       "time": "Time",
       "name": "Name",
       "phone": "Phone",
-      "type": "Service Type"
+      "type": "Service Type",
+      "answers": "Your details"
     },
     "button": {
       "back": "Go Back",

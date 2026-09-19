@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Calendar, Clock, User, Phone, CheckCircle, Loader2, AlertTriangle, Edit, Trash, Tag } from 'lucide-react';
+import { Calendar, Clock, User, Phone, CheckCircle, Loader2, AlertTriangle, Edit, Trash, Tag, ClipboardList, Check } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
 import { Appointment } from '../models/Appointment';
 import Schedule from './Layout/Schedule/Schedule';
@@ -174,6 +174,7 @@ const ManageAppointment: React.FC = () => {
         phone={config.contact.phone}
         timeToCancel={minCancelTime || config.minCancelTimeMS}
         bookingHorizonDays={config.bookingHorizonDays}
+        bookingFields={config.bookingFields}
         user_id={appointment.user_id}
         isUpdating={true}
         appointmentToUpdate={appointment}
@@ -292,6 +293,40 @@ const ManageAppointment: React.FC = () => {
               </div>
             </div>
           </div>
+
+          {/* What the customer answered to the owner's questions (LT-178),
+              read-only: the labels are the ones stored with the booking, so
+              a question renamed or deleted since still reads as it was asked.
+              Editing them is phase 2. */}
+          {appointment.answers.length > 0 && (
+            <div className="p-4 rounded-xl bg-light-gray/30 dark:bg-dark-gray/30">
+              <div className="flex items-center gap-4">
+                <ClipboardList className="w-6 h-6 text-primary dark:text-primary-dark flex-shrink-0" />
+                <div className="text-sm text-light-text/70 dark:text-dark-text/70">
+                  {t('manage.label.answers')}
+                </div>
+              </div>
+              <ul className="mt-2 ms-10 space-y-1.5">
+                {appointment.answers.map((answer) => {
+                  // A confirm shows as a tick and its label. Its type comes
+                  // from the owner's catalog; a question deleted since falls
+                  // back to "label: value", which is still true.
+                  const isConfirm = (config?.bookingFields ?? []).find((field) => field.key === answer.key)?.type === 'confirm';
+                  return isConfirm ? (
+                    <li key={answer.key} className="flex items-center gap-2 font-medium text-light-text dark:text-dark-text">
+                      <Check className="w-4 h-4 text-emerald-500 flex-shrink-0" aria-hidden="true" />
+                      <span>{answer.label}</span>
+                    </li>
+                  ) : (
+                    <li key={answer.key} className="flex flex-wrap gap-x-2">
+                      <span className="text-light-text/70 dark:text-dark-text/70">{answer.label}:</span>
+                      <span className="font-medium text-light-text dark:text-dark-text break-words">{answer.value}</span>
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+          )}
         </div>
 
         {(() => {

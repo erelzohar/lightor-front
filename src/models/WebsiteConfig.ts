@@ -11,6 +11,7 @@ import { DesignConfig } from './DesignConfig';
 import { TestimonialsConfig } from './TestimonialsConfig';
 import { FaqConfig } from './FaqConfig';
 import { DateOverride } from '../utils/workingHours';
+import { BookingField, parseBookingFields } from './BookingField';
 
 /**
  * Every part is optional, and the whole address may be absent — a business can
@@ -186,7 +187,12 @@ export class WebsiteConfig {
      * How many days ahead a customer may book (LT-156), chosen by the
      * owner. Sixty when absent: what every site did before the choice existed.
      */
-    public bookingHorizonDays: number = 60
+    public bookingHorizonDays: number = 60,
+    /**
+     * The questions the booking form asks beyond name and phone (LT-178),
+     * written by the owner. Empty for every site that never added one.
+     */
+    public bookingFields: BookingField[] = []
   ) {}
 
   static fromJSON(json: any): WebsiteConfig {
@@ -218,7 +224,8 @@ export class WebsiteConfig {
       parseBlocks(json.blocks),
       Number.isInteger(json.bookingHorizonDays) && json.bookingHorizonDays >= 1 && json.bookingHorizonDays <= 365
         ? json.bookingHorizonDays
-        : 60
+        : 60,
+      parseBookingFields(json.bookingFields)
     );
   }
 }

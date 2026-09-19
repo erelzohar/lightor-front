@@ -3,6 +3,34 @@ import globals from './globals';
 import { Appointment } from '../models/Appointment';
 import { BusySlot } from '../models/BusySlot';
 import { ClassOccurrence } from '../models/ClassOccurrence';
+import { AnswerPayload } from '../models/BookingField';
+
+/**
+ * What the booking form posts (LT-178): the appointment's own fields plus
+ * the answers as key and value only — the server takes label and type from
+ * the owner's catalog.
+ */
+export type AppointmentDraft = Partial<Omit<Appointment, 'answers'>> & {
+  type_id?: string;
+  answers?: AnswerPayload[];
+};
+
+/**
+ * The server refused an answer to one of the owner's questions (LT-178).
+ * Carries the machine code and the field it named, so the form can go back
+ * to the details step and put the message on that question.
+ */
+export class BookingRefusedError extends Error {
+  constructor(
+    public readonly code: 'ANSWER_REQUIRED' | 'ANSWER_INVALID',
+    public readonly details?: { key?: string; label?: string }
+  ) {
+    super(code);
+    this.name = 'BookingRefusedError';
+  }
+}
+
+const ANSWER_CODES = ['ANSWER_REQUIRED', 'ANSWER_INVALID'] as const;
 
 class AppointmentService {
   private static instance: AppointmentService;
@@ -81,7 +109,7 @@ class AppointmentService {
    * booked, so a booking cannot skip phone verification. (LT-005)
    */
   public async createAppointment(
-    appointment: Partial<Appointment>,
+    appointment: AppointmentDraft,
     phoneToken?: string | null
   ): Promise<Appointment> {
     try {
@@ -89,7 +117,7 @@ class AppointmentService {
         ...appointment,
         ...(phoneToken ? { phoneToken } : {}),
       });
-      // if (!response.data.success) return 
+      // if (!response.data.success) return
       return Appointment.fromJSON(response.data.data);
     } catch (error: any) {
       if (error.response && error.response.status === 409) {
@@ -99,6 +127,11 @@ class AppointmentService {
       // server's machine-readable code, never on the message text.
       if (error.response?.status === 403 && error.response.data?.code === 'CUSTOMER_BLOCKED') {
         throw new Error("CUSTOMER_BLOCKED");
+      }
+      // An answer to one of the owner's questions was refused (LT-178): the
+      // form returns to that question rather than showing a generic failure.
+      if (error.response?.status === 400 && ANSWER_CODES.includes(error.response.data?.code)) {
+        throw new BookingRefusedError(error.response.data.code, error.response.data.details);
       }
       console.error('Error creating appointment:', error);
       throw error;

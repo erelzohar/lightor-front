@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import MockAdapter from 'axios-mock-adapter';
 import axios from 'axios';
-import AppointmentService from '../../services/AppointmentService';
+import AppointmentService, { BookingRefusedError } from '../../services/AppointmentService';
 import globals from '../../services/globals';
 import { stubLocation } from '../helpers/location';
 
@@ -186,6 +186,33 @@ describe('AppointmentService', () => {
       const error = await service.createAppointment(draft, 'pt_abc').catch((e: Error) => e);
       expect(error).toBeInstanceOf(Error);
       expect((error as Error).message).not.toBe('CUSTOMER_BLOCKED');
+    });
+
+    it('translates a refused answer into a code naming the question (LT-178)', async () => {
+      // The server checks the owner's questions itself; the form needs the
+      // code and the field key to go back to the right input.
+      mock.onPost(base).reply(400, {
+        success: false, error: 'required', code: 'ANSWER_REQUIRED', details: { key: 'address', label: 'Address' },
+      });
+
+      const error = await service.createAppointment(draft, 'pt_abc').catch((e: Error) => e);
+      expect(error).toBeInstanceOf(BookingRefusedError);
+      expect(error).toMatchObject({ code: 'ANSWER_REQUIRED', details: { key: 'address', label: 'Address' } });
+    });
+
+    it('leaves an ordinary 400 as a plain failure', async () => {
+      mock.onPost(base).reply(400, { success: false, error: 'Validation failed' });
+
+      const error = await service.createAppointment(draft, 'pt_abc').catch((e: Error) => e);
+      expect(error).not.toBeInstanceOf(BookingRefusedError);
+    });
+
+    it('sends the answers through untouched', async () => {
+      mock.onPost(base).reply(201, { data: created });
+
+      await service.createAppointment({ ...draft, answers: [{ key: 'address', value: 'Herzl 12, Tel Aviv' }] }, 'pt_abc');
+
+      expect(JSON.parse(mock.history.post[0].data).answers).toEqual([{ key: 'address', value: 'Herzl 12, Tel Aviv' }]);
     });
   });
 
