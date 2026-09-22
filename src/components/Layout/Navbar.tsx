@@ -10,6 +10,13 @@ import { navLinksFromBlocks, sectionTitlesOf } from '../../services/navLinks';
 import { hasBookableServices } from '../../models/AppointmentType';
 import { Calendar } from 'lucide-react';
 
+// LT-190: the business name is never cut. On phones the brand block may
+// shrink so a long name drops to a second line; from md up it keeps its width
+// (the links row collapses into the burger instead, LT-173) and wraps past
+// 16rem rather than truncating. --nav-offset follows the taller bar.
+const BRAND_CLS = 'flex items-center gap-2 min-w-0 shrink md:shrink-0';
+const NAME_CLS = 'business-name font-bold text-light-text dark:text-dark-text leading-tight text-start break-words min-w-0 max-w-[16rem]';
+
 interface WebsiteConfig {
   logoImageName: string;
   businessName: string;
@@ -223,9 +230,9 @@ const Navbar: React.FC<NavbarProps> = ({ websiteConfig, isPreview }) => {
     )
   );
   const logo = (cls = 'h-12 w-12') => (
-    <button onClick={handleScrollToTop} className="flex items-center gap-2 shrink-0" aria-label={t('nav.home')}>
+    <button onClick={handleScrollToTop} className={BRAND_CLS} aria-label={t('nav.home')}>
       <img src={ImagesService.getInstance().getImage(websiteConfig.logoImageName)} onError={handleSquareImageError} alt="Logo" className={`${cls} rounded-full object-cover flex-shrink-0`} />
-      <span className="business-name font-bold text-light-text dark:text-dark-text text-lg sm:text-xl truncate max-w-[16rem]">{websiteConfig.businessName}</span>
+      <span className={`${NAME_CLS} text-lg sm:text-xl`}>{websiteConfig.businessName}</span>
     </button>
   );
   const bookButton = bookable ? (
@@ -360,7 +367,7 @@ const Navbar: React.FC<NavbarProps> = ({ websiteConfig, isPreview }) => {
         <div className="flex items-center justify-between">
           <button
             onClick={handleScrollToTop}
-            className="flex items-center gap-2 shrink-0"
+            className={BRAND_CLS}
             aria-label={t('nav.home')}
           >
             <img
@@ -370,7 +377,7 @@ const Navbar: React.FC<NavbarProps> = ({ websiteConfig, isPreview }) => {
               alt="Logo"
               className="h-12 w-12 rounded-full object-cover flex-shrink-0"
             />
-            <span className="business-name font-bold text-light-text dark:text-dark-text text-lg sm:text-xl lg:text-2xl truncate max-w-[16rem]">
+            <span className={`${NAME_CLS} text-lg sm:text-xl lg:text-2xl`}>
               {websiteConfig.businessName}
             </span>
           </button>

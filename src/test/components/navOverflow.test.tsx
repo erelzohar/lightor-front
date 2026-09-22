@@ -58,11 +58,19 @@ describe('navbar overflow', () => {
     expect(burgerOf(container).className).not.toContain('md:hidden');
   });
 
-  it('labels never wrap and the brand block never shrinks', () => {
+  it('labels never wrap and the brand block keeps its width from md up', () => {
     rowContent = 0; rowRoom = 0;
     const { container } = render(<Navbar websiteConfig={config('pill')} />);
     for (const a of rowOf(container).querySelectorAll('a')) expect(a.className).toContain('whitespace-nowrap');
-    expect(container.querySelector('button[aria-label="nav.home"]')?.className).toContain('shrink-0');
-    expect(container.querySelector('.business-name')?.className).toContain('truncate');
+    expect(container.querySelector('button[aria-label="nav.home"]')?.className).toContain('md:shrink-0');
+  });
+
+  it.each(['floating', 'minimal', 'pill', 'split', 'centered'] as const)('%s: the business name wraps, never truncates (LT-190)', (style) => {
+    rowContent = 0; rowRoom = 0;
+    const { container } = render(<Navbar websiteConfig={config(style)} />);
+    const name = container.querySelector('.business-name')!;
+    expect(name.className).not.toContain('truncate');
+    expect(name.className).toContain('break-words');
+    expect(container.querySelector('button[aria-label="nav.home"]')?.className).toContain('min-w-0');
   });
 });
