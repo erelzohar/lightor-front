@@ -78,7 +78,9 @@
       },
       "answer": {
         "choose": "Choose an option",
-        "optional": "optional"
+        "optional": "optional",
+        "noAddresses": "No matching addresses",
+        "addressSuggestions": "Address suggestions"
       }
     },
     "legend": {
@@ -100,7 +102,8 @@
       },
       "answer": {
         "required": "This field is required",
-        "invalid": "Please check this answer"
+        "invalid": "Please check this answer",
+        "chooseAddress": "Choose an address from the suggestions"
       }
     },
     "channel": {
@@ -213,7 +216,7 @@
       "privacy": "Privacy Policy",
       "terms": "Terms of Use",
       "security": "Security Policy",
-      "privacy_content": "<p>At Lightor, we respect our users' privacy and are committed to protecting their personal information.</p><br /><h4>Data Collection</h4><p>When booking an appointment, we collect basic information such as full name, phone number, and sometimes email address or other contact details.</p><br /><p>Information is collected directly from the user and is not transferred to third parties without prior consent.</p><br /><h4>Information Use</h4><p>Personal information will be used solely for purposes related to booking appointments, reminders, updates, and providing services related to the scheduled services.</p><br /><p>Information should not be used for other commercial purposes without obtaining your consent.</p><br /><h4>Information Transfer to Third Parties</h4><p>We will not provide personal information to third parties unless required by law or court order.</p><br /><h4>Disclaimer</h4><p>Use of the site is at the user's sole responsibility. Lightor will not be liable for any direct or indirect damage, including loss of information, resulting from site use or information provided through it.</p><br /><p>The site may contain links to external sites â€“ we have no control over them and are not responsible for their content or conduct.</p><br />",
+      "privacy_content": "<p>At Lightor, we respect our users' privacy and are committed to protecting their personal information.</p><br /><h4>Data Collection</h4><p>When booking an appointment, we collect basic information such as full name, phone number, and sometimes email address or other contact details.</p><br /><p>Information is collected directly from the user and is not transferred to third parties without prior consent.</p><br /><h4>Information Use</h4><p>Personal information will be used solely for purposes related to booking appointments, reminders, updates, and providing services related to the scheduled services.</p><br /><p>Information should not be used for other commercial purposes without obtaining your consent.</p><br /><h4>Information Transfer to Third Parties</h4><p>We will not provide personal information to third parties unless required by law or court order.</p><br /><p>When you type in an address field on the booking form, the text you type is sent to Google Maps Platform so that it can suggest addresses.</p><br /><h4>Disclaimer</h4><p>Use of the site is at the user's sole responsibility. Lightor will not be liable for any direct or indirect damage, including loss of information, resulting from site use or information provided through it.</p><br /><p>The site may contain links to external sites â€“ we have no control over them and are not responsible for their content or conduct.</p><br />",
       "terms_content": "<p>Use of the Lightor system constitutes full agreement by the user to the conditions detailed below:</p><br /><h4>System Use</h4><p>The service is provided \"As Is\". We do not guarantee full availability or malfunction-free operation at all times.</p><br /><p>The user is responsible for ensuring the information they enter is correct and up to date. Lightor is not responsible for consequences of incorrect information.</p><br /><p>While using the system, you confirm receiving mailings/system messages/reminders through various media means.</p><br /><h4>Cancellations and No-Shows</h4><p>Users are requested to cancel appointments according to operator conditions. Failure to arrive for an appointment may lead to charges or restriction on future use.</p><br /><h4>Waiver of Liability</h4><p>Lightor will not be liable for any damage, direct or indirect, caused due to use or inability to use the system, including technical failures or availability.</p><br /><p>All content on the site or system, including texts, images, or other information, are for illustration only and do not constitute professional advice or a binding legal document.</p><br />",
       "security_content": "<p>Lightor is committed to maintaining its users' data security using advanced security technologies and accepted protocols.</p><br /><h4>Encryption and Storage</h4><p>Information is transferred to our servers in encrypted form and kept in a secure and protected environment.</p><br /><h4>Access to Information</h4><p>Access to personal information is limited strictly to authorized staff who need it for service operation.</p><br /><h4>User Responsibility</h4><p>The user should ensure they keep their passwords and identification means secret. Lightor will not be liable for damages resulting from unauthorized use of user identification details.</p><br /><h4>Waiver of Liability</h4><p>Despite our efforts, absolute immunity from breaches or failures cannot be guaranteed. Use of the site and system is done at the user's sole responsibility.</p><br />"
     }

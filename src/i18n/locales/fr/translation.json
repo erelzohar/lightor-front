@@ -78,7 +78,9 @@
       },
       "answer": {
         "choose": "Choisissez une option",
-        "optional": "facultatif"
+        "optional": "facultatif",
+        "noAddresses": "Aucune adresse correspondante",
+        "addressSuggestions": "Suggestions d'adresses"
       }
     },
     "validation": {
@@ -94,7 +96,8 @@
       },
       "answer": {
         "required": "Ce champ est obligatoire",
-        "invalid": "Veuillez vérifier cette réponse"
+        "invalid": "Veuillez vérifier cette réponse",
+        "chooseAddress": "Choisissez une adresse parmi les suggestions"
       }
     },
     "legend": {
@@ -213,7 +216,7 @@
       "privacy": "Politique de confidentialité",
       "terms": "Conditions d'utilisation",
       "security": "Sécurité",
-      "privacy_content": "<p>Chez Lightor, nous respectons la vie privée de nos utilisateurs et nous nous engageons à protéger leurs informations personnelles.</p><br /><h4>Collecte de données</h4><p>Lors de la réservation, nous collectons des informations de base telles que le nom complet, le numéro de téléphone et parfois l'adresse e-mail.</p><br /><p>Les informations sont collectées directement auprès de l'utilisateur et ne sont pas transférées à des tiers sans consentement préalable.</p><br /><h4>Utilisation des informations</h4><p>Les informations personnelles seront utilisées uniquement à des fins liées à la réservation, aux rappels, aux mises à jour et à la fourniture de services.</p><br /><p>Les informations ne doivent pas être utilisées à d'autres fins commerciales sans votre consentement.</p><br /><h4>Transfert à des tiers</h4><p>Nous ne fournirons pas d'informations personnelles à des tiers, sauf si la loi ou une ordonnance du tribunal l'exige.</p><br /><h4>Clause de non-responsabilité</h4><p>L'utilisation du site relève de la seule responsabilité de l'utilisateur. Lightor ne sera pas responsable des dommages directs ou indirects résultant de l'utilisation du site.</p><br />",
+      "privacy_content": "<p>Chez Lightor, nous respectons la vie privée de nos utilisateurs et nous nous engageons à protéger leurs informations personnelles.</p><br /><h4>Collecte de données</h4><p>Lors de la réservation, nous collectons des informations de base telles que le nom complet, le numéro de téléphone et parfois l'adresse e-mail.</p><br /><p>Les informations sont collectées directement auprès de l'utilisateur et ne sont pas transférées à des tiers sans consentement préalable.</p><br /><h4>Utilisation des informations</h4><p>Les informations personnelles seront utilisées uniquement à des fins liées à la réservation, aux rappels, aux mises à jour et à la fourniture de services.</p><br /><p>Les informations ne doivent pas être utilisées à d'autres fins commerciales sans votre consentement.</p><br /><h4>Transfert à des tiers</h4><p>Nous ne fournirons pas d'informations personnelles à des tiers, sauf si la loi ou une ordonnance du tribunal l'exige.</p><br /><p>Lorsque vous saisissez une adresse dans le formulaire de réservation, le texte saisi est transmis à Google Maps Platform afin de vous proposer des adresses.</p><br /><h4>Clause de non-responsabilité</h4><p>L'utilisation du site relève de la seule responsabilité de l'utilisateur. Lightor ne sera pas responsable des dommages directs ou indirects résultant de l'utilisation du site.</p><br />",
       "terms_content": "<p>L'utilisation du système Lightor constitue un accord complet de l'utilisateur avec les conditions détaillées ci-dessous :</p><br /><h4>Utilisation du système</h4><p>Le service est fourni \"tel quel\" (As Is). Nous ne garantissons pas une disponibilité totale.</p><br /><p>L'utilisateur est responsable de l'exactitude des informations saisies.</p><br /><p>En utilisant le système, vous confirmez recevoir des messages/rappels du système.</p><br /><h4>Annulations</h4><p>Les utilisateurs sont priés d'annuler selon les conditions. Le non-respect peut entraîner des frais.</p><br />",
       "security_content": "<p>Lightor s'engage à maintenir la sécurité des données à l'aide de technologies avancées.</p><br /><h4>Cryptage</h4><p>Les informations sont transférées de manière cryptée et conservées dans un environnement sécurisé.</p><br /><h4>Accès</h4><p>L'accès est strictement limité au personnel autorisé.</p><br /><h4>Responsabilité</h4><p>L'utilisateur doit garder ses identifiants secrets.</p><br />"
     }

@@ -43,6 +43,12 @@ export interface MaterialInputProps {
     autoComplete?: string;
     /** Shown after the label, e.g. "optional" (LT-178). */
     hint?: string;
+    /**
+     * Extra attributes for the <input> itself — the combobox wiring of the
+     * address question (LT-191). The named props above win over them.
+     */
+    inputProps?: React.InputHTMLAttributes<HTMLInputElement>;
+    inputRef?: React.Ref<HTMLInputElement>;
 }
 
 export const MaterialInput = memo(({
@@ -62,7 +68,9 @@ export const MaterialInput = memo(({
     onInvalid,
     title,
     autoComplete,
-    hint
+    hint,
+    inputProps,
+    inputRef
 }: MaterialInputProps) => (
     <div className="relative pt-2">
         <FieldLabel htmlFor={id} label={label} hint={hint} />
@@ -70,6 +78,8 @@ export const MaterialInput = memo(({
             <Icon className="h-5 w-5 text-primary dark:text-primary-dark" aria-hidden="true" />
         </div>
         <input
+            {...inputProps}
+            ref={inputRef}
             id={id}
             type={type}
             value={value}

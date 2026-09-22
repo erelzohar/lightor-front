@@ -1,11 +1,11 @@
 import React, { useState, useCallback, useEffect, useMemo, useRef } from 'react';
-import { Calendar as CalendarIcon, Clock, CheckCircle, ChevronLeft, ChevronRight, Phone, User, Shield, Tag, XCircle, MessageSquareX, MessageSquareCode, MessagesSquare, MapPin, PenLine, AlignLeft, ListChecks } from 'lucide-react';
+import { Calendar as CalendarIcon, Clock, CheckCircle, ChevronLeft, ChevronRight, Phone, User, Shield, Tag, XCircle, MessageSquareX, MessageSquareCode, MessagesSquare, PenLine, AlignLeft, ListChecks } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Turnstile } from '@marsidev/react-turnstile';
 import { useLanguage } from '../../../contexts/LanguageContext';
 import { AppointmentType } from '../../../models/AppointmentType';
 import { Appointment } from '../../../models/Appointment';
-import { BookingField, ANSWER_MAX_LENGTH, fieldsForService, answerProblem, answersForRequest } from '../../../models/BookingField';
+import { BookingField, AnswerValue, ANSWER_MAX_LENGTH, fieldsForService, answerProblem, answersForRequest } from '../../../models/BookingField';
 import { BusySlot } from '../../../models/BusySlot';
 import { ClassOccurrence } from '../../../models/ClassOccurrence';
 import { ScheduleConfig } from '../../../models/ScheduleConfig';
@@ -29,6 +29,7 @@ const CARD_CLASS: Record<ScheduleStyle, string> = {
   split: 'bg-light-surface dark:bg-dark-surface rounded-design-card shadow-card p-6 md:p-8',
 };
 import { MaterialInput, MaterialTextarea, MaterialSelect, MaterialCheckbox } from './ScheduleForms';
+import { AddressAutocomplete } from './AddressAutocomplete';
 import { DateButton } from './ScheduleCalendar';
 import { CalendarEventInput, googleCalendarUrl, downloadIcs } from '../../../services/calendarLinks';
 import { parseIntervals, getHoursForDate, DateOverride } from '../../../utils/workingHours';
@@ -42,9 +43,11 @@ interface BookingFormData {
   /**
    * The owner's questions, by field key (LT-178). Kept apart from the
    * fields above on purpose: these never pass through the name sanitiser,
-   * which would strip the digits and commas out of an address.
+   * which would strip the digits and commas out of an address. An address
+   * chosen from Google's suggestions is an object carrying its place id
+   * and coordinates (LT-191); typed text stays a string.
    */
-  answers: Record<string, string | boolean>;
+  answers: Record<string, AnswerValue>;
 }
 
 interface FormErrors {
@@ -205,6 +208,15 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
     [scopedFields, formData.answers]
   );
 
+  // The address questions whose Google suggestions are live (LT-191). The
+  // widget reports in once the script is loaded and out if anything fails,
+  // so a typed-but-not-chosen address is refused only while choosing one
+  // was actually possible.
+  const [liveAddressFields, setLiveAddressFields] = useState<Record<string, boolean>>({});
+  const handleAddressActive = useCallback((key: string, active: boolean) => {
+    setLiveAddressFields(prev => (prev[key] === active ? prev : { ...prev, [key]: active }));
+  }, []);
+
   const validateForm = useCallback(() => {
     const errors: FormErrors = {};
 
@@ -233,15 +245,16 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
     // every one of these checks.
     const answerErrors: Record<string, string> = {};
     for (const field of scopedFields) {
-      const problem = answerProblem(field, formData.answers[field.key]);
+      const problem = answerProblem(field, formData.answers[field.key], { chooseAddress: liveAddressFields[field.key] });
       if (problem === 'required') answerErrors[field.key] = t('schedule.validation.answer.required');
       else if (problem === 'invalid') answerErrors[field.key] = t('schedule.validation.answer.invalid');
+      else if (problem === 'chooseAddress') answerErrors[field.key] = t('schedule.validation.answer.chooseAddress');
     }
     if (Object.keys(answerErrors).length > 0) errors.answers = answerErrors;
 
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
-  }, [formData, bookingStep, language, scopedFields]);
+  }, [formData, bookingStep, language, scopedFields, liveAddressFields]);
 
   const resetCalendar = useCallback(() => {
     setError(null);
@@ -339,10 +352,11 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
       
       if (!isPreview) {
         const service = AppointmentService.getInstance();
-        // A new booking carries the answers as key and value only (LT-178):
-        // the server takes label and type from the owner's catalog. A
-        // reschedule sends the stored appointment back whole, answers
-        // included, and the server leaves them untouched.
+        // A new booking carries the answers as key and value (LT-178) — plus
+        // the place id and coordinates of an address chosen from Google's
+        // suggestions (LT-191): the server takes label and type from the
+        // owner's catalog. A reschedule sends the stored appointment back
+        // whole, answers included, and the server leaves them untouched.
         const res = isUpdating && appointmentToUpdate
           ? await service.updateAppointment({ ...appointmentToUpdate, ...appointmentToCreate })
           : await service.createAppointment(
@@ -439,7 +453,7 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
   // An answer to one of the owner's questions (LT-178). Deliberately not
   // routed through handleInputChange: the name sanitiser above would strip
   // the house number and the commas out of an address.
-  const handleAnswerChange = useCallback((key: string, value: string | boolean) => {
+  const handleAnswerChange = useCallback((key: string, value: AnswerValue) => {
     setFormData(prev => ({ ...prev, answers: { ...prev.answers, [key]: value } }));
     setFormErrors(prev => {
       if (!prev.answers?.[key]) return prev;
@@ -1096,18 +1110,19 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
           />
         );
       case 'address':
+        // Google's suggestions under the input (LT-191); the plain input it
+        // always was when there is no key or Google is unreachable.
         return (
-          <MaterialInput
-            icon={MapPin}
+          <AddressAutocomplete
             label={field.label}
-            value={text}
-            onChange={(e) => handleAnswerChange(field.key, e.target.value)}
+            value={value}
+            onChange={(answer) => handleAnswerChange(field.key, answer)}
+            onActiveChange={(active) => handleAddressActive(field.key, active)}
             error={error}
             required={field.required}
             name={name}
             id={id}
             maxLength={ANSWER_MAX_LENGTH.address}
-            autoComplete="street-address"
             hint={hint}
           />
         );

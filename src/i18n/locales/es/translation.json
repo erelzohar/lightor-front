@@ -78,7 +78,9 @@
       },
       "answer": {
         "choose": "Elige una opción",
-        "optional": "opcional"
+        "optional": "opcional",
+        "noAddresses": "No hay direcciones coincidentes",
+        "addressSuggestions": "Sugerencias de direcciones"
       }
     },
     "validation": {
@@ -94,7 +96,8 @@
       },
       "answer": {
         "required": "Este campo es obligatorio",
-        "invalid": "Por favor revisa esta respuesta"
+        "invalid": "Por favor revisa esta respuesta",
+        "chooseAddress": "Elige una dirección de las sugerencias"
       }
     },
     "legend": {
@@ -213,7 +216,7 @@
       "privacy": "Política de privacidad",
       "terms": "Términos de uso",
       "security": "Seguridad",
-      "privacy_content": "<p>En Lightor respetamos la privacidad de nuestros usuarios y nos comprometemos a proteger su información personal.</p><br /><h4>Recolección de datos</h4><p>Al reservar, recolectamos información básica como nombre completo, teléfono y a veces email.</p><br /><p>La información se recolecta directamente del usuario y no se transfiere a terceros sin consentimiento.</p><br /><h4>Uso de la información</h4><p>La información personal se usará solo para fines relacionados con la reserva y recordatorios.</p><br />",
+      "privacy_content": "<p>En Lightor respetamos la privacidad de nuestros usuarios y nos comprometemos a proteger su información personal.</p><br /><h4>Recolección de datos</h4><p>Al reservar, recolectamos información básica como nombre completo, teléfono y a veces email.</p><br /><p>La información se recolecta directamente del usuario y no se transfiere a terceros sin consentimiento.</p><br /><p>Al escribir en el campo de dirección del formulario de reserva, el texto que escribes se envía a Google Maps Platform para sugerir direcciones.</p><br /><h4>Uso de la información</h4><p>La información personal se usará solo para fines relacionados con la reserva y recordatorios.</p><br />",
       "terms_content": "<p>El uso del sistema Lightor constituye la aceptación de los términos detallados aquí.</p><br />",
       "security_content": "<p>Lightor se compromete a mantener la seguridad de los datos usando tecnologías avanzadas.</p><br />"
     }

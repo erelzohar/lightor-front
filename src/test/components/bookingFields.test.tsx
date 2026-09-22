@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import Schedule from '../../components/Layout/Schedule/Schedule';
 import ManageAppointment from '../../components/ManageAppointment';
@@ -19,6 +19,9 @@ const mocks = vi.hoisted(() => ({
   getWebConfig: vi.fn(),
   sendOtp: vi.fn(),
   verifyOtp: vi.fn(),
+  loadPlaces: vi.fn(),
+  fetchSuggestions: vi.fn(),
+  resolveSuggestion: vi.fn(),
 }));
 
 // jsdom has no IntersectionObserver, and framer-motion's whileInView reaches
@@ -57,6 +60,14 @@ vi.mock('../../services/AppointmentService', () => ({
 }));
 vi.mock('../../services/SmsService', () => ({ default: { sendOtp: mocks.sendOtp, verifyOtp: mocks.verifyOtp } }));
 vi.mock('../../services/WebConfigService', () => ({ default: { getInstance: () => ({ getWebConfig: mocks.getWebConfig }) } }));
+// Google's suggestions (LT-191) are mocked at the one module that talks to
+// Google; placesKey stays real, so vi.stubEnv decides whether the widget is on.
+vi.mock('../../services/places', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../services/places')>()),
+  loadPlaces: mocks.loadPlaces,
+  fetchAddressSuggestions: mocks.fetchSuggestions,
+  resolveAddressSuggestion: mocks.resolveSuggestion,
+}));
 vi.mock('../../hooks/useTheme', () => ({ useTheme: () => {} }));
 vi.mock('react-router-dom', async (importOriginal) => ({
   ...(await importOriginal<typeof import('react-router-dom')>()),
@@ -316,5 +327,204 @@ describe('the manage page (LT-178)', () => {
 
     expect(await screen.findByText('manage.label.name')).toBeTruthy();
     expect(screen.queryByText('manage.label.answers')).toBeNull();
+  });
+});
+
+describe('the address question with Google suggestions (LT-191)', () => {
+  const herzl = { placeId: 'p1', text: 'Herzl 12, Tel Aviv-Yafo, Israel', mainText: 'Herzl 12', secondaryText: 'Tel Aviv-Yafo, Israel' };
+  const resolved = { placeId: 'p1', formattedAddress: 'Herzl St 12, Tel Aviv-Yafo, Israel', lat: 32.0624, lng: 34.7702 };
+  const chosen = { key: 'address', value: 'Herzl St 12, Tel Aviv-Yafo, Israel', placeId: 'p1', lat: 32.0624, lng: 34.7702 };
+
+  beforeEach(() => {
+    Object.values(mocks).forEach((fn) => fn.mockReset());
+    mocks.getCalendar.mockResolvedValue({ busy: [], classes: [] });
+    mocks.sendOtp.mockResolvedValue(true);
+    mocks.verifyOtp.mockResolvedValue('pt_1');
+    mocks.createAppointment.mockResolvedValue(booked);
+    mocks.loadPlaces.mockResolvedValue(undefined);
+    mocks.fetchSuggestions.mockResolvedValue([herzl]);
+    mocks.resolveSuggestion.mockResolvedValue(resolved);
+    vi.stubEnv('VITE_GOOGLE_MAPS_KEY', 'test');
+  });
+  afterEach(() => vi.unstubAllEnvs());
+
+  const addressInput = (): HTMLInputElement => screen.getByLabelText('Address') as HTMLInputElement;
+  const typeAddress = (text: string) => fireEvent.change(addressInput(), { target: { value: text } });
+  /** The details step with name and phone filled and the script loaded. */
+  const reachAddress = async () => {
+    renderWidget();
+    await reachDetails();
+    fillBasics();
+    await waitFor(() => expect(addressInput().getAttribute('role')).toBe('combobox'));
+  };
+  /** Send the code, enter it, and return the answers the booking carried. */
+  const bookAndReadAnswers = async () => {
+    fireEvent.submit(detailsForm());
+    await waitFor(() => expect(mocks.sendOtp).toHaveBeenCalledTimes(1));
+    await enterOtp();
+    await waitFor(() => expect(mocks.createAppointment).toHaveBeenCalledTimes(1));
+    return mocks.createAppointment.mock.calls[0][0].answers;
+  };
+
+  it('judges a chosen address as fine and a typed one as unchosen only while suggestions are live', () => {
+    const address = catalog[0];
+    const place = { text: 'Herzl St 12, Tel Aviv-Yafo, Israel', placeId: 'p1', lat: 32.0624, lng: 34.7702 };
+    expect(answerProblem(address, 'Herzl 12', { chooseAddress: true })).toBe('chooseAddress');
+    expect(answerProblem(address, 'Herzl 12')).toBeNull();
+    expect(answerProblem(address, 'Herzl 12', { chooseAddress: false })).toBeNull();
+    expect(answerProblem(address, place, { chooseAddress: true })).toBeNull();
+    expect(answerProblem(address, '', { chooseAddress: true })).toBe('required');
+    expect(answerProblem(address, { ...place, text: 'x'.repeat(201) }, { chooseAddress: true })).toBe('invalid');
+    // The other shapes are untouched by the rule.
+    expect(answerProblem(catalog[3], 'Mazda', { chooseAddress: true })).toBeNull();
+    expect(answersForRequest([address], { address: place })).toEqual([chosen]);
+    expect(answersForRequest([address], { address: 'Herzl 12' })).toEqual([{ key: 'address', value: 'Herzl 12' }]);
+    expect(answersForRequest([address], { address: { ...place, text: '  ' } })).toEqual([]);
+  });
+
+  it('keeps the place on a stored answer and drops anything else', () => {
+    const appointment = Appointment.fromJSON({
+      ...booked, type: { ...booked.type },
+      answers: [
+        { key: 'address', label: 'Address', value: 'Herzl St 12', placeId: 'p1', lat: 32.0624, lng: 34.7702, extra: 1 },
+        { key: 'other', label: 'Other', value: 'typed', placeId: 'p2', lat: 'no' },
+      ],
+    });
+    expect(appointment.answers).toEqual([
+      { key: 'address', label: 'Address', value: 'Herzl St 12', placeId: 'p1', lat: 32.0624, lng: 34.7702 },
+      { key: 'other', label: 'Other', value: 'typed' },
+    ]);
+  });
+
+  it('is the plain input, never loading the script, without a key', async () => {
+    vi.unstubAllEnvs();
+    renderWidget();
+    await reachDetails();
+    fillBasics();
+    typeAddress('Herzl 12, Tel Aviv');
+
+    expect(addressInput().getAttribute('role')).toBeNull();
+    expect(addressInput().getAttribute('autocomplete')).toBe('street-address');
+    expect(mocks.loadPlaces).not.toHaveBeenCalled();
+    const answers = await bookAndReadAnswers();
+    expect(answers).toEqual([{ key: 'address', value: 'Herzl 12, Tel Aviv' }]);
+    expect(mocks.fetchSuggestions).not.toHaveBeenCalled();
+  });
+
+  it('lists the suggestions from the third character, and a tap sends the chosen place with the address', async () => {
+    await reachAddress();
+    typeAddress('He');
+    typeAddress('Her');
+
+    const option = await screen.findByRole('option', { name: /Herzl 12/ });
+    expect(mocks.fetchSuggestions).toHaveBeenCalledTimes(1);
+    expect(mocks.fetchSuggestions).toHaveBeenCalledWith('Her', expect.objectContaining({ language: 'en' }));
+    expect(screen.getByText('Tel Aviv-Yafo, Israel')).toBeTruthy();
+    expect(screen.getByText('Google Maps')).toBeTruthy();
+    expect(addressInput().getAttribute('aria-expanded')).toBe('true');
+    expect(addressInput().getAttribute('aria-controls')).toBe('schedule-answer-address-listbox');
+
+    fireEvent.click(option);
+    await waitFor(() => expect(addressInput().value).toBe('Herzl St 12, Tel Aviv-Yafo, Israel'));
+    expect(mocks.resolveSuggestion).toHaveBeenCalledWith(expect.objectContaining({ placeId: 'p1' }));
+    expect(screen.queryByRole('listbox')).toBeNull();
+
+    const answers = await bookAndReadAnswers();
+    expect(answers).toEqual([chosen]);
+  });
+
+  it('refuses an address that was typed but not chosen, before any code is sent', async () => {
+    await reachAddress();
+    typeAddress('Herzl 12, Tel Aviv');
+    await screen.findByRole('option', { name: /Herzl 12/ });
+    expect(sendCodeButton().hasAttribute('disabled')).toBe(false);
+
+    fireEvent.submit(detailsForm());
+
+    expect(await screen.findByText('schedule.validation.answer.chooseAddress')).toBeTruthy();
+    expect(mocks.sendOtp).not.toHaveBeenCalled();
+  });
+
+  it('drops back to typed text once a chosen address is edited, and asks again', async () => {
+    await reachAddress();
+    typeAddress('Her');
+    fireEvent.click(await screen.findByRole('option', { name: /Herzl 12/ }));
+    await waitFor(() => expect(addressInput().value).toBe('Herzl St 12, Tel Aviv-Yafo, Israel'));
+
+    typeAddress('Herzl St 12, Tel Aviv-Yafo, Israel, apt 3');
+    fireEvent.submit(detailsForm());
+
+    expect(await screen.findByText('schedule.validation.answer.chooseAddress')).toBeTruthy();
+    expect(mocks.sendOtp).not.toHaveBeenCalled();
+  });
+
+  it('chooses with the keyboard: ArrowDown, then Enter', async () => {
+    await reachAddress();
+    typeAddress('Her');
+    const option = await screen.findByRole('option', { name: /Herzl 12/ });
+
+    fireEvent.keyDown(addressInput(), { key: 'ArrowDown' });
+    expect(addressInput().getAttribute('aria-activedescendant')).toBe('schedule-answer-address-option-0');
+    expect(option.getAttribute('aria-selected')).toBe('true');
+
+    fireEvent.keyDown(addressInput(), { key: 'Enter' });
+    await waitFor(() => expect(addressInput().value).toBe('Herzl St 12, Tel Aviv-Yafo, Israel'));
+    expect(screen.queryByRole('listbox')).toBeNull();
+    expect(mocks.sendOtp).not.toHaveBeenCalled();
+  });
+
+  it('says so when Google has no match, and Escape closes the list', async () => {
+    mocks.fetchSuggestions.mockResolvedValue([]);
+    await reachAddress();
+    typeAddress('Zzz');
+
+    expect(await screen.findByText('schedule.form.answer.noAddresses')).toBeTruthy();
+    fireEvent.keyDown(addressInput(), { key: 'Escape' });
+    expect(screen.queryByRole('listbox')).toBeNull();
+    expect(addressInput().getAttribute('aria-expanded')).toBe('false');
+  });
+
+  it('is the plain input when the script fails to load: typed text is accepted and sent as text', async () => {
+    mocks.loadPlaces.mockRejectedValue(new Error('blocked'));
+    renderWidget();
+    await reachDetails();
+    fillBasics();
+    await waitFor(() => expect(mocks.loadPlaces).toHaveBeenCalledTimes(1));
+    typeAddress('Herzl 12, Tel Aviv');
+
+    expect(addressInput().getAttribute('role')).toBeNull();
+    const answers = await bookAndReadAnswers();
+    expect(answers).toEqual([{ key: 'address', value: 'Herzl 12, Tel Aviv' }]);
+    expect(mocks.fetchSuggestions).not.toHaveBeenCalled();
+    expect(screen.queryByText('schedule.validation.answer.chooseAddress')).toBeNull();
+  });
+
+  it('is the plain input again when Google refuses a request', async () => {
+    mocks.fetchSuggestions.mockRejectedValue(new Error('REQUEST_DENIED'));
+    await reachAddress();
+    typeAddress('Herzl 12, Tel Aviv');
+
+    await waitFor(() => expect(mocks.fetchSuggestions).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(addressInput().getAttribute('role')).toBeNull());
+    expect(screen.queryByRole('listbox')).toBeNull();
+    const answers = await bookAndReadAnswers();
+    expect(answers).toEqual([{ key: 'address', value: 'Herzl 12, Tel Aviv' }]);
+  });
+
+  it('the manage page still shows the text of a chosen address', async () => {
+    mocks.getWebConfig.mockResolvedValue({
+      minCancelTimeMS: 0, businessName: 'Salon', logoImageName: '', contact: { phone: '' },
+      workingDays: openAllWeek, vacations: [], dateOverrides: [], appointmentTypes: [haircut], bookingFields: catalog,
+    });
+    mocks.getAppointmentById.mockResolvedValue(Appointment.fromJSON({
+      _id: 'a1', user_id: 'u1', type: { _id: 't1', name: 'Haircut', price: '80', user_id: 'u1', durationMS: '1800000' },
+      name: 'Dana Levi', status: 'scheduled', phone: '0501234567', timestamp: String(Date.now() + 3 * DAY), channelType: 'sms',
+      answers: [{ key: 'address', label: 'Address', value: 'Herzl St 12, Tel Aviv-Yafo, Israel', placeId: 'p1', lat: 32.0624, lng: 34.7702 }],
+    }));
+
+    render(<ManageAppointment />);
+
+    expect(await screen.findByText('manage.label.answers')).toBeTruthy();
+    expect(screen.getByText('Herzl St 12, Tel Aviv-Yafo, Israel')).toBeTruthy();
   });
 });
