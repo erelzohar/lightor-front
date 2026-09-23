@@ -369,7 +369,7 @@ describe('the address question with Google suggestions (LT-191)', () => {
 
   it('judges a chosen address as fine and a typed one as unchosen only while suggestions are live', () => {
     const address = catalog[0];
-    const place = { text: 'Herzl St 12, Tel Aviv-Yafo, Israel', placeId: 'p1', lat: 32.0624, lng: 34.7702 };
+    const place = { text: 'Herzl 12, Tel Aviv-Yafo, Israel', placeId: 'p1', lat: 32.0624, lng: 34.7702 };
     expect(answerProblem(address, 'Herzl 12', { chooseAddress: true })).toBe('chooseAddress');
     expect(answerProblem(address, 'Herzl 12')).toBeNull();
     expect(answerProblem(address, 'Herzl 12', { chooseAddress: false })).toBeNull();
