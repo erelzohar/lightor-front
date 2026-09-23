@@ -169,12 +169,14 @@ export const AddressAutocomplete = ({
       setOpen(false);
       setActiveIndex(-1);
       setQuery(null);
-      // The prediction's text at once; the formatted address replaces it below.
+      // The chosen line at once; the place id and coordinates join it below.
+      // The text never changes on them: what the customer read is what is
+      // stored, in the language it was listed in (LT-192).
       onChange(suggestion.text);
       try {
         const place = await resolveAddressSuggestion(suggestion);
         if (!mounted.current) return;
-        onChange({ text: place.formattedAddress, placeId: place.placeId, lat: place.lat, lng: place.lng });
+        onChange({ text: suggestion.text, placeId: place.placeId, lat: place.lat, lng: place.lng });
       } catch {
         // The place could not be fetched: what they chose stays as text, and
         // the form accepts it rather than demanding a choice it cannot verify.

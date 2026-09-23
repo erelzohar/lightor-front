@@ -21,12 +21,6 @@ const SCRIPT_URL = 'https://maps.googleapis.com/maps/api/js';
 const LOAD_TIMEOUT_MS = 5000;
 
 /**
- * Where suggestions come from. Lightor's market is Israel; a per-business
- * country (the owner's own setting) comes later.
- */
-export const ADDRESS_REGION_CODES: ReadonlyArray<string> = ['il'];
-
-/**
  * The public key, read at call time so tests can stub the env. Empty means
  * the feature is off and nothing here is ever called.
  */
@@ -62,7 +56,6 @@ interface AutocompleteRequest {
   input: string;
   sessionToken?: object;
   language?: string;
-  includedRegionCodes?: string[];
 }
 
 interface PlacesLibrary {
@@ -179,7 +172,6 @@ export interface AddressSuggestion {
 
 export interface ResolvedAddress {
   placeId: string;
-  formattedAddress: string;
   lat: number;
   lng: number;
 }
@@ -193,11 +185,13 @@ export const fetchAddressSuggestions = async (
 ): Promise<AddressSuggestion[]> => {
   const places = await placesLibrary();
   options.session.token ??= new places.AutocompleteSessionToken();
+  // No country restriction (LT-192): without one Google biases by the
+  // customer's IP, so an Israeli customer sees Israel first and a customer
+  // abroad sees their own country — a home-visit business anywhere works.
   const { suggestions } = await places.AutocompleteSuggestion.fetchAutocompleteSuggestions({
     input,
     sessionToken: options.session.token,
     language: options.language,
-    includedRegionCodes: [...ADDRESS_REGION_CODES],
   });
   return (suggestions ?? []).flatMap(({ placePrediction }) => {
     if (!placePrediction?.placeId) return [];
@@ -221,14 +215,18 @@ const coordinate = (location: PlaceLocation, axis: 'lat' | 'lng'): number | null
   return typeof value === 'number' && Number.isFinite(value) ? value : null;
 };
 
-/** The chosen prediction as a place: its formatted address, id and coordinates. */
+/**
+ * The chosen prediction as a place: its id and coordinates. The address text
+ * itself stays the suggestion's own line — the one the customer read and
+ * chose. Place Details would answer in the language the API was loaded with,
+ * which is how a Hebrew pick used to come back in English (LT-192).
+ */
 export const resolveAddressSuggestion = async (suggestion: AddressSuggestion): Promise<ResolvedAddress> => {
   if (!suggestion.prediction) throw new Error('The suggestion carries no place to resolve.');
   const place = suggestion.prediction.toPlace();
-  await place.fetchFields({ fields: ['formattedAddress', 'location', 'id'] });
-  const formattedAddress = (place.formattedAddress ?? '').trim();
+  await place.fetchFields({ fields: ['location', 'id'] });
   const lat = place.location ? coordinate(place.location, 'lat') : null;
   const lng = place.location ? coordinate(place.location, 'lng') : null;
-  if (!formattedAddress || lat === null || lng === null) throw new Error('The place has no address or location.');
-  return { placeId: place.id || suggestion.placeId, formattedAddress, lat, lng };
+  if (lat === null || lng === null) throw new Error('The place has no location.');
+  return { placeId: place.id || suggestion.placeId, lat, lng };
 };

@@ -332,8 +332,9 @@ describe('the manage page (LT-178)', () => {
 
 describe('the address question with Google suggestions (LT-191)', () => {
   const herzl = { placeId: 'p1', text: 'Herzl 12, Tel Aviv-Yafo, Israel', mainText: 'Herzl 12', secondaryText: 'Tel Aviv-Yafo, Israel' };
-  const resolved = { placeId: 'p1', formattedAddress: 'Herzl St 12, Tel Aviv-Yafo, Israel', lat: 32.0624, lng: 34.7702 };
-  const chosen = { key: 'address', value: 'Herzl St 12, Tel Aviv-Yafo, Israel', placeId: 'p1', lat: 32.0624, lng: 34.7702 };
+  // Place Details answers only the id and coordinates; the text stays the line the customer chose (LT-192).
+  const resolved = { placeId: 'p1', lat: 32.0624, lng: 34.7702 };
+  const chosen = { key: 'address', value: 'Herzl 12, Tel Aviv-Yafo, Israel', placeId: 'p1', lat: 32.0624, lng: 34.7702 };
 
   beforeEach(() => {
     Object.values(mocks).forEach((fn) => fn.mockReset());
@@ -425,7 +426,7 @@ describe('the address question with Google suggestions (LT-191)', () => {
     expect(addressInput().getAttribute('aria-controls')).toBe('schedule-answer-address-listbox');
 
     fireEvent.click(option);
-    await waitFor(() => expect(addressInput().value).toBe('Herzl St 12, Tel Aviv-Yafo, Israel'));
+    await waitFor(() => expect(addressInput().value).toBe('Herzl 12, Tel Aviv-Yafo, Israel'));
     expect(mocks.resolveSuggestion).toHaveBeenCalledWith(expect.objectContaining({ placeId: 'p1' }));
     expect(screen.queryByRole('listbox')).toBeNull();
 
@@ -449,7 +450,7 @@ describe('the address question with Google suggestions (LT-191)', () => {
     await reachAddress();
     typeAddress('Her');
     fireEvent.click(await screen.findByRole('option', { name: /Herzl 12/ }));
-    await waitFor(() => expect(addressInput().value).toBe('Herzl St 12, Tel Aviv-Yafo, Israel'));
+    await waitFor(() => expect(addressInput().value).toBe('Herzl 12, Tel Aviv-Yafo, Israel'));
 
     typeAddress('Herzl St 12, Tel Aviv-Yafo, Israel, apt 3');
     fireEvent.submit(detailsForm());
@@ -468,7 +469,7 @@ describe('the address question with Google suggestions (LT-191)', () => {
     expect(option.getAttribute('aria-selected')).toBe('true');
 
     fireEvent.keyDown(addressInput(), { key: 'Enter' });
-    await waitFor(() => expect(addressInput().value).toBe('Herzl St 12, Tel Aviv-Yafo, Israel'));
+    await waitFor(() => expect(addressInput().value).toBe('Herzl 12, Tel Aviv-Yafo, Israel'));
     expect(screen.queryByRole('listbox')).toBeNull();
     expect(mocks.sendOtp).not.toHaveBeenCalled();
   });
