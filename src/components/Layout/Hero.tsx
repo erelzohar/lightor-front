@@ -168,18 +168,24 @@ const Hero: React.FC<HeroProps> = ({ config, social, phone, isContactVisible, ap
 
     let cancelled = false;
 
+    // No WebGL (crawlers, blocklisted GPUs) makes three.js throw; the section's
+    // bg-light-bg/dark-bg colour is the fallback, so fail silently.
     VANTA_IMPORTERS[bgType]().then((mod) => {
       if (cancelled || !vantaRef.current) return;
-      vantaInstanceRef.current = mod.default({
-        el: vantaRef.current,
-        mouseControls: true,
-        touchControls: true,
-        gyroControls: false,
-        minHeight: 200,
-        minWidth: 200,
-        ...buildVantaOptions(bgType, isDarkMode, palette),
-      });
-    });
+      try {
+        vantaInstanceRef.current = mod.default({
+          el: vantaRef.current,
+          mouseControls: true,
+          touchControls: true,
+          gyroControls: false,
+          minHeight: 200,
+          minWidth: 200,
+          ...buildVantaOptions(bgType, isDarkMode, palette),
+        });
+      } catch {
+        vantaInstanceRef.current = null;
+      }
+    }).catch(() => {});
 
     return () => {
       cancelled = true;
