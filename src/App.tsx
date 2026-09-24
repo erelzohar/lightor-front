@@ -29,6 +29,7 @@ import { useLanguage, Language } from './contexts/LanguageContext';
 import { WebsiteConfig } from './models/WebsiteConfig';
 import { DesignConfig } from './models/DesignConfig';
 import WebConfigService from './services/WebConfigService';
+import { readInlineConfig, sameConfig } from './services/edgeShell';
 import { getSiteJitter, createRng } from './services/seed';
 import { scaleOf, spacingOf, SPACING_CLASS, pickInvert, pickInterludeSlot } from './services/artDirection';
 import Interlude from './components/Layout/Interlude';
@@ -177,6 +178,37 @@ function MainContent() {
 
       try {
         const subdomain = window.location.hostname.split('.')[0];
+
+        // The edge shell (LT-194) inlined this host's config: paint from it
+        // now — no first round trip — and let the API correct it in the
+        // background, since the edge holds a copy up to a minute old. The
+        // shell also wrote the title and meta tags, so none of the client
+        // side head work below runs on this path.
+        const inline = readInlineConfig(document, window.location.hostname);
+        if (inline) {
+          let shellConfig: WebsiteConfig | null = null;
+          try {
+            shellConfig = WebsiteConfig.fromJSON(inline.config);
+          } catch {
+            shellConfig = null; // an unparsable shell falls through to the fetch
+          }
+          if (shellConfig) {
+            setConfig(shellConfig);
+            setLanguage(shellConfig.defaultLanguage as Language);
+            void WebConfigService.getInstance()
+              .getWebConfig(subdomain)
+              .then((fresh) => {
+                if (isPreviewRef.current) return;
+                if (!sameConfig(fresh, shellConfig)) setConfig(fresh);
+              })
+              .catch(() => {
+                // The shell's copy stands; a failed refresh is not an error
+                // the visitor needs to hear about.
+              });
+            return;
+          }
+        }
+
         const result = await WebConfigService.getInstance().getWebConfig(subdomain);
 
         if (isPreviewRef.current) return;
