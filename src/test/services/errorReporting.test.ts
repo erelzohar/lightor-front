@@ -80,6 +80,7 @@ describe('ErrorReportingService', () => {
       'AxiosError: Network Error',
       'TypeError: Failed to fetch',
       'TypeError: Load failed',
+      "ReferenceError: Can't find variable: _AutofillCallbackHandler",
       '',
     ]) {
       expect(await reportClientError({ error })).toBe(false);

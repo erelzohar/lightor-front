@@ -17,7 +17,8 @@ import globals from './globals';
  *    all — the API allows an IP five per quarter hour, and a render loop
  *    must not spend that budget on one bug.
  *  - Noise that is not ours is dropped: ResizeObserver's benign loop
- *    warning, cross-origin "Script error." with no detail, plain network
+ *    warning, cross-origin "Script error." with no detail, in-app browser
+ *    injections (Facebook's iOS autofill script), plain network
  *    failures (the API logs its own 5xx; a visitor's flaky Wi-Fi is not a
  *    bug in this site).
  *  - Reporting never throws and never rejects.
@@ -54,6 +55,9 @@ const IGNORED: RegExp[] = [
   /Failed to fetch$/,
   /^TypeError: Load failed$/,
   /^AbortError/,
+  // Facebook's iOS in-app browser injects an autofill script that calls a
+  // handler it never defined; it throws on our page but isn't our code.
+  /_AutofillCallbackHandler/,
 ];
 
 let enabled = import.meta.env.PROD;
