@@ -157,6 +157,7 @@
   },
   "contact": {
     "title": "Get in Touch",
+    "closed": "We're not taking messages through the site right now — call us or send a WhatsApp message.",
     "form": {
       "name": "Name",
       "phone": "Phone",

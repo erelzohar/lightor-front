@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Mail, Phone, MapPin, Send, User, MessageSquare, CheckCircle, XCircle } from 'lucide-react';
+import React, { useCallback, useState } from 'react';
+import { Mail, Phone, MapPin, Send, User, MessageSquare, CheckCircle, XCircle, MessageCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { ContactConfig } from '../../models/ContactConfig';
@@ -13,6 +13,8 @@ import { ContactModal } from '../../components/ContactModal';
 import { useContactHandler } from '../../hooks/useContactHandler';
 import smsService from '../../services/SmsService';
 import { whatsAppHref } from '../../utils/phone';
+import { BookingField, AnswerValue, answerProblem, answersForRequest } from '../../models/BookingField';
+import { QuestionField } from '../common/QuestionField';
 
 // Optional throughout: a business may have no premises, and the API stores an
 // address only when it carries real values.
@@ -44,7 +46,17 @@ interface ContactProps {
    *  plain layout keeps its own default (poster: surface, the rest: bg), which
    *  is what the legacy flow draws; the composer alternates it. */
   tone?: SectionTone;
+  /** The owner's own questions on the lead form (LT-197). */
+  leadFields?: BookingField[];
+  /**
+   * False once a free plan has had this month's leads (LT-197): the form
+   * gives way to call / WhatsApp buttons, so no visitor fills a form that
+   * reaches nobody.
+   */
+  leadsOpen?: boolean;
 }
+
+const NO_LEAD_FIELDS: BookingField[] = [];
 
 const MaterialInput = ({
   icon: Icon,
@@ -105,7 +117,7 @@ const MaterialInput = ({
   </div>
 );
 
-const Contact: React.FC<ContactProps> = ({ config, address, contact, workingDays, isPreview, layout = 'split', header, headerScale, reveal, tone }) => {
+const Contact: React.FC<ContactProps> = ({ config, address, contact, workingDays, isPreview, layout = 'split', header, headerScale, reveal, tone, leadFields = NO_LEAD_FIELDS, leadsOpen = true }) => {
   // 'split' = info column beside the form; 'stacked' = one narrow centered
   // column with the info as a chip row above the form.
   const isStacked = layout === 'stacked';
@@ -126,6 +138,31 @@ const Contact: React.FC<ContactProps> = ({ config, address, contact, workingDays
   });
   const { t, language } = useLanguage();
   const { isModalOpen, setIsModalOpen, modalType, handleContactClick } = useContactHandler();
+
+  // The owner's questions (LT-197), answered like the booking form's.
+  const [answers, setAnswers] = useState<Record<string, AnswerValue>>({});
+  const [answerErrors, setAnswerErrors] = useState<Record<string, string>>({});
+  // Address questions whose Google suggestions are live (LT-191): only then
+  // is a typed-but-not-chosen address refused.
+  const [liveAddressFields, setLiveAddressFields] = useState<Record<string, boolean>>({});
+  // The server said the month's leads are used up (LT-197). The config's
+  // `leadsOpen` can lag behind it by the edge cache's minute.
+  const [capReached, setCapReached] = useState(false);
+  const formOpen = leadsOpen && !capReached;
+
+  const handleAnswerChange = useCallback((key: string, value: AnswerValue) => {
+    setAnswers(prev => ({ ...prev, [key]: value }));
+    setAnswerErrors(prev => {
+      if (!prev[key]) return prev;
+      const next = { ...prev };
+      delete next[key];
+      return next;
+    });
+    setError(null);
+  }, []);
+  const handleAddressActive = useCallback((key: string, active: boolean) => {
+    setLiveAddressFields(prev => (prev[key] === active ? prev : { ...prev, [key]: active }));
+  }, []);
 
   // Address is optional and any individual part may be missing — a business
   // can have no premises at all. Join only what exists, so an absent address
@@ -182,12 +219,20 @@ const Contact: React.FC<ContactProps> = ({ config, address, contact, workingDays
       errors.phone = t('contact.validation.phone.digits');
     }
 
-    if (formData.message.trim().length < 10) {
-      errors.message = t('contact.validation.message');
+    // The message is optional since LT-197: the owner's questions, or a
+    // name and a number to call back, may be the whole lead.
+
+    const nextAnswerErrors: Record<string, string> = {};
+    for (const field of leadFields) {
+      const problem = answerProblem(field, answers[field.key], { chooseAddress: liveAddressFields[field.key] });
+      if (problem === 'required') nextAnswerErrors[field.key] = t('schedule.validation.answer.required');
+      else if (problem === 'invalid') nextAnswerErrors[field.key] = t('schedule.validation.answer.invalid');
+      else if (problem === 'chooseAddress') nextAnswerErrors[field.key] = t('schedule.validation.answer.chooseAddress');
     }
 
     setFormErrors(errors);
-    return !Object.values(errors).some(error => error !== '');
+    setAnswerErrors(nextAnswerErrors);
+    return !Object.values(errors).some(error => error !== '') && Object.keys(nextAnswerErrors).length === 0;
   };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -200,18 +245,46 @@ const Contact: React.FC<ContactProps> = ({ config, address, contact, workingDays
     setIsSubmitting(true);
     try {
       if (!isPreview) {
-        // The server finds the owner by subdomain and emails them; nothing
-        // about the recipient travels from the browser. (LT-035)
+        // The server finds the owner by subdomain, stores the lead and tells
+        // them; nothing about the recipient travels from the browser.
+        // (LT-035, LT-197)
         const subdomain = window.location.hostname.split('.')[0];
-        const res = await smsService.sendContactMessage(subdomain, formData);
+        const message = formData.message.trim();
+        const res = await smsService.sendContactMessage(subdomain, {
+          name: formData.name,
+          phone: formData.phone,
+          ...(message ? { message } : {}),
+          answers: answersForRequest(leadFields, answers),
+        });
 
-        if (!res) throw "";
+        if (!res.ok) {
+          if (res.code === 'LEADS_CAP_REACHED') {
+            setCapReached(true);
+            return;
+          }
+          if (res.code === 'ANSWER_REQUIRED' || res.code === 'ANSWER_INVALID') {
+            const text = res.code === 'ANSWER_REQUIRED'
+              ? t('schedule.validation.answer.required')
+              : t('schedule.validation.answer.invalid');
+            const key = res.details?.key;
+            // A question this form does not know (added while it was open)
+            // falls back to the general line.
+            if (key && leadFields.some(field => field.key === key)) {
+              setAnswerErrors(prev => ({ ...prev, [key]: text }));
+            } else {
+              setError(text);
+            }
+            return;
+          }
+          throw new Error(res.code ?? 'CONTACT_FAILED');
+        }
       }
       setIsSuccess(true);
       // Reset form after showing success message
       setTimeout(() => {
         setIsSuccess(false);
         setFormData({ name: '', phone: '', message: '' });
+        setAnswers({});
       }, 3000);
     } catch (err) {
       setError(t('schedule.genericError')); // LT-169: 'schedule.error' is an object, the key itself was shown
@@ -359,12 +432,26 @@ const Contact: React.FC<ContactProps> = ({ config, address, contact, workingDays
         error={formErrors.phone}
       />
 
+      {/* The owner's questions (LT-197), under name and phone. */}
+      {leadFields.map((field) => (
+        <QuestionField
+          key={field.key}
+          field={field}
+          value={answers[field.key]}
+          error={answerErrors[field.key]}
+          onChange={handleAnswerChange}
+          onAddressActive={handleAddressActive}
+          idPrefix="contact-answer"
+        />
+      ))}
+
       <MaterialInput
         icon={MessageSquare}
-        label={t('contact.form.message')}
+        label={`${t('contact.form.message')} (${t('schedule.form.answer.optional')})`}
         value={formData.message}
-        onChange={(e) => handleInputChange('message', e.target.value)}
+        onChange={(e) => handleInputChange('message', e.target.value.slice(0, 2000))}
         multiline
+        required={false}
         name="message"
         id="contact-message"
         error={formErrors.message}
@@ -375,8 +462,8 @@ const Contact: React.FC<ContactProps> = ({ config, address, contact, workingDays
         className="w-full bg-primary dark:bg-primary-dark text-on-primary dark:text-on-primary-dark py-4 px-6 rounded-design transition-all relative overflow-hidden shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
         whileHover={{ scale: 1.02 }}
         whileTap={{ scale: 0.98 }}
-        disabled={isSubmitting || !formData.name || !formData.phone || !formData.message}
-        aria-disabled={isSubmitting || !formData.name || !formData.phone || !formData.message}
+        disabled={isSubmitting || !formData.name || !formData.phone}
+        aria-disabled={isSubmitting || !formData.name || !formData.phone}
         aria-busy={isSubmitting}
       >
         <motion.span
@@ -432,6 +519,36 @@ const Contact: React.FC<ContactProps> = ({ config, address, contact, workingDays
       </AnimatePresence>
     </motion.form>
   );
+  // The month's leads are used up (LT-197): the visitor still reaches the
+  // business, by phone or WhatsApp, instead of filling a form nobody gets.
+  const closedNode = (
+    <motion.div
+      className="card-design space-y-6 p-8 text-center"
+      variants={itemVariants}
+      data-testid="contact-closed"
+    >
+      <p className="text-lg text-light-text dark:text-dark-text">{t('contact.closed')}</p>
+      <div className="flex flex-col sm:flex-row gap-3 justify-center">
+        <button
+          type="button"
+          onClick={() => handleContactClick('phone', `tel:${phoneDigits}`)}
+          className="flex items-center justify-center gap-2 bg-primary dark:bg-primary-dark text-on-primary dark:text-on-primary-dark py-3 px-6 rounded-design shadow-lg hover:shadow-xl transition-all"
+        >
+          <Phone className="h-5 w-5" aria-hidden="true" />
+          <span>{t('contact.option.call')}</span>
+        </button>
+        <button
+          type="button"
+          onClick={() => handleContactClick('whatsapp', whatsAppHref(phoneDigits))}
+          className="flex items-center justify-center gap-2 border-2 border-primary dark:border-primary-dark text-primary-readable dark:text-primary-dark-readable py-3 px-6 rounded-design transition-all"
+        >
+          <MessageCircle className="h-5 w-5" aria-hidden="true" />
+          <span>{t('contact.option.whatsapp')}</span>
+        </button>
+      </div>
+    </motion.div>
+  );
+  const formOrButtons = formOpen ? formNode : closedNode;
   const modal = (
     <ContactModal
       isOpen={isModalOpen}
@@ -459,7 +576,7 @@ const Contact: React.FC<ContactProps> = ({ config, address, contact, workingDays
                 </button>
                 {plainLines('mt-8 text-light-text/80 dark:text-dark-text/80', { skipPhone: true })}
               </div>
-              <div className="py-12 md:ps-12">{formNode}</div>
+              <div className="py-12 md:ps-12">{formOrButtons}</div>
             </div>
           </div>
         </section>
@@ -476,7 +593,7 @@ const Contact: React.FC<ContactProps> = ({ config, address, contact, workingDays
             <SectionHeading title={config.title} description={config.description || undefined} variant={header} scale={headerScale} mb="mb-12" titleId="contact-title" />
             <div className="grid md:grid-cols-2 gap-16 max-w-6xl">
               {plainLines('text-light-text/80 dark:text-dark-text/80')}
-              {formNode}
+              {formOrButtons}
             </div>
           </div>
         </section>
@@ -525,7 +642,7 @@ const Contact: React.FC<ContactProps> = ({ config, address, contact, workingDays
               {plainLines('mt-8')}
             </div>
             <div className="bg-light-surface dark:bg-dark-surface text-light-text dark:text-dark-text rounded-design-card shadow-card p-6 md:p-8">
-              {formNode}
+              {formOrButtons}
             </div>
           </div>
         </section>
@@ -541,7 +658,7 @@ const Contact: React.FC<ContactProps> = ({ config, address, contact, workingDays
           <div className="container mx-auto px-4">
             <SectionHeading title={config.title} description={config.description || undefined} variant={header} scale={headerScale} mb="mb-12" titleId="contact-title" />
             <div className="grid md:grid-cols-2 gap-8 max-w-6xl mx-auto">
-              <div className="card-design p-6 md:p-8">{formNode}</div>
+              <div className="card-design p-6 md:p-8">{formOrButtons}</div>
               <div className="card-design p-6 md:p-8 flex flex-col gap-6">
                 {plainLines('text-light-text/80 dark:text-dark-text/80')}
                 {mapsHref && (
@@ -677,7 +794,7 @@ const Contact: React.FC<ContactProps> = ({ config, address, contact, workingDays
             </motion.div>
 
             <motion.div variants={containerVariants}>
-              {formNode}
+              {formOrButtons}
             </motion.div>
           </div>
         </motion.div>

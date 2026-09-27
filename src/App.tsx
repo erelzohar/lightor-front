@@ -383,6 +383,9 @@ function MainContent() {
           contact={config.contact}
           workingDays={config.workingDays}
           layout={config.design?.contactLayout}
+          leadFields={config.leadFields}
+          leadsOpen={config.leadsOpen}
+          isPreview={isPreview}
         />
       )
     });

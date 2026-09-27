@@ -157,6 +157,7 @@
   },
   "contact": {
     "title": "Contáctanos",
+    "closed": "Ahora mismo no recibimos mensajes por el sitio: llámanos o escríbenos por WhatsApp.",
     "form": {
       "name": "Nombre",
       "phone": "Teléfono",

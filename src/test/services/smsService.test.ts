@@ -32,7 +32,7 @@ describe('SmsService', () => {
     it('posts to the contact endpoint, not the SMS one (LT-035)', async () => {
       mock.onPost(`${globals.messagingUrl}/contact`).reply(200, { success: true });
 
-      await expect(smsService.sendContactMessage('demo', form)).resolves.toBe(true);
+      await expect(smsService.sendContactMessage('demo', form)).resolves.toEqual({ ok: true });
       expect(mock.history.post).toHaveLength(1);
       expect(mock.history.post[0].url).toBe(`${globals.messagingUrl}/contact`);
     });
@@ -50,19 +50,31 @@ describe('SmsService', () => {
     it('reports failure instead of a silent success', async () => {
       mock.onPost(`${globals.messagingUrl}/contact`).reply(401);
 
-      await expect(smsService.sendContactMessage('demo', form)).resolves.toBe(false);
+      await expect(smsService.sendContactMessage('demo', form)).resolves.toMatchObject({ ok: false });
     });
 
     it('reports failure when the server answers 200 without success', async () => {
       mock.onPost(`${globals.messagingUrl}/contact`).reply(200, { success: false });
 
-      await expect(smsService.sendContactMessage('demo', form)).resolves.toBeFalsy();
+      await expect(smsService.sendContactMessage('demo', form)).resolves.toEqual({ ok: false });
     });
 
     it('reports failure when the network is down', async () => {
       mock.onPost(`${globals.messagingUrl}/contact`).networkError();
 
-      await expect(smsService.sendContactMessage('demo', form)).resolves.toBe(false);
+      await expect(smsService.sendContactMessage('demo', form)).resolves.toMatchObject({ ok: false });
+    });
+
+    it("hands back the server's refusal code and the question it names (LT-197)", async () => {
+      mock.onPost(`${globals.messagingUrl}/contact`).reply(400, {
+        success: false, code: 'ANSWER_REQUIRED', details: { key: 'area', label: 'Area' },
+      });
+      await expect(smsService.sendContactMessage('demo', form)).resolves.toEqual({
+        ok: false, code: 'ANSWER_REQUIRED', details: { key: 'area', label: 'Area' },
+      });
+
+      mock.onPost(`${globals.messagingUrl}/contact`).reply(403, { success: false, code: 'LEADS_CAP_REACHED' });
+      await expect(smsService.sendContactMessage('demo', form)).resolves.toMatchObject({ ok: false, code: 'LEADS_CAP_REACHED' });
     });
   });
 

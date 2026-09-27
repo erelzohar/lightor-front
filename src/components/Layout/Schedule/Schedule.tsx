@@ -1,11 +1,11 @@
 import React, { useState, useCallback, useEffect, useMemo, useRef } from 'react';
-import { Calendar as CalendarIcon, Clock, CheckCircle, ChevronLeft, ChevronRight, Phone, User, Shield, Tag, XCircle, MessageSquareX, MessageSquareCode, MessagesSquare, PenLine, AlignLeft, ListChecks } from 'lucide-react';
+import { Calendar as CalendarIcon, Clock, CheckCircle, ChevronLeft, ChevronRight, Phone, User, Shield, Tag, XCircle, MessageSquareX, MessageSquareCode, MessagesSquare } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Turnstile } from '@marsidev/react-turnstile';
 import { useLanguage } from '../../../contexts/LanguageContext';
 import { AppointmentType } from '../../../models/AppointmentType';
 import { Appointment } from '../../../models/Appointment';
-import { BookingField, AnswerValue, ANSWER_MAX_LENGTH, fieldsForService, answerProblem, answersForRequest } from '../../../models/BookingField';
+import { BookingField, AnswerValue, fieldsForService, answerProblem, answersForRequest } from '../../../models/BookingField';
 import { BusySlot } from '../../../models/BusySlot';
 import { ClassOccurrence } from '../../../models/ClassOccurrence';
 import { ScheduleConfig } from '../../../models/ScheduleConfig';
@@ -28,8 +28,8 @@ const CARD_CLASS: Record<ScheduleStyle, string> = {
   // LT-137: the widget beside an info column (hours, phone).
   split: 'bg-light-surface dark:bg-dark-surface rounded-design-card shadow-card p-6 md:p-8',
 };
-import { MaterialInput, MaterialTextarea, MaterialSelect, MaterialCheckbox } from './ScheduleForms';
-import { AddressAutocomplete } from './AddressAutocomplete';
+import { MaterialInput } from './ScheduleForms';
+import { QuestionField } from '../../common/QuestionField';
 import { DateButton } from './ScheduleCalendar';
 import { CalendarEventInput, googleCalendarUrl, downloadIcs } from '../../../services/calendarLinks';
 import { parseIntervals, getHoursForDate, DateOverride } from '../../../utils/workingHours';
@@ -1048,101 +1048,17 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
     getAvailabilityStatus
   ]);
 
-  /**
-   * One of the owner's questions on the details step (LT-178). The label
-   * and the options are the owner's own words, rendered raw — never through
-   * t(). Text and address are single-line inputs like name and phone; a
-   * note is a textarea, a choice a select, a confirm a box to tick.
-   */
-  const renderBookingField = (field: BookingField) => {
-    const value = formData.answers[field.key];
-    const text = typeof value === 'string' ? value : '';
-    const error = formErrors.answers?.[field.key];
-    // Name and phone carry no marker and are required, so on this form an
-    // unmarked question is required too; the optional ones say so.
-    const hint = field.required ? undefined : t('schedule.form.answer.optional');
-    const id = `schedule-answer-${field.key}`;
-    const name = `answer-${field.key}`;
-
-    switch (field.type) {
-      case 'confirm':
-        return (
-          <MaterialCheckbox
-            label={field.label}
-            checked={value === true}
-            onChange={(e) => handleAnswerChange(field.key, e.target.checked)}
-            error={error}
-            required={field.required}
-            name={name}
-            id={id}
-            hint={hint}
-          />
-        );
-      case 'choice':
-        return (
-          <MaterialSelect
-            icon={ListChecks}
-            label={field.label}
-            value={text}
-            options={field.options}
-            placeholder={t('schedule.form.answer.choose')}
-            onChange={(e) => handleAnswerChange(field.key, e.target.value)}
-            error={error}
-            required={field.required}
-            name={name}
-            id={id}
-            hint={hint}
-          />
-        );
-      case 'note':
-        return (
-          <MaterialTextarea
-            icon={AlignLeft}
-            label={field.label}
-            value={text}
-            onChange={(e) => handleAnswerChange(field.key, e.target.value)}
-            error={error}
-            required={field.required}
-            name={name}
-            id={id}
-            maxLength={ANSWER_MAX_LENGTH.note}
-            hint={hint}
-          />
-        );
-      case 'address':
-        // Google's suggestions under the input (LT-191); the plain input it
-        // always was when there is no key or Google is unreachable.
-        return (
-          <AddressAutocomplete
-            label={field.label}
-            value={value}
-            onChange={(answer) => handleAnswerChange(field.key, answer)}
-            onActiveChange={(active) => handleAddressActive(field.key, active)}
-            error={error}
-            required={field.required}
-            name={name}
-            id={id}
-            maxLength={ANSWER_MAX_LENGTH.address}
-            hint={hint}
-          />
-        );
-      default:
-        return (
-          <MaterialInput
-            icon={PenLine}
-            label={field.label}
-            value={text}
-            onChange={(e) => handleAnswerChange(field.key, e.target.value)}
-            error={error}
-            required={field.required}
-            name={name}
-            id={id}
-            maxLength={ANSWER_MAX_LENGTH.text}
-            hint={hint}
-          />
-        );
-    }
-  };
+  /** One of the owner's questions on the details step (LT-178); shared with the lead form (LT-197). */
+  const renderBookingField = (field: BookingField) => (
+    <QuestionField
+      field={field}
+      value={formData.answers[field.key]}
+      error={formErrors.answers?.[field.key]}
+      onChange={handleAnswerChange}
+      onAddressActive={handleAddressActive}
+      idPrefix="schedule-answer"
+    />
+  );
 
   return (
     <section id="schedule" className={`section-y ${TONE_BG[tone]} transition-colors duration-300`}>

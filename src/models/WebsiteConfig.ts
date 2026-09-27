@@ -192,7 +192,18 @@ export class WebsiteConfig {
      * The questions the booking form asks beyond name and phone (LT-178),
      * written by the owner. Empty for every site that never added one.
      */
-    public bookingFields: BookingField[] = []
+    public bookingFields: BookingField[] = [],
+    /**
+     * The contact form's own questions (LT-197): a separate list on the same
+     * mechanism, never scoped to a service.
+     */
+    public leadFields: BookingField[] = [],
+    /**
+     * False once a free plan has had this month's leads (LT-197): the form
+     * gives way to call / WhatsApp buttons. Absent reads as open — older
+     * payloads and the register preview.
+     */
+    public leadsOpen: boolean = true
   ) {}
 
   static fromJSON(json: any): WebsiteConfig {
@@ -225,7 +236,10 @@ export class WebsiteConfig {
       Number.isInteger(json.bookingHorizonDays) && json.bookingHorizonDays >= 1 && json.bookingHorizonDays <= 365
         ? json.bookingHorizonDays
         : 60,
-      parseBookingFields(json.bookingFields)
+      parseBookingFields(json.bookingFields),
+      // The server stores them with no service scope.
+      parseBookingFields(json.leadFields),
+      json.leadsOpen !== false
     );
   }
 }

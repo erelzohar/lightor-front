@@ -196,6 +196,9 @@ const ComposedPage: React.FC<ComposedPageProps> = ({ config, jitter, isPreview, 
             contact={config.contact}
             workingDays={config.workingDays}
             layout={(v as ContactLayout) ?? design?.contactLayout}
+            leadFields={config.leadFields}
+            leadsOpen={config.leadsOpen}
+            isPreview={isPreview}
           />
         ) : null;
       case 'footer':

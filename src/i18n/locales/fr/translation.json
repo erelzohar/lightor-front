@@ -157,6 +157,7 @@
   },
   "contact": {
     "title": "Contactez-nous",
+    "closed": "Le formulaire n'est pas disponible pour le moment — appelez-nous ou envoyez un message WhatsApp.",
     "form": {
       "name": "Nom",
       "phone": "Téléphone",

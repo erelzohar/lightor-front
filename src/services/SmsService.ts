@@ -1,22 +1,36 @@
 import axios from "axios";
 import globals from "./globals";
 import i18n from "../i18n/config";
+import type { AnswerPayload } from "../models/BookingField";
+
+export interface ContactResult {
+    ok: boolean;
+    code?: string;
+    details?: { key?: string; label?: string };
+}
 
 class SMSService {
     /**
-     * Contact-form submission. The server resolves the business owner from
-     * the subdomain and emails them — the caller never names a recipient.
-     * Replaces the old sendSMS, which had been dying with 401 since /sms was
-     * locked to real accounts (LT-003); email also costs nothing per send.
-     * (LT-035)
+     * Contact-form submission — a lead (LT-035, LT-197). The server resolves
+     * the business owner from the subdomain, stores the lead and tells the
+     * owner; the caller never names a recipient. Answers carry key and value
+     * only: the server takes labels and rules from the owner's `leadFields`.
+     *
+     * Resolves `{ ok: true }` or the server's refusal — `LEADS_CAP_REACHED`
+     * when the month's leads are used up, `ANSWER_REQUIRED` /
+     * `ANSWER_INVALID` with the question named in `details`.
      */
-    public async sendContactMessage(subdomain: string, form: { name: string; phone: string; message: string }): Promise<boolean> {
+    public async sendContactMessage(
+        subdomain: string,
+        form: { name: string; phone: string; message?: string; answers?: AnswerPayload[] }
+    ): Promise<ContactResult> {
         try {
             const res = await axios.post<any>(globals.messagingUrl + "/contact", { subdomain, ...form });
-            return res.data?.success;
+            return res.data?.success ? { ok: true } : { ok: false };
         }
-        catch (err) {
-            return false;
+        catch (err: any) {
+            const data = err?.response?.data;
+            return { ok: false, code: typeof data?.code === 'string' ? data.code : undefined, details: data?.details };
         }
     }
 
