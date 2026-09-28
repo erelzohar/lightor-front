@@ -1,6 +1,6 @@
 import { Fragment, cloneElement, isValidElement, type ReactElement, type ReactNode } from 'react';
 import type { WebsiteConfig } from '../../models/WebsiteConfig';
-import { hasBookableServices } from '../../models/AppointmentType';
+import { takesBookings } from '../../services/siteMode';
 import type { Block } from '../../models/Block';
 import type { SiteJitter } from '../../services/seed';
 import { SPACING_CLASS } from '../../services/artDirection';
@@ -65,7 +65,8 @@ const ComposedPage: React.FC<ComposedPageProps> = ({ config, jitter, isPreview, 
   const design = config.design;
   const hasBand = config.blocks.some((b) => b.type === 'bookingBand');
   // LT-167: nothing to book → no schedule and no band pointing at it.
-  const bookable = hasBookableServices(config.appointmentTypes);
+  // LT-199: nor on a leads site, whatever its services.
+  const bookable = takesBookings(config.conversion, config.appointmentTypes);
 
   // `tone` is passed explicitly because the flow's cloneElement below only reaches
   // component nodes, and the schedule sits inside a plain div (LT-166).
@@ -82,6 +83,7 @@ const ComposedPage: React.FC<ComposedPageProps> = ({ config, jitter, isPreview, 
             isContactVisible={config.blocks.some((x) => x.type === 'contact')}
             businessName={config.businessName}
             appointmentTypes={config.appointmentTypes}
+            conversion={config.conversion}
             isPreview={isPreview}
             palette={config.pallete}
             design={v ? { ...design, heroLayout: v as HeroLayout } : design}
@@ -131,7 +133,7 @@ const ComposedPage: React.FC<ComposedPageProps> = ({ config, jitter, isPreview, 
       case 'bookingBand': {
         const statement = (typeof p.text === 'string' && p.text) || c?.schedule?.description?.trim();
         const chips = v === 'chips' ? (config.appointmentTypes ?? []).map((a) => a?.name).filter((n): n is string => !!n) : undefined;
-        return statement && bookable ? <BookingBand statement={statement} chips={chips} /> : null;
+        return statement && bookable ? <BookingBand statement={statement} chips={chips} label={c?.hero?.cta} /> : null;
       }
       // LT-136 — the fourteen phase-3 blocks.
       case 'ticker':
@@ -149,7 +151,7 @@ const ComposedPage: React.FC<ComposedPageProps> = ({ config, jitter, isPreview, 
       case 'process':
         return Array.isArray(p.steps) ? <Process steps={p.steps as ProcessStep[]} title={typeof p.title === 'string' ? p.title : undefined} variant={v} /> : null;
       case 'priceCards':
-        return <PriceCards appointmentTypes={config.appointmentTypes ?? []} />;
+        return <PriceCards appointmentTypes={config.appointmentTypes ?? []} bookable={bookable} />;
       case 'hours':
         return <Hours workingDays={config.workingDays ?? []} variant={v} />;
       case 'photoPair': {
@@ -198,6 +200,7 @@ const ComposedPage: React.FC<ComposedPageProps> = ({ config, jitter, isPreview, 
             layout={(v as ContactLayout) ?? design?.contactLayout}
             leadFields={config.leadFields}
             leadsOpen={config.leadsOpen}
+            conversion={config.conversion}
             isPreview={isPreview}
           />
         ) : null;
@@ -206,6 +209,7 @@ const ComposedPage: React.FC<ComposedPageProps> = ({ config, jitter, isPreview, 
           <Footer
             config={c.footer}
             appointmentsType={config.appointmentTypes}
+            conversion={config.conversion}
             social={config.social}
             businessName={config.businessName}
             logoImageName={config.logoImageName}

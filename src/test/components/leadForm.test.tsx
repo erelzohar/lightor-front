@@ -5,6 +5,7 @@ import { ContactConfig } from '../../models/ContactConfig';
 import { BookingField } from '../../models/BookingField';
 import { WebsiteConfig } from '../../models/WebsiteConfig';
 import { RAW_AI_RESPONSE_SHAPE } from '../fixtures/rawAiConfig';
+import { resetVisitorPassForTests } from '../../services/visitorPass';
 
 /**
  * LT-197 — the contact form is lead capture: the owner's own questions under
@@ -15,6 +16,7 @@ import { RAW_AI_RESPONSE_SHAPE } from '../fixtures/rawAiConfig';
 
 const mocks = vi.hoisted(() => ({
   sendContactMessage: vi.fn(),
+  handshake: vi.fn(),
   loadPlaces: vi.fn(),
   fetchSuggestions: vi.fn(),
   resolveSuggestion: vi.fn(),
@@ -30,6 +32,18 @@ vi.stubGlobal('IntersectionObserver', NoopObserver);
 Element.prototype.scrollIntoView = vi.fn();
 
 vi.mock('../../services/SmsService', () => ({ default: { sendContactMessage: mocks.sendContactMessage } }));
+// The visitor check (LT-199): the widget passes as soon as it mounts; the
+// handshake it feeds is the real store's, against a mocked server call.
+vi.mock('@marsidev/react-turnstile', async () => {
+  const React = await import('react');
+  return {
+    Turnstile: ({ onSuccess }: { onSuccess?: (token: string) => void }): null => {
+      React.useEffect(() => { onSuccess?.('test-token'); }, []);
+      return null;
+    },
+  };
+});
+vi.mock('../../services/AuthService', () => ({ default: { handshake: mocks.handshake } }));
 vi.mock('../../services/places', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../services/places')>()),
   loadPlaces: mocks.loadPlaces,
@@ -70,6 +84,8 @@ describe('lead form (LT-197)', () => {
   beforeEach(() => {
     Object.values(mocks).forEach((fn) => fn.mockReset());
     mocks.sendContactMessage.mockResolvedValue({ ok: true });
+    mocks.handshake.mockResolvedValue(true);
+    resetVisitorPassForTests();
   });
   afterEach(() => vi.unstubAllEnvs());
 

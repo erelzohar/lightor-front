@@ -15,6 +15,9 @@ import smsService from '../../services/SmsService';
 import { whatsAppHref } from '../../utils/phone';
 import { BookingField, AnswerValue, answerProblem, answersForRequest } from '../../models/BookingField';
 import { QuestionField } from '../common/QuestionField';
+import type { Conversion } from '../../services/siteMode';
+import { Turnstile } from '@marsidev/react-turnstile';
+import { visitorPass, useVisitorPass } from '../../services/visitorPass';
 
 // Optional throughout: a business may have no premises, and the API stores an
 // address only when it carries real values.
@@ -54,9 +57,13 @@ interface ContactProps {
    * reaches nobody.
    */
   leadsOpen?: boolean;
+  /** LT-199: on a leads site every layout carries the form — it is the conversion. */
+  conversion?: Conversion;
 }
 
 const NO_LEAD_FIELDS: BookingField[] = [];
+/** How long a send waits for the visitor check to finish. */
+const PASS_WAIT_MS = 20_000;
 
 const MaterialInput = ({
   icon: Icon,
@@ -117,7 +124,7 @@ const MaterialInput = ({
   </div>
 );
 
-const Contact: React.FC<ContactProps> = ({ config, address, contact, workingDays, isPreview, layout = 'split', header, headerScale, reveal, tone, leadFields = NO_LEAD_FIELDS, leadsOpen = true }) => {
+const Contact: React.FC<ContactProps> = ({ config, address, contact, workingDays, isPreview, layout = 'split', header, headerScale, reveal, tone, leadFields = NO_LEAD_FIELDS, leadsOpen = true, conversion = 'book' }) => {
   // 'split' = info column beside the form; 'stacked' = one narrow centered
   // column with the info as a chip row above the form.
   const isStacked = layout === 'stacked';
@@ -148,6 +155,9 @@ const Contact: React.FC<ContactProps> = ({ config, address, contact, workingDays
   // The server said the month's leads are used up (LT-197). The config's
   // `leadsOpen` can lag behind it by the edge cache's minute.
   const [capReached, setCapReached] = useState(false);
+  // The visitor pass (LT-199): asked for once the visitor starts on the form.
+  const hasPass = useVisitorPass();
+  const [wantsPass, setWantsPass] = useState(false);
   const formOpen = leadsOpen && !capReached;
 
   const handleAnswerChange = useCallback((key: string, value: AnswerValue) => {
@@ -250,12 +260,24 @@ const Contact: React.FC<ContactProps> = ({ config, address, contact, workingDays
         // (LT-035, LT-197)
         const subdomain = window.location.hostname.split('.')[0];
         const message = formData.message.trim();
-        const res = await smsService.sendContactMessage(subdomain, {
+        const send = () => smsService.sendContactMessage(subdomain, {
           name: formData.name,
           phone: formData.phone,
           ...(message ? { message } : {}),
           answers: answersForRequest(leadFields, answers),
         });
+
+        // The visitor pass (LT-199, G1): on a page without a calendar this
+        // form runs the Turnstile check itself, once a field is focused.
+        setWantsPass(true);
+        if (!(await visitorPass.wait(PASS_WAIT_MS))) throw new Error('NO_VISITOR_PASS');
+        let res = await send();
+        // The pass lives an hour: an expired one is asked for again, once.
+        if (!res.ok && res.status === 401) {
+          visitorPass.invalidate();
+          if (!(await visitorPass.wait(PASS_WAIT_MS))) throw new Error('NO_VISITOR_PASS');
+          res = await send();
+        }
 
         if (!res.ok) {
           if (res.code === 'LEADS_CAP_REACHED') {
@@ -405,6 +427,7 @@ const Contact: React.FC<ContactProps> = ({ config, address, contact, workingDays
   const formNode = (
     <motion.form
       onSubmit={handleSubmit}
+      onFocus={() => setWantsPass(true)}
       className="card-design space-y-6 p-8"
       variants={itemVariants}
       aria-labelledby="contact-form-title"
@@ -456,6 +479,18 @@ const Contact: React.FC<ContactProps> = ({ config, address, contact, workingDays
         id="contact-message"
         error={formErrors.message}
       />
+
+      {/* The visitor check (LT-199): only on a page that has no pass yet —
+          a booking page already ran one in its calendar. Usually invisible. */}
+      {!isPreview && wantsPass && !hasPass && (
+        <div className="flex justify-center" data-testid="contact-turnstile">
+          <Turnstile
+            siteKey={import.meta.env.VITE_TURNSTILE_SITE_KEY}
+            onSuccess={(token) => void visitorPass.handshake(token)}
+            options={{ theme: 'auto', size: 'flexible', appearance: 'interaction-only' }}
+          />
+        </div>
+      )}
 
       <motion.button
         type="submit"
@@ -624,6 +659,13 @@ const Contact: React.FC<ContactProps> = ({ config, address, contact, workingDays
                 </>
               )}
             </div>
+            {/* This layout has no form of its own; a leads site's contact
+                section is its conversion, so it gets one (LT-199). */}
+            {conversion === 'lead' && (
+              <div className="mt-12 max-w-2xl bg-light-surface dark:bg-dark-surface text-light-text dark:text-dark-text rounded-design-card shadow-card">
+                {formOrButtons}
+              </div>
+            )}
           </div>
         </section>
         {modal}

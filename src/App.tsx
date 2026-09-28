@@ -21,7 +21,7 @@ import Loading from './components/Loading';
 import SectionDivider, { type SectionTone } from './components/SectionDivider';
 import ServicesLedger from './components/Layout/ServicesLedger';
 import BookingBand from './components/Layout/BookingBand';
-import { hasBookableServices } from './models/AppointmentType';
+import { takesBookings } from './services/siteMode';
 import { pickBandSlot } from './services/bandSlot';
 
 // Contexts & Hooks
@@ -230,7 +230,8 @@ function MainContent() {
           };
 
           updateMetaTag('property', 'og:title', result.businessName);
-          const description = result.components?.about?.description || `Book an appointment at ${result.businessName}`;
+          const description = result.components?.about?.description
+            || (result.conversion === 'lead' ? result.businessName : `Book an appointment at ${result.businessName}`);
           updateMetaTag('name', 'description', description);
 
           if (result.logoImageName) {
@@ -264,8 +265,8 @@ function MainContent() {
   // two same-preset sites still differ (LT-053).
   const jitter = getSiteJitter(config.subDomain);
   const flow: { key: string; tone: SectionTone; node: ReactNode }[] = [];
-  // LT-167: nothing to book → no schedule, no booking band.
-  const bookable = hasBookableServices(config.appointmentTypes);
+  // LT-167: nothing to book → no schedule, no booking band. LT-199: nor on a leads site.
+  const bookable = takesBookings(config.conversion, config.appointmentTypes);
   // Vibe sites (LT-093+) opt into every seeded page-level variation; legacy
   // presets and unpresetted sites never reorder or restyle.
   const isVibeSite = (config.design?.sectionHeader ?? 'centered') !== 'centered'
@@ -281,6 +282,7 @@ function MainContent() {
           isContactVisible={config.components?.contact?.visible ?? false}
           businessName={config.businessName}
           appointmentTypes={config.appointmentTypes}
+          conversion={config.conversion}
           isPreview={isPreview}
           palette={config.pallete}
           design={config.design}
@@ -385,6 +387,7 @@ function MainContent() {
           layout={config.design?.contactLayout}
           leadFields={config.leadFields}
           leadsOpen={config.leadsOpen}
+          conversion={config.conversion}
           isPreview={isPreview}
         />
       )
@@ -491,7 +494,7 @@ function MainContent() {
               // Same tone as its neighbour so no divider is drawn against it —
               // the band paints its own primary background edge to edge.
               tone: (ordered[slot] ?? ordered[slot - 1]).tone,
-              node: <BookingBand statement={config.components.schedule.description} />,
+              node: <BookingBand statement={config.components.schedule.description} label={config.components.hero?.cta} />,
             });
           }
         }
@@ -560,6 +563,7 @@ function MainContent() {
           <Footer
             config={config.components.footer}
             appointmentsType={config.appointmentTypes}
+            conversion={config.conversion}
             social={config.social}
             businessName={config.businessName}
             logoImageName={config.logoImageName}

@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { Calendar, Phone, Instagram, Facebook } from 'lucide-react';
+import { Calendar, MessageSquare, Phone, Instagram, Facebook } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { ContactModal } from '../ContactModal';
@@ -8,7 +8,8 @@ import { HeroConfig } from '../../models/HeroConfig';
 import { Social } from '../../models/Social';
 import { Palette } from '../../models/WebsiteConfig';
 import { DesignConfig, BorderRadius } from '../../models/DesignConfig';
-import { AppointmentType, hasBookableServices } from '../../models/AppointmentType';
+import { AppointmentType } from '../../models/AppointmentType';
+import { Conversion, mainCta } from '../../services/siteMode';
 import { stampTextFor } from '../../services/heroStamp';
 import ImagesService from '../../services/ImagesService';
 import { handleWideImageError } from '../../utils/imageFallback';
@@ -75,6 +76,8 @@ interface HeroProps {
   businessName?: string;
   /** The business's real services — the ticker band lists these (LT-117). */
   appointmentTypes?: AppointmentType[];
+  /** LT-199: a leads site's main button goes to the contact form. */
+  conversion?: Conversion;
   isPreview?: boolean;
   palette?: Palette;
   design?: DesignConfig;
@@ -103,7 +106,7 @@ const radiusClassMap: Record<BorderRadius, string> = {
   full: 'rounded-full',
 };
 
-const Hero: React.FC<HeroProps> = ({ config, social, phone, isContactVisible, appointmentTypes, isPreview, palette, design, jitter, businessName }) => {
+const Hero: React.FC<HeroProps> = ({ config, social, phone, isContactVisible, appointmentTypes, conversion, isPreview, palette, design, jitter, businessName }) => {
   const { t, language } = useLanguage();
   const { isModalOpen, setIsModalOpen, modalType, handleContactClick } = useContactHandler();
 
@@ -261,22 +264,27 @@ const Hero: React.FC<HeroProps> = ({ config, social, phone, isContactVisible, ap
 
   // ── Button renderers ──────────────────────────────────────────────────────
 
+  // The site's main button (LT-199): the calendar on a booking site, the
+  // contact form on a leads site, in the owner's words when they wrote some.
+  // None on a booking site with nothing to book yet (LT-167).
+  const cta = mainCta({ conversion, types: appointmentTypes, own: config.cta }, t);
+  const CtaIcon = cta?.target === 'contact' ? MessageSquare : Calendar;
   const renderBookButton = (fullWidth = false) => {
-    if (!hasBookableServices(appointmentTypes)) return null; // LT-167
+    if (!cta) return null;
     const w = fullWidth ? 'w-full' : '';
 
     if (buttonStyle === 'solid') {
       return (
         <motion.a
-          href="#schedule"
+          href={cta.href}
           className={`relative inline-flex items-center justify-center px-8 py-4 bg-primary dark:bg-primary-dark text-on-primary dark:text-on-primary-dark ${btnRadius} ${w} shadow-lg hover:opacity-90 transition-opacity`}
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
-          aria-label={t('hero.book')}
+          aria-label={cta.label}
         >
           <span className="flex items-center justify-center gap-2">
-            <span>{t('hero.book')}</span>
-            <Calendar className="h-5 w-5" aria-hidden="true" />
+            <span>{cta.label}</span>
+            <CtaIcon className="h-5 w-5" aria-hidden="true" />
           </span>
         </motion.a>
       );
@@ -285,15 +293,15 @@ const Hero: React.FC<HeroProps> = ({ config, social, phone, isContactVisible, ap
     if (buttonStyle === 'outline') {
       return (
         <motion.a
-          href="#schedule"
+          href={cta.href}
           className={`inline-flex items-center justify-center px-8 py-4 border-2 border-primary-readable dark:border-primary-dark-readable text-primary-readable dark:text-primary-dark-readable ${btnRadius} ${w} hover:bg-primary/10 dark:hover:bg-primary-dark/10 transition-colors shadow-lg`}
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
-          aria-label={t('hero.book')}
+          aria-label={cta.label}
         >
           <span className="flex items-center justify-center gap-2">
-            <span>{t('hero.book')}</span>
-            <Calendar className="h-5 w-5" aria-hidden="true" />
+            <span>{cta.label}</span>
+            <CtaIcon className="h-5 w-5" aria-hidden="true" />
           </span>
         </motion.a>
       );
@@ -302,15 +310,15 @@ const Hero: React.FC<HeroProps> = ({ config, social, phone, isContactVisible, ap
     if (buttonStyle === 'ghost') {
       return (
         <motion.a
-          href="#schedule"
+          href={cta.href}
           className={`inline-flex items-center justify-center px-8 py-4 text-primary-readable dark:text-primary-dark-readable ${btnRadius} ${w} hover:bg-primary/10 dark:hover:bg-primary-dark/10 transition-colors`}
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
-          aria-label={t('hero.book')}
+          aria-label={cta.label}
         >
           <span className="flex items-center justify-center gap-2">
-            <span>{t('hero.book')}</span>
-            <Calendar className="h-5 w-5" aria-hidden="true" />
+            <span>{cta.label}</span>
+            <CtaIcon className="h-5 w-5" aria-hidden="true" />
           </span>
         </motion.a>
       );
@@ -319,12 +327,12 @@ const Hero: React.FC<HeroProps> = ({ config, social, phone, isContactVisible, ap
     // gradient (default)
     return (
       <motion.a
-        href="#schedule"
+        href={cta.href}
         className={`group relative inline-flex items-center justify-center px-8 py-4 bg-primary dark:bg-primary-dark text-on-primary dark:text-on-primary-dark ${btnRadius} ${w} shadow-lg hover:shadow-xl overflow-hidden`}
         whileHover={{ scale: 1.05 }}
         whileTap={{ scale: 0.95 }}
         role="button"
-        aria-label={t('hero.book')}
+        aria-label={cta.label}
       >
         <motion.div
           className="absolute inset-0 bg-gradient-to-r from-primary via-accent-violet to-primary dark:from-primary-dark dark:via-accent-cyan dark:to-primary-dark"
@@ -341,15 +349,16 @@ const Hero: React.FC<HeroProps> = ({ config, social, phone, isContactVisible, ap
           aria-hidden="true"
         />
         <span className="relative text-center flex items-center justify-center gap-2">
-          <span>{t('hero.book')}</span>
-          <Calendar className="h-5 w-5" aria-hidden="true" />
+          <span>{cta.label}</span>
+          <CtaIcon className="h-5 w-5" aria-hidden="true" />
         </span>
       </motion.a>
     );
   };
 
   const renderContactButton = (fullWidth = false) => {
-    if (!isContactVisible) return null;
+    // A leads site's main button already goes there (LT-199).
+    if (!isContactVisible || cta?.target === 'contact') return null;
     const w = fullWidth ? 'w-full' : '';
     return (
       <motion.a

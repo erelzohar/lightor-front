@@ -8,6 +8,8 @@ interface BookingBandProps {
   statement: string;
   /** LT-136 'chips' variant: the services as quick picks under the statement. */
   chips?: string[];
+  /** LT-199: the site's main button text, the owner's words; absent = "Book". */
+  label?: string;
 }
 
 /**
@@ -16,11 +18,12 @@ interface BookingBandProps {
  * monthly."); generated pages had no color break at all. Sits directly above
  * the schedule section and anchors to it.
  */
-const BookingBand: React.FC<BookingBandProps> = ({ statement, chips }) => {
+const BookingBand: React.FC<BookingBandProps> = ({ statement, chips, label }) => {
   const { t } = useLanguage();
+  const buttonLabel = label?.trim() || t('hero.book');
   return (
     <section
-      aria-label={t('hero.book')}
+      aria-label={buttonLabel}
       className="bg-primary dark:bg-primary-dark text-on-primary dark:text-on-primary-dark transition-colors duration-300"
     >
       <motion.div
@@ -46,7 +49,7 @@ const BookingBand: React.FC<BookingBandProps> = ({ statement, chips }) => {
           className="shrink-0 inline-flex items-center gap-3 bg-light-bg text-light-text dark:bg-dark-bg dark:text-dark-text font-bold px-8 py-4 rounded-design min-h-[3.25rem] hover:opacity-90 transition-opacity"
         >
           <Calendar className="h-5 w-5" aria-hidden="true" />
-          {t('hero.book')}
+          {buttonLabel}
         </a>
       </motion.div>
     </section>

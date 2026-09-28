@@ -70,7 +70,7 @@ describe('SmsService', () => {
         success: false, code: 'ANSWER_REQUIRED', details: { key: 'area', label: 'Area' },
       });
       await expect(smsService.sendContactMessage('demo', form)).resolves.toEqual({
-        ok: false, code: 'ANSWER_REQUIRED', details: { key: 'area', label: 'Area' },
+        ok: false, status: 400, code: 'ANSWER_REQUIRED', details: { key: 'area', label: 'Area' },
       });
 
       mock.onPost(`${globals.messagingUrl}/contact`).reply(403, { success: false, code: 'LEADS_CAP_REACHED' });

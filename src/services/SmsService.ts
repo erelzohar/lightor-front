@@ -5,6 +5,8 @@ import type { AnswerPayload } from "../models/BookingField";
 
 export interface ContactResult {
     ok: boolean;
+    /** The HTTP status of a refusal; 401 means the visitor pass is missing or expired. */
+    status?: number;
     code?: string;
     details?: { key?: string; label?: string };
 }
@@ -30,7 +32,13 @@ class SMSService {
         }
         catch (err: any) {
             const data = err?.response?.data;
-            return { ok: false, code: typeof data?.code === 'string' ? data.code : undefined, details: data?.details };
+            const status: number | undefined = err?.response?.status;
+            return {
+                ok: false,
+                ...(status ? { status } : {}),
+                code: typeof data?.code === 'string' ? data.code : undefined,
+                details: data?.details,
+            };
         }
     }
 

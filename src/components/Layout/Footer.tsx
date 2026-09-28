@@ -5,7 +5,8 @@ import { useLanguage } from '../../contexts/LanguageContext';
 import { ContactModal } from '../ContactModal';
 import { useContactHandler } from '../../hooks/useContactHandler';
 import { LegalModal } from '../LegalModal';
-import { AppointmentType, hasBookableServices } from '../../models/AppointmentType';
+import { AppointmentType, hasNamedServices } from '../../models/AppointmentType';
+import { Conversion, takesBookings } from '../../services/siteMode';
 import { FooterLayout } from '../../models/DesignConfig';
 import { Social } from '../../models/Social';
 import globals from '../../services/globals';
@@ -32,13 +33,15 @@ interface FooterProps {
   businessName: string;
   logoImageName: string;
   appointmentsType: AppointmentType[];
+  /** LT-199: a leads site links no calendar; its services still list. */
+  conversion?: Conversion;
   websiteConfig: WebsiteConfig;
   layout?: FooterLayout;
   /** LT-124: the 'line'/'ticker' rows name the city beside the business. */
   city?: string;
 }
 
-const Footer: React.FC<FooterProps> = ({ config, social, businessName, logoImageName, appointmentsType, websiteConfig, layout = 'columns', city }) => {
+const Footer: React.FC<FooterProps> = ({ config, social, businessName, logoImageName, appointmentsType, conversion, websiteConfig, layout = 'columns', city }) => {
   const { t, language } = useLanguage();
   const { isModalOpen, setIsModalOpen, modalType, handleContactClick } = useContactHandler();
   const [legalModal, setLegalModal] = useState<{
@@ -84,7 +87,7 @@ const Footer: React.FC<FooterProps> = ({ config, social, businessName, logoImage
   const menuItems = [
     { href: "#about", label: titles.about ?? t('nav.about'), visible: websiteConfig?.about?.visible },
     { href: "#portfolio", label: titles.portfolio ?? t('nav.portfolio'), visible: websiteConfig?.portfolio?.visible },
-    { href: "#schedule", label: titles.schedule ?? t('nav.schedule'), visible: hasBookableServices(appointmentsType) },
+    { href: "#schedule", label: titles.schedule ?? t('nav.schedule'), visible: takesBookings(conversion, appointmentsType) },
     { href: "#contact", label: titles.contact ?? t('nav.contact'), visible: websiteConfig?.contact?.visible }
   ].filter(item => item.visible === undefined || item.visible);
 
@@ -372,8 +375,8 @@ const Footer: React.FC<FooterProps> = ({ config, social, businessName, logoImage
                   </nav>
                 </div>
 
-                {/* Services — only when there are any (LT-167). */}
-                {hasBookableServices(appointmentsType) && (
+                {/* Services — only when there are any (LT-167); content on a leads site too (LT-199). */}
+                {hasNamedServices(appointmentsType) && (
                 <div>
                   <h3
                     className="text-lg font-semibold mb-6"

@@ -3,14 +3,14 @@ import { Calendar as CalendarIcon, Clock, CheckCircle, ChevronLeft, ChevronRight
 import { motion, AnimatePresence } from 'framer-motion';
 import { Turnstile } from '@marsidev/react-turnstile';
 import { useLanguage } from '../../../contexts/LanguageContext';
-import { AppointmentType } from '../../../models/AppointmentType';
+import { AppointmentType, isBookableService } from '../../../models/AppointmentType';
 import { Appointment } from '../../../models/Appointment';
 import { BookingField, AnswerValue, fieldsForService, answerProblem, answersForRequest } from '../../../models/BookingField';
 import { BusySlot } from '../../../models/BusySlot';
 import { ClassOccurrence } from '../../../models/ClassOccurrence';
 import { ScheduleConfig } from '../../../models/ScheduleConfig';
 import AppointmentService from '../../../services/AppointmentService';
-import AuthService from '../../../services/AuthService';
+import { visitorPass, useVisitorPass } from '../../../services/visitorPass';
 import smsService from '../../../services/SmsService';
 import { Loader2 } from 'lucide-react';
 import { Vacation } from '../../../models/Vacation';
@@ -96,20 +96,22 @@ const DEFAULT_BOOKING_HORIZON_DAYS = 60;
 /** A stable "no questions" so the scoped list is not recomputed every render. */
 const NO_BOOKING_FIELDS: BookingField[] = [];
 
-const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone, businessName, timeToCancel, vacations, dateOverrides = [], appointmentTypes, isUpdating, appointmentToUpdate, onUpdateComplete, onCancelUpdate, isPreview, hideDescription = false, header, headerScale, scheduleStyle = 'card', tone = 'surface', bookingHorizonDays = DEFAULT_BOOKING_HORIZON_DAYS, bookingFields = NO_BOOKING_FIELDS }) => {
+const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone, businessName, timeToCancel, vacations, dateOverrides = [], appointmentTypes: offeredTypes, isUpdating, appointmentToUpdate, onUpdateComplete, onCancelUpdate, isPreview, hideDescription = false, header, headerScale, scheduleStyle = 'card', tone = 'surface', bookingHorizonDays = DEFAULT_BOOKING_HORIZON_DAYS, bookingFields = NO_BOOKING_FIELDS }) => {
   // if (!appointmentTypes) {
   //   throw new Error('No appointment types available');
   // }
 
-  const [isAuthorized, setIsAuthorized] = useState<boolean>(!!isPreview);
-  const handshakeInProgress = useRef(false);
+  // Only what can be booked (LT-199): a service without a duration is
+  // content on the page, not a time slot, and never reaches the menu.
+  const appointmentTypes = useMemo(() => offeredTypes.filter(isBookableService), [offeredTypes]);
 
-  const handleHandshake = async (token: string) => {
-    if (handshakeInProgress.current || isAuthorized) return;
-    handshakeInProgress.current = true;
-    const success = await AuthService.handshake(token);
-    if (success) setIsAuthorized(true);
-    handshakeInProgress.current = false;
+  // The page's visitor pass (LT-199): shared with the contact form, so a
+  // handshake here also lets a message through, and the other way round.
+  const hasPass = useVisitorPass();
+  const isAuthorized = !!isPreview || hasPass;
+
+  const handleHandshake = (token: string) => {
+    void visitorPass.handshake(token);
   };
 
   const { t, language } = useLanguage();

@@ -8,7 +8,13 @@ import { TONE_BG } from './blockUtils';
 import ImagesService from '../../services/ImagesService';
 import { handleWideImageError } from '../../utils/imageFallback';
 
-interface Props { appointmentTypes: AppointmentType[]; tone?: SectionTone; title?: string }
+interface Props {
+  appointmentTypes: AppointmentType[];
+  tone?: SectionTone;
+  title?: string;
+  /** LT-199: without a calendar on the page a card leads to the contact form. */
+  bookable?: boolean;
+}
 
 const minutes = (ms: string | number | undefined): number | null => {
   const n = Number(ms);
@@ -16,7 +22,7 @@ const minutes = (ms: string | number | undefined): number | null => {
 };
 
 /** LT-136: services as cards with duration and price; the first is highlighted. */
-const PriceCards: React.FC<Props> = ({ appointmentTypes, tone = 'bg', title }) => {
+const PriceCards: React.FC<Props> = ({ appointmentTypes, tone = 'bg', title, bookable = true }) => {
   const { t, language } = useLanguage();
   const rows = (appointmentTypes ?? []).filter((a) => a?.name).slice(0, 6);
   if (!rows.length) return null;
@@ -34,7 +40,7 @@ const PriceCards: React.FC<Props> = ({ appointmentTypes, tone = 'bg', title }) =
             return (
               <motion.a
                 key={a._id ?? i}
-                href="#schedule"
+                href={bookable ? '#schedule' : '#contact'}
                 className={`block rounded-design-card p-7 transition-transform hover:-translate-y-1 ${featured ? 'bg-primary dark:bg-primary-dark text-on-primary dark:text-on-primary-dark shadow-card' : 'card-design'}`}
                 initial={{ opacity: 0, y: 14 }}
                 whileInView={{ opacity: 1, y: 0 }}

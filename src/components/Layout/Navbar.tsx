@@ -7,8 +7,8 @@ import ImagesService from '../../services/ImagesService';
 import { handleSquareImageError } from '../../utils/imageFallback';
 import { useIsDarkMode } from '../../hooks/useIsDarkMode';
 import { navLinksFromBlocks, sectionTitlesOf } from '../../services/navLinks';
-import { hasBookableServices } from '../../models/AppointmentType';
-import { Calendar } from 'lucide-react';
+import { Conversion, mainCta, takesBookings } from '../../services/siteMode';
+import { Calendar, MessageSquare } from 'lucide-react';
 
 // LT-190: the business name is never cut. On phones the brand block may
 // shrink so a long name drops to a second line; from md up it keeps its width
@@ -32,6 +32,8 @@ interface WebsiteConfig {
     contact: { visible: boolean; title?: string };
     schedule?: { title?: string };
     faq?: { title?: string };
+    /** LT-199: the site's main button text, the owner's words. */
+    hero?: { cta?: string };
   };
   design?: {
     navbarStyle?: 'floating' | 'solid' | 'transparent' | 'minimal' | 'centered' | 'pill' | 'split';
@@ -39,8 +41,10 @@ interface WebsiteConfig {
   };
   /** LT-137: a composed page — links come from these, not the section flags. */
   blocks?: { type: string; id: string }[];
-  /** LT-167: no named service → no "Book" link or button. */
-  appointmentTypes?: { name?: string | null }[];
+  /** LT-167: nothing bookable → no "Book" link or button. */
+  appointmentTypes?: { name?: string | null; durationMS?: string | number | null }[];
+  /** LT-199: a leads site's button goes to the contact form. */
+  conversion?: Conversion;
 }
 
 interface NavbarProps {
@@ -141,7 +145,7 @@ const Navbar: React.FC<NavbarProps> = ({ websiteConfig, isPreview }) => {
   };
 
   const { language } = useLanguage();
-  const bookable = hasBookableServices(websiteConfig.appointmentTypes);
+  const bookable = takesBookings(websiteConfig.conversion, websiteConfig.appointmentTypes);
   // LT-168: a link reads as the heading it scrolls to; the generic label only when a section has none.
   const titles = sectionTitlesOf(websiteConfig.components);
   const menuItems = websiteConfig.blocks?.length
@@ -217,7 +221,11 @@ const Navbar: React.FC<NavbarProps> = ({ websiteConfig, isPreview }) => {
 
   // LT-137 variants — each is its own composition, not a class swap on the
   // legacy bar. The legacy three below are untouched.
-  const bookLabel = t('hero.book');
+  // The site's main button (LT-199), as the hero draws it.
+  const cta = mainCta(
+    { conversion: websiteConfig.conversion, types: websiteConfig.appointmentTypes, own: websiteConfig.components.hero?.cta },
+    t
+  );
   const themeButton = (
     showDarkMode && (
       <button
@@ -235,10 +243,10 @@ const Navbar: React.FC<NavbarProps> = ({ websiteConfig, isPreview }) => {
       <span className={`${NAME_CLS} text-lg sm:text-xl`}>{websiteConfig.businessName}</span>
     </button>
   );
-  const bookButton = bookable ? (
-    <a href="#schedule" onClick={handleLinkClick} className="inline-flex items-center gap-2 bg-primary dark:bg-primary-dark text-on-primary dark:text-on-primary-dark font-bold px-5 py-2.5 rounded-design text-sm hover:opacity-90 transition-opacity whitespace-nowrap">
-      <Calendar className="h-4 w-4" aria-hidden="true" />
-      {bookLabel}
+  const bookButton = cta ? (
+    <a href={cta.href} onClick={handleLinkClick} className="inline-flex items-center gap-2 bg-primary dark:bg-primary-dark text-on-primary dark:text-on-primary-dark font-bold px-5 py-2.5 rounded-design text-sm hover:opacity-90 transition-opacity whitespace-nowrap">
+      {cta.target === 'contact' ? <MessageSquare className="h-4 w-4" aria-hidden="true" /> : <Calendar className="h-4 w-4" aria-hidden="true" />}
+      {cta.label}
     </a>
   ) : null;
   const links = (cls: string) => menuItems.map((item) => (

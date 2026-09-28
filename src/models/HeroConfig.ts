@@ -11,7 +11,12 @@ export class HeroConfig {
     public bgType: HeroBgType,
     public bordersType: HeroBordersType,
     /** LT-174: the round stamp decor's own line, written by the AI. Older configs have none. */
-    public stamp?: string
+    public stamp?: string,
+    /**
+     * LT-199: the site's main button text (hero, navbar, booking band) — the
+     * owner's words, AI-written and editable. Absent = the mode's default.
+     */
+    public cta?: string
   ) {}
 
   static fromJSON(json: any): HeroConfig {
@@ -23,7 +28,8 @@ export class HeroConfig {
       json.heroImageSrc,
       json.bgType ?? 'gradient',
       json.bordersType ?? 'round',
-      typeof json.stamp === 'string' && json.stamp.trim() ? json.stamp.trim() : undefined
+      typeof json.stamp === 'string' && json.stamp.trim() ? json.stamp.trim() : undefined,
+      typeof json.cta === 'string' && json.cta.trim() ? json.cta.trim() : undefined
     );
   }
 }

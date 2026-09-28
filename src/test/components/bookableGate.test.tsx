@@ -70,11 +70,13 @@ describe('bookable gate', () => {
   });
   afterEach(() => vi.unstubAllGlobals());
 
-  it('hasBookableServices needs at least one non-blank name', () => {
+  it('hasBookableServices needs at least one non-blank name with a duration', () => {
     expect(hasBookableServices(undefined)).toBe(false);
     expect(hasBookableServices([])).toBe(false);
-    expect(hasBookableServices([{ name: '  ' }, null])).toBe(false);
-    expect(hasBookableServices([{ name: '' }, { name: 'Haircut' }])).toBe(true);
+    expect(hasBookableServices([{ name: '  ', durationMS: '1800000' }, null])).toBe(false);
+    expect(hasBookableServices([{ name: '', durationMS: '1800000' }, { name: 'Haircut', durationMS: '1800000' }])).toBe(true);
+    // LT-199: a service without a duration is content, not a time slot.
+    expect(hasBookableServices([{ name: 'Kitchen renovation' }, { name: 'Bathroom', durationMS: '' }])).toBe(false);
   });
 
   it('composed page: no services → no schedule, no booking band, and the next section takes the first slot', () => {

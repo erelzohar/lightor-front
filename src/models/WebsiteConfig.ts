@@ -12,6 +12,7 @@ import { TestimonialsConfig } from './TestimonialsConfig';
 import { FaqConfig } from './FaqConfig';
 import { DateOverride } from '../utils/workingHours';
 import { BookingField, parseBookingFields } from './BookingField';
+import type { Conversion } from '../services/siteMode';
 
 /**
  * Every part is optional, and the whole address may be absent — a business can
@@ -203,7 +204,12 @@ export class WebsiteConfig {
      * gives way to call / WhatsApp buttons. Absent reads as open — older
      * payloads and the register preview.
      */
-    public leadsOpen: boolean = true
+    public leadsOpen: boolean = true,
+    /**
+     * LT-199: 'lead' = a leads site — no calendar, the contact form is the
+     * conversion. Anything else reads as a booking site.
+     */
+    public conversion: Conversion = 'book'
   ) {}
 
   static fromJSON(json: any): WebsiteConfig {
@@ -239,7 +245,8 @@ export class WebsiteConfig {
       parseBookingFields(json.bookingFields),
       // The server stores them with no service scope.
       parseBookingFields(json.leadFields),
-      json.leadsOpen !== false
+      json.leadsOpen !== false,
+      json.conversion === 'lead' ? 'lead' : 'book'
     );
   }
 }

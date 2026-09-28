@@ -11,6 +11,7 @@ export class AppointmentType {
     // Optional: services seeded at signup are unpriced until the owner sets a price.
     public price: string | undefined,
     public user_id: string,
+    /** '' for a leads site's service (LT-199): content, not a time slot. */
     public durationMS: string,
     /** Absent means an ordinary one-to-one appointment, which is most of them. */
     public kind?: 'appointment' | 'class',
@@ -31,7 +32,7 @@ export class AppointmentType {
       json.name,
       json.price,
       json.user_id,
-      json.durationMS,
+      json.durationMS == null ? '' : String(json.durationMS),
       json.kind,
       json.capacity !== undefined ? Number(json.capacity) : undefined,
       Array.isArray(json.sessions)
@@ -44,11 +45,24 @@ export class AppointmentType {
   }
 }
 
+type ServiceLike = { name?: string | null; durationMS?: string | number | null } | null | undefined;
+
 /**
- * Whether a customer has anything to book (LT-167). A site with no named
- * service shows no schedule, no booking band and no "Book" links — they
- * would all lead to an empty widget.
+ * A service a customer can book: a name and a time slot. Since LT-199 a
+ * service may have no duration — a leads site lists what it does as content.
  */
-export const hasBookableServices = (
-  types?: ReadonlyArray<{ name?: string | null } | null | undefined> | null
-): boolean => (types ?? []).some((t) => !!t?.name?.trim());
+export const isBookableService = (t: ServiceLike): boolean =>
+  !!t?.name?.trim() && Number(t?.durationMS) > 0;
+
+/**
+ * Whether a customer has anything to book (LT-167). A site with nothing
+ * bookable shows no schedule, no booking band and no "Book" links — they
+ * would all lead to an empty widget. Use `takesBookings` (services/siteMode)
+ * for the page: a leads site takes no bookings whatever its services.
+ */
+export const hasBookableServices = (types?: ReadonlyArray<ServiceLike> | null): boolean =>
+  (types ?? []).some(isBookableService);
+
+/** Services to list as content — named ones, bookable or not (LT-199). */
+export const hasNamedServices = (types?: ReadonlyArray<ServiceLike> | null): boolean =>
+  (types ?? []).some((t) => !!t?.name?.trim());
