@@ -29,6 +29,7 @@ import { pickBandSlot } from './services/bandSlot';
 // Contexts & Hooks
 import { useLanguage, Language } from './contexts/LanguageContext';
 import { WebsiteConfig } from './models/WebsiteConfig';
+import { keyPreviewQuestions } from './models/BookingField';
 import { DesignConfig } from './models/DesignConfig';
 import WebConfigService from './services/WebConfigService';
 import { readInlineConfig, sameConfig } from './services/edgeShell';
@@ -110,16 +111,18 @@ function MainContent() {
         // stylePreset expands into concrete design tokens exactly as it does
         // for a real site — previously the raw cast skipped expansion and
         // previews rendered with default tokens instead of the preset (LT-039).
+        // LT-202: the AI's proposed questions have no server key yet.
+        const payload = keyPreviewQuestions(event.data.config);
         let cfg: WebsiteConfig;
         try {
-          cfg = WebsiteConfig.fromJSON(event.data.config);
+          cfg = WebsiteConfig.fromJSON(payload);
         } catch (err) {
           // Tolerate partial preview payloads rather than blanking the
           // preview — but NEVER silently drop the design (LT-104: a throw
           // above used to strip preset expansion, so every onboarding
           // preview rendered generic while the saved site rendered styled).
           console.warn('[lightor-front] PREVIEW_DATA failed full parsing; rendering leniently:', err);
-          const raw = event.data.config as WebsiteConfig;
+          const raw = payload as WebsiteConfig;
           try {
             (raw as { design: unknown }).design = DesignConfig.fromJSON((raw as { design: unknown }).design);
           } catch { /* keep whatever design the payload carried */ }

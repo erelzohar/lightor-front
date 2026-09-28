@@ -55,6 +55,33 @@ export const parseBookingFields = (json: unknown): BookingField[] =>
     ? json.map((entry) => BookingField.fromJSON(entry)).filter((field): field is BookingField => field !== null)
     : [];
 
+/**
+ * A preview shows the AI's proposed questions before they exist (LT-202). The
+ * server keys a question when the site is saved, and a question without a key
+ * is no question to `fromJSON` — so the onboarding preview dropped every one
+ * the AI proposed, and an owner who asked for "a form with location, the car's
+ * hand and the car type" saw a form without them. A preview never submits, so
+ * each keyless question gets a stand-in key, unique in its list; a saved site
+ * still needs the server's.
+ */
+export function keyPreviewQuestions<T>(config: T): T {
+  if (!config || typeof config !== 'object' || Array.isArray(config)) return config;
+  const source = config as Record<string, unknown>;
+  const keyed = (list: unknown, prefix: string): unknown =>
+    Array.isArray(list)
+      ? list.map((entry, index) =>
+          entry && typeof entry === 'object' && !(entry as { key?: unknown }).key
+            ? { ...(entry as Record<string, unknown>), key: `${prefix}-${index}` }
+            : entry
+        )
+      : list;
+  return {
+    ...source,
+    ...('bookingFields' in source ? { bookingFields: keyed(source.bookingFields, 'preview-booking') } : {}),
+    ...('leadFields' in source ? { leadFields: keyed(source.leadFields, 'preview-lead') } : {}),
+  } as T;
+}
+
 /** The questions asked for one service, in catalog order. */
 export const fieldsForService = (catalog: BookingField[], serviceId: string | null | undefined): BookingField[] =>
   catalog.filter((field) => field.services.length === 0 || field.services.includes(String(serviceId)));
