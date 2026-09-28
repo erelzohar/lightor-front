@@ -16,6 +16,8 @@ import ContactButton from './components/ContactButton';
 import LightorBadge from './components/LightorBadge';
 import ErrorBoundary from './components/ErrorBoundary';
 import NotFound from './components/NotFound';
+import SiteNotActive from './components/SiteNotActive';
+import { classifyConfigFailure } from './services/configFailure';
 import ManageAppointment from './components/ManageAppointment';
 import Loading from './components/Loading';
 import SectionDivider, { type SectionTone } from './components/SectionDivider';
@@ -77,6 +79,8 @@ function MainContent() {
   const [config, setConfig] = useState<WebsiteConfig | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [isPreview, setIsPreview] = useState<boolean>(false);
+  // LT-200: the business exists but its site is not live yet (API 403).
+  const [inactive, setInactive] = useState<boolean>(false);
   // Counts the generations the register wizard has posted with `generate` —
   // each one replays the section-by-section cascade (0 = never, no cascade).
   const [generateSeq, setGenerateSeq] = useState(0);
@@ -240,7 +244,12 @@ function MainContent() {
           }
         }
       } catch (err: any) {
-        if (!isPreviewRef.current && err.status !== 404 && err.response?.status !== 404 && process.env.NODE_ENV === 'production') {
+        // LT-200: a 403 is a site that is not live yet (the owner has not
+        // confirmed their email) — an expected state with its own page, not a
+        // crash to report. A 404 is no business at all. Anything else is.
+        const failure = classifyConfigFailure(err);
+        if (failure === 'inactive') setInactive(true);
+        if (!isPreviewRef.current && failure === 'error' && process.env.NODE_ENV === 'production') {
           void reportClientError({ error: err.message, stack: err.stack, kind: 'error' });
         }
       } finally {
@@ -255,7 +264,7 @@ function MainContent() {
   useTheme(config, isPreview);
 
   if (loading) return <Loading isLoading={true} />;
-  if (!config) return <NotFound />;
+  if (!config) return inactive ? <SiteNotActive /> : <NotFound />;
 
   // Build the in-flow content sections with their solid background "tone".
   // The page alternates bg <-> surface; dividers are interleaved between

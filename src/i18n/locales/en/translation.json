@@ -270,6 +270,12 @@
       "refresh": "Refresh Page"
     }
   },
+  "inactive": {
+    "title": "This site isn't live yet",
+    "message": "It goes live as soon as the business owner confirms their email address.",
+    "owner": "Is this your site? Open the email we sent you and click the confirmation link. Didn't get it? You can send it again from the dashboard.",
+    "button": "Go to the dashboard"
+  },
   "loading": {
     "step1": "Loading...",
     "step2": "Checking you're not a robot...",

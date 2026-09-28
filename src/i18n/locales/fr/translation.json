@@ -270,6 +270,12 @@
       "refresh": "Rafraîchir"
     }
   },
+  "inactive": {
+    "title": "Ce site n'est pas encore en ligne",
+    "message": "Il sera en ligne dès que le responsable de l'entreprise aura confirmé son adresse e-mail.",
+    "owner": "C'est votre site ? Ouvrez l'e-mail que nous vous avons envoyé et cliquez sur le lien de confirmation. Vous ne l'avez pas reçu ? Vous pouvez le renvoyer depuis le tableau de bord.",
+    "button": "Aller au tableau de bord"
+  },
   "loading": {
     "step1": "Chargement...",
     "step2": "Vérification anti-robot...",

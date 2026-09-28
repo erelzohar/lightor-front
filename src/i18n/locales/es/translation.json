@@ -270,6 +270,12 @@
       "refresh": "Refrescar"
     }
   },
+  "inactive": {
+    "title": "Este sitio aún no está activo",
+    "message": "Se publicará en cuanto el responsable del negocio confirme su dirección de correo.",
+    "owner": "¿Es tu sitio? Abre el correo que te enviamos y pulsa el enlace de confirmación. ¿No te llegó? Puedes volver a enviarlo desde el panel.",
+    "button": "Ir al panel"
+  },
   "loading": {
     "step1": "Cargando...",
     "step2": "Verificando que no seas un robot...",
