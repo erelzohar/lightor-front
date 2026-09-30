@@ -429,11 +429,11 @@ describe('the address question with Google suggestions (LT-191)', () => {
     expect(mocks.fetchSuggestions).toHaveBeenCalledTimes(1);
     expect(mocks.fetchSuggestions).toHaveBeenCalledWith('Her', expect.objectContaining({ language: 'en' }));
     expect(screen.getByText('Tel Aviv-Yafo, Israel')).toBeTruthy();
-    // Google's attribution, as its policy allows it (LT-207): unmodified,
-    // untranslated, labelled for screen readers.
+    // Google's attribution (LT-207): the Google Maps logo from Google's asset
+    // pack, labelled for screen readers.
     const attribution = screen.getByRole('img', { name: 'Google Maps' });
-    expect(attribution.textContent).toBe('Google Maps');
-    expect(attribution.getAttribute('translate')).toBe('no');
+    expect(attribution.tagName.toLowerCase()).toBe('svg');
+    expect(attribution.getAttribute('viewBox')).toBe('0 0 98 18');
     expect(addressInput().getAttribute('aria-expanded')).toBe('true');
     expect(addressInput().getAttribute('aria-controls')).toBe('schedule-answer-address-listbox');
 

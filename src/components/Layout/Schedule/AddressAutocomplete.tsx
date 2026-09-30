@@ -321,7 +321,7 @@ export const AddressAutocomplete = ({
             )}
           </ul>
           {/* Google's attribution for Places data shown without a map (LT-207). */}
-          <div className="flex justify-end border-t border-primary/15 dark:border-primary-dark/15 px-4 py-1.5">
+          <div className="flex justify-end border-t border-primary/15 dark:border-primary-dark/15 px-4 pt-2.5 pb-1.5">
             <GoogleMapsLogo />
           </div>
         </div>
