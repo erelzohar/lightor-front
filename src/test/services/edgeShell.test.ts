@@ -1,5 +1,5 @@
 import { describe, it, expect, afterEach } from 'vitest';
-import { INLINE_CONFIG_ID, readInlineConfig, sameConfig } from '../../services/edgeShell';
+import { INLINE_CONFIG_ID, readInlineConfig, sameConfig, languageAfterRefresh } from '../../services/edgeShell';
 
 const inline = (body: string, type = 'application/json') => {
   const script = document.createElement('script');
@@ -55,5 +55,27 @@ describe('sameConfig', () => {
     const cyclic: Record<string, unknown> = {};
     cyclic.self = cyclic;
     expect(sameConfig(cyclic, cyclic)).toBe(false);
+  });
+});
+
+/**
+ * LT-209 — the page paints from the edge's copy, then swaps in the API's.
+ * The language used to come from the edge's copy alone, so an owner's new
+ * default waited out the edge cache.
+ */
+describe('languageAfterRefresh', () => {
+  it("switches to the owner's new default while the page still shows the old one", () => {
+    expect(languageAfterRefresh('he', 'en', 'he')).toBe('en');
+  });
+
+  it('leaves a language the visitor picked in the meantime', () => {
+    expect(languageAfterRefresh('he', 'en', 'fr')).toBeNull();
+    expect(languageAfterRefresh('he', 'en', 'en')).toBeNull();
+  });
+
+  it('does nothing when the default did not change, or the API names none', () => {
+    expect(languageAfterRefresh('he', 'he', 'he')).toBeNull();
+    expect(languageAfterRefresh('he', undefined, 'he')).toBeNull();
+    expect(languageAfterRefresh('he', '', 'he')).toBeNull();
   });
 });

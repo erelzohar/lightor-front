@@ -32,7 +32,7 @@ import { WebsiteConfig } from './models/WebsiteConfig';
 import { keyPreviewQuestions } from './models/BookingField';
 import { DesignConfig } from './models/DesignConfig';
 import WebConfigService from './services/WebConfigService';
-import { readInlineConfig, sameConfig } from './services/edgeShell';
+import { readInlineConfig, sameConfig, languageAfterRefresh } from './services/edgeShell';
 import { getSiteJitter, createRng } from './services/seed';
 import { scaleOf, spacingOf, SPACING_CLASS, pickInvert, pickInterludeSlot } from './services/artDirection';
 import Interlude from './components/Layout/Interlude';
@@ -86,12 +86,17 @@ function MainContent() {
   // each one replays the section-by-section cascade (0 = never, no cascade).
   const [generateSeq, setGenerateSeq] = useState(0);
   const isPreviewRef = useRef(false);
-  const { setLanguage } = useLanguage();
+  const { language, setLanguage } = useLanguage();
 
   // Keep a stable ref to setLanguage so the message listener never needs to
   // re-register when the context returns a new function reference.
   const setLanguageRef = useRef(setLanguage);
   useEffect(() => { setLanguageRef.current = setLanguage; }, [setLanguage]);
+
+  // The language on screen, for the config refresh below, which resolves
+  // long after the render that set it (LT-209).
+  const languageRef = useRef(language);
+  useEffect(() => { languageRef.current = language; }, [language]);
 
   // Listen for preview data from a parent window (iframe preview mode).
   // Empty deps: register once on mount and never tear down mid-session.
@@ -200,13 +205,19 @@ function MainContent() {
             shellConfig = null; // an unparsable shell falls through to the fetch
           }
           if (shellConfig) {
+            const shellLanguage = shellConfig.defaultLanguage;
             setConfig(shellConfig);
-            setLanguage(shellConfig.defaultLanguage as Language);
+            setLanguage(shellLanguage as Language);
             void WebConfigService.getInstance()
               .getWebConfig(subdomain)
               .then((fresh) => {
                 if (isPreviewRef.current) return;
                 if (!sameConfig(fresh, shellConfig)) setConfig(fresh);
+                // The swap carries the owner's default language too (LT-209):
+                // it used to be set from the shell's copy only, so a changed
+                // default waited for the edge cache to expire.
+                const next = languageAfterRefresh(shellLanguage, fresh?.defaultLanguage, languageRef.current);
+                if (next) setLanguage(next as Language);
               })
               .catch(() => {
                 // The shell's copy stands; a failed refresh is not an error

@@ -58,3 +58,17 @@ export const sameConfig = (a: unknown, b: unknown): boolean => {
     return false;
   }
 };
+
+/**
+ * The language to switch to once the API's copy replaces the shell's
+ * (LT-209): the fresh default, when the owner changed it after the edge
+ * cached its copy — but only while the page still shows the shell's
+ * default. A language the visitor picked in the meantime is theirs. Null
+ * leaves the language as it is.
+ */
+export const languageAfterRefresh = (
+  shellDefault: string | undefined,
+  freshDefault: string | undefined,
+  current: string
+): string | null =>
+  freshDefault && freshDefault !== shellDefault && current === shellDefault ? freshDefault : null;
