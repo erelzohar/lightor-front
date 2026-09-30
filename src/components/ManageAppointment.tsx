@@ -14,6 +14,7 @@ import Loading from './Loading';
 import ImagesService from '../services/ImagesService';
 import { handleSquareImageError } from '../utils/imageFallback';
 import { googleCalendarUrl, downloadIcs, CalendarEventInput } from '../services/calendarLinks';
+import { CancelWindowClosedError, DEFAULT_MIN_CANCEL_TIME_MS, formatCancelWindow } from '../utils/cancelWindow';
 
 
 
@@ -25,6 +26,10 @@ const ManageAppointment: React.FC = () => {
   const [minCancelTime, setMinCancelTime] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  // A cancel or move refused as too late (LT-205): the window it was refused
+  // under, for the line in the red box. Kept apart from `error`, which turns
+  // the page into its 404 — the booking still stands; the customer calls.
+  const [lateWindowMS, setLateWindowMS] = useState<number | null>(null);
   const [isConfirmationOpen, setIsConfirmationOpen] = useState(false);
   const [isCancelling, setIsCancelling] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
@@ -73,8 +78,31 @@ const ManageAppointment: React.FC = () => {
     return appointmentTime - currentTime >= minCancelTime;
   };
 
+  /**
+   * Too late to cancel or move online (LT-205): the server refused, or the
+   * page sat open past the window. The dialog and any reschedule close, and
+   * the window replaces the page's copy so the subtitle and the buttons agree
+   * with it. No window at all means the appointment has simply started —
+   * the red box already says so.
+   */
+  const closeAsLate = (windowMS: number | null) => {
+    setIsConfirmationOpen(false);
+    setIsUpdating(false);
+    if (!windowMS) return;
+    setMinCancelTime(windowMS);
+    setLateWindowMS(windowMS);
+  };
+
+  /** The server's refusal names its window; if not, the page's own stands in. */
+  const handleWindowClosed = (serverWindowMS?: number) =>
+    closeAsLate(serverWindowMS || minCancelTime || DEFAULT_MIN_CANCEL_TIME_MS);
+
   const handleCancel = async () => {
-    if (!appointment || !canCancelAppointment(appointment.timestamp)) {
+    if (!appointment) return;
+    // A page left open can pass the window with its buttons still enabled;
+    // "Confirm" used to return here and leave the dialog open (LT-205).
+    if (!canCancelAppointment(appointment.timestamp)) {
+      closeAsLate(minCancelTime);
       return;
     }
 
@@ -82,26 +110,12 @@ const ManageAppointment: React.FC = () => {
     try {
       await service.updateAppointment({ ...appointment, status: "cancelled" });
       setIsSuccess(true);
-      try {
-        const service = WebConfigService.getInstance();
-        const res = await service.getWebConfig(window.location.hostname.split('.')[0]);
-        const businessPhone = res.contact.phone;
-        const msg = t('manage.notifications.business_cancel', {
-          name: appointment.name,
-          phone: appointment.phone,
-          date: formatDate(appointment.timestamp),
-          time: formatTime(appointment.timestamp)
-        });
-
-      }
-      catch (err) {
-
-      }
       setTimeout(() => {
         navigate('/');
       }, 2000);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to cancel appointment');
+      if (err instanceof CancelWindowClosedError) handleWindowClosed(err.minCancelTimeMS);
+      else setError(err instanceof Error ? err.message : 'Failed to cancel appointment');
     } finally {
       setIsCancelling(false);
       setIsConfirmationOpen(false);
@@ -109,7 +123,9 @@ const ManageAppointment: React.FC = () => {
   };
 
   const handleUpdate = () => {
-    if (!appointment || !canCancelAppointment(appointment.timestamp)) {
+    if (!appointment) return;
+    if (!canCancelAppointment(appointment.timestamp)) {
+      closeAsLate(minCancelTime);
       return;
     }
     setIsUpdating(true);
@@ -179,6 +195,7 @@ const ManageAppointment: React.FC = () => {
         isUpdating={true}
         appointmentToUpdate={appointment}
         onCancelUpdate={() => setIsUpdating(false)}
+        onCancelWindowClosed={handleWindowClosed}
         onUpdateComplete={(newAppointment) => {
           setAppointment(newAppointment);
           setIsUpdating(false);
@@ -193,7 +210,10 @@ const ManageAppointment: React.FC = () => {
     );
   }
 
-  const isCancellable = canCancelAppointment(appointment.timestamp);
+  // Once refused as too late, the page stays refused (LT-205): the server's
+  // clock is the one that counts, and this page's may run behind it.
+  const isCancellable = lateWindowMS === null && canCancelAppointment(appointment.timestamp);
+  const businessPhone = config.contact?.phone?.trim() ?? '';
 
   return (
     <div className="min-h-screen bg-light-bg dark:bg-dark-bg flex items-center justify-center p-4 transition-colors duration-300">
@@ -225,11 +245,39 @@ const ManageAppointment: React.FC = () => {
         </div>
 
         {!isCancellable && (
-          <div className="mb-6 p-4 bg-red-500/10 rounded-xl flex items-center gap-3">
+          <div className="mb-6 p-4 bg-red-500/10 rounded-xl flex items-start gap-3">
             <AlertTriangle className="w-5 h-5 text-red-500 flex-shrink-0" />
-            <p className="text-red-500 text-sm">
-              {t('manage.message.time_until', { time: getTimeUntilAppointment(appointment.timestamp) })}
-            </p>
+            <div className="space-y-3">
+              <p className="text-red-500 text-sm">
+                {t('manage.message.time_until', { time: getTimeUntilAppointment(appointment.timestamp) })}
+              </p>
+              {/* Why the cancel or move did not happen, and the way on: a
+                  call to the business (LT-205). */}
+              {lateWindowMS !== null && (
+                <motion.div
+                  role="alert"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  className="space-y-3"
+                >
+                  <p className="text-red-500 text-sm">
+                    {t('manage.message.too_late', { duration: formatCancelWindow(lateWindowMS, language) })}
+                  </p>
+                  {businessPhone && (
+                    <motion.a
+                      href={`tel:${businessPhone.replace(/[^0-9+]/g, '')}`}
+                      className="inline-flex items-center gap-2 min-h-12 py-3 px-6 rounded-xl bg-primary dark:bg-primary-dark text-white text-sm font-medium"
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                    >
+                      <Phone className="w-4 h-4 flex-shrink-0" aria-hidden="true" />
+                      <span>{t('contact.modal.button_call')}</span>
+                      <span dir="ltr">{businessPhone}</span>
+                    </motion.a>
+                  )}
+                </motion.div>
+              )}
+            </div>
           </div>
         )}
 

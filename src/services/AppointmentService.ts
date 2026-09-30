@@ -4,6 +4,7 @@ import { Appointment } from '../models/Appointment';
 import { BusySlot } from '../models/BusySlot';
 import { ClassOccurrence } from '../models/ClassOccurrence';
 import { AnswerPayload } from '../models/BookingField';
+import { CANCEL_WINDOW_CLOSED, CancelWindowClosedError } from '../utils/cancelWindow';
 
 /**
  * What the booking form posts (LT-178): the appointment's own fields plus
@@ -149,6 +150,12 @@ class AppointmentService {
       // A blocked customer may still cancel, but a reschedule is refused (LT-122).
       if (error?.response?.status === 403 && error.response.data?.code === 'CUSTOMER_BLOCKED') {
         throw new Error("CUSTOMER_BLOCKED");
+      }
+      // Inside the owner's cancellation window (LT-205): the manage page says
+      // so and offers a call, instead of falling to its 404. Keyed on the
+      // code; the window the server applied travels with the error.
+      if (error?.response?.status === 400 && error.response.data?.code === CANCEL_WINDOW_CLOSED) {
+        throw new CancelWindowClosedError(error.response.data.details?.minCancelTimeMS);
       }
       console.error(`Error updating appointment with id ${app._id}:`, error);
       throw error;

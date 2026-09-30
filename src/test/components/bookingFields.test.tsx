@@ -1,7 +1,8 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, within } from '@testing-library/react';
 import Schedule from '../../components/Layout/Schedule/Schedule';
 import ManageAppointment from '../../components/ManageAppointment';
+import { CancelWindowClosedError } from '../../utils/cancelWindow';
 import { Appointment } from '../../models/Appointment';
 import { AppointmentType } from '../../models/AppointmentType';
 import { BookingField, fieldsForService, answersForRequest, answerProblem } from '../../models/BookingField';
@@ -16,6 +17,7 @@ const mocks = vi.hoisted(() => ({
   getCalendar: vi.fn(),
   createAppointment: vi.fn(),
   getAppointmentById: vi.fn(),
+  updateAppointment: vi.fn(),
   getWebConfig: vi.fn(),
   sendOtp: vi.fn(),
   verifyOtp: vi.fn(),
@@ -54,7 +56,7 @@ vi.mock('../../services/AppointmentService', () => ({
       getAvailability: vi.fn().mockResolvedValue([]),
       createAppointment: mocks.createAppointment,
       getAppointmentById: mocks.getAppointmentById,
-      updateAppointment: vi.fn(),
+      updateAppointment: mocks.updateAppointment,
     }),
   },
 }));
@@ -74,8 +76,14 @@ vi.mock('react-router-dom', async (importOriginal) => ({
   useParams: () => ({ 'appointment-id': 'a1' }),
   useNavigate: () => vi.fn(),
 }));
+// Keys, not copy. A duration rides along (LT-205) so a test can see which
+// window a line names; every other parameter is dropped as before.
 vi.mock('../../contexts/LanguageContext', () => ({
-  useLanguage: () => ({ t: (key: string) => key, language: 'en' }),
+  useLanguage: () => ({
+    t: (key: string, params?: Record<string, unknown>) =>
+      params && 'duration' in params ? `${key} (${params.duration})` : key,
+    language: 'en',
+  }),
 }));
 
 const haircut = new AppointmentType('t1', 'Haircut', '80', 'u1', '1800000');
@@ -421,7 +429,11 @@ describe('the address question with Google suggestions (LT-191)', () => {
     expect(mocks.fetchSuggestions).toHaveBeenCalledTimes(1);
     expect(mocks.fetchSuggestions).toHaveBeenCalledWith('Her', expect.objectContaining({ language: 'en' }));
     expect(screen.getByText('Tel Aviv-Yafo, Israel')).toBeTruthy();
-    expect(screen.getByText('Google Maps')).toBeTruthy();
+    // Google's attribution, as its policy allows it (LT-207): unmodified,
+    // untranslated, labelled for screen readers.
+    const attribution = screen.getByRole('img', { name: 'Google Maps' });
+    expect(attribution.textContent).toBe('Google Maps');
+    expect(attribution.getAttribute('translate')).toBe('no');
     expect(addressInput().getAttribute('aria-expanded')).toBe('true');
     expect(addressInput().getAttribute('aria-controls')).toBe('schedule-answer-address-listbox');
 
@@ -527,5 +539,184 @@ describe('the address question with Google suggestions (LT-191)', () => {
 
     expect(await screen.findByText('manage.label.answers')).toBeTruthy();
     expect(screen.getByText('Herzl St 12, Tel Aviv-Yafo, Israel')).toBeTruthy();
+  });
+});
+
+/**
+ * LT-205 — inside the owner's cancellation window the server refuses a
+ * cancel or a move (400 CANCEL_WINDOW_CLOSED). The manage page used to turn
+ * that into its 404; now it says why, in the page's language, and offers a
+ * call. A move is judged by the time it leaves and the time it takes, so
+ * the reschedule calendar keeps its times outside the window.
+ */
+describe('a cancel or move too close to the appointment (LT-205)', () => {
+  const HOUR = 3_600_000;
+  const storedAt = (timestampMs: number) =>
+    Appointment.fromJSON({
+      _id: 'a1', user_id: 'u1', type: { _id: 't1', name: 'Haircut', price: '80', user_id: 'u1', durationMS: '1800000' },
+      name: 'Dana Levi', status: 'scheduled', phone: '0501234567', timestamp: String(timestampMs), channelType: 'sms',
+    });
+  // The page's copy of the window says none at all, so the page lets the
+  // customer try; the server's refusal is what the tests are about.
+  const site = {
+    minCancelTimeMS: 0, businessName: 'Salon', logoImageName: '', contact: { phone: '' },
+    workingDays: openAllWeek, vacations: [] as unknown[], dateOverrides: [] as unknown[],
+    appointmentTypes: [haircut], bookingFields: catalog,
+  };
+
+  beforeEach(() => {
+    Object.values(mocks).forEach((fn) => fn.mockReset());
+    mocks.getCalendar.mockResolvedValue({ busy: [], classes: [] });
+    mocks.sendOtp.mockResolvedValue(true);
+    mocks.verifyOtp.mockResolvedValue('pt_1');
+    mocks.getWebConfig.mockResolvedValue(site);
+  });
+  afterEach(() => {
+    vi.useRealTimers();
+    vi.restoreAllMocks();
+  });
+
+  const pageButton = (key: string): HTMLButtonElement => screen.getByText(key).closest('button')!;
+  const callLink = () => screen.queryByRole('link', { name: /contact\.modal\.button_call/ });
+  const confirmCancel = async () => {
+    fireEvent.click(await screen.findByText('manage.button.cancel'));
+    fireEvent.click(await screen.findByText('manage.modal.button_confirm'));
+  };
+
+  it('a refused cancel says so on the page instead of the 404, and closes the dialog', async () => {
+    // The owner widened the window to a week after this page loaded its copy.
+    mocks.getAppointmentById.mockResolvedValue(storedAt(Date.now() + 3 * DAY));
+    mocks.updateAppointment.mockRejectedValue(new CancelWindowClosedError(7 * DAY));
+    render(<ManageAppointment />);
+
+    await confirmCancel();
+
+    expect(await screen.findByText('manage.message.too_late (7 days)')).toBeTruthy();
+    expect(mocks.updateAppointment).toHaveBeenCalledWith(expect.objectContaining({ _id: 'a1', status: 'cancelled' }));
+    expect(screen.queryByText('notfound.title')).toBeNull();
+    expect(screen.queryByText('manage.modal.confirm.title')).toBeNull();
+    // The page now agrees with the server.
+    expect(pageButton('manage.button.cancel').disabled).toBe(true);
+    expect(pageButton('manage.button.update').disabled).toBe(true);
+    // No number on the site, no call button.
+    expect(callLink()).toBeNull();
+  });
+
+  it('offers a call when the business has a number on its site', async () => {
+    mocks.getWebConfig.mockResolvedValue({ ...site, contact: { phone: '050-123 4567' } });
+    mocks.getAppointmentById.mockResolvedValue(storedAt(Date.now() + 30 * 60_000));
+    mocks.updateAppointment.mockRejectedValue(new CancelWindowClosedError(HOUR));
+    render(<ManageAppointment />);
+
+    await confirmCancel();
+
+    expect(await screen.findByText('manage.message.too_late (1 hour)')).toBeTruthy();
+    const call = callLink()!;
+    expect(call.getAttribute('href')).toBe('tel:0501234567');
+    expect(within(call).getByText('050-123 4567').getAttribute('dir')).toBe('ltr');
+  });
+
+  it('a page left open past the window closes the dialog and says so, sending nothing', async () => {
+    mocks.getWebConfig.mockResolvedValue({ ...site, minCancelTimeMS: HOUR });
+    const openedAt = Date.now();
+    mocks.getAppointmentById.mockResolvedValue(storedAt(openedAt + HOUR + 10 * 60_000));
+    render(<ManageAppointment />);
+
+    fireEvent.click(await screen.findByText('manage.button.cancel'));
+    const confirm = await screen.findByText('manage.modal.button_confirm');
+    // Twenty minutes go by with the dialog open: the booking is inside the window now.
+    vi.spyOn(Date, 'now').mockReturnValue(openedAt + 20 * 60_000);
+    fireEvent.click(confirm);
+
+    expect(await screen.findByText('manage.message.too_late (1 hour)')).toBeTruthy();
+    expect(screen.queryByText('manage.modal.confirm.title')).toBeNull();
+    expect(mocks.updateAppointment).not.toHaveBeenCalled();
+  });
+
+  describe('moving the booking', () => {
+    // A Wednesday, 09:00 local time: most of today's hours are still ahead.
+    const NOW = new Date(2030, 5, 12, 9, 0, 0, 0);
+    const today = NOW.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+    const todayButton = () => dayButtons().find((button) => button.getAttribute('aria-label')!.startsWith(`${today} - `))!;
+    const firstTimeToday = async () => {
+      await waitFor(() => expect(screen.getByText('schedule.legend.available')).toBeTruthy());
+      fireEvent.click(todayButton());
+      const times = await screen.findAllByRole('button', { name: /^\d{2}:\d{2}$/ });
+      return times[0].textContent;
+    };
+    /** Update, today, the given time, send the code, enter it. */
+    const moveTo = async (time: string) => {
+      fireEvent.click(await screen.findByText('manage.button.update'));
+      await waitFor(() => expect(screen.getByText('schedule.legend.available')).toBeTruthy());
+      fireEvent.click(todayButton());
+      fireEvent.click(await screen.findByRole('button', { name: time }));
+      fireEvent.submit(await waitFor(() => detailsForm()));
+      await waitFor(() => expect(mocks.sendOtp).toHaveBeenCalledTimes(1));
+      await enterOtp();
+      await waitFor(() => expect(mocks.updateAppointment).toHaveBeenCalledTimes(1));
+    };
+
+    beforeEach(() => {
+      vi.useFakeTimers({ toFake: ['Date'] });
+      vi.setSystemTime(NOW);
+    });
+
+    const renderCalendar = (isUpdating: boolean) =>
+      render(
+        <Schedule
+          config={new ScheduleConfig('Book', 'Pick')}
+          workingDays={openAllWeek}
+          user_id="u1"
+          phone=""
+          businessName="Salon"
+          timeToCancel={5 * HOUR}
+          vacations={[]}
+          dateOverrides={[]}
+          appointmentTypes={[haircut]}
+          header={{ style: 'centered' } as never}
+          headerScale={'default' as never}
+          isUpdating={isUpdating}
+          appointmentToUpdate={isUpdating ? storedAt(NOW.getTime() + 3 * DAY) : undefined}
+          onCancelUpdate={isUpdating ? () => {} : undefined}
+        />
+      );
+
+    it('offers no time nearer than the window', async () => {
+      renderCalendar(true);
+      expect(await firstTimeToday()).toBe('14:00');
+    });
+
+    it('leaves a new booking every free time, window or not', async () => {
+      renderCalendar(false);
+      fireEvent.click(await screen.findByText('Haircut'));
+      expect(await firstTimeToday()).toBe('09:30');
+    });
+
+    it('refused because the booking itself is inside the window: the page takes over and offers the call', async () => {
+      mocks.getWebConfig.mockResolvedValue({ ...site, contact: { phone: '0501112222' } });
+      mocks.getAppointmentById.mockResolvedValue(storedAt(NOW.getTime() + 50 * 60_000));
+      mocks.updateAppointment.mockRejectedValue(new CancelWindowClosedError(HOUR));
+      render(<ManageAppointment />);
+
+      await moveTo('15:00');
+
+      expect(await screen.findByText('manage.message.too_late (1 hour)')).toBeTruthy();
+      expect(screen.queryByText('schedule.legend.available')).toBeNull();
+      expect(pageButton('manage.button.update').disabled).toBe(true);
+      expect(callLink()!.getAttribute('href')).toBe('tel:0501112222');
+    });
+
+    it('refused only for its new time: back to the times, which now start outside the window', async () => {
+      mocks.getAppointmentById.mockResolvedValue(storedAt(NOW.getTime() + 3 * DAY));
+      mocks.updateAppointment.mockRejectedValue(new CancelWindowClosedError(HOUR));
+      render(<ManageAppointment />);
+
+      await moveTo('09:30');
+
+      expect(await screen.findByText('schedule.error.too_soon (1 hour)')).toBeTruthy();
+      const times = await screen.findAllByRole('button', { name: /^\d{2}:\d{2}$/ });
+      expect(times[0].textContent).toBe('10:00');
+      expect(screen.queryByText('manage.message.too_late (1 hour)')).toBeNull();
+    });
   });
 });

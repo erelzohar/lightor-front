@@ -12,6 +12,7 @@ import {
   resolveAddressSuggestion,
 } from '../../../services/places';
 import { MaterialInput } from './ScheduleForms';
+import { GoogleMapsLogo } from '../../common/GoogleMapsLogo';
 
 /**
  * The address question with Google's suggestions under it (LT-191).
@@ -319,11 +320,9 @@ export const AddressAutocomplete = ({
               ))
             )}
           </ul>
-          {/* Google's attribution for Places data shown without a map: the
-              policy asks for the Google Maps logo, and allows the text
-              "Google Maps", unmodified, where space is limited. */}
-          <div className="border-t border-primary/15 dark:border-primary-dark/15 px-4 py-1.5 text-end text-xs text-light-text/70 dark:text-dark-text/70">
-            Google Maps
+          {/* Google's attribution for Places data shown without a map (LT-207). */}
+          <div className="flex justify-end border-t border-primary/15 dark:border-primary-dark/15 px-4 py-1.5">
+            <GoogleMapsLogo />
           </div>
         </div>
       )}

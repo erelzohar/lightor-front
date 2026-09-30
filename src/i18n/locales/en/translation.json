@@ -55,7 +55,8 @@
     },
     "error": {
       "sendOtp": "Error sending verification code",
-      "invalidOtp": "Invalid verification code"
+      "invalidOtp": "Invalid verification code",
+      "too_soon": "That time is too soon to move your appointment to — choose a time at least {{duration}} from now."
     },
     "conflictError": "The appointment has been taken please try another one",
     "genericError": "Something went wrong, please try again",
@@ -235,7 +236,8 @@
       "not_cancellable_full": "Cannot cancel or update appointment less than {{hours}} hours before the appointment",
       "hours_before": " hours before the appointment",
       "time_until": "Only {{time}} until the appointment",
-      "started": "The appointment has started"
+      "started": "The appointment has started",
+      "too_late": "It's too late to cancel or change online — less than {{duration}} before the appointment. Please call the business."
     },
     "label": {
       "date": "Date",

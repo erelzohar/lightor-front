@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import MockAdapter from 'axios-mock-adapter';
 import axios from 'axios';
 import AppointmentService, { BookingRefusedError } from '../../services/AppointmentService';
+import { CancelWindowClosedError } from '../../utils/cancelWindow';
 import globals from '../../services/globals';
 import { stubLocation } from '../helpers/location';
 
@@ -224,6 +225,38 @@ describe('AppointmentService', () => {
       await expect(service.updateAppointment({ _id: 'a1', timestamp: '1700003600000' })).rejects.toThrow(
         'CUSTOMER_BLOCKED'
       );
+    });
+
+    it('translates a closed cancellation window into an error carrying the window (LT-205)', async () => {
+      // Too close to cancel or move online. The manage page names the window
+      // and offers a call, so the server's own figure has to reach it.
+      stubLocation('https://demo.lightor.app/manage/a1?manageToken=mt_1');
+      mock.onPut(`${base}/a1`).reply(400, {
+        success: false,
+        error: 'This appointment is too close to be cancelled or moved online',
+        code: 'CANCEL_WINDOW_CLOSED',
+        details: { minCancelTimeMS: 7_200_000 },
+      });
+
+      const error = await service.updateAppointment({ _id: 'a1', status: 'cancelled' }).catch((e: Error) => e);
+      expect(error).toBeInstanceOf(CancelWindowClosedError);
+      expect(error).toMatchObject({ code: 'CANCEL_WINDOW_CLOSED', minCancelTimeMS: 7_200_000 });
+    });
+
+    it('leaves the window unset when the server names none, for the page to fill in', async () => {
+      mock.onPut(`${base}/a1`).reply(400, { success: false, error: 'too close', code: 'CANCEL_WINDOW_CLOSED' });
+
+      const error = await service.updateAppointment({ _id: 'a1', status: 'cancelled' }).catch((e: Error) => e);
+      expect(error).toBeInstanceOf(CancelWindowClosedError);
+      expect((error as CancelWindowClosedError).minCancelTimeMS).toBeUndefined();
+    });
+
+    it('leaves an ordinary 400 as a plain failure', async () => {
+      mock.onPut(`${base}/a1`).reply(400, { success: false, error: 'Validation failed' });
+
+      const error = await service.updateAppointment({ _id: 'a1', status: 'cancelled' }).catch((e: Error) => e);
+      expect(error).toBeInstanceOf(Error);
+      expect(error).not.toBeInstanceOf(CancelWindowClosedError);
     });
   });
 });

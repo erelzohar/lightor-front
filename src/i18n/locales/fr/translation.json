@@ -55,7 +55,8 @@
     },
     "error": {
       "sendOtp": "Échec de l'envoi du code",
-      "invalidOtp": "Code de vérification invalide"
+      "invalidOtp": "Code de vérification invalide",
+      "too_soon": "Cet horaire est trop proche pour y déplacer votre rendez-vous — choisissez-en un dans {{duration}} au moins."
     },
     "conflictError": "Ce créneau est déjà pris, veuillez en choisir un autre",
     "genericError": "Une erreur est survenue, veuillez réessayer",
@@ -235,7 +236,8 @@
       "not_cancellable_full": "Impossible d'annuler moins de {{hours}} heures avant",
       "hours_before": " heures avant",
       "time_until": "Plus que {{time}} avant le rendez-vous",
-      "started": "Le rendez-vous a commencé"
+      "started": "Le rendez-vous a commencé",
+      "too_late": "Il est trop tard pour annuler ou modifier en ligne — il reste moins de {{duration}} avant le rendez-vous. Veuillez appeler l'établissement."
     },
     "label": {
       "date": "Date",

@@ -33,6 +33,7 @@ import { QuestionField } from '../../common/QuestionField';
 import { DateButton } from './ScheduleCalendar';
 import { CalendarEventInput, googleCalendarUrl, downloadIcs } from '../../../services/calendarLinks';
 import { parseIntervals, getHoursForDate, DateOverride } from '../../../utils/workingHours';
+import { CancelWindowClosedError, DEFAULT_MIN_CANCEL_TIME_MS, formatCancelWindow } from '../../../utils/cancelWindow';
 import ImagesService from '../../../services/ImagesService';
 import { handleSquareImageError } from '../../../utils/imageFallback';
 
@@ -87,6 +88,12 @@ interface ScheduleProps {
   appointmentToUpdate?: Appointment;
   onUpdateComplete?: (newAppointment: Appointment) => void;
   onCancelUpdate?: () => void;
+  /**
+   * A reschedule refused because the booking itself is now inside the
+   * owner's cancellation window (LT-205), with the window the server named.
+   * The manage page takes over: nothing about the booking can change online.
+   */
+  onCancelWindowClosed?: (minCancelTimeMS?: number) => void;
   isPreview?: boolean;
 }
 
@@ -96,7 +103,7 @@ const DEFAULT_BOOKING_HORIZON_DAYS = 60;
 /** A stable "no questions" so the scoped list is not recomputed every render. */
 const NO_BOOKING_FIELDS: BookingField[] = [];
 
-const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone, businessName, timeToCancel, vacations, dateOverrides = [], appointmentTypes: offeredTypes, isUpdating, appointmentToUpdate, onUpdateComplete, onCancelUpdate, isPreview, hideDescription = false, header, headerScale, scheduleStyle = 'card', tone = 'surface', bookingHorizonDays = DEFAULT_BOOKING_HORIZON_DAYS, bookingFields = NO_BOOKING_FIELDS }) => {
+const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone, businessName, timeToCancel, vacations, dateOverrides = [], appointmentTypes: offeredTypes, isUpdating, appointmentToUpdate, onUpdateComplete, onCancelUpdate, onCancelWindowClosed, isPreview, hideDescription = false, header, headerScale, scheduleStyle = 'card', tone = 'surface', bookingHorizonDays = DEFAULT_BOOKING_HORIZON_DAYS, bookingFields = NO_BOOKING_FIELDS }) => {
   // if (!appointmentTypes) {
   //   throw new Error('No appointment types available');
   // }
@@ -168,6 +175,15 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
   const [bookedAppointments, setBookedAppointments] = useState<BusySlot[]>([]);
   const [classOccurrences, setClassOccurrences] = useState<ClassOccurrence[]>([]);
   const [resendTimer, setResendTimer] = useState(0);
+  // The cancellation window a refused move named (LT-205), when the owner
+  // widened it after this page loaded its copy.
+  const [serverWindowMS, setServerWindowMS] = useState(0);
+
+  // A move must land at least the owner's cancellation window ahead (LT-205):
+  // the server judges the time a booking takes as well as the one it leaves,
+  // so the reschedule calendar never offers a nearer time. A new booking is
+  // not bound by the window.
+  const moveLeadMS = isUpdating ? Math.max(timeToCancel || 0, serverWindowMS) : 0;
 
 
 
@@ -407,6 +423,30 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
         }, 5000);
       }
       else if (error && error.message === "CUSTOMER_BLOCKED") setError(t('schedule.blockedError'));
+      else if (error instanceof CancelWindowClosedError) {
+        // The owner's cancellation window (LT-205). The server judges a move
+        // by the time it leaves and the time it takes; which one failed
+        // decides what the customer can still do.
+        const windowMS = error.minCancelTimeMS || timeToCancel || DEFAULT_MIN_CANCEL_TIME_MS;
+        const leavingMs = parseInt(appointmentToUpdate?.timestamp ?? '', 10);
+        if (!(leavingMs - Date.now() >= windowMS)) {
+          // The booking itself is inside the window: nothing about it can
+          // change online. The manage page takes over and offers a call.
+          if (onCancelWindowClosed) onCancelWindowClosed(error.minCancelTimeMS);
+          else setError(t('manage.message.too_late', { duration: formatCancelWindow(windowMS, language) }));
+        } else {
+          // Only the new time was too near: chosen at the window's edge, or
+          // the owner widened the window after this page loaded. Back to the
+          // times, which now start far enough ahead.
+          setServerWindowMS(windowMS);
+          setError(t('schedule.error.too_soon', { duration: formatCancelWindow(windowMS, language) }));
+          setFormData(prev => ({ ...prev, verificationCode: '' }));
+          lastSubmittedCode.current = null;
+          setSelectedTime('');
+          setSelectedSession(null);
+          setBookingStep('time');
+        }
+      }
       else if (error && (error.code === 'ANSWER_REQUIRED' || error.code === 'ANSWER_INVALID')) {
         // The server refused an answer after the OTP (LT-178): back to the
         // details step with the message on the question it named. A key
@@ -431,7 +471,7 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
     } finally {
       setIsSubmitting(false);
     }
-  }, [formData, validateForm, selectedDate, selectedAppointmentType, selectedTime, user_id, t, resetCalendar, isPreview, isUpdating, appointmentToUpdate, channelType, onUpdateComplete, businessName, scopedFields]);
+  }, [formData, validateForm, selectedDate, selectedAppointmentType, selectedTime, user_id, t, resetCalendar, isPreview, isUpdating, appointmentToUpdate, channelType, onUpdateComplete, businessName, scopedFields, timeToCancel, onCancelWindowClosed, language]);
 
   const handleInputChange = (field: 'name' | 'phone' | 'verificationCode', value: string) => {
     let processedValue = value;
@@ -585,6 +625,7 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
     const slotInterval = durationMinutes > 60 ? 60 : durationMinutes;
 
     const now = new Date();
+    const earliestMs = now.getTime() + moveLeadMS;
     const testDurationMS = durationMS; // Duration to test against
 
     for (const { startMin, endMin } of intervals) {
@@ -601,6 +642,7 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
 
         if (
           slotDateTime.getTime() > now.getTime() &&
+          slotDateTime.getTime() >= earliestMs &&
           // 🚨 CRITICAL FIX HERE: Pass testDurationMS to isTimeInVacation
           !isTimeInVacation(date, timeStr, testDurationMS) &&
           !isTimeSlotBooked(date, timeStr, testDurationMS)
@@ -611,7 +653,7 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
     }
 
     return slots;
-  }, [workingDays, dateOverrides, isTimeInVacation, isTimeSlotBooked]);
+  }, [workingDays, dateOverrides, isTimeInVacation, isTimeSlotBooked, moveLeadMS]);
 
   /**
    * The last calendar day a customer may book, to the end of that day
@@ -647,9 +689,10 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
       .filter(occurrence =>
         occurrence.type_id === type._id
         && occurrence.startMs > now
+        && occurrence.startMs >= now + moveLeadMS
         && occurrence.startMs <= lastBookableDay.getTime())
       .sort((a, b) => a.startMs - b.startMs);
-  }, [classOccurrences, lastBookableDay]);
+  }, [classOccurrences, lastBookableDay, moveLeadMS]);
 
   /**
    * The runs of a class on one calendar day, soonest first (LT-155). The

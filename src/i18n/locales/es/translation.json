@@ -55,7 +55,8 @@
     },
     "error": {
       "sendOtp": "Error al enviar el código",
-      "invalidOtp": "Código de verificación inválido"
+      "invalidOtp": "Código de verificación inválido",
+      "too_soon": "Este horario está demasiado próximo para mover la cita — elige uno que empiece dentro de {{duration}} como mínimo."
     },
     "conflictError": "Este horario ya está ocupado, por favor elige otro",
     "genericError": "Algo salió mal, inténtalo de nuevo",
@@ -235,7 +236,8 @@
       "not_cancellable_full": "No se puede cancelar con menos de {{hours}} horas de antelación",
       "hours_before": " horas antes",
       "time_until": "Faltan {{time}} para la cita",
-      "started": "La cita ya ha comenzado"
+      "started": "La cita ya ha comenzado",
+      "too_late": "Ya es tarde para cancelar o cambiar en línea: faltan menos de {{duration}} para la cita. Por favor, llama al negocio."
     },
     "label": {
       "date": "Fecha",
