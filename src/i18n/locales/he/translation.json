@@ -15,7 +15,7 @@
   "hero": {
     "book": "קביעת תור",
     "contact": "צור קשר",
-    "welcome_label": "ברוכים הבאים ל-StyleTime"
+    "welcome_label": "ברוכים הבאים ל-{{name}}"
   },
   "about": {
     "title": "אודות סטייל טיים סטודיו",

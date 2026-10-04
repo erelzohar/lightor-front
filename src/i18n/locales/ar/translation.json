@@ -15,7 +15,7 @@
   "hero": {
     "book": "حجز موعد",
     "contact": "اتصل بنا",
-    "welcome_label": "أهلاً بكم في StyleTime"
+    "welcome_label": "أهلاً بكم في {{name}}"
   },
   "about": {
     "title": "حول استوديو ستايل تايم",

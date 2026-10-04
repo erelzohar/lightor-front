@@ -765,7 +765,9 @@ const Hero: React.FC<HeroProps> = ({ config, social, phone, isContactVisible, ap
         ref={vantaRef}
         id="home"
         className="min-h-screen relative overflow-hidden bg-light-bg dark:bg-dark-bg transition-colors duration-300"
-        aria-label={t('hero.welcome_label')}
+        // The business's own name (it announced "Welcome to StyleTime", the
+        // product's old name, on every site).
+        aria-label={businessName ? t('hero.welcome_label', { name: businessName }) : undefined}
       >
         {/* Text-protection veil over the Vanta background (LT-060). The
             animation is painted with palette colors, so any text — especially

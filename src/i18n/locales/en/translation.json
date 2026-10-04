@@ -15,7 +15,7 @@
   "hero": {
     "book": "Book Appointment",
     "contact": "Contact Us",
-    "welcome_label": "Welcome to StyleTime"
+    "welcome_label": "Welcome to {{name}}"
   },
   "about": {
     "title": "About StyleTime Studio",
@@ -43,7 +43,7 @@
     "select": {
       "date": "Select Date",
       "time": "Select Time",
-      "type": "Select haircut type"
+      "type": "Select a service"
     },
     "available": {
       "times": "Available Times for"

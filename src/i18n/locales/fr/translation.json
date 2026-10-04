@@ -15,7 +15,7 @@
   "hero": {
     "book": "Prendre RDV",
     "contact": "Contactez-nous",
-    "welcome_label": "Bienvenue chez StyleTime"
+    "welcome_label": "Bienvenue chez {{name}}"
   },
   "about": {
     "title": "À propos de StyleTime Studio",
