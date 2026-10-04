@@ -56,6 +56,16 @@ export class BookingField {
   }
 }
 
+/**
+ * "Use the details from my last booking" (LT-217) — not offered for now
+ * (LT-224, Erel 2026-10-05). The box shows before the phone code, so it
+ * can't know whether anything was kept: a customer with nothing saved who
+ * ticks it sends the code and is sent back to fill the question in. The
+ * server side stays (remembered answers are still kept, and still prefill
+ * the owner's own bookings); flip `offered` to bring the box back.
+ */
+export const rememberedDetails = { offered: false };
+
 /** The catalog as shipped on the config. Absent, or a malformed entry, is simply no question. */
 export const parseBookingFields = (json: unknown): BookingField[] =>
   Array.isArray(json)

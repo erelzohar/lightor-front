@@ -5,7 +5,7 @@ import { Turnstile } from '@marsidev/react-turnstile';
 import { useLanguage } from '../../../contexts/LanguageContext';
 import { AppointmentType, isBookableService } from '../../../models/AppointmentType';
 import { Appointment } from '../../../models/Appointment';
-import { BookingField, AnswerValue, fieldsForService, answerProblem, answersForRequest } from '../../../models/BookingField';
+import { BookingField, AnswerValue, fieldsForService, answerProblem, answersForRequest, rememberedDetails } from '../../../models/BookingField';
 import { BusySlot } from '../../../models/BusySlot';
 import { ClassOccurrence } from '../../../models/ClassOccurrence';
 import { ScheduleConfig } from '../../../models/ScheduleConfig';
@@ -223,9 +223,13 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
   // The questions the owner keeps for next time (LT-217). A returning
   // customer may ask to use what they gave last time: those questions are
   // then left to the server, which fills them from their record only after
-  // the code is verified — or refuses, and the form asks after all.
+  // the code is verified — or refuses, and the form asks after all. Not
+  // offered for now (LT-224): with none, the box never shows.
   const [useRemembered, setUseRemembered] = useState(false);
-  const rememberFields = useMemo(() => scopedFields.filter(field => field.remember), [scopedFields]);
+  const rememberFields = useMemo(
+    () => (rememberedDetails.offered ? scopedFields.filter(field => field.remember) : []),
+    [scopedFields]
+  );
   const askedFields = useMemo(
     () => (useRemembered ? scopedFields.filter(field => !field.remember) : scopedFields),
     [scopedFields, useRemembered]

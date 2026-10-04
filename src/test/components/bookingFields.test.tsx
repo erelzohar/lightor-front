@@ -5,7 +5,7 @@ import ManageAppointment from '../../components/ManageAppointment';
 import { CancelWindowClosedError } from '../../utils/cancelWindow';
 import { Appointment } from '../../models/Appointment';
 import { AppointmentType } from '../../models/AppointmentType';
-import { BookingField, fieldsForService, answersForRequest, answerProblem } from '../../models/BookingField';
+import { BookingField, fieldsForService, answersForRequest, answerProblem, rememberedDetails } from '../../models/BookingField';
 import { ScheduleConfig } from '../../models/ScheduleConfig';
 import { WebsiteConfig } from '../../models/WebsiteConfig';
 import { RAW_AI_RESPONSE_SHAPE } from '../fixtures/rawAiConfig';
@@ -458,10 +458,31 @@ describe('details kept from the last booking (LT-217)', () => {
     mocks.sendOtp.mockResolvedValue(true);
     mocks.verifyOtp.mockResolvedValue('pt_1');
     mocks.createAppointment.mockResolvedValue(booked);
+    // Not offered for now (LT-224); the flow under it stays tested.
+    rememberedDetails.offered = true;
+  });
+  afterEach(() => {
+    rememberedDetails.offered = false;
   });
 
   it('reads the flag off the catalog', () => {
     expect(remembered.map((f) => f.remember)).toEqual([true, false]);
+  });
+
+  it('is not offered for now: no box, the question asked, nothing about last time sent (LT-224)', async () => {
+    rememberedDetails.offered = false;
+    renderRemembering();
+    await reachDetails();
+    fillBasics();
+
+    expect(screen.queryByTestId('use-remembered')).toBeNull();
+    fireEvent.change(screen.getByLabelText('Address'), { target: { value: 'Herzl 12' } });
+    fireEvent.submit(detailsForm());
+    await enterOtp();
+
+    await waitFor(() => expect(mocks.createAppointment).toHaveBeenCalledTimes(1));
+    const [payload] = mocks.createAppointment.mock.calls[0];
+    expect(payload).not.toHaveProperty('useRemembered');
   });
 
   it('asks the remembered question unless the customer says to use last time\'s, then leaves it to the server', async () => {
