@@ -120,6 +120,11 @@
       "label": "Clase grupal",
       "placesLeft": "Quedan {{count}} plazas",
       "full": "Completo"
+    },
+    "remembered": {
+      "use": "Usar los datos de mi última reserva",
+      "hint": "Usaremos lo que indicaste la última vez: {{fields}}",
+      "missing": "No lo tenemos guardado de la última vez; complétalo, por favor"
     }
   },
   "common": {
@@ -264,6 +269,14 @@
     "success_title": "Cita cancelada",
     "notifications": {
       "business_cancel": "La cita de {{name}} - {{phone}} el {{date}} a las {{time}} fue cancelada por el cliente. Lightor"
+    },
+    "details": {
+      "edit": "Editar datos",
+      "save": "Guardar datos",
+      "cancel": "Cancelar",
+      "saved": "Tus datos se actualizaron",
+      "closed": "Los datos de esta reserva ya no se pueden cambiar",
+      "failed": "No se pudo guardar, inténtalo de nuevo"
     }
   },
   "notfound": {

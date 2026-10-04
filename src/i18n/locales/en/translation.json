@@ -120,6 +120,11 @@
       "label": "Group class",
       "placesLeft": "{{count}} places left",
       "full": "Full"
+    },
+    "remembered": {
+      "use": "Use the details from my last booking",
+      "hint": "We'll use what you gave last time: {{fields}}",
+      "missing": "We don't have this saved from last time — please fill it in"
     }
   },
   "common": {
@@ -264,6 +269,14 @@
     "success_title": "Appointment Cancelled",
     "notifications": {
       "business_cancel": "Appointment for {{name}} - {{phone}} on {{date}} at {{time}} was cancelled by the client. Lightor"
+    },
+    "details": {
+      "edit": "Edit details",
+      "save": "Save details",
+      "cancel": "Cancel",
+      "saved": "Your details were updated",
+      "closed": "This booking's details can no longer be changed",
+      "failed": "Could not save, please try again"
     }
   },
   "notfound": {

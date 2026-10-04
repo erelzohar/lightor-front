@@ -32,7 +32,13 @@ export class BookingField {
     /** choice only. */
     public options: string[] = [],
     /** AppointmentType ids; empty means every service. */
-    public services: string[] = []
+    public services: string[] = [],
+    /**
+     * The answer is kept for the customer's next booking (LT-217): the form
+     * offers "use the details from my last booking", and the server fills
+     * it in only after the code is verified.
+     */
+    public remember: boolean = false
   ) {}
 
   static fromJSON(json: any): BookingField | null {
@@ -44,7 +50,8 @@ export class BookingField {
       json.type,
       json.required === true,
       Array.isArray(json.options) ? json.options.filter((option: any) => typeof option === 'string') : [],
-      Array.isArray(json.services) ? json.services.map(String) : []
+      Array.isArray(json.services) ? json.services.map(String) : [],
+      json.remember === true
     );
   }
 }

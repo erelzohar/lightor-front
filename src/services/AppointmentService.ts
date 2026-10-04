@@ -14,7 +14,15 @@ import { CANCEL_WINDOW_CLOSED, CancelWindowClosedError } from '../utils/cancelWi
 export type AppointmentDraft = Partial<Omit<Appointment, 'answers'>> & {
   type_id?: string;
   answers?: AnswerPayload[];
+  /**
+   * Fill the questions the owner keeps for next time from this customer's
+   * record (LT-217) — the server does it once the phone is proven.
+   */
+  useRemembered?: boolean;
 };
+
+/** The booking can no longer change: past, or not scheduled (LT-217). */
+export const BOOKING_CLOSED = 'BOOKING_CLOSED';
 
 /**
  * The server refused an answer to one of the owner's questions (LT-178).
@@ -163,6 +171,31 @@ class AppointmentService {
         throw new CancelWindowClosedError(error.response.data.details?.minCancelTimeMS);
       }
       console.error(`Error updating appointment with id ${app._id}:`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * The customer corrects their answers from the manage link (LT-217): the
+   * questions of the booked service, as key and value — the server rebuilds
+   * them from the owner's catalog. Refusals come back as codes the page acts
+   * on: an answer (BookingRefusedError), a closed booking, a blocked number.
+   */
+  public async updateAnswers(id: string, answers: AnswerPayload[]): Promise<Appointment> {
+    try {
+      const manageToken = AppointmentService.manageTokenFromUrl();
+      const response = await axios.put<{ data?: unknown }>(`${this.baseUrl}/${id}/answers`, { answers }, {
+        params: manageToken ? { manageToken } : undefined,
+      });
+      return Appointment.fromJSON(response.data?.data);
+    } catch (error) {
+      const refusal = axios.isAxiosError(error)
+        ? (error.response?.data as { code?: string; details?: { key?: string; label?: string } } | undefined)
+        : undefined;
+      const code = refusal?.code;
+      if (code === 'ANSWER_REQUIRED' || code === 'ANSWER_INVALID') throw new BookingRefusedError(code, refusal?.details);
+      if (code === BOOKING_CLOSED || code === 'CUSTOMER_BLOCKED') throw new Error(code);
+      console.error(`Error updating the answers of appointment ${id}:`, error);
       throw error;
     }
   }

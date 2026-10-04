@@ -15,6 +15,8 @@ import ImagesService from '../services/ImagesService';
 import { handleSquareImageError } from '../utils/imageFallback';
 import { googleCalendarUrl, downloadIcs, CalendarEventInput } from '../services/calendarLinks';
 import { CancelWindowClosedError, DEFAULT_MIN_CANCEL_TIME_MS, formatCancelWindow } from '../utils/cancelWindow';
+import { fieldsForService } from '../models/BookingField';
+import AnswersEditor from './manage/AnswersEditor';
 
 
 
@@ -36,6 +38,9 @@ const ManageAppointment: React.FC = () => {
   const [isUpdating, setIsUpdating] = useState(false);
   const [lastAction, setLastAction] = useState<'cancel' | 'update'>('cancel');
   const [config, setConfig] = useState<WebsiteConfig | null>(null);
+  // The customer corrects their answers here (LT-217).
+  const [isEditingDetails, setIsEditingDetails] = useState(false);
+  const [detailsSaved, setDetailsSaved] = useState(false);
   const service = AppointmentService.getInstance()
   const configService = WebConfigService.getInstance();
 
@@ -213,6 +218,12 @@ const ManageAppointment: React.FC = () => {
   // Once refused as too late, the page stays refused (LT-205): the server's
   // clock is the one that counts, and this page's may run behind it.
   const isCancellable = lateWindowMS === null && canCancelAppointment(appointment.timestamp);
+  // The booked service's questions; editable while the booking is ahead and
+  // scheduled (the server checks the same), whatever the cancel window.
+  const editableFields = fieldsForService(config?.bookingFields ?? [], appointment.type?._id);
+  const canEditDetails = editableFields.length > 0
+    && appointment.status === 'scheduled'
+    && parseInt(appointment.timestamp) > Date.now();
   const businessPhone = config.contact?.phone?.trim() ?? '';
 
   return (
@@ -342,18 +353,50 @@ const ManageAppointment: React.FC = () => {
             </div>
           </div>
 
-          {/* What the customer answered to the owner's questions (LT-178),
-              read-only: the labels are the ones stored with the booking, so
-              a question renamed or deleted since still reads as it was asked.
-              Editing them is phase 2. */}
-          {appointment.answers.length > 0 && (
-            <div className="p-4 rounded-xl bg-light-gray/30 dark:bg-dark-gray/30">
+          {/* What the customer answered to the owner's questions (LT-178):
+              the labels are the ones stored with the booking, so a question
+              renamed or deleted since still reads as it was asked. While the
+              booking is ahead they can correct them (LT-217). */}
+          {(appointment.answers.length > 0 || canEditDetails) && (
+            <div className="p-4 rounded-xl bg-light-gray/30 dark:bg-dark-gray/30" data-testid="manage-answers">
               <div className="flex items-center gap-4">
                 <ClipboardList className="w-6 h-6 text-primary dark:text-primary-dark flex-shrink-0" />
-                <div className="text-sm text-light-text/70 dark:text-dark-text/70">
+                <div className="text-sm text-light-text/70 dark:text-dark-text/70 flex-1">
                   {t('manage.label.answers')}
                 </div>
+                {canEditDetails && !isEditingDetails && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsEditingDetails(true);
+                      setDetailsSaved(false);
+                    }}
+                    className="flex items-center gap-1.5 text-sm font-medium text-primary dark:text-primary-dark hover:underline"
+                  >
+                    <Edit className="w-4 h-4" aria-hidden="true" />
+                    {t('manage.details.edit')}
+                  </button>
+                )}
               </div>
+              {detailsSaved && !isEditingDetails && (
+                <p className="mt-2 ms-10 text-sm text-emerald-600 dark:text-emerald-400" role="status">
+                  {t('manage.details.saved')}
+                </p>
+              )}
+              {isEditingDetails ? (
+                <div className="ms-10">
+                  <AnswersEditor
+                    appointment={appointment}
+                    fields={editableFields}
+                    onSaved={(updated) => {
+                      setAppointment(updated);
+                      setIsEditingDetails(false);
+                      setDetailsSaved(true);
+                    }}
+                    onCancel={() => setIsEditingDetails(false)}
+                  />
+                </div>
+              ) : (
               <ul className="mt-2 ms-10 space-y-1.5">
                 {appointment.answers.map((answer) => {
                   // A confirm shows as a tick and its label. Its type comes
@@ -373,6 +416,7 @@ const ManageAppointment: React.FC = () => {
                   );
                 })}
               </ul>
+              )}
             </div>
           )}
         </div>

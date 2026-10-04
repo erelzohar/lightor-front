@@ -120,6 +120,11 @@
       "label": "Cours collectif",
       "placesLeft": "{{count}} places restantes",
       "full": "Complet"
+    },
+    "remembered": {
+      "use": "Utiliser les informations de ma dernière réservation",
+      "hint": "Nous reprendrons ce que vous avez indiqué la dernière fois : {{fields}}",
+      "missing": "Nous ne l’avons pas gardé de la dernière fois — merci de le renseigner"
     }
   },
   "common": {
@@ -264,6 +269,14 @@
     "success_title": "Rendez-vous annulé",
     "notifications": {
       "business_cancel": "Le rendez-vous pour {{name}} - {{phone}} le {{date}} à {{time}} a été annulé par le client. Lightor"
+    },
+    "details": {
+      "edit": "Modifier les informations",
+      "save": "Enregistrer",
+      "cancel": "Annuler",
+      "saved": "Vos informations ont été mises à jour",
+      "closed": "Les informations de cette réservation ne peuvent plus être modifiées",
+      "failed": "Échec de l’enregistrement, veuillez réessayer"
     }
   },
   "notfound": {

@@ -220,10 +220,21 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
     [bookingFields, selectedAppointmentType, isUpdating]
   );
 
+  // The questions the owner keeps for next time (LT-217). A returning
+  // customer may ask to use what they gave last time: those questions are
+  // then left to the server, which fills them from their record only after
+  // the code is verified — or refuses, and the form asks after all.
+  const [useRemembered, setUseRemembered] = useState(false);
+  const rememberFields = useMemo(() => scopedFields.filter(field => field.remember), [scopedFields]);
+  const askedFields = useMemo(
+    () => (useRemembered ? scopedFields.filter(field => !field.remember) : scopedFields),
+    [scopedFields, useRemembered]
+  );
+
   /** Every required question has an answer — the send-code button's guard. */
   const requiredAnswersPresent = useMemo(
-    () => scopedFields.every(field => answerProblem(field, formData.answers[field.key]) !== 'required'),
-    [scopedFields, formData.answers]
+    () => askedFields.every(field => answerProblem(field, formData.answers[field.key]) !== 'required'),
+    [askedFields, formData.answers]
   );
 
   // The address questions whose Google suggestions are live (LT-191). The
@@ -262,7 +273,7 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
     // out — so a missing address costs nobody an SMS. The server repeats
     // every one of these checks.
     const answerErrors: Record<string, string> = {};
-    for (const field of scopedFields) {
+    for (const field of askedFields) {
       const problem = answerProblem(field, formData.answers[field.key], { chooseAddress: liveAddressFields[field.key] });
       if (problem === 'required') answerErrors[field.key] = t('schedule.validation.answer.required');
       else if (problem === 'invalid') answerErrors[field.key] = t('schedule.validation.answer.invalid');
@@ -272,7 +283,7 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
 
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
-  }, [formData, bookingStep, language, scopedFields, liveAddressFields]);
+  }, [formData, bookingStep, language, askedFields, liveAddressFields]);
 
   const resetCalendar = useCallback(() => {
     setError(null);
@@ -283,6 +294,7 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
     setSelectedTime(null);
     setSelectedSession(null);
     setFormData({ name: '', phone: '', verificationCode: '', answers: {} });
+    setUseRemembered(false);
     setBookingStep(isUpdating ? 'date' : 'type');
   }, [isUpdating]);
 
@@ -378,7 +390,11 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
         const res = isUpdating && appointmentToUpdate
           ? await service.updateAppointment({ ...appointmentToUpdate, ...appointmentToCreate })
           : await service.createAppointment(
-              { ...appointmentToCreate, answers: answersForRequest(scopedFields, formData.answers) },
+              {
+                ...appointmentToCreate,
+                answers: answersForRequest(askedFields, formData.answers),
+                ...(useRemembered && rememberFields.length > 0 ? { useRemembered: true } : {}),
+              },
               phoneToken
             );
 
@@ -456,9 +472,16 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
         // this form does not know (a question added while it was open)
         // falls back to the general error line.
         const key: string | undefined = error.details?.key;
-        const message = error.code === 'ANSWER_REQUIRED'
-          ? t('schedule.validation.answer.required')
-          : t('schedule.validation.answer.invalid');
+        // A remembered question with nothing kept for this number (LT-217):
+        // the question comes back, saying why.
+        const notKept = error.code === 'ANSWER_REQUIRED' && useRemembered
+          && !!key && rememberFields.some(field => field.key === key);
+        if (notKept) setUseRemembered(false);
+        const message = notKept
+          ? t('schedule.remembered.missing')
+          : error.code === 'ANSWER_REQUIRED'
+            ? t('schedule.validation.answer.required')
+            : t('schedule.validation.answer.invalid');
         if (key && scopedFields.some(field => field.key === key)) {
           setFormErrors(prev => ({ ...prev, answers: { ...prev.answers, [key]: message } }));
           setError(null);
@@ -474,7 +497,7 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
     } finally {
       setIsSubmitting(false);
     }
-  }, [formData, validateForm, selectedDate, selectedAppointmentType, selectedTime, user_id, t, resetCalendar, isPreview, isUpdating, appointmentToUpdate, channelType, onUpdateComplete, businessName, scopedFields, timeToCancel, onCancelWindowClosed, language]);
+  }, [formData, validateForm, selectedDate, selectedAppointmentType, selectedTime, user_id, t, resetCalendar, isPreview, isUpdating, appointmentToUpdate, channelType, onUpdateComplete, businessName, scopedFields, askedFields, rememberFields, useRemembered, timeToCancel, onCancelWindowClosed, language]);
 
   const handleInputChange = (field: 'name' | 'phone' | 'verificationCode', value: string) => {
     let processedValue = value;
@@ -1542,8 +1565,29 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
                       />
                     </div>
 
+                    {/* A returning customer may use what they gave last
+                        time (LT-217): the remembered questions step aside. */}
+                    {rememberFields.length > 0 && (
+                      <label className="mt-6 flex items-start gap-3 cursor-pointer text-start" data-testid="use-remembered">
+                        <input
+                          type="checkbox"
+                          className="mt-1 h-4 w-4 flex-shrink-0 accent-primary"
+                          checked={useRemembered}
+                          onChange={(e) => setUseRemembered(e.target.checked)}
+                        />
+                        <span>
+                          <span className="block text-sm font-medium text-light-text dark:text-dark-text">
+                            {t('schedule.remembered.use')}
+                          </span>
+                          <span className="block text-xs text-light-text/60 dark:text-dark-text/60 mt-0.5">
+                            {t('schedule.remembered.hint', { fields: rememberFields.map((field) => field.label).join(', ') })}
+                          </span>
+                        </span>
+                      </label>
+                    )}
+
                     {/* The owner's questions for this service (LT-178). */}
-                    {scopedFields.map((field) => (
+                    {askedFields.map((field) => (
                       <div className="mt-6" key={field.key}>
                         {renderBookingField(field)}
                       </div>

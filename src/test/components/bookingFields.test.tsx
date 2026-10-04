@@ -18,6 +18,7 @@ const mocks = vi.hoisted(() => ({
   createAppointment: vi.fn(),
   getAppointmentById: vi.fn(),
   updateAppointment: vi.fn(),
+  updateAnswers: vi.fn(),
   getWebConfig: vi.fn(),
   sendOtp: vi.fn(),
   verifyOtp: vi.fn(),
@@ -49,7 +50,9 @@ vi.mock('@marsidev/react-turnstile', async () => {
   };
 });
 vi.mock('../../services/AuthService', () => ({ default: { handshake: vi.fn().mockResolvedValue(true) } }));
-vi.mock('../../services/AppointmentService', () => ({
+vi.mock('../../services/AppointmentService', async (importOriginal) => ({
+  // The refusal class and codes stay real (LT-217's editor checks them).
+  ...(await importOriginal<typeof import('../../services/AppointmentService')>()),
   default: {
     getInstance: () => ({
       getCalendar: mocks.getCalendar,
@@ -57,6 +60,7 @@ vi.mock('../../services/AppointmentService', () => ({
       createAppointment: mocks.createAppointment,
       getAppointmentById: mocks.getAppointmentById,
       updateAppointment: mocks.updateAppointment,
+      updateAnswers: mocks.updateAnswers,
     }),
   },
 }));
@@ -328,13 +332,174 @@ describe('the manage page (LT-178)', () => {
     expect(screen.queryByText('yes')).toBeNull();
   });
 
-  it('shows no such section for a booking without answers', async () => {
-    mocks.getAppointmentById.mockResolvedValue(stored([]));
+  it('shows no such section for a past booking without answers', async () => {
+    mocks.getAppointmentById.mockResolvedValue(Appointment.fromJSON({
+      _id: 'a1', user_id: 'u1', type: { _id: 't1', name: 'Haircut', price: '80', user_id: 'u1', durationMS: '1800000' },
+      name: 'Dana Levi', status: 'scheduled', phone: '0501234567', timestamp: String(Date.now() - 3 * DAY), channelType: 'sms',
+      answers: [],
+    }));
 
     render(<ManageAppointment />);
 
     expect(await screen.findByText('manage.label.name')).toBeTruthy();
     expect(screen.queryByText('manage.label.answers')).toBeNull();
+  });
+});
+
+describe('the customer corrects their answers (LT-217)', () => {
+  const upcoming = (answers: unknown[], extra: Record<string, unknown> = {}) =>
+    Appointment.fromJSON({
+      _id: 'a1', user_id: 'u1', type: { _id: 't1', name: 'Haircut', price: '80', user_id: 'u1', durationMS: '1800000' },
+      name: 'Dana Levi', status: 'scheduled', phone: '0501234567', timestamp: String(Date.now() + 3 * DAY), channelType: 'sms',
+      answers, ...extra,
+    });
+  const site = {
+    minCancelTimeMS: 0, businessName: 'Salon', logoImageName: '', contact: { phone: '' },
+    workingDays: openAllWeek, vacations: [] as unknown[], dateOverrides: [] as unknown[], appointmentTypes: [haircut], bookingFields: catalog,
+  };
+
+  beforeEach(() => {
+    mocks.getAppointmentById.mockReset();
+    mocks.updateAnswers.mockReset();
+    mocks.getWebConfig.mockReset();
+    mocks.getWebConfig.mockResolvedValue(site);
+  });
+
+  it("opens the service's questions filled with what was given, and saves them as key and value", async () => {
+    mocks.getAppointmentById.mockResolvedValue(upcoming([
+      { key: 'address', label: 'Address', value: 'Herzl 12, Tel Aviv' },
+      { key: 'parking', label: 'Parking available', value: 'yes' },
+    ]));
+    mocks.updateAnswers.mockImplementation(async () =>
+      upcoming([{ key: 'address', label: 'Address', value: 'Rothschild 1, Tel Aviv' }])
+    );
+    render(<ManageAppointment />);
+
+    fireEvent.click(await screen.findByRole('button', { name: 'manage.details.edit' }));
+    const editor = screen.getByTestId('answers-editor');
+    const address = within(editor).getByLabelText('Address') as HTMLInputElement;
+    expect(address.value).toBe('Herzl 12, Tel Aviv');
+    expect((within(editor).getByLabelText(/^Parking available/) as HTMLInputElement).checked).toBe(true);
+    // Haircut's questions only: the room, not the car.
+    expect(within(editor).getByLabelText(/^Room/)).toBeTruthy();
+    expect(within(editor).queryByText(/Car model/)).toBeNull();
+
+    fireEvent.change(address, { target: { value: 'Rothschild 1, Tel Aviv' } });
+    fireEvent.click(within(editor).getByLabelText(/^Parking available/));
+    fireEvent.click(within(editor).getByRole('button', { name: 'manage.details.save' }));
+
+    await waitFor(() => expect(mocks.updateAnswers).toHaveBeenCalledWith('a1', [{ key: 'address', value: 'Rothschild 1, Tel Aviv' }]));
+    expect(await screen.findByText('manage.details.saved')).toBeTruthy();
+    expect(screen.getByText('Rothschild 1, Tel Aviv')).toBeTruthy();
+    expect(screen.queryByTestId('answers-editor')).toBeNull();
+  });
+
+  it('refuses an empty required answer before sending anything', async () => {
+    mocks.getAppointmentById.mockResolvedValue(upcoming([{ key: 'address', label: 'Address', value: 'Herzl 12' }]));
+    render(<ManageAppointment />);
+
+    fireEvent.click(await screen.findByRole('button', { name: 'manage.details.edit' }));
+    const editor = screen.getByTestId('answers-editor');
+    fireEvent.change(within(editor).getByLabelText('Address'), { target: { value: '' } });
+    fireEvent.click(within(editor).getByRole('button', { name: 'manage.details.save' }));
+
+    expect(await within(editor).findByText('schedule.validation.answer.required')).toBeTruthy();
+    expect(mocks.updateAnswers).not.toHaveBeenCalled();
+  });
+
+  it('says so when the booking can no longer change', async () => {
+    mocks.getAppointmentById.mockResolvedValue(upcoming([{ key: 'address', label: 'Address', value: 'Herzl 12' }]));
+    mocks.updateAnswers.mockRejectedValue(new Error('BOOKING_CLOSED'));
+    render(<ManageAppointment />);
+
+    fireEvent.click(await screen.findByRole('button', { name: 'manage.details.edit' }));
+    fireEvent.click(within(screen.getByTestId('answers-editor')).getByRole('button', { name: 'manage.details.save' }));
+
+    expect(await screen.findByText('manage.details.closed')).toBeTruthy();
+  });
+
+  it('offers no editing once the booking time has passed', async () => {
+    mocks.getAppointmentById.mockResolvedValue(
+      upcoming([{ key: 'address', label: 'Address', value: 'Herzl 12' }], { timestamp: String(Date.now() - DAY) })
+    );
+    render(<ManageAppointment />);
+
+    expect(await screen.findByText('Herzl 12')).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'manage.details.edit' })).toBeNull();
+  });
+});
+
+describe('details kept from the last booking (LT-217)', () => {
+  const remembered: BookingField[] = [
+    field({ key: 'address', label: 'Address', type: 'address', required: true, services: [], remember: true }),
+    field({ key: 'parking', label: 'Parking available', type: 'confirm', required: false, services: [] }),
+  ];
+  const renderRemembering = () =>
+    render(
+      <Schedule
+        config={new ScheduleConfig('Book', 'Pick')}
+        workingDays={openAllWeek}
+        user_id="u1"
+        phone="+972500000000"
+        businessName="Salon"
+        timeToCancel={0}
+        vacations={[]}
+        dateOverrides={[]}
+        appointmentTypes={[haircut, massage]}
+        bookingFields={remembered}
+        header={{ style: 'centered' } as never}
+        headerScale={'default' as never}
+      />
+    );
+
+  beforeEach(() => {
+    Object.values(mocks).forEach((fn) => fn.mockReset());
+    mocks.getCalendar.mockResolvedValue({ busy: [], classes: [] });
+    mocks.sendOtp.mockResolvedValue(true);
+    mocks.verifyOtp.mockResolvedValue('pt_1');
+    mocks.createAppointment.mockResolvedValue(booked);
+  });
+
+  it('reads the flag off the catalog', () => {
+    expect(remembered.map((f) => f.remember)).toEqual([true, false]);
+  });
+
+  it('asks the remembered question unless the customer says to use last time\'s, then leaves it to the server', async () => {
+    renderRemembering();
+    await reachDetails();
+    fillBasics();
+    expect(screen.getByLabelText('Address')).toBeTruthy();
+
+    fireEvent.click(within(screen.getByTestId('use-remembered')).getByRole('checkbox'));
+    expect(screen.queryByLabelText('Address')).toBeNull();
+    // The required address no longer holds the send-code button back.
+    expect(sendCodeButton().hasAttribute('disabled')).toBe(false);
+
+    fireEvent.submit(detailsForm());
+    await enterOtp();
+
+    await waitFor(() => expect(mocks.createAppointment).toHaveBeenCalledTimes(1));
+    const [payload] = mocks.createAppointment.mock.calls[0];
+    expect(payload.useRemembered).toBe(true);
+    expect(payload.answers).toEqual([]);
+  });
+
+  it('asks after all when nothing was kept, and says why', async () => {
+    mocks.createAppointment.mockRejectedValueOnce(
+      Object.assign(new Error('ANSWER_REQUIRED'), { code: 'ANSWER_REQUIRED', details: { key: 'address', label: 'Address' } })
+    );
+    renderRemembering();
+    await reachDetails();
+    fillBasics();
+    fireEvent.click(within(screen.getByTestId('use-remembered')).getByRole('checkbox'));
+
+    fireEvent.submit(detailsForm());
+    await enterOtp();
+    await waitFor(() => expect(mocks.createAppointment).toHaveBeenCalledTimes(1));
+
+    expect(await screen.findByLabelText('Address')).toBeTruthy();
+    expect(screen.getByText('schedule.remembered.missing')).toBeTruthy();
+    expect((within(screen.getByTestId('use-remembered')).getByRole('checkbox') as HTMLInputElement).checked).toBe(false);
   });
 });
 
