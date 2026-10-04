@@ -412,12 +412,15 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
       }, isUpdating ? 5000 : 20000);
 
     } catch (error: any) {
-      if (error && error.message === "SLOT_TAKEN") {
+      // This phone is already in the class: say so, and let them be — there
+      // is nothing to pick again.
+      if (error && error.message === "ALREADY_BOOKED") setError(t('schedule.alreadyBookedError'));
+      else if (error && (error.message === "SLOT_TAKEN" || error.message === "CLASS_FULL")) {
         AppointmentService.getInstance()
           .getAvailability(Date.now())
           .then(setBookedAppointments)
           .catch(console.error);
-        setError(t('schedule.conflictError'));
+        setError(t(error.message === "CLASS_FULL" ? 'schedule.classFullError' : 'schedule.conflictError'));
         setTimeout(() => {
           resetCalendar();
         }, 5000);
@@ -1283,7 +1286,10 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
                     </motion.button>
                   </div>
 
-                  <div className="grid grid-cols-7 gap-2 mb-2">
+                  {/* px-1.5 on both grids: a day grows 10% on hover, and the
+                      flow's wrapper clips (overflow-hidden, for its exit
+                      animation) — the outer columns need room to grow into. */}
+                  <div className="grid grid-cols-7 gap-2 mb-2 px-1.5">
                     {getDayNames().map((day, index) => (
                       <div
                         key={index}
@@ -1294,7 +1300,7 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
                     ))}
                   </div>
 
-                  <div className="grid grid-cols-7 gap-2">
+                  <div className="grid grid-cols-7 gap-2 px-1.5">
                     {generateCalendarDays()}
                   </div>
                   <div className={`mt-8 pt-4 border-t border-light-gray dark:border-dark-gray text-sm 

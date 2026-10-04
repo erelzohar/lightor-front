@@ -59,6 +59,8 @@
       "too_soon": "That time is too soon to move your appointment to — choose a time at least {{duration}} from now."
     },
     "conflictError": "The appointment has been taken please try another one",
+    "alreadyBookedError": "This number is already registered for this class.",
+    "classFullError": "This class just filled up. Please choose another time.",
     "genericError": "Something went wrong, please try again",
     "blockedError": "This business cannot accept a booking for this phone number — please contact them directly.",
     "form": {

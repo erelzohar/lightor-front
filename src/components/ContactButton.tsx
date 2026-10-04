@@ -43,7 +43,9 @@ const ContactButton: React.FC<ContactButtonProps> = ({ phone }) => {
     {
       icon: AlertTriangle,
       label: t('contact.option.report'),
-      action: 'mailto:support@styletime.com?subject=Problem%20Report',
+      // The product's support inbox, as on the error screens (it read
+      // StyleTime's, the product's old name).
+      action: 'mailto:lightorapp@gmail.com?subject=Problem%20Report',
       color: 'bg-amber-500/10 text-amber-500 hover:bg-amber-500 dark:text-amber-400 dark:hover:bg-amber-400'
     }
   ];

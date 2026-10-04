@@ -122,6 +122,11 @@ class AppointmentService {
       return Appointment.fromJSON(response.data.data);
     } catch (error: any) {
       if (error.response && error.response.status === 409) {
+        // A class says which conflict it was (LT-152): this phone is already
+        // in the session, or the last seat just went. Anything else is a
+        // slot someone else took first.
+        const code = error.response.data?.code;
+        if (code === 'ALREADY_BOOKED' || code === 'CLASS_FULL') throw new Error(code);
         throw new Error("SLOT_TAKEN"); // Send a specific code to the component
       }
       // The business has blocked this phone number (LT-122). Keyed on the

@@ -59,6 +59,8 @@
       "too_soon": "Este horario está demasiado próximo para mover la cita — elige uno que empiece dentro de {{duration}} como mínimo."
     },
     "conflictError": "Este horario ya está ocupado, por favor elige otro",
+    "alreadyBookedError": "Este número ya está inscrito en esta clase.",
+    "classFullError": "Esta clase acaba de llenarse. Por favor, elige otro horario.",
     "genericError": "Algo salió mal, inténtalo de nuevo",
     "blockedError": "Este negocio no puede aceptar una reserva desde este número de teléfono — contáctalo directamente.",
     "form": {

@@ -159,6 +159,19 @@ describe('AppointmentService', () => {
       await expect(service.createAppointment(draft, 'pt_abc')).rejects.toThrow('SLOT_TAKEN');
     });
 
+    it('tells a class apart: this phone already in it, or the last seat gone', async () => {
+      // The worker's codes (LT-152) travel on the 409; the form words each
+      // one. Any other conflict is still a slot someone else took.
+      mock.onPost(base).replyOnce(409, { code: 'ALREADY_BOOKED' });
+      await expect(service.createAppointment(draft, 'pt_abc')).rejects.toThrow('ALREADY_BOOKED');
+
+      mock.onPost(base).replyOnce(409, { code: 'CLASS_FULL' });
+      await expect(service.createAppointment(draft, 'pt_abc')).rejects.toThrow('CLASS_FULL');
+
+      mock.onPost(base).replyOnce(409, { code: 'CLASS_IN_THE_WAY' });
+      await expect(service.createAppointment(draft, 'pt_abc')).rejects.toThrow('SLOT_TAKEN');
+    });
+
     it('propagates other failures instead of reporting a booking', async () => {
       mock.onPost(base).reply(500);
 

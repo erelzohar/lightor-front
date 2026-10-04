@@ -59,6 +59,8 @@
       "too_soon": "Cet horaire est trop proche pour y déplacer votre rendez-vous — choisissez-en un dans {{duration}} au moins."
     },
     "conflictError": "Ce créneau est déjà pris, veuillez en choisir un autre",
+    "alreadyBookedError": "Ce numéro est déjà inscrit à ce cours.",
+    "classFullError": "Ce cours vient d’être complet. Veuillez choisir un autre horaire.",
     "genericError": "Une erreur est survenue, veuillez réessayer",
     "blockedError": "Cet établissement ne peut pas accepter de réservation pour ce numéro de téléphone — contactez-le directement.",
     "form": {
