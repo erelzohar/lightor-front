@@ -40,6 +40,7 @@ import GenerateReveal from './components/GenerateReveal';
 import ComposedPage from './components/blocks/ComposedPage';
 import ImagesService from './services/ImagesService';
 import { useTheme } from './hooks/useTheme';
+import { useSectionDeepLinks } from './hooks/useSectionDeepLinks';
 import { reportClientError } from './services/ErrorReportingService';
 
 // Origins permitted to drive this app through a PREVIEW_DATA postMessage.
@@ -276,6 +277,8 @@ function MainContent() {
   }, []);
 
   useTheme(config, isPreview);
+  // LT-222: a shared `/#schedule` lands on its section once the site is drawn.
+  useSectionDeepLinks(!loading && !!config);
 
   if (loading) return <Loading isLoading={true} />;
   if (!config) return inactive ? <SiteNotActive /> : <NotFound />;

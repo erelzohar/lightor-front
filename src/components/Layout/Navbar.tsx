@@ -8,6 +8,7 @@ import { handleSquareImageError } from '../../utils/imageFallback';
 import { useIsDarkMode } from '../../hooks/useIsDarkMode';
 import { navLinksFromBlocks, sectionTitlesOf } from '../../services/navLinks';
 import { showsPrices } from '../../utils/servicesHeading';
+import { scrollToSection, sectionOf } from '../../utils/sections';
 import { Conversion, mainCta, takesBookings } from '../../services/siteMode';
 import { Calendar, MessageSquare } from 'lucide-react';
 
@@ -112,22 +113,13 @@ const Navbar: React.FC<NavbarProps> = ({ websiteConfig, isPreview }) => {
   const handleLinkClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
     e.preventDefault();
     const href = e.currentTarget.getAttribute('href');
-    if (href) {
-      const targetElement = document.querySelector(href);
-      if (targetElement) {
-        // The bar's real bottom edge (LT-163) rather than a guessed 80px: the
-        // styles run from 57 to 109px tall, and a long name can wrap.
-        const navbarHeight = navRef.current ? navRef.current.offsetTop + navRef.current.offsetHeight : 80;
-        const elementPosition = targetElement.getBoundingClientRect().top;
-        const offsetPosition = elementPosition + window.pageYOffset - navbarHeight;
-
-        window.scrollTo({
-          top: offsetPosition,
-          behavior: 'smooth'
-        });
-
-        setIsOpen(false);
-      }
+    const target = sectionOf(href);
+    if (href && target) {
+      // Under the bar's real bottom edge (LT-163), as a shared link lands.
+      scrollToSection(target, 'smooth');
+      // LT-222: the address names the section, so it can be copied and shared.
+      window.history.replaceState(window.history.state, '', href);
+      setIsOpen(false);
     }
   };
 
