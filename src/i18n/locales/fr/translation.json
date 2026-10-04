@@ -6,7 +6,13 @@
     "schedule": "Rendez-vous",
     "contact": "Contact",
     "open_menu": "Ouvrir le menu",
-    "close_menu": "Fermer le menu"
+    "close_menu": "Fermer le menu",
+    "prices": "Tarifs",
+    "services": "Services"
+  },
+  "services": {
+    "ledger_title": "Tarifs",
+    "list_title": "Services"
   },
   "intro": {
     "title": "Message système",

@@ -341,7 +341,7 @@ function MainContent() {
     const tone = flow.length && flow[flow.length - 1].tone === 'bg' ? 'surface' as const : 'bg' as const;
     flow.push({
       key: 'services', tone,
-      node: <ServicesLedger appointmentTypes={config.appointmentTypes} tone={tone} />
+      node: <ServicesLedger appointmentTypes={config.appointmentTypes} tone={tone} title={config.components?.services?.title} />
     });
   }
 

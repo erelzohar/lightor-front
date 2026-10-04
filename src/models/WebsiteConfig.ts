@@ -137,7 +137,9 @@ export class Components {
     public contactButton: ContactButtonConfig,
     /** Optional sections (LT-086) — absent on older configs = invisible. */
     public testimonials: TestimonialsConfig,
-    public faq: FaqConfig
+    public faq: FaqConfig,
+    /** LT-220: the services / price list heading; '' = the default by prices. */
+    public services: { title: string } = { title: '' }
   ) {}
 
   static fromJSON(json: any): Components {
@@ -152,7 +154,8 @@ export class Components {
       IntroPopupConfig.fromJSON(json.introPopup),
       ContactButtonConfig.fromJSON(json.contactButton),
       TestimonialsConfig.fromJSON(json.testimonials),
-      FaqConfig.fromJSON(json.faq)
+      FaqConfig.fromJSON(json.faq),
+      { title: typeof json.services?.title === 'string' ? json.services.title : '' }
     );
   }
 }

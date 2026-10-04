@@ -6,7 +6,13 @@
     "schedule": "קביעת תור",
     "contact": "צור קשר",
     "open_menu": "פתח תפריט",
-    "close_menu": "סגור תפריט"
+    "close_menu": "סגור תפריט",
+    "prices": "מחירון",
+    "services": "שירותים"
+  },
+  "services": {
+    "ledger_title": "המחירון",
+    "list_title": "השירותים"
   },
   "intro": {
     "title": "הודעת מערכת",

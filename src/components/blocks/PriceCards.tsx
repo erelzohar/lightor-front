@@ -7,6 +7,7 @@ import type { SectionTone } from '../SectionDivider';
 import { TONE_BG } from './blockUtils';
 import ImagesService from '../../services/ImagesService';
 import { handleWideImageError } from '../../utils/imageFallback';
+import { servicesHeading } from '../../utils/servicesHeading';
 
 interface Props {
   appointmentTypes: AppointmentType[];
@@ -26,12 +27,13 @@ const PriceCards: React.FC<Props> = ({ appointmentTypes, tone = 'bg', title, boo
   const { t, language } = useLanguage();
   const rows = (appointmentTypes ?? []).filter((a) => a?.name).slice(0, 6);
   if (!rows.length) return null;
+  const heading = servicesHeading(title, rows, t, language);
   const price = (p?: string) => (!p?.trim() ? '' : /^\d+(\.\d+)?$/.test(p.trim()) ? `₪${p.trim()}` : p.trim());
   return (
-    <section id="services" className={`section-y ${TONE_BG[tone]} transition-colors duration-300`} aria-label={title || t('services.ledger_title', { defaultValue: language === 'he' ? 'המחירון' : 'Services' })}>
+    <section id="services" className={`section-y ${TONE_BG[tone]} transition-colors duration-300`} aria-label={heading}>
       <div className="container mx-auto px-4">
         <h2 className="text-4xl font-bold text-light-text dark:text-dark-text mb-12">
-          {title || t('services.ledger_title', { defaultValue: language === 'he' ? 'המחירון' : 'Services' })}
+          {heading}
         </h2>
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {rows.map((a, i) => {

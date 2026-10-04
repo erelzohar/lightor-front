@@ -6,7 +6,13 @@
     "schedule": "Citas",
     "contact": "Contacto",
     "open_menu": "Abrir menú",
-    "close_menu": "Cerrar menú"
+    "close_menu": "Cerrar menú",
+    "prices": "Precios",
+    "services": "Servicios"
+  },
+  "services": {
+    "ledger_title": "Precios",
+    "list_title": "Servicios"
   },
   "intro": {
     "title": "Mensaje del sistema",

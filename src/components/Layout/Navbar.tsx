@@ -7,6 +7,7 @@ import ImagesService from '../../services/ImagesService';
 import { handleSquareImageError } from '../../utils/imageFallback';
 import { useIsDarkMode } from '../../hooks/useIsDarkMode';
 import { navLinksFromBlocks, sectionTitlesOf } from '../../services/navLinks';
+import { showsPrices } from '../../utils/servicesHeading';
 import { Conversion, mainCta, takesBookings } from '../../services/siteMode';
 import { Calendar, MessageSquare } from 'lucide-react';
 
@@ -149,7 +150,7 @@ const Navbar: React.FC<NavbarProps> = ({ websiteConfig, isPreview }) => {
   // LT-168: a link reads as the heading it scrolls to; the generic label only when a section has none.
   const titles = sectionTitlesOf(websiteConfig.components);
   const menuItems = websiteConfig.blocks?.length
-    ? navLinksFromBlocks(websiteConfig.blocks.filter((b) => bookable || b.type !== 'schedule'), titles).map((l) => ({
+    ? navLinksFromBlocks(websiteConfig.blocks.filter((b) => bookable || b.type !== 'schedule'), titles, { priced: showsPrices(websiteConfig.appointmentTypes) }).map((l) => ({
       href: l.href,
       label: l.title ?? t(l.key, { defaultValue: language === 'he' ? l.fallbackHe : l.fallbackEn }),
       visible: true,

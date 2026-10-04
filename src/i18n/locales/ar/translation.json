@@ -6,7 +6,13 @@
     "schedule": "حجز موعد",
     "contact": "اتصل بنا",
     "open_menu": "فتح القائمة",
-    "close_menu": "إغلاق القائمة"
+    "close_menu": "إغلاق القائمة",
+    "prices": "الأسعار",
+    "services": "الخدمات"
+  },
+  "services": {
+    "ledger_title": "الأسعار",
+    "list_title": "الخدمات"
   },
   "intro": {
     "title": "رسالة النظام",

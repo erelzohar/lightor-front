@@ -6,7 +6,13 @@
     "schedule": "Schedule",
     "contact": "Contact",
     "open_menu": "Open menu",
-    "close_menu": "Close menu"
+    "close_menu": "Close menu",
+    "prices": "Prices",
+    "services": "Services"
+  },
+  "services": {
+    "ledger_title": "Prices",
+    "list_title": "Services"
   },
   "intro": {
     "title": "System message",

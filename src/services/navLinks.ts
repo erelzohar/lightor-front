@@ -16,7 +16,7 @@ export interface NavLink {
 interface BlockLike { type: string; id: string }
 
 /** The section headings a menu can borrow (LT-168). */
-export interface SectionTitles { about?: string; portfolio?: string; schedule?: string; faq?: string; contact?: string }
+export interface SectionTitles { about?: string; portfolio?: string; schedule?: string; faq?: string; contact?: string; services?: string }
 
 /** LT-173: a heading longer than this stays a heading; the menu keeps its generic word.
  *  Sixteen characters is the room a bar with five links, a logo, a name and a
@@ -32,13 +32,14 @@ const clean = (t: unknown, max = NAV_LABEL_MAX): string | undefined => {
 /** Pull the menu-worthy headings out of a config's `components`. */
 export const sectionTitlesOf = (c?: {
   about?: { title?: string } | null; portfolio?: { title?: string } | null; schedule?: { title?: string } | null;
-  faq?: { title?: string } | null; contact?: { title?: string } | null;
+  faq?: { title?: string } | null; contact?: { title?: string } | null; services?: { title?: string } | null;
 } | null): SectionTitles => ({
   about: clean(c?.about?.title), portfolio: clean(c?.portfolio?.title), schedule: clean(c?.schedule?.title),
-  faq: clean(c?.faq?.title), contact: clean(c?.contact?.title),
+  faq: clean(c?.faq?.title), contact: clean(c?.contact?.title), services: clean(c?.services?.title),
 });
 
-export const navLinksFromBlocks = (blocks: BlockLike[], titles: SectionTitles = {}): NavLink[] => {
+/** `priced` (LT-220): whether a service shows a price — the services link then says "price list". */
+export const navLinksFromBlocks = (blocks: BlockLike[], titles: SectionTitles = {}, { priced = true }: { priced?: boolean } = {}): NavLink[] => {
   const out: NavLink[] = [];
   const seen = new Set<string>();
   const add = (l: NavLink, title?: string) => {
@@ -53,7 +54,9 @@ export const navLinksFromBlocks = (blocks: BlockLike[], titles: SectionTitles = 
       case 'features': if (!seen.has('#about')) add({ href: '#about-features', key: 'nav.about', fallbackHe: 'אודות', fallbackEn: 'About' }, titles.about); break;
       case 'gallery': add({ href: '#portfolio', key: 'nav.portfolio', fallbackHe: 'תיק עבודות', fallbackEn: 'Work' }, titles.portfolio); break;
       case 'ledger':
-      case 'priceCards': add({ href: '#services', key: 'services.ledger_title', fallbackHe: 'מחירון', fallbackEn: 'Services' }); break;
+      case 'priceCards': add(priced
+        ? { href: '#services', key: 'nav.prices', fallbackHe: 'מחירון', fallbackEn: 'Prices' }
+        : { href: '#services', key: 'nav.services', fallbackHe: 'שירותים', fallbackEn: 'Services' }, titles.services); break;
       case 'schedule': add({ href: '#schedule', key: 'nav.schedule', fallbackHe: 'קביעת תור', fallbackEn: 'Book' }, titles.schedule); break;
       case 'faq': add({ href: '#faq', key: 'nav.faq', fallbackHe: 'שאלות', fallbackEn: 'FAQ' }, titles.faq); break;
       case 'contact': add({ href: '#contact', key: 'nav.contact', fallbackHe: 'צור קשר', fallbackEn: 'Contact' }, titles.contact); break;
