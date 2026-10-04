@@ -128,7 +128,7 @@
     "until": "until {{time}}",
     "before": "before the appointment",
     "hours_and_minutes": "{{hours}} hours and {{minutes}} minutes",
-    "currency": "$",
+    "currency": "₪",
     "toggle_dark_mode": "Toggle dark mode"
   },
   "day": {
