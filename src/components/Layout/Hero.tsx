@@ -97,6 +97,13 @@ const VANTA_IMPORTERS: Record<string, () => Promise<any>> = {
   net: () => import('vanta/dist/vanta.net.min'),
 };
 
+/** The Vanta effect to load for a stored bgType. 'gradient' renders fog
+ *  (LT-071), and so does anything we have no importer for: the model allows
+ *  'rings', and an unsaved preview config can carry '' or an invented name
+ *  (LT-227). */
+export const resolveVantaType = (raw: string | undefined | null): string =>
+  raw && Object.prototype.hasOwnProperty.call(VANTA_IMPORTERS, raw) ? raw : 'fog';
+
 const radiusClassMap: Record<BorderRadius, string> = {
   none: 'rounded-none',
   sm: 'rounded',
@@ -116,10 +123,8 @@ const Hero: React.FC<HeroProps> = ({ config, social, phone, isContactVisible, ap
   const isDarkMode = useIsDarkMode();
 
   // The default background is Vanta fog (LT-071, Erel's decision after the
-  // LT-062..069 animated-gradient saga — see the missions log). Stored
-  // configs may still say 'gradient'; they render fog.
-  const rawBgType = config.bgType ?? 'gradient';
-  const bgType = rawBgType === 'gradient' ? 'fog' : rawBgType;
+  // LT-062..069 animated-gradient saga — see the missions log).
+  const bgType = resolveVantaType(config.bgType);
 
   // Design tokens with fallbacks to legacy bordersType
   const btnRadius = design?.borderRadius
