@@ -170,6 +170,29 @@ describe('the site editor bridge (LT-243)', () => {
     expect(container.querySelector('[data-lt-edit="blocks.k7.props.text"]')).toHaveTextContent('We cut with care');
   });
 
+  it('a hidden section is gone from the site but shows, marked, in the editor (LT-249)', async () => {
+    const legacy = config();
+    (legacy.components as Record<string, Record<string, unknown>>).faq.visible = false;
+    const { container } = renderSite();
+    await post({ type: 'PREVIEW_DATA', config: legacy });
+    await waitFor(() => expect(screen.getAllByText('Sharp cuts').length).toBeGreaterThan(0));
+    expect(screen.queryByText('Parking?')).toBeNull();
+
+    await post({ type: 'LT_EDIT', on: true });
+    await waitFor(() => expect(container.querySelector('[data-lt-section="faq"]')).not.toBeNull());
+    expect(container.querySelector('[data-lt-section="faq"]')).toHaveAttribute('data-lt-hidden', 'true');
+    expect(container.querySelector('[data-lt-section="hero"]')).not.toHaveAttribute('data-lt-hidden');
+
+    // A composed page: the block hidden by the owner, the same way.
+    await post({
+      type: 'PREVIEW_DATA',
+      config: config({ blocks: [{ id: 'b1', type: 'hero' }, { id: 'k7', type: 'manifesto', props: { text: 'Hidden words' }, mod: { hidden: true } }] }),
+    });
+    await waitFor(() => expect(container.querySelector('[data-lt-section="k7"]')).toHaveAttribute('data-lt-hidden', 'true'));
+    await post({ type: 'LT_EDIT', on: false });
+    await waitFor(() => expect(screen.queryByText('Hidden words')).toBeNull());
+  });
+
   it('ignores editor messages from an untrusted origin', async () => {
     const { container } = renderSite();
     await post({ type: 'PREVIEW_DATA', config: config() });

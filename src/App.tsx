@@ -350,7 +350,10 @@ function MainContent() {
   // Deterministic per-site jitter: same subdomain always renders the same,
   // two same-preset sites still differ (LT-053).
   const jitter = getSiteJitter(config.subDomain);
-  const flow: { key: string; tone: SectionTone; node: ReactNode }[] = [];
+  const flow: { key: string; tone: SectionTone; node: ReactNode; hidden?: boolean }[] = [];
+  // LT-249: a section the owner hid still shows in the site editor — faded,
+  // so it can be clicked and shown again. Nowhere else.
+  const showSection = (visible: boolean | undefined) => !!visible || editing;
   // LT-167: nothing to book → no schedule, no booking band. LT-199: nor on a leads site.
   const bookable = takesBookings(config.conversion, config.appointmentTypes);
   // Vibe sites (LT-093+) opt into every seeded page-level variation; legacy
@@ -358,9 +361,9 @@ function MainContent() {
   const isVibeSite = (config.design?.sectionHeader ?? 'centered') !== 'centered'
     || config.design?.bookingBand === 'band';
 
-  if (config.components?.hero?.visible) {
+  if (config.components?.hero && showSection(config.components.hero.visible)) {
     flow.push({
-      key: 'hero', tone: 'bg', node: (
+      key: 'hero', tone: 'bg', hidden: !config.components.hero.visible, node: (
         <Hero
           config={config.components.hero}
           social={config.social}
@@ -378,9 +381,9 @@ function MainContent() {
     });
   }
 
-  if (config.components?.about?.visible) {
+  if (config.components?.about && showSection(config.components.about.visible)) {
     flow.push({
-      key: 'about', tone: 'surface', node: (
+      key: 'about', tone: 'surface', hidden: !config.components.about.visible, node: (
         <About
           config={config.components.about}
           websiteConfig={{
@@ -408,9 +411,9 @@ function MainContent() {
     });
   }
 
-  if (config.components?.portfolio?.visible) {
+  if (config.components?.portfolio && showSection(config.components.portfolio.visible)) {
     flow.push({
-      key: 'portfolio', tone: 'bg',
+      key: 'portfolio', tone: 'bg', hidden: !config.components.portfolio.visible,
       node: <Portfolio config={config.components.portfolio} layout={config.design?.portfolioLayout} masonryPhase={jitter.masonryPhase} />
     });
   }
@@ -418,10 +421,10 @@ function MainContent() {
   // Optional sections (LT-086) — absent/invisible on older configs. Their
   // tone is the opposite of the previous section's, so the bg/surface rhythm
   // and the dividers keep working wherever they slot in.
-  if (config.components?.testimonials?.visible && (config.components.testimonials.items?.length ?? 0) > 0) {
+  if (config.components?.testimonials && showSection(config.components.testimonials.visible) && (config.components.testimonials.items?.length ?? 0) > 0) {
     const tone = flow.length && flow[flow.length - 1].tone === 'bg' ? 'surface' as const : 'bg' as const;
     flow.push({
-      key: 'testimonials', tone,
+      key: 'testimonials', tone, hidden: !config.components.testimonials.visible,
       node: <Testimonials config={config.components.testimonials} tone={tone} layout={config.design?.testimonialsLayout} />
     });
   }
@@ -454,17 +457,17 @@ function MainContent() {
     });
   }
 
-  if (config.components?.faq?.visible && (config.components.faq.items?.length ?? 0) > 0) {
+  if (config.components?.faq && showSection(config.components.faq.visible) && (config.components.faq.items?.length ?? 0) > 0) {
     const tone = flow.length && flow[flow.length - 1].tone === 'bg' ? 'surface' as const : 'bg' as const;
     flow.push({
-      key: 'faq', tone,
+      key: 'faq', tone, hidden: !config.components.faq.visible,
       node: <Faq config={config.components.faq} tone={tone} faqStyle={config.design?.faqStyle} />
     });
   }
 
-  if (config.components?.contact?.visible) {
+  if (config.components?.contact && showSection(config.components.contact.visible)) {
     flow.push({
-      key: 'contact', tone: 'bg', node: (
+      key: 'contact', tone: 'bg', hidden: !config.components.contact.visible, node: (
         <Contact
           config={config.components.contact}
           address={config.address}
@@ -493,8 +496,8 @@ function MainContent() {
         <ErrorBoundary><IntroPopup config={config.components.introPopup} /></ErrorBoundary>
       )}
 
-      {config.components?.navbar?.visible && (
-        <EditSection id="navbar" type="navbar">
+      {config.components?.navbar && showSection(config.components.navbar.visible) && (
+        <EditSection id="navbar" type="navbar" hidden={!config.components.navbar.visible}>
           <ErrorBoundary><Navbar websiteConfig={config} isPreview={isPreview} /></ErrorBoundary>
         </EditSection>
       )}
@@ -508,7 +511,10 @@ function MainContent() {
         // LT-115: seeded page-order variation — some sites lead with the
         // work. Vibe presets only: legacy sites must never reorder (the
         // review caught the ungated draw touching ~40% of old sites).
-        const ordered = [...flow];
+        // Hidden sections (the editor only) take no part in the seeded layout
+        // below: they go back in beside their usual neighbour at the end, so
+        // the page around them is drawn exactly as it is live.
+        const ordered = flow.filter((e) => !e.hidden);
         if (isVibeSite) {
           // LT-126: a seeded permutation of the middle sections, so the page
           // skeleton itself differs between two same-vibe sites (supersedes
@@ -573,7 +579,8 @@ function MainContent() {
             });
           }
         }
-        const noDivider = (key: string) => key === 'booking-band' || key === 'interlude' || backdropKeys.has(key) || key === invertKey;
+        const hiddenKeys = new Set(flow.filter((e) => e.hidden).map((e) => e.key));
+        const noDivider = (key: string) => key === 'booking-band' || key === 'interlude' || backdropKeys.has(key) || key === invertKey || hiddenKeys.has(key);
         // The canvas full-bleed CTA band. LT-119: at a seeded slot that is
         // never directly above (or below) the schedule — there it merely
         // announced the widget beneath it, on every site alike. Only with a
@@ -601,6 +608,11 @@ function MainContent() {
           wide: '[&_.container]:max-w-none [&_.container]:px-6 lg:[&_.container]:px-16',
         };
         const widthClass = isVibeSite ? (WIDTH_CLASS[config.design?.sectionWidth ?? 'contained'] ?? '') : '';
+        flow.forEach((entry, at) => {
+          if (!entry.hidden) return;
+          const before = flow.slice(0, at).reverse().find((e) => !e.hidden);
+          ordered.splice(before ? ordered.findIndex((e) => e.key === before.key) + 1 : 0, 0, entry);
+        });
         const rendered = ordered.map((s, i) => {
           return (
             <Fragment key={s.key}>
@@ -609,7 +621,7 @@ function MainContent() {
               {i > 0 && !noDivider(s.key) && !noDivider(ordered[i - 1].key) && (
                 <SectionDivider variant={divider} aboveTone={ordered[i - 1].tone} belowTone={s.tone} mirror={jitter.mirrorDividers} />
               )}
-              <EditSection id={s.key} type={s.key}>
+              <EditSection id={s.key} type={s.key} hidden={'hidden' in s && !!s.hidden}>
               {(() => {
                 const inner = (
                   <GenerateReveal seq={generateSeq} index={i}>
@@ -653,8 +665,8 @@ function MainContent() {
         return widthClass ? <div className={widthClass}>{rendered}</div> : rendered;
       })()}
 
-      {config.components?.footer?.visible && (
-        <EditSection id="footer" type="footer">
+      {config.components?.footer && showSection(config.components.footer.visible) && (
+        <EditSection id="footer" type="footer" hidden={!config.components.footer.visible}>
         <ErrorBoundary>
           <Footer
             config={config.components.footer}
@@ -678,8 +690,8 @@ function MainContent() {
         <ErrorBoundary><LightorBadge /></ErrorBoundary>
       )}
 
-      {config.components?.contactButton?.visible && (
-        <EditSection id="contactButton" type="contactButton">
+      {config.components?.contactButton && showSection(config.components.contactButton.visible) && (
+        <EditSection id="contactButton" type="contactButton" hidden={!config.components.contactButton.visible}>
           <ErrorBoundary><ContactButton phone={config.contact.phone} /></ErrorBoundary>
         </EditSection>
       )}

@@ -7,11 +7,17 @@ import { useEdit } from '../services/editMode';
  * gives the wrapper no box of its own, so it cannot move anything; the
  * overlay measures what it contains. Outside the editor it renders nothing.
  */
-const EditSection = ({ id, type, children }: { id: string; type: string; children: ReactNode }) => {
+const EditSection = ({ id, type, hidden = false, children }: { id: string; type: string; hidden?: boolean; children: ReactNode }) => {
   const { editing } = useEdit();
   if (!editing) return <>{children}</>;
   return (
-    <div data-lt-section={id} data-lt-section-type={type} style={{ display: 'contents' }}>
+    <div
+      data-lt-section={id}
+      data-lt-section-type={type}
+      // LT-249: hidden by the owner — drawn faded here only (index.css), so it can be shown again.
+      {...(hidden ? { 'data-lt-hidden': 'true' } : {})}
+      style={{ display: 'contents' }}
+    >
       {children}
     </div>
   );

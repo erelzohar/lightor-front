@@ -8,6 +8,7 @@ import ImagesService from '../../services/ImagesService';
 import ErrorBoundary from '../ErrorBoundary';
 import GenerateReveal from '../GenerateReveal';
 import EditSection from '../EditSection';
+import { useEdit } from '../../services/editMode';
 import SectionDivider, { type SectionTone } from '../SectionDivider';
 import Hero from '../Layout/Hero';
 import About from '../Layout/About';
@@ -62,6 +63,7 @@ const FEATURES_LAYOUT: Record<string, AboutLayout> = { tiles: 'cards', band: 'ba
  * backdrop), so a composition is fully described by the stored config.
  */
 const ComposedPage: React.FC<ComposedPageProps> = ({ config, jitter, isPreview, generateSeq = 0 }) => {
+  const { editing } = useEdit();
   const c = config.components;
   const design = config.design;
   const hasBand = config.blocks.some((b) => b.type === 'bookingBand');
@@ -233,16 +235,20 @@ const ComposedPage: React.FC<ComposedPageProps> = ({ config, jitter, isPreview, 
   const items: { block: Block; tone: SectionTone; node: ReactNode }[] = [];
   let last: SectionTone = 'surface';
   for (const block of config.blocks) {
+    // LT-249: a hidden block is skipped — except in the site editor, where it
+    // shows faded and does not move the alternation (the page around it
+    // keeps the tones it has live).
+    if (block.mod?.hidden && !editing) continue;
     const tone: SectionTone = block.mod?.tone ?? (last === 'bg' ? 'surface' : 'bg');
     const node = render(block, tone);
     if (node === null) continue; // a skipped block does not advance the alternation
     items.push({ block, tone, node });
-    last = tone;
+    if (!block.mod?.hidden) last = tone;
   }
 
   const divider = design?.sectionDivider ?? 'none';
   const flat = (b: Block) => ['bookingBand', 'interlude', 'footer', 'hero', 'ticker', 'announcement', 'logoMark', 'mapStrip'].includes(b.type)
-    || (b.mod?.backdrop && b.mod.backdrop !== 'none') || !!b.mod?.invert;
+    || (b.mod?.backdrop && b.mod.backdrop !== 'none') || !!b.mod?.invert || !!b.mod?.hidden;
   const heroImg = c?.hero?.heroImageSrc;
 
   return (
@@ -276,7 +282,7 @@ const ComposedPage: React.FC<ComposedPageProps> = ({ config, jitter, isPreview, 
               <SectionDivider variant={divider} aboveTone={items[i - 1].tone} belowTone={tone} mirror={jitter.mirrorDividers} />
             )}
             {/* LT-243: the site editor selects a section by its block id. */}
-            <EditSection id={b.id} type={b.type}>{wrapped}</EditSection>
+            <EditSection id={b.id} type={b.type} hidden={!!b.mod?.hidden}>{wrapped}</EditSection>
           </Fragment>
         );
       })}

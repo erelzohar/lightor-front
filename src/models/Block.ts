@@ -19,6 +19,8 @@ export interface BlockMod {
   scale?: 'giant' | 'normal' | 'micro';
   invert?: boolean;
   backdrop?: 'none' | 'tinted' | 'photo' | 'pattern';
+  /** LT-249: hidden by the owner — skipped on the site, faded in the site editor. */
+  hidden?: boolean;
 }
 
 export interface Block {
