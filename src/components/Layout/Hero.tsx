@@ -16,6 +16,7 @@ import { handleWideImageError } from '../../utils/imageFallback';
 import { useIsDarkMode } from '../../hooks/useIsDarkMode';
 import MarqueeStrip from '../MarqueeStrip';
 import { whatsAppHref } from '../../utils/phone';
+import { loadVantaDeps } from './vantaDeps';
 
 function hexToInt(hex: string): number {
   return parseInt(hex.replace('#', ''), 16);
@@ -177,8 +178,9 @@ const Hero: React.FC<HeroProps> = ({ config, social, phone, isContactVisible, ap
     let cancelled = false;
 
     // No WebGL (crawlers, blocklisted GPUs) makes three.js throw; the section's
-    // bg-light-bg/dark-bg colour is the fallback, so fail silently.
-    VANTA_IMPORTERS[bgType]().then((mod) => {
+    // bg-light-bg/dark-bg colour is the fallback, so fail silently. The same
+    // goes for a CDN that fails to serve three/p5 (LT-240).
+    loadVantaDeps(bgType).then(() => VANTA_IMPORTERS[bgType]()).then((mod) => {
       if (cancelled || !vantaRef.current) return;
       try {
         vantaInstanceRef.current = mod.default({
