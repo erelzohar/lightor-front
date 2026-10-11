@@ -128,6 +128,30 @@ describe('the site editor bridge (LT-243)', () => {
     expect(parentPost).toHaveBeenLastCalledWith(expect.objectContaining({ path: 'components.hero.cta' }), DASHBOARD);
   });
 
+  it("a section's selection lists the fields it shows, once each (LT-249)", async () => {
+    const { container } = renderSite();
+    await post({ type: 'PREVIEW_DATA', config: config() });
+    await post({ type: 'LT_EDIT', on: true });
+    const faq = await waitFor(() => {
+      const el = container.querySelector<HTMLElement>('[data-lt-section="faq"] section');
+      expect(el).not.toBeNull();
+      return el as HTMLElement;
+    });
+    parentPost.mockClear();
+    act(() => { faq.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true })); });
+    expect(parentPost).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: 'LT_SELECT', kind: 'section', section: 'faq',
+        fields: [
+          { path: 'components.faq.title', kind: 'text' },
+          { path: 'components.faq.items.0.question', kind: 'text' },
+          { path: 'components.faq.items.0.answer', kind: 'text' },
+        ],
+      }),
+      DASHBOARD
+    );
+  });
+
   it('names blocks by id on a composed page, and block copy by its props path', async () => {
     const { container } = renderSite();
     await post({

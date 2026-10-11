@@ -53,7 +53,11 @@ export type EditorToSite =
 export type SiteToEditor =
   | { type: 'LT_READY' }
   | { type: 'LT_SELECT'; kind: EditKind; path: string; section: string | null; sectionType: string | null; count: number }
-  | { type: 'LT_SELECT'; kind: 'section'; path: null; section: string; sectionType: string | null; count: 1 }
+  | {
+      type: 'LT_SELECT'; kind: 'section'; path: null; section: string; sectionType: string | null; count: 1;
+      /** LT-249: every field the section shows, once each, so the editor can hand all its texts to the AI. */
+      fields: { path: string; kind: EditKind }[];
+    }
   | { type: 'LT_DESELECT' };
 
 const cssEscape = (value: string): string =>
@@ -133,7 +137,16 @@ export const pickAtPoint = (x: number, y: number, target: EventTarget | null): P
 export const selectMessage = (picked: Picked | null): SiteToEditor => {
   if (!picked) return { type: 'LT_DESELECT' };
   if (picked.kind === 'section' || !picked.path) {
-    return { type: 'LT_SELECT', kind: 'section', path: null, section: picked.section as string, sectionType: picked.sectionType, count: 1 };
+    const el = elementForSection(document, picked.section as string);
+    const fields: { path: string; kind: EditKind }[] = [];
+    const seen = new Set<string>();
+    el?.querySelectorAll<HTMLElement>('[data-lt-edit]').forEach((node) => {
+      const path = node.dataset.ltEdit;
+      if (!path || seen.has(path)) return;
+      seen.add(path);
+      fields.push({ path, kind: (node.dataset.ltKind as EditKind) || 'text' });
+    });
+    return { type: 'LT_SELECT', kind: 'section', path: null, section: picked.section as string, sectionType: picked.sectionType, count: 1, fields };
   }
   return {
     type: 'LT_SELECT',
