@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, Fragment, cloneElement, isValidElement, type ReactNode, type ReactElement } from 'react';
+import { useState, useEffect, useRef, useMemo, useCallback, Fragment, cloneElement, isValidElement, type ReactNode, type ReactElement } from 'react';
 import { Routes, Route } from 'react-router-dom';
 
 // Components & Services
@@ -42,6 +42,9 @@ import ImagesService from './services/ImagesService';
 import { useTheme } from './hooks/useTheme';
 import { useSectionDeepLinks } from './hooks/useSectionDeepLinks';
 import { reportClientError } from './services/ErrorReportingService';
+import EditSection from './components/EditSection';
+import EditOverlay from './components/EditOverlay';
+import { EditContext, elementForSection, elementsForPath, type EditTarget, type EditorToSite, type SiteToEditor } from './services/editMode';
 
 // Origins permitted to drive this app through a PREVIEW_DATA postMessage.
 // Only the register and dashboard apps embed the public site in an iframe for
@@ -50,6 +53,12 @@ const PREVIEW_PARENT_HOSTNAMES = new Set([
   'register.lightor.app',
   'dashboard.lightor.app',
 ]);
+
+// LT-243: the dashboard inside the native app. Its WebView's own origin is
+// `capacitor://app.lightor.app` on iOS and `https://app.lightor.app` on
+// Android (dashboard capacitor.config.ts); without these the app's preview
+// stayed empty.
+const NATIVE_APP_HOSTNAME = 'app.lightor.app';
 
 const LOCAL_DEV_HOSTNAMES = new Set(['localhost', '127.0.0.1', '[::1]']);
 
@@ -68,6 +77,7 @@ const isAllowedPreviewOrigin = (origin: string): boolean => {
 
   // Trusted parents are always served over TLS in production.
   if (PREVIEW_PARENT_HOSTNAMES.has(url.hostname)) return url.protocol === 'https:';
+  if (url.hostname === NATIVE_APP_HOSTNAME) return url.protocol === 'https:' || url.protocol === 'capacitor:';
 
   // Local development: any port, http or https. Gated on the dev build so a
   // production bundle never trusts a locally-served page — Vite statically
@@ -75,6 +85,19 @@ const isAllowedPreviewOrigin = (origin: string): boolean => {
   if (!import.meta.env.DEV) return false;
   if (url.protocol !== 'http:' && url.protocol !== 'https:') return false;
   return LOCAL_DEV_HOSTNAMES.has(url.hostname);
+};
+
+/**
+ * LT-243: a message to the editor that embeds this page. Replies go to the
+ * origin the editor's own messages came from (http only exists in dev, where
+ * the allow-list admits localhost). A `capacitor:` origin is not one
+ * `postMessage` can target (its URL has an opaque origin), and LT_READY goes
+ * out before the editor has spoken, so those use `'*'` — what travels is only
+ * which field was clicked, never data.
+ */
+const postToEditor = (message: SiteToEditor, origin: string | null) => {
+  if (window.parent === window) return;
+  window.parent.postMessage(message, origin && /^https?:\/\//.test(origin) ? origin : '*');
 };
 
 function MainContent() {
@@ -88,6 +111,11 @@ function MainContent() {
   const [generateSeq, setGenerateSeq] = useState(0);
   const isPreviewRef = useRef(false);
   const { language, setLanguage } = useLanguage();
+  // LT-243: the dashboard's site editor — on while it says so, with the
+  // field or section it has selected; replies go to the origin it wrote from.
+  const [editing, setEditing] = useState(false);
+  const [selection, setSelection] = useState<EditTarget | null>(null);
+  const editorOriginRef = useRef<string | null>(null);
 
   // Keep a stable ref to setLanguage so the message listener never needs to
   // re-register when the context returns a new function reference.
@@ -106,6 +134,23 @@ function MainContent() {
   // absent right after each setLanguage call triggered effect cleanup).
   useEffect(() => {
     const handleMessage = (event: MessageEvent) => {
+      const kind = event.data?.type;
+      if (kind === 'LT_EDIT' || kind === 'LT_SELECT_PATH' || kind === 'LT_SCROLL_TO') {
+        if (!isAllowedPreviewOrigin(event.origin)) return;
+        editorOriginRef.current = event.origin;
+        const msg = event.data as EditorToSite;
+        if (msg.type === 'LT_EDIT') {
+          setEditing(!!msg.on);
+          if (!msg.on) setSelection(null);
+        } else if (msg.type === 'LT_SELECT_PATH') {
+          setSelection(msg.path || msg.section ? { path: msg.path ?? null, section: msg.section ?? null } : null);
+        } else {
+          const el = msg.path ? elementsForPath(document, msg.path)[0] : msg.section ? elementForSection(document, msg.section) : null;
+          const target = el && getComputedStyle(el).display === 'contents' ? el.firstElementChild : el;
+          target?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+        return;
+      }
       if (event.data?.type === 'PREVIEW_DATA') {
         // Reject config injected by any page that is not a trusted preview parent.
         if (!isAllowedPreviewOrigin(event.origin)) {
@@ -113,6 +158,7 @@ function MainContent() {
           return;
         }
         isPreviewRef.current = true;
+        editorOriginRef.current = event.origin;
         // The parent posts a plain JSON config. Run it through fromJSON so a
         // stylePreset expands into concrete design tokens exactly as it does
         // for a real site — previously the raw cast skipped expansion and
@@ -146,6 +192,9 @@ function MainContent() {
       }
     };
     window.addEventListener('message', handleMessage);
+    // LT-243: tell the parent the listener is up, so it need not guess when
+    // to post the config (both parents waited 500 ms after onLoad).
+    if (window.self !== window.top) postToEditor({ type: 'LT_READY' }, null);
 
     // Safety valve: if we are inside an iframe and the parent never sends
     // PREVIEW_DATA (message lost in a race, or X-Frame-Options blocked
@@ -279,6 +328,17 @@ function MainContent() {
   useTheme(config, isPreview);
   // LT-222: a shared `/#schedule` lands on its section once the site is drawn.
   useSectionDeepLinks(!loading && !!config);
+
+  const editState = useMemo(() => ({ editing }), [editing]);
+  // A click in the editor: select it here at once, and tell the editor.
+  const onPick = useCallback((message: SiteToEditor) => {
+    if (message.type === 'LT_SELECT') {
+      setSelection(message.kind === 'section' ? { path: null, section: message.section } : { path: message.path, section: message.section });
+    } else if (message.type === 'LT_DESELECT') {
+      setSelection(null);
+    }
+    postToEditor(message, editorOriginRef.current);
+  }, []);
 
   if (loading) return <Loading isLoading={true} />;
   if (!config) return inactive ? <SiteNotActive /> : <NotFound />;
@@ -425,13 +485,18 @@ function MainContent() {
   // and put a horizontal scroll under it. `clip` rather than `hidden` so this
   // never becomes a scroll container — sticky and anchors keep working.
   return (
+    <EditContext.Provider value={editState}>
     <div className="min-h-screen overflow-x-clip bg-light-bg dark:bg-dark-bg transition-colors duration-300">
-      {config.components?.introPopup?.visible && (
+      {/* LT-243: the popup would cover the page the owner is editing; the
+          editor edits its text from its own list instead. */}
+      {config.components?.introPopup?.visible && !editing && (
         <ErrorBoundary><IntroPopup config={config.components.introPopup} /></ErrorBoundary>
       )}
 
       {config.components?.navbar?.visible && (
-        <ErrorBoundary><Navbar websiteConfig={config} isPreview={isPreview} /></ErrorBoundary>
+        <EditSection id="navbar" type="navbar">
+          <ErrorBoundary><Navbar websiteConfig={config} isPreview={isPreview} /></ErrorBoundary>
+        </EditSection>
       )}
 
       {/* LT-133: a composed page (blocks present) replaces the section flow
@@ -498,7 +563,9 @@ function MainContent() {
               node: (
                 <Interlude
                   image={interludeImage}
+                  imagePath={config.components?.portfolio?.items?.[1]?.url ? 'components.portfolio.items.1.url' : 'components.hero.heroImageSrc'}
                   statement={config.components?.about?.paragraphs?.mission?.trim() || config.components?.hero?.subtitle?.trim() || undefined}
+                  statementPath={config.components?.about?.paragraphs?.mission?.trim() ? 'components.about.paragraphs.mission' : 'components.hero.subtitle'}
                   variant={jitter.interludeVariant < 0.5 ? 0 : 1}
                   tone={tone}
                 />
@@ -520,7 +587,7 @@ function MainContent() {
               // Same tone as its neighbour so no divider is drawn against it —
               // the band paints its own primary background edge to edge.
               tone: (ordered[slot] ?? ordered[slot - 1]).tone,
-              node: <BookingBand statement={config.components.schedule.description} label={config.components.hero?.cta} />,
+              node: <BookingBand statement={config.components.schedule.description} statementPath="components.schedule.description" label={config.components.hero?.cta} />,
             });
           }
         }
@@ -542,6 +609,7 @@ function MainContent() {
               {i > 0 && !noDivider(s.key) && !noDivider(ordered[i - 1].key) && (
                 <SectionDivider variant={divider} aboveTone={ordered[i - 1].tone} belowTone={s.tone} mirror={jitter.mirrorDividers} />
               )}
+              <EditSection id={s.key} type={s.key}>
               {(() => {
                 const inner = (
                   <GenerateReveal seq={generateSeq} index={i}>
@@ -578,6 +646,7 @@ function MainContent() {
                   </div>
                 );
               })()}
+              </EditSection>
             </Fragment>
           );
         });
@@ -585,6 +654,7 @@ function MainContent() {
       })()}
 
       {config.components?.footer?.visible && (
+        <EditSection id="footer" type="footer">
         <ErrorBoundary>
           <Footer
             config={config.components.footer}
@@ -598,6 +668,7 @@ function MainContent() {
             city={config.address?.city}
           />
         </ErrorBoundary>
+        </EditSection>
       )}
       </>)}
 
@@ -608,9 +679,14 @@ function MainContent() {
       )}
 
       {config.components?.contactButton?.visible && (
-        <ErrorBoundary><ContactButton phone={config.contact.phone} /></ErrorBoundary>
+        <EditSection id="contactButton" type="contactButton">
+          <ErrorBoundary><ContactButton phone={config.contact.phone} /></ErrorBoundary>
+        </EditSection>
       )}
+
+      {editing && <EditOverlay selected={selection} onPick={onPick} />}
     </div>
+    </EditContext.Provider>
   );
 }
 

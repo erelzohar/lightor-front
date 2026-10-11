@@ -7,6 +7,7 @@ import { SPACING_CLASS } from '../../services/artDirection';
 import ImagesService from '../../services/ImagesService';
 import ErrorBoundary from '../ErrorBoundary';
 import GenerateReveal from '../GenerateReveal';
+import EditSection from '../EditSection';
 import SectionDivider, { type SectionTone } from '../SectionDivider';
 import Hero from '../Layout/Hero';
 import About from '../Layout/About';
@@ -128,35 +129,40 @@ const ComposedPage: React.FC<ComposedPageProps> = ({ config, jitter, isPreview, 
         const image = (typeof p.image === 'string' && p.image) || c?.portfolio?.items?.[1]?.url || c?.hero?.heroImageSrc;
         if (!image) return null;
         const statement = (typeof p.text === 'string' && p.text) || c?.about?.paragraphs?.mission?.trim() || undefined;
-        return <Interlude image={image} statement={statement} variant={v === 'split' ? 1 : 0} />;
+        // LT-243: the editor edits whichever field this block actually shows.
+        const imagePath = typeof p.image === 'string' && p.image ? `blocks.${b.id}.props.image`
+          : c?.portfolio?.items?.[1]?.url ? 'components.portfolio.items.1.url' : 'components.hero.heroImageSrc';
+        const statementPath = typeof p.text === 'string' && p.text ? `blocks.${b.id}.props.text` : 'components.about.paragraphs.mission';
+        return <Interlude image={image} statement={statement} variant={v === 'split' ? 1 : 0} imagePath={imagePath} statementPath={statementPath} />;
       }
       case 'bookingBand': {
         const statement = (typeof p.text === 'string' && p.text) || c?.schedule?.description?.trim();
         const chips = v === 'chips' ? (config.appointmentTypes ?? []).map((a) => a?.name).filter((n): n is string => !!n) : undefined;
-        return statement && bookable ? <BookingBand statement={statement} chips={chips} label={c?.hero?.cta} /> : null;
+        const statementPath = typeof p.text === 'string' && p.text ? `blocks.${b.id}.props.text` : 'components.schedule.description';
+        return statement && bookable ? <BookingBand statement={statement} statementPath={statementPath} chips={chips} label={c?.hero?.cta} /> : null;
       }
       // LT-136 — the fourteen phase-3 blocks.
       case 'ticker':
         return <TickerBlock items={(config.appointmentTypes ?? []).map((a) => a?.name).filter((n): n is string => !!n)} />;
       case 'announcement':
-        return typeof p.text === 'string' && p.text.trim() ? <Announcement text={p.text.trim()} /> : null;
+        return typeof p.text === 'string' && p.text.trim() ? <Announcement text={p.text.trim()} basePath={`blocks.${b.id}.props`} /> : null;
       case 'manifesto':
-        return typeof p.text === 'string' && p.text.trim() ? <Manifesto text={p.text.trim()} /> : null;
+        return typeof p.text === 'string' && p.text.trim() ? <Manifesto text={p.text.trim()} basePath={`blocks.${b.id}.props`} /> : null;
       case 'stats':
-        return Array.isArray(p.items) ? <Stats items={p.items as StatItem[]} /> : null;
+        return Array.isArray(p.items) ? <Stats items={p.items as StatItem[]} basePath={`blocks.${b.id}.props`} /> : null;
       case 'pullQuote':
         return typeof p.text === 'string' && p.text.trim()
-          ? <PullQuote text={p.text.trim()} attribution={typeof p.attribution === 'string' ? p.attribution : config.businessName} />
+          ? <PullQuote text={p.text.trim()} attribution={typeof p.attribution === 'string' ? p.attribution : config.businessName} basePath={`blocks.${b.id}.props`} attributionPath={typeof p.attribution === 'string' ? `blocks.${b.id}.props.attribution` : 'businessName'} />
           : null;
       case 'process':
-        return Array.isArray(p.steps) ? <Process steps={p.steps as ProcessStep[]} title={typeof p.title === 'string' ? p.title : undefined} variant={v} /> : null;
+        return Array.isArray(p.steps) ? <Process steps={p.steps as ProcessStep[]} title={typeof p.title === 'string' ? p.title : undefined} variant={v} basePath={`blocks.${b.id}.props`} /> : null;
       case 'priceCards':
         return <PriceCards appointmentTypes={config.appointmentTypes ?? []} bookable={bookable} title={c?.services?.title} />;
       case 'hours':
         return <Hours workingDays={config.workingDays ?? []} variant={v} />;
       case 'photoPair': {
         const from = typeof p.from === 'number' ? p.from : 0;
-        return <PhotoPair items={(c?.portfolio?.items ?? []).slice(from, from + 2)} variant={v} />;
+        return <PhotoPair items={(c?.portfolio?.items ?? []).slice(from, from + 2)} variant={v} from={from} />;
       }
       case 'beforeAfter':
         return <BeforeAfter items={(c?.portfolio?.items ?? []).slice(0, 2)} />;
@@ -269,7 +275,8 @@ const ComposedPage: React.FC<ComposedPageProps> = ({ config, jitter, isPreview, 
             {i > 0 && !flat(b) && !flat(items[i - 1].block) && (
               <SectionDivider variant={divider} aboveTone={items[i - 1].tone} belowTone={tone} mirror={jitter.mirrorDividers} />
             )}
-            {wrapped}
+            {/* LT-243: the site editor selects a section by its block id. */}
+            <EditSection id={b.id} type={b.type}>{wrapped}</EditSection>
           </Fragment>
         );
       })}

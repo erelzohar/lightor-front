@@ -1,22 +1,25 @@
 import React from 'react';
+import { useEditAttrs } from '../../services/editMode';
 import { motion } from 'framer-motion';
 import { useLanguage } from '../../contexts/LanguageContext';
 import type { SectionTone } from '../SectionDivider';
 import { TONE_BG, displayFontFor } from './blockUtils';
 
 export interface ProcessStep { title: string; text?: string }
-interface Props { steps: ProcessStep[]; title?: string; tone?: SectionTone; variant?: string }
+interface Props { steps: ProcessStep[]; title?: string; tone?: SectionTone; variant?: string; /** LT-243: `blocks.<id>.props`. */ basePath?: string }
 
 /** LT-136: how a visit goes, three to five steps — the one honest use of numbering. */
-const Process: React.FC<Props> = ({ steps, title, tone = 'surface', variant = 'rail' }) => {
+const Process: React.FC<Props> = ({ steps, title, tone = 'surface', variant = 'rail', basePath }) => {
   const { language } = useLanguage();
-  const rows = steps.filter((s) => s?.title).slice(0, 5);
+  const ed = useEditAttrs();
+  // Each step keeps its index in the stored list, for the editor's paths.
+  const rows = steps.map((s, at) => ({ ...s, at })).filter((s) => s?.title).slice(0, 5);
   if (rows.length < 2) return null;
   const grid = variant === 'grid';
   return (
     <section className={`section-y ${TONE_BG[tone]} transition-colors duration-300`} aria-label={title || undefined}>
       <div className="container mx-auto px-4">
-        {title && <h2 className="text-4xl font-bold text-light-text dark:text-dark-text mb-12">{title}</h2>}
+        {title && <h2 {...ed(basePath && `${basePath}.title`)} className="text-4xl font-bold text-light-text dark:text-dark-text mb-12">{title}</h2>}
         <ol className={`list-none p-0 m-0 ${grid ? 'grid md:grid-cols-3 gap-8' : 'relative border-s-2 border-primary/30 dark:border-primary-dark/30 ms-5 space-y-10'}`}>
           {rows.map((s, i) => (
             <motion.li
@@ -36,8 +39,8 @@ const Process: React.FC<Props> = ({ steps, title, tone = 'surface', variant = 'r
               >
                 {grid ? String(i + 1).padStart(2, '0') : i + 1}
               </span>
-              <h3 className="text-xl font-semibold mb-2 text-light-text dark:text-dark-text">{s.title}</h3>
-              {s.text && <p className="m-0 text-light-text/80 dark:text-dark-text/80">{s.text}</p>}
+              <h3 {...ed(basePath && `${basePath}.steps.${s.at}.title`)} className="text-xl font-semibold mb-2 text-light-text dark:text-dark-text">{s.title}</h3>
+              {s.text && <p {...ed(basePath && `${basePath}.steps.${s.at}.text`)} className="m-0 text-light-text/80 dark:text-dark-text/80">{s.text}</p>}
             </motion.li>
           ))}
         </ol>

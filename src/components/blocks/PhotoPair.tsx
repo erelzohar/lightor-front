@@ -1,17 +1,19 @@
 import React from 'react';
+import { useEditAttrs } from '../../services/editMode';
 import ImagesService from '../../services/ImagesService';
 import type { SectionTone } from '../SectionDivider';
 import { TONE_BG } from './blockUtils';
 
 interface Item { url: string; title?: string; description?: string }
-interface Props { items: Item[]; tone?: SectionTone; variant?: string }
+interface Props { items: Item[]; tone?: SectionTone; variant?: string; /** LT-243: the gallery index of items[0], for the site editor. */ from?: number }
 
 /** LT-136: two photos, offset or stacked, with one caption line. */
-const PhotoPair: React.FC<Props> = ({ items, tone = 'bg', variant = 'offset' }) => {
-  const pair = items.filter((i) => i?.url).slice(0, 2);
+const PhotoPair: React.FC<Props> = ({ items, tone = 'bg', variant = 'offset', from }) => {
+  const ed = useEditAttrs();
+  const pair = items.map((i, at) => ({ ...i, at })).filter((i) => i?.url).slice(0, 2);
   if (pair.length < 2) return null;
-  const img = (i: Item, cls: string) => (
-    <img src={ImagesService.getInstance().getImage(i.url)} alt={i.title ?? ''} className={`w-full object-cover rounded-design-card ${cls}`} loading="lazy" />
+  const img = (i: Item & { at: number }, cls: string) => (
+    <img {...ed(from === undefined ? undefined : `components.portfolio.items.${from + i.at}.url`, 'image')} src={ImagesService.getInstance().getImage(i.url)} alt={i.title ?? ''} className={`w-full object-cover rounded-design-card ${cls}`} loading="lazy" />
   );
   const caption = pair.map((i) => i.title).filter(Boolean).join(' · ');
   return (

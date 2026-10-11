@@ -8,6 +8,8 @@ import SectionHeading from './Layout/SectionHeading';
 import type { HeadingScale } from '../services/artDirection';
 import globals from '../services/globals';
 import ImagesService from '../services/ImagesService';
+import { useEditAttrs } from '../services/editMode';
+import EditText from './EditText';
 import { handleWideImageError } from '../utils/imageFallback';
 
 interface PortfolioProps {
@@ -27,6 +29,7 @@ interface PortfolioProps {
 const MASONRY_ASPECTS = ['aspect-[4/3]', 'aspect-square', 'aspect-[3/4]'];
 
 const Portfolio: React.FC<PortfolioProps> = ({ config, layout = 'grid', masonryPhase = 0, header, headerScale, tone = 'bg' }) => {
+  const ed = useEditAttrs();
   const [currentSlide, setCurrentSlide] = useState(0);
   // LT-169: the slideshow is the 'carousel' layout — a design-system token
   // like grid/masonry, no longer a per-component `isGrid` flag. With nothing
@@ -132,7 +135,7 @@ const Portfolio: React.FC<PortfolioProps> = ({ config, layout = 'grid', masonryP
           whileInView={{ y: 0, opacity: 1 }}
           viewport={{ once: true }}
         >
-          <SectionHeading
+          <SectionHeading titlePath="components.portfolio.title" descriptionPath="components.portfolio.description"
             title={config.title}
             description={config.description}
             variant={header} scale={headerScale}
@@ -156,7 +159,7 @@ const Portfolio: React.FC<PortfolioProps> = ({ config, layout = 'grid', masonryP
                   tabIndex={0}
                   aria-label={`${item.title}: ${item.description}`}
                 >
-                  <img
+                  <img {...ed(`components.portfolio.items.${index}.url`, 'image')}
                     src={ImagesService.getInstance().getImage(item.url)}
                     alt={item.title}
                     onError={handleWideImageError}
@@ -167,8 +170,8 @@ const Portfolio: React.FC<PortfolioProps> = ({ config, layout = 'grid', masonryP
                     aria-hidden="true"
                   >
                     <div className="absolute bottom-0 inset-x-0 p-4 md:p-6">
-                      <h3 className="text-lg md:text-xl font-bold text-white mb-1 md:mb-2">{item.title}</h3>
-                      <p className="text-sm md:text-base text-white/80">{item.description}</p>
+                      <h3 {...ed(`components.portfolio.items.${index}.title`)} className="text-lg md:text-xl font-bold text-white mb-1 md:mb-2">{item.title}</h3>
+                      <p {...ed(`components.portfolio.items.${index}.description`)} className="text-sm md:text-base text-white/80">{item.description}</p>
                     </div>
                   </div>
                 </motion.div>
@@ -222,15 +225,15 @@ const Portfolio: React.FC<PortfolioProps> = ({ config, layout = 'grid', masonryP
                         role="gridcell"
                         aria-label={`${main.title}: ${main.description}`}
                       >
-                        <img
+                        <img {...ed(`components.portfolio.items.${active}.url`, 'image')}
                           src={ImagesService.getInstance().getImage(main.url)}
                           alt={main.title}
                           onError={handleWideImageError}
                           className="w-full h-full object-cover"
                         />
                         <div className="absolute inset-x-0 bottom-0 p-6 md:p-10 bg-gradient-to-t from-black/70 to-transparent">
-                          <h3 className="text-2xl md:text-4xl font-bold text-white">{main.title}</h3>
-                          {main.description && <p className="text-white/80 mt-2 max-w-2xl">{main.description}</p>}
+                          <h3 {...ed(`components.portfolio.items.${active}.title`)} className="text-2xl md:text-4xl font-bold text-white">{main.title}</h3>
+                          {main.description && <p {...ed(`components.portfolio.items.${active}.description`)} className="text-white/80 mt-2 max-w-2xl">{main.description}</p>}
                         </div>
                       </motion.div>
                     </AnimatePresence>
@@ -246,7 +249,7 @@ const Portfolio: React.FC<PortfolioProps> = ({ config, layout = 'grid', masonryP
                             className={`flex-none w-28 aspect-[4/3] rounded-design-sm overflow-hidden border-2 transition-opacity ${index === active ? 'border-primary dark:border-primary-dark' : 'border-transparent opacity-60 hover:opacity-100'}`}
                             aria-label={item.title}
                           >
-                            <img src={ImagesService.getInstance().getImage(item.url)} alt="" onError={handleWideImageError} className="w-full h-full object-cover" />
+                            <img {...ed(`components.portfolio.items.${index}.url`, 'image')} src={ImagesService.getInstance().getImage(item.url)} alt="" onError={handleWideImageError} className="w-full h-full object-cover" />
                           </button>
                         ))}
                       </div>
@@ -289,14 +292,14 @@ const Portfolio: React.FC<PortfolioProps> = ({ config, layout = 'grid', masonryP
                         aria-label={`${item.title}: ${item.description}`}
                       >
                         <div className="aspect-square overflow-hidden">
-                          <img
+                          <img {...ed(`components.portfolio.items.${index}.url`, 'image')}
                             src={ImagesService.getInstance().getImage(item.url)}
                             alt={item.title}
                             onError={handleWideImageError}
                             className="w-full h-full object-cover"
                           />
                         </div>
-                        <p className="mt-3 text-center font-semibold text-neutral-800">{item.title}</p>
+                        <p {...ed(`components.portfolio.items.${index}.title`)} className="mt-3 text-center font-semibold text-neutral-800">{item.title}</p>
                       </motion.div>
                     ))}
                   </div>
@@ -320,7 +323,7 @@ const Portfolio: React.FC<PortfolioProps> = ({ config, layout = 'grid', masonryP
                         tabIndex={0}
                         aria-label={`${item.title}: ${item.description}`}
                       >
-                        <img
+                        <img {...ed(`components.portfolio.items.${index}.url`, 'image')}
                           src={ImagesService.getInstance().getImage(item.url)}
                           alt={item.title}
                           onError={handleWideImageError}
@@ -331,7 +334,7 @@ const Portfolio: React.FC<PortfolioProps> = ({ config, layout = 'grid', masonryP
                           aria-hidden="true"
                         >
                           <div className="absolute bottom-0 inset-x-0 p-3">
-                            <h3 className="text-base font-bold text-white">{item.title}</h3>
+                            <h3 {...ed(`components.portfolio.items.${index}.title`)} className="text-base font-bold text-white">{item.title}</h3>
                           </div>
                         </div>
                       </motion.div>
@@ -371,7 +374,7 @@ const Portfolio: React.FC<PortfolioProps> = ({ config, layout = 'grid', masonryP
                       tabIndex={0}
                       aria-label={`${item.title}: ${item.description}`}
                     >
-                      <img
+                      <img {...ed(`components.portfolio.items.${index}.url`, 'image')}
                         src={ImagesService.getInstance().getImage(item.url)}
                         alt={item.title}
                         onError={handleWideImageError}
@@ -382,8 +385,8 @@ const Portfolio: React.FC<PortfolioProps> = ({ config, layout = 'grid', masonryP
                         aria-hidden="true"
                       >
                         <div className="absolute bottom-0 inset-x-0 p-4 md:p-6">
-                          <h3 className="text-lg md:text-xl font-bold text-white mb-1 md:mb-2">{item.title}</h3>
-                          <p className="text-sm md:text-base text-white/80">{item.description}</p>
+                          <h3 {...ed(`components.portfolio.items.${index}.title`)} className="text-lg md:text-xl font-bold text-white mb-1 md:mb-2">{item.title}</h3>
+                          <p {...ed(`components.portfolio.items.${index}.description`)} className="text-sm md:text-base text-white/80">{item.description}</p>
                         </div>
                       </div>
                     </motion.div>
@@ -422,7 +425,7 @@ const Portfolio: React.FC<PortfolioProps> = ({ config, layout = 'grid', masonryP
                   aria-label={`${config.items[currentSlide].title}: ${config.items[currentSlide].description}`}
                 >
                   <div className="relative h-full">
-                    <img
+                    <img {...ed(`components.portfolio.items.${currentSlide}.url`, 'image')}
                       src={ImagesService.getInstance().getImage(config.items[currentSlide].url)}
                       alt={config.items[currentSlide].title}
                       onError={handleWideImageError}
@@ -435,10 +438,10 @@ const Portfolio: React.FC<PortfolioProps> = ({ config, layout = 'grid', masonryP
                     >
                       <div className="absolute bottom-0 inset-x-0 p-4 md:p-8">
                         <h3 className="text-xl md:text-3xl font-bold mb-1 md:mb-2 text-white">
-                          {config.items[currentSlide].title}
+                          <EditText path={`components.portfolio.items.${currentSlide}.title`}>{config.items[currentSlide].title}</EditText>
                         </h3>
                         <p className="text-sm md:text-lg text-white/80">
-                          {config.items[currentSlide].description}
+                          <EditText path={`components.portfolio.items.${currentSlide}.description`}>{config.items[currentSlide].description}</EditText>
                         </p>
                       </div>
                     </div>

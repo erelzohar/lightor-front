@@ -2,6 +2,8 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { Calendar } from 'lucide-react';
 import { useLanguage } from '../../contexts/LanguageContext';
+import { useEditAttrs } from '../../services/editMode';
+import EditText from '../EditText';
 
 interface BookingBandProps {
   /** The schedule section's description doubles as the band's statement. */
@@ -10,6 +12,8 @@ interface BookingBandProps {
   chips?: string[];
   /** LT-199: the site's main button text, the owner's words; absent = "Book". */
   label?: string;
+  /** LT-243: where the statement comes from (the block's own text or the schedule's description). */
+  statementPath?: string;
 }
 
 /**
@@ -18,7 +22,8 @@ interface BookingBandProps {
  * monthly."); generated pages had no color break at all. Sits directly above
  * the schedule section and anchors to it.
  */
-const BookingBand: React.FC<BookingBandProps> = ({ statement, chips, label }) => {
+const BookingBand: React.FC<BookingBandProps> = ({ statement, chips, label, statementPath }) => {
+  const ed = useEditAttrs();
   const { t } = useLanguage();
   const buttonLabel = label?.trim() || t('hero.book');
   return (
@@ -33,7 +38,7 @@ const BookingBand: React.FC<BookingBandProps> = ({ statement, chips, label }) =>
         viewport={{ once: true }}
       >
         <div className="text-center md:text-start">
-          <h2 className="text-3xl md:text-4xl font-bold leading-tight">
+          <h2 {...ed(statementPath)} className="text-3xl md:text-4xl font-bold leading-tight">
             {statement}
           </h2>
           {chips && chips.length > 0 && (
@@ -49,7 +54,7 @@ const BookingBand: React.FC<BookingBandProps> = ({ statement, chips, label }) =>
           className="shrink-0 inline-flex items-center gap-3 bg-light-bg text-light-text dark:bg-dark-bg dark:text-dark-text font-bold px-8 py-4 rounded-design min-h-[3.25rem] hover:opacity-90 transition-opacity"
         >
           <Calendar className="h-5 w-5" aria-hidden="true" />
-          {buttonLabel}
+          <EditText path="components.hero.cta">{buttonLabel}</EditText>
         </a>
       </motion.div>
     </section>

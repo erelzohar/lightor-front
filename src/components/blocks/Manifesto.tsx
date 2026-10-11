@@ -1,18 +1,21 @@
 import React from 'react';
+import { useEditAttrs } from '../../services/editMode';
 import { motion } from 'framer-motion';
 import { useLanguage } from '../../contexts/LanguageContext';
 import type { SectionTone } from '../SectionDivider';
 import { TONE_BG, displayFontFor } from './blockUtils';
 
-interface Props { text: string; tone?: SectionTone }
+interface Props { text: string; tone?: SectionTone; /** LT-243: `blocks.<id>.props`. */ basePath?: string }
 
 /** LT-136: one display-size line across the page — the most "canvas" block. */
-const Manifesto: React.FC<Props> = ({ text, tone = 'bg' }) => {
+const Manifesto: React.FC<Props> = ({ text, tone = 'bg', basePath }) => {
   const { language } = useLanguage();
+  const ed = useEditAttrs();
   return (
     <section className={`section-y ${TONE_BG[tone]} transition-colors duration-300`}>
       <div className="container mx-auto px-4">
         <motion.p
+          {...ed(basePath && `${basePath}.text`)}
           className="font-bold leading-none text-light-text dark:text-dark-text m-0"
           style={{ fontFamily: displayFontFor(language), fontSize: 'clamp(2.5rem, 7vw, 6rem)', textWrap: 'balance' }}
           initial={{ opacity: 0, y: 16 }}

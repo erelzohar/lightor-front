@@ -23,6 +23,8 @@ import {
 } from "lucide-react";
 import { motion } from 'framer-motion';
 import { revealVariants } from '../../services/reveal';
+import { useEditAttrs } from '../../services/editMode';
+import EditText from '../EditText';
 import type { RevealStyle } from '../../models/DesignConfig';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { ContactModal } from '../ContactModal';
@@ -89,6 +91,7 @@ interface AboutProps {
 const ROMAN_NUMERALS = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII'];
 
 const About: React.FC<AboutProps> = ({ config, websiteConfig, layout = 'cards', flipSplit = false, featureStyle = 'icons', header, headerScale, showVisit = true, tone = 'surface', reveal, parts, sectionId = 'about' }) => {
+  const ed = useEditAttrs();
   const showPart = (p: AboutPart) => !parts || parts.includes(p);
   const visitOn = showVisit && showPart('visit');
   const { t, language } = useLanguage();
@@ -255,10 +258,10 @@ const About: React.FC<AboutProps> = ({ config, websiteConfig, layout = 'cards', 
   const paragraphs = (extraClass = 'max-w-3xl mx-auto text-center mb-20') => !showPart('intro') ? null : (
     <motion.div className={extraClass} variants={itemVariants}>
       <p className="text-xl text-light-text dark:text-dark-text leading-relaxed mb-8">
-        {config.paragraphs.intro}
+        <EditText path="components.about.paragraphs.intro">{config.paragraphs.intro}</EditText>
       </p>
       <p className="text-lg text-light-text/80 dark:text-dark-text/80 leading-relaxed">
-        {config.paragraphs.mission}
+        <EditText path="components.about.paragraphs.mission">{config.paragraphs.mission}</EditText>
       </p>
     </motion.div>
   );
@@ -295,8 +298,8 @@ const About: React.FC<AboutProps> = ({ config, websiteConfig, layout = 'cards', 
                   ? <Icon className="h-8 w-8 text-primary dark:text-primary-dark" />
                   : featureMark(index, 'text-2xl')}
               </div>
-              <h3 className="text-xl font-semibold mb-4 text-light-text dark:text-dark-text text-center">{feature.title}</h3>
-              <p className="text-light-text/80 dark:text-dark-text/80 text-center flex-grow">{feature.description}</p>
+              <h3 {...ed(`components.about.features.${index}.title`)} className="text-xl font-semibold mb-4 text-light-text dark:text-dark-text text-center">{feature.title}</h3>
+              <p {...ed(`components.about.features.${index}.description`)} className="text-light-text/80 dark:text-dark-text/80 text-center flex-grow">{feature.description}</p>
             </div>
           </motion.div>
         );
@@ -317,8 +320,8 @@ const About: React.FC<AboutProps> = ({ config, websiteConfig, layout = 'cards', 
             {featureStyle === 'icons'
               ? <Icon className="h-8 w-8 text-primary dark:text-primary-dark mb-4" />
               : <span className="mb-4">{featureMark(index, 'text-3xl')}</span>}
-            <h3 className="text-xl font-semibold mb-2 text-light-text dark:text-dark-text">{feature.title}</h3>
-            <p className="text-light-text/80 dark:text-dark-text/80">{feature.description}</p>
+            <h3 {...ed(`components.about.features.${index}.title`)} className="text-xl font-semibold mb-2 text-light-text dark:text-dark-text">{feature.title}</h3>
+            <p {...ed(`components.about.features.${index}.description`)} className="text-light-text/80 dark:text-dark-text/80">{feature.description}</p>
           </motion.div>
         );
       })}
@@ -338,8 +341,8 @@ const About: React.FC<AboutProps> = ({ config, websiteConfig, layout = 'cards', 
                 : featureMark(index, 'text-lg')}
             </div>
             <div>
-              <h3 className="text-lg font-semibold mb-1 text-light-text dark:text-dark-text">{feature.title}</h3>
-              <p className="text-light-text/80 dark:text-dark-text/80">{feature.description}</p>
+              <h3 {...ed(`components.about.features.${index}.title`)} className="text-lg font-semibold mb-1 text-light-text dark:text-dark-text">{feature.title}</h3>
+              <p {...ed(`components.about.features.${index}.description`)} className="text-light-text/80 dark:text-dark-text/80">{feature.description}</p>
             </div>
           </motion.div>
         );
@@ -360,8 +363,8 @@ const About: React.FC<AboutProps> = ({ config, websiteConfig, layout = 'cards', 
           variants={itemVariants}
         >
           <div className="mb-4">{featureMark(index, 'text-sm')}</div>
-          <h3 className="font-bold leading-tight text-light-text dark:text-dark-text" style={{ fontSize: 'clamp(1.75rem, 3vw, 2.75rem)' }}>{feature.title}</h3>
-          <p className="mt-4 text-light-text/80 dark:text-dark-text/80">{feature.description}</p>
+          <h3 {...ed(`components.about.features.${index}.title`)} className="font-bold leading-tight text-light-text dark:text-dark-text" style={{ fontSize: 'clamp(1.75rem, 3vw, 2.75rem)' }}>{feature.title}</h3>
+          <p {...ed(`components.about.features.${index}.description`)} className="mt-4 text-light-text/80 dark:text-dark-text/80">{feature.description}</p>
         </motion.div>
       ))}
     </motion.div>
@@ -380,8 +383,8 @@ const About: React.FC<AboutProps> = ({ config, websiteConfig, layout = 'cards', 
             >
               {featureStyle === 'icons' ? <Icon className="h-5 w-5" /> : String(index + 1)}
             </span>
-            <h3 className="text-xl font-semibold mb-2 text-light-text dark:text-dark-text">{feature.title}</h3>
-            <p className="text-light-text/80 dark:text-dark-text/80">{feature.description}</p>
+            <h3 {...ed(`components.about.features.${index}.title`)} className="text-xl font-semibold mb-2 text-light-text dark:text-dark-text">{feature.title}</h3>
+            <p {...ed(`components.about.features.${index}.description`)} className="text-light-text/80 dark:text-dark-text/80">{feature.description}</p>
           </motion.li>
         );
       })}
@@ -398,8 +401,8 @@ const About: React.FC<AboutProps> = ({ config, websiteConfig, layout = 'cards', 
             {String(index + 1).padStart(2, '0')}
           </span>
           <div>
-            <h3 className="text-2xl font-semibold mb-2 text-light-text dark:text-dark-text">{feature.title}</h3>
-            <p className="text-light-text/80 dark:text-dark-text/80">{feature.description}</p>
+            <h3 {...ed(`components.about.features.${index}.title`)} className="text-2xl font-semibold mb-2 text-light-text dark:text-dark-text">{feature.title}</h3>
+            <p {...ed(`components.about.features.${index}.description`)} className="text-light-text/80 dark:text-dark-text/80">{feature.description}</p>
           </div>
         </motion.div>
       ))}
@@ -511,7 +514,7 @@ const About: React.FC<AboutProps> = ({ config, websiteConfig, layout = 'cards', 
           variants={containerVariants}
         >
           {showPart('intro') && <motion.div variants={itemVariants}>
-            <SectionHeading
+            <SectionHeading titlePath="components.about.title" descriptionPath="components.about.description"
               title={config.title}
               description={config.description}
               variant={header} scale={headerScale}
@@ -524,10 +527,10 @@ const About: React.FC<AboutProps> = ({ config, websiteConfig, layout = 'cards', 
             <>
               {showPart('intro') && <div className="grid lg:grid-cols-2 gap-8 lg:gap-16 mb-16">
                 <motion.p className="text-2xl md:text-3xl leading-snug text-light-text dark:text-dark-text" variants={itemVariants}>
-                  {config.paragraphs.intro}
+                  <EditText path="components.about.paragraphs.intro">{config.paragraphs.intro}</EditText>
                 </motion.p>
                 <motion.p className="text-lg text-light-text/80 dark:text-dark-text/80 leading-loose" variants={itemVariants}>
-                  {config.paragraphs.mission}
+                  <EditText path="components.about.paragraphs.mission">{config.paragraphs.mission}</EditText>
                 </motion.p>
               </div>}
               {featureWall}
@@ -560,11 +563,11 @@ const About: React.FC<AboutProps> = ({ config, websiteConfig, layout = 'cards', 
                   style={{ fontFamily: 'inherit' }}
                   variants={itemVariants}
                 >
-                  <h3 className="leading-tight">"{config.paragraphs.intro}"</h3>
+                  <h3 className="leading-tight">"<EditText path="components.about.paragraphs.intro">{config.paragraphs.intro}</EditText>"</h3>
                 </motion.blockquote>
                 <motion.div variants={itemVariants}>
                   <p className="text-lg text-light-text/80 dark:text-dark-text/80 leading-loose">
-                    {config.paragraphs.mission}
+                    <EditText path="components.about.paragraphs.mission">{config.paragraphs.mission}</EditText>
                   </p>
                 </motion.div>
               </div>}

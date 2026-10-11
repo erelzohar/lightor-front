@@ -11,6 +11,8 @@ import { FooterLayout } from '../../models/DesignConfig';
 import { Social } from '../../models/Social';
 import globals from '../../services/globals';
 import ImagesService from '../../services/ImagesService';
+import { useEdit, editAttrs } from '../../services/editMode';
+import EditText from '../EditText';
 import MarqueeStrip from '../MarqueeStrip';
 import { handleSquareImageError } from '../../utils/imageFallback';
 import { sectionTitlesOf } from '../../services/navLinks';
@@ -42,6 +44,7 @@ interface FooterProps {
 }
 
 const Footer: React.FC<FooterProps> = ({ config, social, businessName, logoImageName, appointmentsType, conversion, websiteConfig, layout = 'columns', city }) => {
+  const { editing } = useEdit();
   const { t, language } = useLanguage();
   const { isModalOpen, setIsModalOpen, modalType, handleContactClick } = useContactHandler();
   const [legalModal, setLegalModal] = useState<{
@@ -206,7 +209,7 @@ const Footer: React.FC<FooterProps> = ({ config, social, businessName, logoImage
           <div className="container mx-auto px-4 flex flex-col gap-5">
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 text-sm">
               <span className="font-semibold">{tagline}</span>
-              {config.description && <span className="opacity-70 md:max-w-md md:truncate">{config.description}</span>}
+              {config.description && <span {...editAttrs(editing, 'components.footer.description')} className="opacity-70 md:max-w-md md:truncate">{config.description}</span>}
               {socialLinks.length > 0 && (
                 <div className="flex gap-2">
                   {socialLinks.map((social, index) => (
@@ -259,13 +262,13 @@ const Footer: React.FC<FooterProps> = ({ config, social, businessName, logoImage
                the long description are dropped. Legal block below is shared. */
             <motion.div variants={itemVariants} className="flex flex-col items-center gap-6 mb-12 text-center">
               <div className="flex items-center gap-2">
-                <img
+                <img {...editAttrs(editing, 'logoImageName', 'image')}
                   src={ImagesService.getInstance().getImage(logoImageName)}
                   alt="Logo"
                   onError={handleSquareImageError}
                   className="h-10 w-10 rounded-full object-cover"
                 />
-                <span className="text-2xl font-bold">{businessName}</span>
+                <span {...editAttrs(editing, 'businessName')} className="text-2xl font-bold">{businessName}</span>
               </div>
               {socialLinks.length > 0 && (
                 <div className="flex justify-center gap-4" role="list" aria-label={t('footer.follow')}>
@@ -293,16 +296,16 @@ const Footer: React.FC<FooterProps> = ({ config, social, businessName, logoImage
             {/* Logo and Description */}
             <motion.div variants={itemVariants} className="text-center md:text-start">
               <div className="flex items-center justify-center md:justify-start gap-2 mb-6">
-                <img
+                <img {...editAttrs(editing, 'logoImageName', 'image')}
                   src={ImagesService.getInstance().getImage(logoImageName)}
                   alt="Logo"
                   onError={handleSquareImageError}
                   className="h-10 w-10 rounded-full object-cover"
                 />
-                <span className="text-2xl font-bold">{businessName}</span>
+                <span {...editAttrs(editing, 'businessName')} className="text-2xl font-bold">{businessName}</span>
               </div>
               <p className="text-dark-text/80 leading-relaxed">
-                {config.description}
+                <EditText path="components.footer.description">{config.description}</EditText>
               </p>
             </motion.div>
 

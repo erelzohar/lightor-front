@@ -11,6 +11,8 @@ import { DesignConfig, BorderRadius } from '../../models/DesignConfig';
 import { AppointmentType } from '../../models/AppointmentType';
 import { Conversion, mainCta } from '../../services/siteMode';
 import { stampTextFor } from '../../services/heroStamp';
+import { useEditAttrs } from '../../services/editMode';
+import EditText from '../EditText';
 import ImagesService from '../../services/ImagesService';
 import { handleWideImageError } from '../../utils/imageFallback';
 import { useIsDarkMode } from '../../hooks/useIsDarkMode';
@@ -115,6 +117,7 @@ const radiusClassMap: Record<BorderRadius, string> = {
 };
 
 const Hero: React.FC<HeroProps> = ({ config, social, phone, isContactVisible, appointmentTypes, conversion, isPreview, palette, design, jitter, businessName }) => {
+  const ed = useEditAttrs();
   const { t, language } = useLanguage();
   const { isModalOpen, setIsModalOpen, modalType, handleContactClick } = useContactHandler();
 
@@ -290,7 +293,7 @@ const Hero: React.FC<HeroProps> = ({ config, social, phone, isContactVisible, ap
           aria-label={cta.label}
         >
           <span className="flex items-center justify-center gap-2">
-            <span>{cta.label}</span>
+            <span {...ed('components.hero.cta')}>{cta.label}</span>
             <CtaIcon className="h-5 w-5" aria-hidden="true" />
           </span>
         </motion.a>
@@ -307,7 +310,7 @@ const Hero: React.FC<HeroProps> = ({ config, social, phone, isContactVisible, ap
           aria-label={cta.label}
         >
           <span className="flex items-center justify-center gap-2">
-            <span>{cta.label}</span>
+            <span {...ed('components.hero.cta')}>{cta.label}</span>
             <CtaIcon className="h-5 w-5" aria-hidden="true" />
           </span>
         </motion.a>
@@ -324,7 +327,7 @@ const Hero: React.FC<HeroProps> = ({ config, social, phone, isContactVisible, ap
           aria-label={cta.label}
         >
           <span className="flex items-center justify-center gap-2">
-            <span>{cta.label}</span>
+            <span {...ed('components.hero.cta')}>{cta.label}</span>
             <CtaIcon className="h-5 w-5" aria-hidden="true" />
           </span>
         </motion.a>
@@ -356,7 +359,7 @@ const Hero: React.FC<HeroProps> = ({ config, social, phone, isContactVisible, ap
           aria-hidden="true"
         />
         <span className="relative text-center flex items-center justify-center gap-2">
-          <span>{cta.label}</span>
+          <span {...ed('components.hero.cta')}>{cta.label}</span>
           <CtaIcon className="h-5 w-5" aria-hidden="true" />
         </span>
       </motion.a>
@@ -417,7 +420,7 @@ const Hero: React.FC<HeroProps> = ({ config, social, phone, isContactVisible, ap
     // neutral drop shadow stays.
     return (
       <div className="relative">
-        <img
+        <img {...ed('components.hero.heroImageSrc', 'image')}
           src={ImagesService.getInstance().getImage(config.heroImageSrc)}
           alt="intro"
           onError={handleWideImageError}
@@ -454,14 +457,14 @@ const Hero: React.FC<HeroProps> = ({ config, social, phone, isContactVisible, ap
               className="text-5xl md:text-7xl font-bold text-light-text dark:text-dark-text mb-4 leading-tight"
               variants={itemVariants}
             >
-              {config.title}
-              <span className="block text-primary-readable dark:text-primary-dark-readable">{config.subtitle}</span>
+              <EditText path="components.hero.title">{config.title}</EditText>
+              <span className="block text-primary-readable dark:text-primary-dark-readable"><EditText path="components.hero.subtitle">{config.subtitle}</EditText></span>
             </motion.h1>
             <motion.p
               className="text-xl text-light-text/80 dark:text-dark-text/80 mb-8 max-w-xl mx-auto"
               variants={itemVariants}
             >
-              {config.description}
+              <EditText path="components.hero.description">{config.description}</EditText>
             </motion.p>
             <motion.div className="flex flex-col sm:flex-row gap-4 justify-center" variants={itemVariants}>
               {renderBookButton(false)}
@@ -484,13 +487,13 @@ const Hero: React.FC<HeroProps> = ({ config, social, phone, isContactVisible, ap
             className={`text-xs md:text-sm font-semibold ${noTrack ? '' : 'tracking-[0.3em]'} text-light-text/60 dark:text-dark-text/60 uppercase`}
             variants={itemVariants}
           >
-            {config.description}
+            <EditText path="components.hero.description">{config.description}</EditText>
           </motion.div>
           <motion.h1
             className="font-bold text-light-text dark:text-dark-text leading-none mt-6"
             variants={itemVariants}
           >
-            {config.title}
+            <EditText path="components.hero.title">{config.title}</EditText>
           </motion.h1>
           {config.subtitle && (
             <motion.div
@@ -508,7 +511,7 @@ const Hero: React.FC<HeroProps> = ({ config, social, phone, isContactVisible, ap
                   The class also carries the leading, which has to win over the
                   html[data-type-scale] h1 rule. */}
               <h1 className="text-echo font-bold">
-                {config.subtitle}
+                <EditText path="components.hero.subtitle">{config.subtitle}</EditText>
               </h1>
             </motion.div>
           )}
@@ -529,7 +532,7 @@ const Hero: React.FC<HeroProps> = ({ config, social, phone, isContactVisible, ap
       return (
         <motion.div className="relative" variants={containerVariants}>
           <motion.div className="relative h-[60vh] min-h-[24rem] overflow-hidden" variants={itemVariants}>
-            <img
+            <img {...ed('components.hero.heroImageSrc', 'image')}
               src={ImagesService.getInstance().getImage(config.heroImageSrc)}
               alt={config.title}
               onError={handleWideImageError}
@@ -537,11 +540,11 @@ const Hero: React.FC<HeroProps> = ({ config, social, phone, isContactVisible, ap
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" aria-hidden="true" />
             <div className="absolute bottom-6 start-6 md:bottom-10 md:start-10 text-white max-w-[70%]">
-              <div className="text-xs tracking-[0.3em] uppercase text-white/70">{config.subtitle}</div>
-              <h1 className="font-bold leading-tight mt-2">{config.title}</h1>
+              <div className="text-xs tracking-[0.3em] uppercase text-white/70"><EditText path="components.hero.subtitle">{config.subtitle}</EditText></div>
+              <h1 className="font-bold leading-tight mt-2"><EditText path="components.hero.title">{config.title}</EditText></h1>
             </div>
             <div className="hidden md:block absolute bottom-10 end-10 text-xs tracking-[0.3em] uppercase text-white/70 max-w-[25%] text-end">
-              {config.description}
+              <EditText path="components.hero.description">{config.description}</EditText>
             </div>
           </motion.div>
           <motion.div className="flex flex-row flex-wrap items-center justify-between gap-4 mt-8" variants={itemVariants}>
@@ -569,21 +572,21 @@ const Hero: React.FC<HeroProps> = ({ config, social, phone, isContactVisible, ap
               className="font-bold text-light-text dark:text-dark-text leading-none"
               variants={itemVariants}
             >
-              {config.title}
+              <EditText path="components.hero.title">{config.title}</EditText>
             </motion.h1>
             {config.subtitle && (
               <motion.div
                 className="mt-4 text-2xl md:text-4xl font-bold text-primary-readable dark:text-primary-dark-readable"
                 variants={itemVariants}
               >
-                {config.subtitle}
+                <EditText path="components.hero.subtitle">{config.subtitle}</EditText>
               </motion.div>
             )}
             <motion.p
               className="text-lg md:text-xl text-light-text/70 dark:text-dark-text/70 max-w-md mt-6"
               variants={itemVariants}
             >
-              {config.description}
+              <EditText path="components.hero.description">{config.description}</EditText>
             </motion.p>
             <motion.div className="flex flex-row flex-wrap gap-4 mt-8" variants={itemVariants}>
               {renderBookButton(false)}
@@ -605,7 +608,7 @@ const Hero: React.FC<HeroProps> = ({ config, social, phone, isContactVisible, ap
               DOM order, and the seeded flip keeps its md:order-first. */}
           <motion.div className={`relative w-full max-w-md md:max-w-none mx-auto md:mx-0 order-first ${jitter?.flipPosterSplit ? 'md:order-first' : 'md:order-none'}`} variants={itemVariants}>
             <div className="relative h-full min-h-[22rem] md:min-h-[28rem]">
-              <img
+              <img {...ed('components.hero.heroImageSrc', 'image')}
                 src={ImagesService.getInstance().getImage(config.heroImageSrc)}
                 alt={config.title}
                 onError={handleWideImageError}
@@ -613,7 +616,7 @@ const Hero: React.FC<HeroProps> = ({ config, social, phone, isContactVisible, ap
               />
               {config.subtitle && (
                 <span className="absolute bottom-0 start-0 bg-primary dark:bg-primary-dark text-on-primary dark:text-on-primary-dark text-xs font-bold tracking-[0.2em] px-4 py-2 max-w-full truncate">
-                  {config.subtitle}
+                  <EditText path="components.hero.subtitle">{config.subtitle}</EditText>
                 </span>
               )}
             </div>
@@ -636,14 +639,14 @@ const Hero: React.FC<HeroProps> = ({ config, social, phone, isContactVisible, ap
               className="text-5xl md:text-7xl font-bold text-light-text dark:text-dark-text mb-4 leading-tight"
               variants={itemVariants}
             >
-              {config.title}
-              <span className="block text-primary-readable dark:text-primary-dark-readable">{config.subtitle}</span>
+              <EditText path="components.hero.title">{config.title}</EditText>
+              <span className="block text-primary-readable dark:text-primary-dark-readable"><EditText path="components.hero.subtitle">{config.subtitle}</EditText></span>
             </motion.h1>
             <motion.p
               className="text-xl text-light-text/80 dark:text-dark-text/80 mb-8 max-w-xl mx-auto"
               variants={itemVariants}
             >
-              {config.description}
+              <EditText path="components.hero.description">{config.description}</EditText>
             </motion.p>
             <motion.div className="flex flex-col sm:flex-row gap-4 justify-center" variants={itemVariants}>
               {renderBookButton(false)}
@@ -688,14 +691,14 @@ const Hero: React.FC<HeroProps> = ({ config, social, phone, isContactVisible, ap
               className="text-5xl md:text-6xl font-bold text-light-text dark:text-dark-text leading-tight"
               variants={itemVariants}
             >
-              {config.title}
-              <span className="block text-primary-readable dark:text-primary-dark-readable">{config.subtitle}</span>
+              <EditText path="components.hero.title">{config.title}</EditText>
+              <span className="block text-primary-readable dark:text-primary-dark-readable"><EditText path="components.hero.subtitle">{config.subtitle}</EditText></span>
             </motion.h1>
             <motion.p
               className="text-xl text-light-text/80 dark:text-dark-text/80"
               variants={itemVariants}
             >
-              {config.description}
+              <EditText path="components.hero.description">{config.description}</EditText>
             </motion.p>
             <motion.div className="flex flex-row gap-4 flex-wrap justify-center md:justify-start" variants={itemVariants}>
               {renderBookButton(false)}
@@ -716,14 +719,14 @@ const Hero: React.FC<HeroProps> = ({ config, social, phone, isContactVisible, ap
               className="text-5xl md:text-7xl font-bold text-light-text dark:text-dark-text mb-4 lg:mb-8 leading-tight"
               variants={itemVariants}
             >
-              {config.title}
-              <span className="block text-primary-readable dark:text-primary-dark-readable">{config.subtitle}</span>
+              <EditText path="components.hero.title">{config.title}</EditText>
+              <span className="block text-primary-readable dark:text-primary-dark-readable"><EditText path="components.hero.subtitle">{config.subtitle}</EditText></span>
             </motion.h1>
             <motion.p
               className={`text-xl text-light-text/80 dark:text-dark-text/80 mb-6 lg:mb-12 max-w-2xl ${language === 'he' || language === 'ar' ? 'md:me-0 md:ms-auto md:text-right' : 'md:ms-0 md:me-auto md:text-left'}`}
               variants={itemVariants}
             >
-              {config.description}
+              <EditText path="components.hero.description">{config.description}</EditText>
             </motion.p>
             <motion.div
               className="flex flex-col sm:flex-row gap-4 justify-center md:justify-end"
@@ -749,14 +752,14 @@ const Hero: React.FC<HeroProps> = ({ config, social, phone, isContactVisible, ap
                 className="text-4xl font-bold text-light-text dark:text-dark-text leading-tight"
                 variants={itemVariants}
               >
-                {config.title}
-                <span className="block text-primary-readable dark:text-primary-dark-readable">{config.subtitle}</span>
+                <EditText path="components.hero.title">{config.title}</EditText>
+                <span className="block text-primary-readable dark:text-primary-dark-readable"><EditText path="components.hero.subtitle">{config.subtitle}</EditText></span>
               </motion.h1>
               <motion.p
                 className="text-lg text-light-text/80 dark:text-dark-text/80 mx-auto"
                 variants={itemVariants}
               >
-                {config.description}
+                <EditText path="components.hero.description">{config.description}</EditText>
               </motion.p>
             </motion.div>
             {renderBookButton(true)}
@@ -799,7 +802,7 @@ const Hero: React.FC<HeroProps> = ({ config, social, phone, isContactVisible, ap
           >
             <div className="w-[5.5rem] h-[5.5rem] rounded-full border border-primary-readable/60 dark:border-primary-dark-readable/60 flex items-center justify-center p-2">
               <span className="text-[11px] font-bold tracking-widest text-center leading-tight text-primary-readable dark:text-primary-dark-readable line-clamp-3">
-                {stampText}
+                <EditText path="components.hero.stamp">{stampText}</EditText>
               </span>
             </div>
           </div>

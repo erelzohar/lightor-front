@@ -6,6 +6,7 @@ import type { AppointmentType } from '../../models/AppointmentType';
 import type { SectionTone } from '../SectionDivider';
 import { TONE_BG } from './blockUtils';
 import ImagesService from '../../services/ImagesService';
+import { useEditAttrs, servicePath } from '../../services/editMode';
 import { handleWideImageError } from '../../utils/imageFallback';
 import { servicesHeading } from '../../utils/servicesHeading';
 
@@ -25,6 +26,7 @@ const minutes = (ms: string | number | undefined): number | null => {
 /** LT-136: services as cards with duration and price; the first is highlighted. */
 const PriceCards: React.FC<Props> = ({ appointmentTypes, tone = 'bg', title, bookable = true }) => {
   const { t, language } = useLanguage();
+  const ed = useEditAttrs();
   const rows = (appointmentTypes ?? []).filter((a) => a?.name).slice(0, 6);
   if (!rows.length) return null;
   const heading = servicesHeading(title, rows, t, language);
@@ -32,7 +34,7 @@ const PriceCards: React.FC<Props> = ({ appointmentTypes, tone = 'bg', title, boo
   return (
     <section id="services" className={`section-y ${TONE_BG[tone]} transition-colors duration-300`} aria-label={heading}>
       <div className="container mx-auto px-4">
-        <h2 className="text-4xl font-bold text-light-text dark:text-dark-text mb-12">
+        <h2 {...ed('components.services.title')} className="text-4xl font-bold text-light-text dark:text-dark-text mb-12">
           {heading}
         </h2>
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -51,7 +53,7 @@ const PriceCards: React.FC<Props> = ({ appointmentTypes, tone = 'bg', title, boo
               >
                 {/* The owner's picture for this service (LT-157), when there is one. */}
                 {a.image && (
-                  <img
+                  <img {...ed(servicePath(a._id, 'image'), 'image')}
                     src={ImagesService.getInstance().getImage(a.image)}
                     alt=""
                     loading="lazy"
@@ -59,8 +61,8 @@ const PriceCards: React.FC<Props> = ({ appointmentTypes, tone = 'bg', title, boo
                     className="w-full aspect-[4/3] object-cover rounded-design-sm mb-5"
                   />
                 )}
-                <h3 className="text-xl font-semibold mb-4">{a.name}</h3>
-                <div className={`text-3xl font-bold ${featured ? '' : 'text-light-text dark:text-dark-text'}`} style={{ fontVariantNumeric: 'tabular-nums' }}>{price(a.price)}</div>
+                <h3 {...ed(servicePath(a._id, 'name'))} className="text-xl font-semibold mb-4">{a.name}</h3>
+                <div {...ed(servicePath(a._id, 'price'))} className={`text-3xl font-bold ${featured ? '' : 'text-light-text dark:text-dark-text'}`} style={{ fontVariantNumeric: 'tabular-nums' }}>{price(a.price)}</div>
                 {mins && (
                   <div className={`mt-3 flex items-center gap-2 text-sm ${featured ? 'opacity-90' : 'text-light-text/70 dark:text-dark-text/70'}`}>
                     <Clock className="h-4 w-4" aria-hidden="true" />

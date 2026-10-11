@@ -11,6 +11,8 @@ import { showsPrices } from '../../utils/servicesHeading';
 import { scrollToSection, sectionOf } from '../../utils/sections';
 import { Conversion, mainCta, takesBookings } from '../../services/siteMode';
 import { Calendar, MessageSquare } from 'lucide-react';
+import { useEdit, editAttrs } from '../../services/editMode';
+import EditText from '../EditText';
 
 // LT-190: the business name is never cut. On phones the brand block may
 // shrink so a long name drops to a second line; from md up it keeps its width
@@ -55,6 +57,7 @@ interface NavbarProps {
 }
 
 const Navbar: React.FC<NavbarProps> = ({ websiteConfig, isPreview }) => {
+  const { editing } = useEdit();
   const [isOpen, setIsOpen] = useState(false);
   // The bar itself, measured so the page can clear it (LT-163).
   const navRef = useRef<HTMLElement>(null);
@@ -232,14 +235,14 @@ const Navbar: React.FC<NavbarProps> = ({ websiteConfig, isPreview }) => {
   );
   const logo = (cls = 'h-12 w-12') => (
     <button onClick={handleScrollToTop} className={BRAND_CLS} aria-label={t('nav.home')}>
-      <img src={ImagesService.getInstance().getImage(websiteConfig.logoImageName)} onError={handleSquareImageError} alt="Logo" className={`${cls} rounded-full object-cover flex-shrink-0`} />
-      <span className={`${NAME_CLS} text-lg sm:text-xl`}>{websiteConfig.businessName}</span>
+      <img {...editAttrs(editing, 'logoImageName', 'image')} src={ImagesService.getInstance().getImage(websiteConfig.logoImageName)} onError={handleSquareImageError} alt="Logo" className={`${cls} rounded-full object-cover flex-shrink-0`} />
+      <span {...editAttrs(editing, 'businessName')} className={`${NAME_CLS} text-lg sm:text-xl`}>{websiteConfig.businessName}</span>
     </button>
   );
   const bookButton = cta ? (
     <a href={cta.href} onClick={handleLinkClick} className="inline-flex items-center gap-2 bg-primary dark:bg-primary-dark text-on-primary dark:text-on-primary-dark font-bold px-5 py-2.5 rounded-design text-sm hover:opacity-90 transition-opacity whitespace-nowrap">
       {cta.target === 'contact' ? <MessageSquare className="h-4 w-4" aria-hidden="true" /> : <Calendar className="h-4 w-4" aria-hidden="true" />}
-      {cta.label}
+      <EditText path="components.hero.cta">{cta.label}</EditText>
     </a>
   ) : null;
   const links = (cls: string) => menuItems.map((item) => (
@@ -266,7 +269,8 @@ const Navbar: React.FC<NavbarProps> = ({ websiteConfig, isPreview }) => {
       {isOpen ? <X className="h-6 w-6 text-light-text dark:text-dark-text" /> : <Menu className="h-6 w-6 text-light-text dark:text-dark-text" />}
     </button>
   );
-  const slide = isVisible ? 'translate-y-0' : '-translate-y-full';
+  // LT-243: never slides away in the site editor.
+  const slide = isVisible || editing ? 'translate-y-0' : '-translate-y-full';
   // LT-173: labels never wrap — a row that runs out of width collapses into
   // the burger instead (see the overflow watcher above).
   const linkCls = 'text-center whitespace-nowrap text-light-text dark:text-dark-text hover:text-primary dark:hover:text-primary-dark transition-colors font-medium';
@@ -349,7 +353,7 @@ const Navbar: React.FC<NavbarProps> = ({ websiteConfig, isPreview }) => {
   }
 
   const navClassName = (() => {
-    const visibility = isVisible ? 'translate-y-0' : '-translate-y-full';
+    const visibility = isVisible || editing ? 'translate-y-0' : '-translate-y-full';
     if (navbarStyle === 'solid') {
       return `fixed top-0 left-0 right-0 z-50 transition-all duration-300 transform bg-white/95 dark:bg-dark-surface/95 backdrop-blur-md shadow-md ${visibility}`;
     }
@@ -371,14 +375,14 @@ const Navbar: React.FC<NavbarProps> = ({ websiteConfig, isPreview }) => {
             className={BRAND_CLS}
             aria-label={t('nav.home')}
           >
-            <img
+            <img {...editAttrs(editing, 'logoImageName', 'image')}
               src={ImagesService.getInstance().getImage(websiteConfig.logoImageName)}
               onError={handleSquareImageError}
               // src={isPreview && websiteConfig.logoImageName?.startsWith('blob:') ? websiteConfig.logoImageName : globals.imagesUrl + websiteConfig.logoImageName}
               alt="Logo"
               className="h-12 w-12 rounded-full object-cover flex-shrink-0"
             />
-            <span className={`${NAME_CLS} text-lg sm:text-xl lg:text-2xl`}>
+            <span {...editAttrs(editing, 'businessName')} className={`${NAME_CLS} text-lg sm:text-xl lg:text-2xl`}>
               {websiteConfig.businessName}
             </span>
           </button>

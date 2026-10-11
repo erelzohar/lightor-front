@@ -8,6 +8,7 @@ import { revealVariants } from '../../services/reveal';
 import SectionHeading from './SectionHeading';
 import type { HeadingScale } from '../../services/artDirection';
 import ImagesService from '../../services/ImagesService';
+import { useEditAttrs, servicePath } from '../../services/editMode';
 import { handleSquareImageError } from '../../utils/imageFallback';
 import { servicesHeading } from '../../utils/servicesHeading';
 
@@ -43,6 +44,7 @@ const LEGACY_VARIANTS = {
 // display type, built from the business's REAL services. Rendered only when
 // the servicesLayout token asks for it and priced services exist.
 const ServicesLedger: React.FC<ServicesLedgerProps> = ({ appointmentTypes, tone, header, headerScale, reveal, title }) => {
+  const ed = useEditAttrs();
   const { t, language } = useLanguage();
   const { container: containerVariants, item: itemVariants } = revealVariants(reveal, LEGACY_VARIANTS);
   const rows = appointmentTypes.filter((a) => a?.name);
@@ -68,7 +70,7 @@ const ServicesLedger: React.FC<ServicesLedgerProps> = ({ appointmentTypes, tone,
         variants={containerVariants}
       >
         <motion.div variants={itemVariants}>
-          <SectionHeading
+          <SectionHeading titlePath="components.services.title"
             title={servicesHeading(title, rows, t, language)}
             variant={header} scale={headerScale}
             mb="mb-14"
@@ -87,7 +89,7 @@ const ServicesLedger: React.FC<ServicesLedgerProps> = ({ appointmentTypes, tone,
                 {String(i + 1).padStart(2, '0')}
               </span>
               {item.image && (
-                <img
+                <img {...ed(servicePath(item._id, 'image'), 'image')}
                   src={ImagesService.getInstance().getImage(item.image)}
                   alt=""
                   loading="lazy"
@@ -95,9 +97,10 @@ const ServicesLedger: React.FC<ServicesLedgerProps> = ({ appointmentTypes, tone,
                   className="w-10 h-10 rounded-md object-cover shrink-0 self-center"
                 />
               )}
-              <h3 className="text-xl md:text-2xl text-light-text dark:text-dark-text">{item.name}</h3>
+              <h3 {...ed(servicePath(item._id, 'name'))} className="text-xl md:text-2xl text-light-text dark:text-dark-text">{item.name}</h3>
               <span className="flex-1 border-b border-dotted border-light-text/30 dark:border-dark-text/30 -translate-y-1.5" aria-hidden="true"></span>
               <span
+                {...ed(servicePath(item._id, 'price'))}
                 className="text-xl md:text-2xl text-light-text dark:text-dark-text"
                 style={{ fontFamily: language === 'he' || language === 'ar' ? 'var(--font-heading-rtl)' : 'var(--font-heading)' }}
               >

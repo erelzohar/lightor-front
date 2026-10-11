@@ -1,16 +1,19 @@
 import React from 'react';
+import { useEditAttrs } from '../../services/editMode';
 import { motion } from 'framer-motion';
 import { useLanguage } from '../../contexts/LanguageContext';
 import type { SectionTone } from '../SectionDivider';
 import { TONE_BG, displayFontFor } from './blockUtils';
 
 export interface StatItem { value: string; label: string }
-interface Props { items: StatItem[]; tone?: SectionTone }
+interface Props { items: StatItem[]; tone?: SectionTone; /** LT-243: `blocks.<id>.props`. */ basePath?: string }
 
 /** LT-136: two to four big numbers. The server only emits numbers the owner wrote. */
-const Stats: React.FC<Props> = ({ items, tone = 'surface' }) => {
+const Stats: React.FC<Props> = ({ items, tone = 'surface', basePath }) => {
   const { language } = useLanguage();
-  const rows = items.filter((i) => i?.value && i?.label).slice(0, 4);
+  const ed = useEditAttrs();
+  // Each row keeps its index in the stored list, for the editor's paths.
+  const rows = items.map((r, at) => ({ ...r, at })).filter((i) => i?.value && i?.label).slice(0, 4);
   if (rows.length < 2) return null;
   return (
     <section className={`section-y ${TONE_BG[tone]} transition-colors duration-300`} aria-label={rows.map((r) => `${r.value} ${r.label}`).join(', ')}>
@@ -25,9 +28,9 @@ const Stats: React.FC<Props> = ({ items, tone = 'surface' }) => {
             transition={{ delay: i * 0.08 }}
           >
             <div className="font-bold leading-none text-primary-readable dark:text-primary-dark-readable" style={{ fontFamily: displayFontFor(language), fontSize: 'clamp(3rem, 7vw, 5.5rem)', fontVariantNumeric: 'tabular-nums' }}>
-              {r.value}
+              <span {...ed(basePath && `${basePath}.items.${r.at}.value`)}>{r.value}</span>
             </div>
-            <div className="mt-3 text-light-text/80 dark:text-dark-text/80 text-lg">{r.label}</div>
+            <div {...ed(basePath && `${basePath}.items.${r.at}.label`)} className="mt-3 text-light-text/80 dark:text-dark-text/80 text-lg">{r.label}</div>
           </motion.div>
         ))}
       </div>

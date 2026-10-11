@@ -5,6 +5,7 @@ import { useLanguage } from '../../contexts/LanguageContext';
 import { ContactConfig } from '../../models/ContactConfig';
 import { ContactLayout, SectionHeader, RevealStyle } from '../../models/DesignConfig';
 import { revealVariants } from '../../services/reveal';
+import { useEdit, editAttrs } from '../../services/editMode';
 import SectionHeading from './SectionHeading';
 import type { HeadingScale } from '../../services/artDirection';
 import type { SectionTone } from '../SectionDivider';
@@ -125,6 +126,7 @@ const MaterialInput = ({
 );
 
 const Contact: React.FC<ContactProps> = ({ config, address, contact, workingDays, isPreview, layout = 'split', header, headerScale, reveal, tone, leadFields = NO_LEAD_FIELDS, leadsOpen = true, conversion = 'book' }) => {
+  const { editing } = useEdit();
   // 'split' = info column beside the form; 'stacked' = one narrow centered
   // column with the info as a chip row above the form.
   const isStacked = layout === 'stacked';
@@ -598,7 +600,7 @@ const Contact: React.FC<ContactProps> = ({ config, address, contact, workingDays
       <>
         <section id="contact" aria-label="Contact us" className={`section-y ${plainBg} transition-colors duration-300`}>
           <div className="container mx-auto px-4">
-            <SectionHeading title={config.title} description={config.description || undefined} variant={header} scale={headerScale} mb="mb-10" titleId="contact-title" />
+            <SectionHeading titlePath="components.contact.title" descriptionPath="components.contact.description" title={config.title} description={config.description || undefined} variant={header} scale={headerScale} mb="mb-10" titleId="contact-title" />
             <div className="grid md:grid-cols-2 border-t border-light-text/15 dark:border-dark-text/15">
               <div className="py-12 md:pe-12 md:border-e border-light-text/15 dark:border-dark-text/15">
                 <button
@@ -625,7 +627,7 @@ const Contact: React.FC<ContactProps> = ({ config, address, contact, workingDays
       <>
         <section id="contact" aria-label="Contact us" className={`section-y ${plainBg} transition-colors duration-300`}>
           <div className="container mx-auto px-4">
-            <SectionHeading title={config.title} description={config.description || undefined} variant={header} scale={headerScale} mb="mb-12" titleId="contact-title" />
+            <SectionHeading titlePath="components.contact.title" descriptionPath="components.contact.description" title={config.title} description={config.description || undefined} variant={header} scale={headerScale} mb="mb-12" titleId="contact-title" />
             <div className="grid md:grid-cols-2 gap-16 max-w-6xl">
               {plainLines('text-light-text/80 dark:text-dark-text/80')}
               {formOrButtons}
@@ -643,9 +645,9 @@ const Contact: React.FC<ContactProps> = ({ config, address, contact, workingDays
         <section id="contact" aria-labelledby="contact-title" className="section-y bg-light-text text-light-bg dark:bg-dark-text dark:text-dark-bg transition-colors duration-300">
           <div className="container mx-auto px-4">
             {config.description && (
-              <p className={`text-xs font-bold uppercase opacity-60 ${noTrack ? '' : 'tracking-[0.3em]'}`}>{config.description}</p>
+              <p {...editAttrs(editing, 'components.contact.description')} className={`text-xs font-bold uppercase opacity-60 ${noTrack ? '' : 'tracking-[0.3em]'}`}>{config.description}</p>
             )}
-            <h2 id="contact-title" className="font-bold leading-none mt-4" style={{ fontFamily: displayFont, fontSize: 'clamp(3rem, 9vw, 7rem)' }}>
+            <h2 {...editAttrs(editing, 'components.contact.title')} id="contact-title" className="font-bold leading-none mt-4" style={{ fontFamily: displayFont, fontSize: 'clamp(3rem, 9vw, 7rem)' }}>
               {config.title}
             </h2>
             <div className="mt-10 flex flex-wrap items-baseline gap-x-4 gap-y-2 text-lg opacity-90">
@@ -679,8 +681,8 @@ const Contact: React.FC<ContactProps> = ({ config, address, contact, workingDays
         <section id="contact" aria-labelledby="contact-title" className="section-y bg-primary dark:bg-primary-dark text-on-primary dark:text-on-primary-dark transition-colors duration-300">
           <div className="container mx-auto px-4 grid md:grid-cols-2 gap-12 items-center max-w-6xl">
             <div>
-              <h2 id="contact-title" className="font-bold leading-tight" style={{ fontFamily: displayFont, fontSize: 'clamp(2.25rem, 5vw, 4rem)' }}>{config.title}</h2>
-              {config.description && <p className="mt-4 text-lg opacity-90 max-w-xl">{config.description}</p>}
+              <h2 {...editAttrs(editing, 'components.contact.title')} id="contact-title" className="font-bold leading-tight" style={{ fontFamily: displayFont, fontSize: 'clamp(2.25rem, 5vw, 4rem)' }}>{config.title}</h2>
+              {config.description && <p {...editAttrs(editing, 'components.contact.description')} className="mt-4 text-lg opacity-90 max-w-xl">{config.description}</p>}
               {plainLines('mt-8')}
             </div>
             <div className="bg-light-surface dark:bg-dark-surface text-light-text dark:text-dark-text rounded-design-card shadow-card p-6 md:p-8">
@@ -698,7 +700,7 @@ const Contact: React.FC<ContactProps> = ({ config, address, contact, workingDays
       <>
         <section id="contact" aria-label="Contact us" className={`section-y ${plainBg} transition-colors duration-300`}>
           <div className="container mx-auto px-4">
-            <SectionHeading title={config.title} description={config.description || undefined} variant={header} scale={headerScale} mb="mb-12" titleId="contact-title" />
+            <SectionHeading titlePath="components.contact.title" descriptionPath="components.contact.description" title={config.title} description={config.description || undefined} variant={header} scale={headerScale} mb="mb-12" titleId="contact-title" />
             <div className="grid md:grid-cols-2 gap-8 max-w-6xl mx-auto">
               <div className="card-design p-6 md:p-8">{formOrButtons}</div>
               <div className="card-design p-6 md:p-8 flex flex-col gap-6">
@@ -756,7 +758,7 @@ const Contact: React.FC<ContactProps> = ({ config, address, contact, workingDays
           variants={containerVariants}
         >
           <motion.div variants={itemVariants}>
-            <SectionHeading
+            <SectionHeading titlePath="components.contact.title" descriptionPath="components.contact.description"
               title={config.title}
               description={config.description}
               variant={header} scale={headerScale}

@@ -2,6 +2,7 @@ import React from 'react';
 import type { SectionHeader } from '../../models/DesignConfig';
 import { useLanguage } from '../../contexts/LanguageContext';
 import type { HeadingScale } from '../../services/artDirection';
+import { useEditAttrs } from '../../services/editMode';
 
 interface SectionHeadingProps {
   title: string;
@@ -18,6 +19,9 @@ interface SectionHeadingProps {
   /** LT-131: per-section heading scale — 'giant' display title, 'micro'
    *  label-only. Unset/'normal' renders exactly as before. */
   scale?: HeadingScale;
+  /** LT-243: the config paths of the title and description, for the site editor. */
+  titlePath?: string;
+  descriptionPath?: string;
 }
 
 /**
@@ -38,7 +42,10 @@ const SectionHeading: React.FC<SectionHeadingProps> = ({
   descClass = 'text-xl text-light-text/80 dark:text-dark-text/80',
   titleId,
   scale,
+  titlePath,
+  descriptionPath,
 }) => {
+  const ed = useEditAttrs();
   // Arabic cursive joins break under letter-spacing — the label chrome drops
   // its tracking there (review finding).
   const { language } = useLanguage();
@@ -53,16 +60,16 @@ const SectionHeading: React.FC<SectionHeadingProps> = ({
     return (
       <div className={`${variant === 'centered' ? 'text-center' : ''} ${mb}`}>
         {variant === 'label' && <span className="block h-px bg-light-text/15 dark:bg-dark-text/15 mb-8" aria-hidden="true"></span>}
-        <h2 id={titleId} className="font-bold text-light-text dark:text-dark-text mb-6" style={giantStyle}>{title}</h2>
-        {description && <p className={`text-lg text-light-text/70 dark:text-dark-text/70 ${variant === 'centered' ? 'max-w-2xl mx-auto' : 'max-w-2xl'}`}>{description}</p>}
+        <h2 {...ed(titlePath)} id={titleId} className="font-bold text-light-text dark:text-dark-text mb-6" style={giantStyle}>{title}</h2>
+        {description && <p {...ed(descriptionPath)} className={`text-lg text-light-text/70 dark:text-dark-text/70 ${variant === 'centered' ? 'max-w-2xl mx-auto' : 'max-w-2xl'}`}>{description}</p>}
       </div>
     );
   }
   if (scale === 'micro' && variant !== 'label') {
     return (
       <div className={`${variant === 'centered' ? 'text-center' : ''} ${mb}`}>
-        <h2 id={titleId} className={microClass}>{title}</h2>
-        {description && <p className={`mt-4 text-lg text-light-text/70 dark:text-dark-text/70 ${variant === 'centered' ? 'max-w-2xl mx-auto' : 'max-w-2xl'}`}>{description}</p>}
+        <h2 {...ed(titlePath)} id={titleId} className={microClass}>{title}</h2>
+        {description && <p {...ed(descriptionPath)} className={`mt-4 text-lg text-light-text/70 dark:text-dark-text/70 ${variant === 'centered' ? 'max-w-2xl mx-auto' : 'max-w-2xl'}`}>{description}</p>}
       </div>
     );
   }
@@ -71,13 +78,13 @@ const SectionHeading: React.FC<SectionHeadingProps> = ({
     return (
       <div className={mb}>
         <div className="flex items-center gap-4">
-          <h2 id={titleId} className={`section-label-title text-base font-bold ${track} uppercase text-primary-readable dark:text-primary-dark-readable`}>
+          <h2 {...ed(titlePath)} id={titleId} className={`section-label-title text-base font-bold ${track} uppercase text-primary-readable dark:text-primary-dark-readable`}>
             {title}
           </h2>
           <span className="flex-1 h-px bg-light-text/15 dark:bg-dark-text/15" aria-hidden="true"></span>
         </div>
         {description && (
-          <p className="mt-6 max-w-2xl text-lg text-light-text/70 dark:text-dark-text/70">{description}</p>
+          <p {...ed(descriptionPath)} className="mt-6 max-w-2xl text-lg text-light-text/70 dark:text-dark-text/70">{description}</p>
         )}
       </div>
     );
@@ -86,9 +93,9 @@ const SectionHeading: React.FC<SectionHeadingProps> = ({
   if (variant === 'side') {
     return (
       <div className={mb}>
-        <h2 id={titleId} className="text-4xl font-bold text-light-text dark:text-dark-text mb-6">{title}</h2>
+        <h2 {...ed(titlePath)} id={titleId} className="text-4xl font-bold text-light-text dark:text-dark-text mb-6">{title}</h2>
         <div className="heading-accent mb-8" aria-hidden="true"></div>
-        {description && <p className="max-w-2xl text-lg text-light-text/70 dark:text-dark-text/70">{description}</p>}
+        {description && <p {...ed(descriptionPath)} className="max-w-2xl text-lg text-light-text/70 dark:text-dark-text/70">{description}</p>}
       </div>
     );
   }
@@ -96,9 +103,9 @@ const SectionHeading: React.FC<SectionHeadingProps> = ({
   // 'centered' — the legacy chrome, unchanged for old presets and defaults.
   return (
     <div className={`text-center ${mb}`}>
-      <h2 id={titleId} className="text-4xl font-bold text-light-text dark:text-dark-text mb-6">{title}</h2>
+      <h2 {...ed(titlePath)} id={titleId} className="text-4xl font-bold text-light-text dark:text-dark-text mb-6">{title}</h2>
       <div className="heading-accent mx-auto mb-8" aria-hidden="true"></div>
-      {description !== undefined && <p className={descClass}>{description}</p>}
+      {description !== undefined && <p {...ed(descriptionPath)} className={descClass}>{description}</p>}
     </div>
   );
 };

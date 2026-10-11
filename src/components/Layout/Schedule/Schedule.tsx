@@ -35,6 +35,7 @@ import { CalendarEventInput, googleCalendarUrl, downloadIcs } from '../../../ser
 import { parseIntervals, getHoursForDate, DateOverride } from '../../../utils/workingHours';
 import { CancelWindowClosedError, DEFAULT_MIN_CANCEL_TIME_MS, formatCancelWindow } from '../../../utils/cancelWindow';
 import ImagesService from '../../../services/ImagesService';
+import { useEdit, editAttrs, servicePath } from '../../../services/editMode';
 import { handleSquareImageError } from '../../../utils/imageFallback';
 
 interface BookingFormData {
@@ -104,6 +105,7 @@ const DEFAULT_BOOKING_HORIZON_DAYS = 60;
 const NO_BOOKING_FIELDS: BookingField[] = [];
 
 const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone, businessName, timeToCancel, vacations, dateOverrides = [], appointmentTypes: offeredTypes, isUpdating, appointmentToUpdate, onUpdateComplete, onCancelUpdate, onCancelWindowClosed, isPreview, hideDescription = false, header, headerScale, scheduleStyle = 'card', tone = 'surface', bookingHorizonDays = DEFAULT_BOOKING_HORIZON_DAYS, bookingFields = NO_BOOKING_FIELDS }) => {
+  const { editing } = useEdit();
   // if (!appointmentTypes) {
   //   throw new Error('No appointment types available');
   // }
@@ -1164,7 +1166,7 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
         >
           <motion.div className={`${header && header !== 'centered' ? 'mb-12' : 'text-center mb-20'} ${scheduleStyle === 'split' ? 'lg:col-span-2' : ''}`}>
             {header && header !== 'centered' ? (
-              <SectionHeading
+              <SectionHeading titlePath="components.schedule.title" descriptionPath="components.schedule.description"
                 title={config.title}
                 description={hideDescription ? undefined : config.description}
                 variant={header} scale={headerScale}
@@ -1173,14 +1175,14 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
               />
             ) : (
               <>
-                <h2 className="text-4xl font-bold text-light-text dark:text-dark-text mb-6">
+                <h2 {...editAttrs(editing, 'components.schedule.title')} className="text-4xl font-bold text-light-text dark:text-dark-text mb-6">
                   {config.title}
                 </h2>
                 <div className="w-24 h-1 bg-primary dark:bg-primary-dark mx-auto mb-8"></div>
 
 
                 {!hideDescription && (
-                  <p className="text-xl text-light-text/80 dark:text-dark-text/80 max-w-2xl mx-auto">
+                  <p {...editAttrs(editing, 'components.schedule.description')} className="text-xl text-light-text/80 dark:text-dark-text/80 max-w-2xl mx-auto">
                     {config.description}
                   </p>
                 )}
@@ -1399,7 +1401,7 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
                           >
                             <div className="flex items-center gap-4">
                               {type.image ? (
-                                <img
+                                <img {...editAttrs(editing, servicePath(type._id, 'image'), 'image')}
                                   src={ImagesService.getInstance().getImage(type.image)}
                                   alt={type.name}
                                   loading="lazy"
@@ -1412,7 +1414,7 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
                                 </div>
                               )}
                               <div className="flex-1 text-right">
-                                <h4 className="font-semibold text-light-text dark:text-dark-text mb-1">
+                                <h4 {...editAttrs(editing, servicePath(type._id, 'name'))} className="font-semibold text-light-text dark:text-dark-text mb-1">
                                   {type.name}
                                 </h4>
                                 <p className="text-sm text-light-text/70 dark:text-dark-text/70">
