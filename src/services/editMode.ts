@@ -50,8 +50,28 @@ export type EditorToSite =
   | { type: 'LT_SCROLL_TO'; path?: string | null; section?: string | null; /** 'start' when the editor's panel covers the lower screen (a phone). */ block?: 'start' | 'center' };
 
 /** Site → editor. */
+/**
+ * LT-252: a legacy page (one without blocks) as the blocks it would be —
+ * what the editor turns it into when the owner adds or moves a section.
+ * `key` is the legacy section a block comes from (its EditSection id).
+ */
+export interface LayoutBlock {
+  key: string;
+  type: string;
+  variant?: string;
+  source?: string;
+  mod?: {
+    invert?: boolean;
+    backdrop?: 'tinted' | 'photo' | 'pattern';
+    spacing?: 'tight' | 'huge';
+    scale?: 'giant' | 'micro';
+    hidden?: boolean;
+  };
+}
+
 export type SiteToEditor =
   | { type: 'LT_READY' }
+  | { type: 'LT_LAYOUT'; blocks: LayoutBlock[] }
   | { type: 'LT_SELECT'; kind: EditKind; path: string; section: string | null; sectionType: string | null; count: number }
   | {
       type: 'LT_SELECT'; kind: 'section'; path: null; section: string; sectionType: string | null; count: 1;

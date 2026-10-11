@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach, onTestFinished } from 'vitest';
 import { render, screen, act, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import App from '../../App';
@@ -191,6 +191,54 @@ describe('the site editor bridge (LT-243)', () => {
     await waitFor(() => expect(container.querySelector('[data-lt-section="k7"]')).toHaveAttribute('data-lt-hidden', 'true'));
     await post({ type: 'LT_EDIT', on: false });
     await waitFor(() => expect(screen.queryByText('Hidden words')).toBeNull());
+  });
+
+  it('a legacy page tells the editor its sections, in order, as the blocks they would be (LT-252)', async () => {
+    const legacy = config({ design: { heroLayout: 'split', aboutLayout: 'wall' } });
+    (legacy.components as Record<string, Record<string, unknown>>).faq.visible = false;
+    renderSite();
+    await post({ type: 'PREVIEW_DATA', config: legacy });
+    await waitFor(() => expect(screen.getAllByText('Sharp cuts').length).toBeGreaterThan(0));
+    // Nothing while the editor is off.
+    expect(parentPost.mock.calls.some(([m]) => m.type === 'LT_LAYOUT')).toBe(false);
+
+    await post({ type: 'LT_EDIT', on: true });
+    const blocks = await waitFor(() => {
+      const call = parentPost.mock.calls.find(([m]) => m.type === 'LT_LAYOUT');
+      expect(call).toBeDefined();
+      return call![0].blocks as { key: string; type: string; variant?: string; mod?: Record<string, unknown> }[];
+    });
+    expect(blocks.map((b) => b.type)).toEqual(['hero', 'intro', 'gallery', 'schedule', 'faq', 'contact', 'footer']);
+    // The about section as the composer reads its layout; the hidden FAQ stays, hidden.
+    expect(blocks[1]).toEqual({ key: 'about', type: 'intro', variant: 'columns', source: 'about' });
+    expect(blocks[4]).toEqual({ key: 'faq', type: 'faq', source: 'faq', mod: { hidden: true } });
+    expect(parentPost.mock.calls.find(([m]) => m.type === 'LT_LAYOUT')![1]).toBe(DASHBOARD);
+
+    // A composed page has its blocks already: no layout.
+    parentPost.mockClear();
+    await post({ type: 'PREVIEW_DATA', config: config({ blocks: [{ id: 'b1', type: 'hero' }, { id: 'b2', type: 'faq' }] }) });
+    await waitFor(() => expect(document.querySelector('[data-lt-section="b2"]')).not.toBeNull());
+    expect(parentPost.mock.calls.some(([m]) => m.type === 'LT_LAYOUT')).toBe(false);
+  });
+
+  it('scrolls to a section that the next draft draws, clear of the navbar (LT-252)', async () => {
+    const scrollTo = vi.spyOn(window, 'scrollTo').mockImplementation(() => {});
+    onTestFinished(() => { scrollTo.mockRestore(); document.documentElement.style.removeProperty('--nav-offset'); });
+    const { container } = renderSite();
+    await post({ type: 'PREVIEW_DATA', config: config({ blocks: [{ id: 'b1', type: 'hero' }] }) });
+    await post({ type: 'LT_EDIT', on: true });
+    scrollTo.mockClear();
+    await post({ type: 'LT_SCROLL_TO', section: 'b9', block: 'start' });
+    expect(scrollTo).not.toHaveBeenCalled();
+    // Where the new section will be drawn, and the bar above it (jsdom lays nothing out).
+    const rect = vi.spyOn(Element.prototype, 'getBoundingClientRect').mockReturnValue(
+      { top: 900, bottom: 1300, left: 0, right: 0, width: 0, height: 400, x: 0, y: 900, toJSON: () => ({}) } as DOMRect,
+    );
+    onTestFinished(() => rect.mockRestore());
+    document.documentElement.style.setProperty('--nav-offset', '72px');
+    await post({ type: 'PREVIEW_DATA', config: config({ blocks: [{ id: 'b1', type: 'hero' }, { id: 'b9', type: 'faq' }] }) });
+    await waitFor(() => expect(scrollTo).toHaveBeenCalledWith({ top: 900 - 72, behavior: 'smooth' }));
+    expect(container.querySelector('[data-lt-section="b9"]')).not.toBeNull();
   });
 
   it('ignores editor messages from an untrusted origin', async () => {

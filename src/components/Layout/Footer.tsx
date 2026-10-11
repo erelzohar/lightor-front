@@ -15,7 +15,8 @@ import { useEdit, editAttrs } from '../../services/editMode';
 import EditText from '../EditText';
 import MarqueeStrip from '../MarqueeStrip';
 import { handleSquareImageError } from '../../utils/imageFallback';
-import { sectionTitlesOf } from '../../services/navLinks';
+import { navLinksFromBlocks, sectionTitlesOf } from '../../services/navLinks';
+import { showsPrices } from '../../utils/servicesHeading';
 import { whatsAppHref } from '../../utils/phone';
 
 interface WebsiteConfig {
@@ -41,9 +42,14 @@ interface FooterProps {
   layout?: FooterLayout;
   /** LT-124: the 'line'/'ticker' rows name the city beside the business. */
   city?: string;
+  /**
+   * LT-252: a composed page — the quick links follow its blocks, as the
+   * navbar's do (LT-137); the section flags say nothing about what is drawn.
+   */
+  blocks?: { type: string; id: string; mod?: { hidden?: boolean } }[];
 }
 
-const Footer: React.FC<FooterProps> = ({ config, social, businessName, logoImageName, appointmentsType, conversion, websiteConfig, layout = 'columns', city }) => {
+const Footer: React.FC<FooterProps> = ({ config, social, businessName, logoImageName, appointmentsType, conversion, websiteConfig, layout = 'columns', city, blocks }) => {
   const { editing } = useEdit();
   const { t, language } = useLanguage();
   const { isModalOpen, setIsModalOpen, modalType, handleContactClick } = useContactHandler();
@@ -87,12 +93,19 @@ const Footer: React.FC<FooterProps> = ({ config, social, businessName, logoImage
   };
 
   const titles = sectionTitlesOf(websiteConfig);
-  const menuItems = [
-    { href: "#about", label: titles.about ?? t('nav.about'), visible: websiteConfig?.about?.visible },
-    { href: "#portfolio", label: titles.portfolio ?? t('nav.portfolio'), visible: websiteConfig?.portfolio?.visible },
-    { href: "#schedule", label: titles.schedule ?? t('nav.schedule'), visible: takesBookings(conversion, appointmentsType) },
-    { href: "#contact", label: titles.contact ?? t('nav.contact'), visible: websiteConfig?.contact?.visible }
-  ].filter(item => item.visible === undefined || item.visible);
+  const bookable = takesBookings(conversion, appointmentsType);
+  const menuItems = blocks?.length
+    ? navLinksFromBlocks(blocks.filter((b) => !b.mod?.hidden && (bookable || b.type !== 'schedule')), titles, { priced: showsPrices(appointmentsType) }).map((l) => ({
+      href: l.href,
+      label: l.title ?? t(l.key, { defaultValue: language === 'he' ? l.fallbackHe : l.fallbackEn }),
+      visible: true,
+    }))
+    : [
+      { href: "#about", label: titles.about ?? t('nav.about'), visible: websiteConfig?.about?.visible },
+      { href: "#portfolio", label: titles.portfolio ?? t('nav.portfolio'), visible: websiteConfig?.portfolio?.visible },
+      { href: "#schedule", label: titles.schedule ?? t('nav.schedule'), visible: bookable },
+      { href: "#contact", label: titles.contact ?? t('nav.contact'), visible: websiteConfig?.contact?.visible }
+    ].filter(item => item.visible === undefined || item.visible);
 
   const socialLinks = [
     social.instagram && {

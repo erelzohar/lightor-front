@@ -66,4 +66,11 @@ describe('navbar section links', () => {
     expect(scrollTo).not.toHaveBeenCalled();
     expect(window.location.hash).toBe('');
   });
+
+  it('a section the owner hid gets no link (LT-252)', () => {
+    const hidden = { ...CONFIG, blocks: CONFIG.blocks.map((b) => (b.type === 'intro' ? { ...b, mod: { hidden: true } } : b)) };
+    const { container } = render(<Navbar websiteConfig={hidden as never} />);
+    expect(container.querySelector('a[href="#about"]')).toBeNull();
+    expect(container.querySelector('a[href="#contact"]')).not.toBeNull();
+  });
 });

@@ -83,4 +83,27 @@ describe('nav labels follow the section titles', () => {
     expect(labels['#schedule']).toBe('הזמנת מארזים');
     expect(labels['#contact']).toBe('nav.contact');
   });
+
+  it("footer quick links on a composed page follow its blocks, a hidden one left out (LT-252)", () => {
+    const blocks = [...BLOCKS.map((b) => (b.type === 'intro' ? { ...b, mod: { hidden: true } } : b)).filter((b) => b.type !== 'gallery')];
+    const { container } = render(
+      <Footer
+        config={{ description: 'd' }}
+        social={{ instagram: '', facebook: '', tiktok: '' } as never}
+        businessName="Z"
+        logoImageName="l.png"
+        appointmentsType={[HAIRCUT]}
+        websiteConfig={components(TITLES)}
+        layout="columns"
+        blocks={blocks}
+      />
+    );
+    const labels = labelsByHref(container);
+    // About is hidden and the gallery is not on the page, whatever the section flags say.
+    expect(labels['#about']).toBeUndefined();
+    expect(labels['#portfolio']).toBeUndefined();
+    expect(labels['#faq']).toBe(TITLES.faq);
+    expect(labels['#contact']).toBe(TITLES.contact);
+  });
 });
+

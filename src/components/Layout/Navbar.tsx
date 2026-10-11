@@ -44,7 +44,7 @@ interface WebsiteConfig {
     borderRadius?: string;
   };
   /** LT-137: a composed page — links come from these, not the section flags. */
-  blocks?: { type: string; id: string }[];
+  blocks?: { type: string; id: string; mod?: { hidden?: boolean } }[];
   /** LT-167: nothing bookable → no "Book" link or button. */
   appointmentTypes?: { name?: string | null; durationMS?: string | number | null }[];
   /** LT-199: a leads site's button goes to the contact form. */
@@ -145,7 +145,7 @@ const Navbar: React.FC<NavbarProps> = ({ websiteConfig, isPreview }) => {
   // LT-168: a link reads as the heading it scrolls to; the generic label only when a section has none.
   const titles = sectionTitlesOf(websiteConfig.components);
   const menuItems = websiteConfig.blocks?.length
-    ? navLinksFromBlocks(websiteConfig.blocks.filter((b) => bookable || b.type !== 'schedule'), titles, { priced: showsPrices(websiteConfig.appointmentTypes) }).map((l) => ({
+    ? navLinksFromBlocks(websiteConfig.blocks.filter((b) => !b.mod?.hidden && (bookable || b.type !== 'schedule')), titles, { priced: showsPrices(websiteConfig.appointmentTypes) }).map((l) => ({
       href: l.href,
       label: l.title ?? t(l.key, { defaultValue: language === 'he' ? l.fallbackHe : l.fallbackEn }),
       visible: true,

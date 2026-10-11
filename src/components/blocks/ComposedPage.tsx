@@ -83,7 +83,7 @@ const ComposedPage: React.FC<ComposedPageProps> = ({ config, jitter, isPreview, 
             config={c.hero}
             social={config.social}
             phone={config.contact.phone}
-            isContactVisible={config.blocks.some((x) => x.type === 'contact')}
+            isContactVisible={config.blocks.some((x) => x.type === 'contact' && !x.mod?.hidden)}
             businessName={config.businessName}
             appointmentTypes={config.appointmentTypes}
             conversion={config.conversion}
@@ -224,6 +224,7 @@ const ComposedPage: React.FC<ComposedPageProps> = ({ config, jitter, isPreview, 
             websiteConfig={c}
             layout={(v as FooterLayout) ?? design?.footerLayout}
             city={config.address?.city}
+            blocks={config.blocks}
           />
         ) : null;
       default:

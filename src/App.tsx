@@ -44,7 +44,9 @@ import { useSectionDeepLinks } from './hooks/useSectionDeepLinks';
 import { reportClientError } from './services/ErrorReportingService';
 import EditSection from './components/EditSection';
 import EditOverlay from './components/EditOverlay';
-import { EditContext, elementForSection, elementsForPath, type EditTarget, type EditorToSite, type SiteToEditor } from './services/editMode';
+import { EditContext, elementForSection, elementsForPath, type EditTarget, type EditorToSite, type LayoutBlock, type SiteToEditor } from './services/editMode';
+import { legacyLayout } from './services/legacyLayout';
+import { scrollToSection } from './utils/sections';
 
 // Origins permitted to drive this app through a PREVIEW_DATA postMessage.
 // Only the register and dashboard apps embed the public site in an iframe for
@@ -116,6 +118,11 @@ function MainContent() {
   const [editing, setEditing] = useState(false);
   const [selection, setSelection] = useState<EditTarget | null>(null);
   const editorOriginRef = useRef<string | null>(null);
+  // LT-252: a legacy page tells the editor the sections it draws, in order,
+  // as the blocks it would be (services/legacyLayout.ts) — drawn into the
+  // first ref while the page renders, posted when it changes.
+  const layoutRef = useRef('');
+  const sentLayoutRef = useRef('');
 
   // Keep a stable ref to setLanguage so the message listener never needs to
   // re-register when the context returns a new function reference.
@@ -142,12 +149,23 @@ function MainContent() {
         if (msg.type === 'LT_EDIT') {
           setEditing(!!msg.on);
           if (!msg.on) setSelection(null);
+          sentLayoutRef.current = '';
         } else if (msg.type === 'LT_SELECT_PATH') {
           setSelection(msg.path || msg.section ? { path: msg.path ?? null, section: msg.section ?? null } : null);
         } else {
-          const el = msg.path ? elementsForPath(document, msg.path)[0] : msg.section ? elementForSection(document, msg.section) : null;
-          const target = el && getComputedStyle(el).display === 'contents' ? el.firstElementChild : el;
-          target?.scrollIntoView({ behavior: 'smooth', block: msg.block === 'start' ? 'start' : 'center' });
+          // LT-252: a section the owner just added arrives with the next
+          // PREVIEW_DATA, a moment after this message — look again for a
+          // while. At the top (a phone, the panel over the lower screen) it
+          // lands clear of the site's own navbar, as a menu link does.
+          let tries = 0;
+          const scroll = () => {
+            const el = msg.path ? elementsForPath(document, msg.path)[0] : msg.section ? elementForSection(document, msg.section) : null;
+            const target = el && getComputedStyle(el).display === 'contents' ? el.firstElementChild : el;
+            if (target && msg.block === 'start') scrollToSection(target);
+            else if (target) target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            else if (++tries < 20) setTimeout(scroll, 100);
+          };
+          scroll();
         }
         return;
       }
@@ -330,6 +348,11 @@ function MainContent() {
   useSectionDeepLinks(!loading && !!config);
 
   const editState = useMemo(() => ({ editing }), [editing]);
+  useEffect(() => {
+    if (!editing || !layoutRef.current || layoutRef.current === sentLayoutRef.current) return;
+    sentLayoutRef.current = layoutRef.current;
+    postToEditor({ type: 'LT_LAYOUT', blocks: JSON.parse(layoutRef.current) as LayoutBlock[] }, editorOriginRef.current);
+  });
   // A click in the editor: select it here at once, and tell the editor.
   const onPick = useCallback((message: SiteToEditor) => {
     if (message.type === 'LT_SELECT') {
@@ -483,6 +506,8 @@ function MainContent() {
     });
   }
 
+  layoutRef.current = '';
+
   // LT-164: `overflow-x-clip` so nothing a tenant's design does (wide
   // containers, vw-scaled poster headings, drifting decor) can widen the page
   // and put a horizontal scroll under it. `clip` rather than `hidden` so this
@@ -613,6 +638,22 @@ function MainContent() {
           const before = flow.slice(0, at).reverse().find((e) => !e.hidden);
           ordered.splice(before ? ordered.findIndex((e) => e.key === before.key) + 1 : 0, 0, entry);
         });
+        if (editing) {
+          layoutRef.current = JSON.stringify(legacyLayout(
+            ordered.map((e) => ({ key: e.key, hidden: 'hidden' in e && !!e.hidden })),
+            {
+              aboutLayout: config.design?.aboutLayout,
+              hasFeatures: (config.components?.about?.features?.length ?? 0) > 0,
+              interludeSplit: jitter.interludeVariant >= 0.5,
+              invertKey,
+              backdropKeys,
+              backdrop,
+              spacing: isVibeSite ? (key) => spacingOf(key, jitter) : undefined,
+              scale: isVibeSite ? (key) => scaleOf(key, jitter) : undefined,
+              footer: config.components?.footer ? { hidden: !config.components.footer.visible } : null,
+            },
+          ));
+        }
         const rendered = ordered.map((s, i) => {
           return (
             <Fragment key={s.key}>
