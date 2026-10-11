@@ -147,7 +147,7 @@ function MainContent() {
         } else {
           const el = msg.path ? elementsForPath(document, msg.path)[0] : msg.section ? elementForSection(document, msg.section) : null;
           const target = el && getComputedStyle(el).display === 'contents' ? el.firstElementChild : el;
-          target?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          target?.scrollIntoView({ behavior: 'smooth', block: msg.block === 'start' ? 'start' : 'center' });
         }
         return;
       }

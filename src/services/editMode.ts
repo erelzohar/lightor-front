@@ -47,7 +47,7 @@ export const servicePath = (id: string | undefined, field: 'name' | 'price' | 'i
 export type EditorToSite =
   | { type: 'LT_EDIT'; on: boolean }
   | { type: 'LT_SELECT_PATH'; path?: string | null; section?: string | null }
-  | { type: 'LT_SCROLL_TO'; path?: string | null; section?: string | null };
+  | { type: 'LT_SCROLL_TO'; path?: string | null; section?: string | null; /** 'start' when the editor's panel covers the lower screen (a phone). */ block?: 'start' | 'center' };
 
 /** Site → editor. */
 export type SiteToEditor =
