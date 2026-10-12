@@ -197,6 +197,7 @@ const About: React.FC<AboutProps> = ({ config, websiteConfig, layout = 'cards', 
   ].filter(Boolean);
 
   const fullAddress = getFullAddress();
+  const hours = formatWorkingHours();
 
   const contactInfo = [
     // Location card only when there is an address to point at.
@@ -224,14 +225,16 @@ const About: React.FC<AboutProps> = ({ config, websiteConfig, layout = 'cards', 
       isLink: true,
       color: 'bg-primary/10 text-primary dark:bg-primary-dark/10 dark:text-primary-dark'
     },
-    {
+    // LT-279: an hours card only when some day is open - an event's page
+    // or a landing page has no opening hours, and an empty card is a hole.
+    ...(hours.length ? [{
       icon: Clock,
       title: t('about.hours'),
-      content: formatWorkingHours(),
+      content: hours,
       isLink: false,
       color: 'bg-primary/10 text-primary dark:bg-primary-dark/10 dark:text-primary-dark',
       isHours: true
-    }
+    }] : [])
   ];
 
   const { container: containerVariants, item: itemVariants } = revealVariants(reveal, {

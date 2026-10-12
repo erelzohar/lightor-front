@@ -3,6 +3,8 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import ComposedPage from '../../components/blocks/ComposedPage';
 import Navbar from '../../components/Layout/Navbar';
 import Contact from '../../components/Layout/Contact';
+import About from '../../components/Layout/About';
+import { AboutConfig } from '../../models/AboutConfig';
 import { ContactConfig } from '../../models/ContactConfig';
 import { WebsiteConfig } from '../../models/WebsiteConfig';
 import { HeroConfig } from '../../models/HeroConfig';
@@ -198,5 +200,33 @@ describe('models (LT-199)', () => {
     expect(mainCta({ conversion: 'book', types: [HAIRCUT], own: '' }, t)).toEqual({ target: 'schedule', href: '#schedule', label: 'hero.book' });
     expect(mainCta({ conversion: 'lead', types: [HAIRCUT], own: 'Get a quote' }, t)).toEqual({ target: 'contact', href: '#contact', label: 'Get a quote' });
     expect(mainCta({ conversion: 'book', types: [KITCHEN], own: 'Book now' }, t)).toBeNull();
+  });
+});
+
+describe('a site with no opening hours (LT-279)', () => {
+  // An event's page or a landing page has no open day: no hours card, not an
+  // empty one. One open day brings the card back (the positive control).
+  const CLOSED = Array(7).fill(null);
+  const ONE_DAY = [null, '09:00-17:00', null, null, null, null, null];
+  const contact = { phone: '050-1234567', mail: 'a@b.co' };
+  beforeEach(() => vi.stubGlobal('IntersectionObserver', NoopObserver));
+  afterEach(() => vi.unstubAllGlobals());
+
+  it('the contact section draws no hours card', () => {
+    const closed = render(<Contact config={new ContactConfig(true, 'Contact', '')} contact={contact} workingDays={CLOSED} conversion="lead" />);
+    expect(screen.queryByText('about.hours')).toBeNull();
+    closed.unmount();
+    render(<Contact config={new ContactConfig(true, 'Contact', '')} contact={contact} workingDays={ONE_DAY} conversion="lead" />);
+    expect(screen.getAllByText('about.hours').length).toBeGreaterThan(0);
+  });
+
+  it('the about section draws no hours card', () => {
+    const about = AboutConfig.fromJSON({ visible: true, title: 'About', description: '', paragraphs: { intro: 'Hello', mission: '' }, features: [] });
+    const site = (workingDays: (string | null)[]) => ({ address: {}, contact, social: { instagram: '', facebook: '', tiktok: '' }, workingDays }) as never;
+    const closed = render(<About config={about} websiteConfig={site(CLOSED)} parts={['visit']} />);
+    expect(screen.queryByText('about.hours')).toBeNull();
+    closed.unmount();
+    render(<About config={about} websiteConfig={site(ONE_DAY)} parts={['visit']} />);
+    expect(screen.getAllByText('about.hours').length).toBeGreaterThan(0);
   });
 });

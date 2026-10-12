@@ -820,21 +820,24 @@ const Contact: React.FC<ContactProps> = ({ config, address, contact, workingDays
                 ))}
               </div>
 
-              <motion.div
-                className="card-design mt-12 p-6"
-                variants={itemVariants}
-              >
-                <h4 className="font-semibold text-lg mb-4 text-light-text dark:text-dark-text">
-                  {t('about.hours')}
-                </h4>
-                <div className="space-y-2">
-                  {formatWorkingHours().map((schedule, index) => (
-                    <p key={index} className="text-light-text/80 dark:text-dark-text/80">
-                      {`${schedule.day}: ${schedule.hours}`}
-                    </p>
-                  ))}
-                </div>
-              </motion.div>
+              {/* LT-279: no card when no day is open (an event, a landing page). */}
+              {hours.length > 0 && (
+                <motion.div
+                  className="card-design mt-12 p-6"
+                  variants={itemVariants}
+                >
+                  <h4 className="font-semibold text-lg mb-4 text-light-text dark:text-dark-text">
+                    {t('about.hours')}
+                  </h4>
+                  <div className="space-y-2">
+                    {hours.map((schedule, index) => (
+                      <p key={index} className="text-light-text/80 dark:text-dark-text/80">
+                        {`${schedule.day}: ${schedule.hours}`}
+                      </p>
+                    ))}
+                  </div>
+                </motion.div>
+              )}
             </motion.div>
 
             <motion.div variants={containerVariants}>
