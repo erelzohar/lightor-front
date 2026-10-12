@@ -73,7 +73,7 @@
       "name": "Nom complet",
       "phone": "Numéro de téléphone",
       "verify": "Confirmer et réserver",
-      "helper": "En cliquant sur 'Réserver', un code de vérification sera envoyé au numéro fourni.",
+      "helper": "En cliquant sur 'Envoyer le code', un code de vérification sera envoyé au numéro fourni.",
       "send": {
         "code": "Envoyer le code"
       },

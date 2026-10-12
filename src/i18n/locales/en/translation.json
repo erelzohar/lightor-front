@@ -73,7 +73,7 @@
       "name": "Full Name",
       "phone": "Phone Number",
       "verify": "Verify and Book",
-      "helper": "By clicking 'Book Appointment', a verification code will be sent to the phone number provided.",
+      "helper": "By clicking 'Send Verification Code', a code will be sent to the phone number provided.",
       "send": {
         "code": "Send Verification Code"
       },
