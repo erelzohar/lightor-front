@@ -98,6 +98,22 @@ describe('the site editor bridge (LT-243)', () => {
     await waitFor(() => expect(container.querySelector('[data-lt-edit]')).toBeNull());
   });
 
+  it("LT-312: the corner by plan — the contact button on a free site, Lighty's picture on a Plus one", async () => {
+    const { container } = renderSite();
+    const withButton = (over: Record<string, unknown> = {}) =>
+      config({ ...over, components: { ...config().components, contactButton: { visible: true } } });
+    await post({ type: 'PREVIEW_DATA', config: withButton() });
+    await post({ type: 'LT_EDIT', on: true });
+    await waitFor(() => expect(container.querySelector('[data-lt-section="contactButton"]')).not.toBeNull());
+    expect(screen.queryByTestId('site-lighty-still')).toBeNull();
+
+    await post({ type: 'PREVIEW_DATA', config: withButton({ assistant: true }) });
+    await waitFor(() => expect(screen.getByTestId('site-lighty-still')).toBeTruthy());
+    expect(container.querySelector('[data-lt-section="contactButton"]')).toBeNull();
+    // He talks to visitors on the live site only.
+    expect(screen.queryByTestId('site-lighty')).toBeNull();
+  });
+
   it('turns a click into LT_SELECT for the editor, and the click goes nowhere else', async () => {
     const { container } = renderSite();
     await post({ type: 'PREVIEW_DATA', config: config() });

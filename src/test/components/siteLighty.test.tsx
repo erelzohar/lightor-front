@@ -1,7 +1,8 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { describe, it, expect, vi, beforeAll, beforeEach, afterAll } from 'vitest';
+import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
 import SiteLighty from '../../components/SiteLighty/SiteLighty';
 import { replyParts } from '../../components/SiteLighty/replyText';
+import { clampOffset, readOffset, saveOffset } from '../../components/SiteLighty/floating';
 import { WebsiteConfig } from '../../models/WebsiteConfig';
 import { resetVisitorPassForTests } from '../../services/visitorPass';
 import { RAW_AI_RESPONSE_SHAPE } from '../fixtures/rawAiConfig';
@@ -22,7 +23,11 @@ const mocks = vi.hoisted(() => ({
 
 vi.mock('../../services/SiteAssistantService', () => ({ default: { ask: mocks.ask, report: mocks.report } }));
 vi.mock('../../services/AuthService', () => ({ default: { handshake: mocks.handshake } }));
-vi.mock('../../components/SiteLighty/SiteLighty3D', () => ({ default: (): null => null }));
+vi.mock('../../components/SiteLighty/SiteLighty3D', () => ({
+  default: ({ dragging, greet }: { dragging?: boolean; greet?: boolean }) => (
+    <div data-testid={greet ? 'chat-3d' : 'button-3d'} data-dragging={String(!!dragging)} />
+  ),
+}));
 vi.mock('../../utils/sections', () => ({
   sectionOf: (hash: string) => document.querySelector(hash),
   scrollToSection: mocks.scrollToSection,
@@ -180,5 +185,109 @@ describe('the assistant flag (LT-302)', () => {
     expect(WebsiteConfig.fromJSON({ ...RAW_AI_RESPONSE_SHAPE, assistant: true }).assistant).toBe(true);
     expect(WebsiteConfig.fromJSON({ ...RAW_AI_RESPONSE_SHAPE, assistant: 'yes' }).assistant).toBe(false);
     expect(WebsiteConfig.fromJSON(RAW_AI_RESPONSE_SHAPE).assistant).toBe(false);
+  });
+});
+
+/** LT-312: on a Plus site Lighty is the corner itself — dragged anywhere, a tantrum while held. */
+describe('the corner Lighty, dragged (LT-312)', () => {
+  const VW = 1000, VH = 800;
+  const HOME = { left: VW - 12 - 80, top: VH - 12 - 96, width: 80, height: 96 };
+  const realRect = Element.prototype.getBoundingClientRect;
+  beforeAll(() => {
+    // jsdom has no PointerEvent; a MouseEvent with a pointerId stands in.
+    if (!('PointerEvent' in window)) {
+      class PE extends MouseEvent {
+        pointerId: number;
+        constructor(type: string, init: MouseEventInit & { pointerId?: number } = {}) {
+          super(type, init);
+          this.pointerId = init.pointerId ?? 1;
+        }
+      }
+      (window as unknown as { PointerEvent: typeof PE }).PointerEvent = PE;
+    }
+    // His box: the home corner, moved by whatever translate he carries.
+    Element.prototype.getBoundingClientRect = function (this: Element) {
+      if ((this as HTMLElement).dataset?.testid !== 'site-lighty') return realRect.call(this);
+      const m = /translate\((-?\d+)px, (-?\d+)px\)/.exec((this as HTMLElement).style.transform);
+      const x = m ? +m[1] : 0, y = m ? +m[2] : 0;
+      return { left: HOME.left + x, top: HOME.top + y, right: HOME.left + x + 80, bottom: HOME.top + y + 96, width: 80, height: 96, x: HOME.left + x, y: HOME.top + y, toJSON: () => ({}) } as DOMRect;
+    };
+  });
+  afterAll(() => { Element.prototype.getBoundingClientRect = realRect; });
+  beforeEach(() => {
+    Object.defineProperty(window, 'innerWidth', { value: VW, configurable: true });
+    Object.defineProperty(window, 'innerHeight', { value: VH, configurable: true });
+    localStorage.clear();
+    sessionStorage.clear();
+    Object.values(mocks).forEach((fn) => fn.mockReset());
+  });
+
+  const lighty = () => screen.getByLabelText('assistant.open');
+  const wrap = () => screen.getByTestId('site-lighty');
+  const pointer = (type: 'pointerDown' | 'pointerMove' | 'pointerUp', x: number, y: number) =>
+    act(() => { fireEvent[type](lighty(), { pointerId: 1, button: 0, clientX: x, clientY: y }); });
+
+  it('keeps him whole on screen, never below his corner, and remembers where he was left', () => {
+    expect(clampOffset(HOME, -5000, -5000, VW, VH)).toEqual({ x: 8 - HOME.left, y: 8 - HOME.top });
+    expect(clampOffset(HOME, 500, 500, VW, VH)).toEqual({ x: VW - 80 - 8 - HOME.left, y: 0 });
+    expect(readOffset()).toEqual({ x: 0, y: 0 });
+    saveOffset({ x: -300, y: -120 });
+    expect(readOffset()).toEqual({ x: -300, y: -120 });
+    localStorage.setItem('lighty.siteOffset', '{"x":"nope"}');
+    expect(readOffset()).toEqual({ x: 0, y: 0 });
+  });
+
+  it('a tap still opens the chat', () => {
+    render(<SiteLighty businessName="Dana Studio" leadsSite={false} />);
+    pointer('pointerDown', 930, 740);
+    pointer('pointerMove', 932, 741);
+    pointer('pointerUp', 932, 741);
+    fireEvent.click(lighty());
+    expect(screen.getByRole('dialog')).toBeTruthy();
+    expect(wrap().style.transform).toBe('');
+  });
+
+  it('follows the pointer, throws a tantrum while held, and stays where he is put down', () => {
+    render(<SiteLighty businessName="Dana Studio" leadsSite={false} />);
+    pointer('pointerDown', 930, 740);
+    expect(screen.getByTestId('button-3d')).toHaveAttribute('data-dragging', 'false');
+    pointer('pointerMove', 700, 500);
+    expect(screen.getByTestId('button-3d')).toHaveAttribute('data-dragging', 'true');
+    expect(wrap().style.transform).toBe('translate(-230px, -240px)');
+    pointer('pointerMove', -400, 900);
+    expect(wrap().style.transform).toBe(`translate(${8 - HOME.left}px, 0px)`);
+    pointer('pointerUp', -400, 900);
+    expect(screen.getByTestId('button-3d')).toHaveAttribute('data-dragging', 'false');
+    expect(readOffset()).toEqual({ x: 8 - HOME.left, y: 0 });
+    // The click that ends a drag is the drop, not a tap.
+    fireEvent.click(lighty());
+    expect(screen.queryByRole('dialog')).toBeNull();
+  });
+
+  it('a tap after a touch drag (which fires no click) still opens the chat', async () => {
+    render(<SiteLighty businessName="Dana Studio" leadsSite={false} />);
+    pointer('pointerDown', 930, 740);
+    pointer('pointerMove', 700, 500);
+    pointer('pointerUp', 700, 500);
+    await act(() => new Promise((r) => setTimeout(r, 150)));
+    fireEvent.click(lighty());
+    expect(screen.getByRole('dialog')).toBeTruthy();
+  });
+
+  it('starts where he was left last time', () => {
+    saveOffset({ x: -300, y: -200 });
+    render(<SiteLighty businessName="Dana Studio" leadsSite={false} />);
+    expect(wrap().style.transform).toBe('translate(-300px, -200px)');
+  });
+
+  it("carries the contact button's call and WhatsApp in the chat's header", () => {
+    const { unmount } = render(<SiteLighty businessName="Dana Studio" leadsSite={false} phone="050-1234567" />);
+    fireEvent.click(lighty());
+    expect(screen.getByLabelText('contact.option.call')).toBeTruthy();
+    expect(screen.getByLabelText('contact.option.whatsapp')).toBeTruthy();
+    unmount();
+    render(<SiteLighty businessName="Dana Studio" leadsSite={false} />);
+    fireEvent.click(lighty());
+    expect(screen.queryByLabelText('contact.option.call')).toBeNull();
   });
 });

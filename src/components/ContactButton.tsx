@@ -10,7 +10,7 @@ interface ContactButtonProps {
   phone: string;
 }
 
-const WhatsAppIcon = () => (
+export const WhatsAppIcon = () => (
   <svg
     viewBox="0 0 24 24"
     fill="currentColor"

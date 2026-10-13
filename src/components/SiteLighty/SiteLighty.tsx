@@ -1,7 +1,7 @@
-import { Suspense, lazy, useEffect, useRef, useState } from 'react';
-import type { FormEvent, KeyboardEvent } from 'react';
+import { Suspense, lazy, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import type { FormEvent, KeyboardEvent, PointerEvent as ReactPointerEvent } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { AlertTriangle, ArrowLeft, Send, X } from 'lucide-react';
+import { AlertTriangle, ArrowLeft, Phone, Send, X } from 'lucide-react';
 import { Turnstile } from '@marsidev/react-turnstile';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { visitorPass, useVisitorPass } from '../../services/visitorPass';
@@ -9,14 +9,23 @@ import siteAssistantService, { type AssistantTurn } from '../../services/SiteAss
 import { reducedMotion } from '../../services/generateReveal';
 import { scrollToSection, sectionOf } from '../../utils/sections';
 import { replyParts } from './replyText';
+import { DRAG_START_PX, clampOffset, readOffset, saveOffset, type Home, type Offset } from './floating';
+import { useContactHandler } from '../../hooks/useContactHandler';
+import { ContactModal } from '../ContactModal';
+import { WhatsAppIcon } from '../ContactButton';
+import { whatsAppHref } from '../../utils/phone';
 
 /**
  * LT-302 — Lighty, the site's assistant, for subscribers' sites. A visitor
  * asks about the business (answered by the server from the site's public
  * data only) or reports a problem with the site, which reaches the Lightor
- * team. The button is a still picture; the chat's 3D Lighty and three.js load
- * only when a visitor opens it. The page's visitor pass (Turnstile, usually
- * invisible) is asked for on the first message, as the contact form does.
+ * team. The page's visitor pass (Turnstile, usually invisible) is asked for
+ * on the first message, as the contact form does.
+ * LT-312: on a Plus site he takes the contact button's corner — its call and
+ * WhatsApp sit in his chat's header — and he is the 3D Lighty himself, who can
+ * be dragged anywhere and throws a tantrum in the air while he is held, as in
+ * the dashboard. His picture stands in until three.js and the model have
+ * loaded, after the page (and for good with reduced motion or Save-Data).
  */
 
 const SiteLighty3D = lazy(() => import('./SiteLighty3D'));
@@ -32,7 +41,14 @@ interface SiteLightyProps {
   businessName: string;
   /** A leads site has no calendar; its suggestions point to the contact form. */
   leadsSite: boolean;
+  /** The business's phone: call and WhatsApp in the chat's header. */
+  phone?: string;
 }
+
+/** Load the 3D button only when it costs the visitor nothing they asked for. */
+const lightMode = (): boolean =>
+  reducedMotion() || (navigator as Navigator & { connection?: { saveData?: boolean } }).connection?.saveData === true;
+
 
 const subdomainOf = (): string => window.location.hostname.split('.')[0];
 
@@ -51,7 +67,7 @@ function Reply({ text, onSection }: { text: string; onSection: (section: string)
   );
 }
 
-export default function SiteLighty({ businessName, leadsSite }: SiteLightyProps) {
+export default function SiteLighty({ businessName, leadsSite, phone }: SiteLightyProps) {
   const { t, language } = useLanguage();
   const [open, setOpen] = useState(false);
   const [mode, setMode] = useState<Mode>('chat');
@@ -67,6 +83,91 @@ export default function SiteLighty({ businessName, leadsSite }: SiteLightyProps)
   const listRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const still = reducedMotion();
+  const { isModalOpen, setIsModalOpen, modalType, handleContactClick } = useContactHandler();
+
+  // ── The 3D button (LT-312): after the page, never in its way ───────────
+  const [load3d, setLoad3d] = useState(false);
+  const [button3d, setButton3d] = useState(false);
+  const [waveKey, setWaveKey] = useState(0);
+  useEffect(() => {
+    if (lightMode()) return;
+    let idle = 0;
+    let timer = 0;
+    const go = () => {
+      const ric = (window as Window & { requestIdleCallback?: (cb: () => void, o?: { timeout: number }) => number }).requestIdleCallback;
+      if (ric) idle = ric(() => setLoad3d(true), { timeout: 3000 });
+      else timer = window.setTimeout(() => setLoad3d(true), 1500);
+    };
+    if (document.readyState === 'complete') go();
+    else window.addEventListener('load', go, { once: true });
+    return () => {
+      window.removeEventListener('load', go);
+      window.clearTimeout(timer);
+      (window as Window & { cancelIdleCallback?: (id: number) => void }).cancelIdleCallback?.(idle);
+    };
+  }, []);
+
+  // ── Dragging (LT-312, as the dashboard's LT-292) ───────────────────────
+  const wrapRef = useRef<HTMLDivElement>(null);
+  const [offset, setOffset] = useState<Offset>(readOffset);
+  const offsetRef = useRef(offset);
+  offsetRef.current = offset;
+  const [dragging, setDragging] = useState(false);
+  const [leftHalf, setLeftHalf] = useState(false);
+  const press = useRef<{ id: number; x: number; y: number; from: Offset; home: Home; moved: boolean } | null>(null);
+  const justDragged = useRef(false);
+  const homeOf = (): Home | null => {
+    const r = wrapRef.current?.getBoundingClientRect();
+    if (!r || !r.width) return null;
+    return { left: r.left - offsetRef.current.x, top: r.top - offsetRef.current.y, width: r.width, height: r.height };
+  };
+  // A smaller window keeps him on screen — and so does a place saved on a bigger one.
+  useEffect(() => {
+    const onResize = () => {
+      const home = homeOf();
+      if (home) setOffset((o) => clampOffset(home, o.x, o.y, window.innerWidth, window.innerHeight));
+    };
+    onResize();
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, []);
+  // Which half he is on: his hello and his chat open on that side.
+  useLayoutEffect(() => {
+    const r = wrapRef.current?.getBoundingClientRect();
+    if (r && r.width) setLeftHalf(r.left + r.width / 2 < window.innerWidth / 2);
+  }, [offset, open]);
+  const onPointerDown = (e: ReactPointerEvent<HTMLButtonElement>) => {
+    if (e.button !== 0) return;
+    const home = homeOf();
+    if (!home) return;
+    press.current = { id: e.pointerId, x: e.clientX, y: e.clientY, from: offsetRef.current, home, moved: false };
+    if (!lightMode()) setLoad3d(true);
+  };
+  const onPointerMove = (e: ReactPointerEvent<HTMLButtonElement>) => {
+    const p = press.current;
+    if (!p || e.pointerId !== p.id) return;
+    const dx = e.clientX - p.x, dy = e.clientY - p.y;
+    if (!p.moved) {
+      if (Math.hypot(dx, dy) < DRAG_START_PX) return;
+      p.moved = true;
+      e.currentTarget.setPointerCapture?.(e.pointerId);
+      setDragging(true);
+      setTeaser(false);
+    }
+    setOffset(clampOffset(p.home, p.from.x + dx, p.from.y + dy, window.innerWidth, window.innerHeight));
+  };
+  const onPointerEnd = (e: ReactPointerEvent<HTMLButtonElement>) => {
+    const p = press.current;
+    if (!p || e.pointerId !== p.id) return;
+    press.current = null;
+    if (!p.moved) return;
+    // The click that follows is the drop, not a tap — when one follows at all:
+    // a touch drag fires none, and the next real tap must not be swallowed.
+    justDragged.current = true;
+    window.setTimeout(() => { justDragged.current = false; }, 100);
+    setDragging(false);
+    saveOffset(offsetRef.current);
+  };
 
   // A hello beside the button, once a session, a few seconds in.
   useEffect(() => {
@@ -75,6 +176,7 @@ export default function SiteLighty({ businessName, leadsSite }: SiteLightyProps)
     if (shown) return;
     const show = window.setTimeout(() => {
       setTeaser(true);
+      setWaveKey((k) => k + 1);
       try { sessionStorage.setItem(TEASER_KEY, '1'); } catch { /* private mode */ }
     }, 4000);
     const hide = window.setTimeout(() => setTeaser(false), 11000);
@@ -82,8 +184,9 @@ export default function SiteLighty({ businessName, leadsSite }: SiteLightyProps)
   }, []);
 
   useEffect(() => {
-    // The 3D Lighty unmounts with the chat; his picture stands in again until he reloads.
-    if (!open) { setModel3d(false); return; }
+    // The button's 3D Lighty and the chat's take turns; each one's picture stands in until it reloads.
+    if (open) setButton3d(false);
+    else { setModel3d(false); return; }
     const onKey = (e: globalThis.KeyboardEvent) => { if (e.key === 'Escape') setOpen(false); };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
@@ -176,7 +279,7 @@ export default function SiteLighty({ businessName, leadsSite }: SiteLightyProps)
     : [t('assistant.suggest.prices'), t('assistant.suggest.hours'), t('assistant.suggest.book')];
 
   return (
-    <div className="fixed bottom-4 end-4 z-50" data-testid="site-lighty">
+    <>
       <AnimatePresence>
         {open && (
           <motion.div
@@ -187,7 +290,7 @@ export default function SiteLighty({ businessName, leadsSite }: SiteLightyProps)
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={still ? undefined : { opacity: 0, y: 16, scale: 0.97 }}
             transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
-            className="fixed bottom-3 inset-x-3 sm:inset-x-auto sm:end-4 sm:bottom-4 sm:w-[360px] flex flex-col max-h-[min(600px,82vh)] rounded-2xl overflow-hidden shadow-2xl border border-black/10 dark:border-white/10 bg-light-surface dark:bg-dark-surface text-light-text dark:text-dark-text"
+            className={`fixed z-50 bottom-3 inset-x-3 sm:inset-x-auto ${leftHalf ? 'sm:left-4' : 'sm:right-4'} sm:bottom-4 sm:w-[360px] flex flex-col max-h-[min(600px,82vh)] rounded-2xl overflow-hidden shadow-2xl border border-black/10 dark:border-white/10 bg-light-surface dark:bg-dark-surface text-light-text dark:text-dark-text`}
           >
             {/* Lighty himself: 3D once loaded, his picture until then (and for good with reduced motion). */}
             <div className="relative flex items-end gap-3 px-4 pt-3 pb-2 bg-primary/10 dark:bg-primary-dark/15">
@@ -195,7 +298,7 @@ export default function SiteLighty({ businessName, leadsSite }: SiteLightyProps)
                 {!model3d && <img src={IMG} alt="" className="absolute inset-0 w-full h-full object-contain" draggable={false} />}
                 {!still && (
                   <Suspense fallback={null}>
-                    <SiteLighty3D talking={busy} onReady={() => setModel3d(true)} className="absolute -inset-2" />
+                    <SiteLighty3D talking={busy} greet onReady={() => setModel3d(true)} className="absolute -inset-2" />
                   </Suspense>
                 )}
               </div>
@@ -203,9 +306,22 @@ export default function SiteLighty({ businessName, leadsSite }: SiteLightyProps)
                 <p className="font-bold leading-tight">{t('assistant.title')}</p>
                 <p className="text-xs opacity-70 truncate">{t('assistant.subtitle', { name: businessName })}</p>
               </div>
-              <button type="button" onClick={() => setOpen(false)} className="self-start p-1.5 rounded-full hover:bg-black/5 dark:hover:bg-white/10" aria-label={t('assistant.close')}>
-                <X className="w-5 h-5" aria-hidden="true" />
-              </button>
+              <div className="self-start flex items-center gap-0.5">
+                {/* The contact button's call and WhatsApp, which Lighty's corner replaces (LT-312). */}
+                {phone && (
+                  <>
+                    <button type="button" onClick={() => handleContactClick('phone', `tel:${phone}`)} className="p-1.5 rounded-full text-emerald-600 dark:text-emerald-400 hover:bg-black/5 dark:hover:bg-white/10" aria-label={t('contact.option.call')}>
+                      <Phone className="w-[18px] h-[18px]" aria-hidden="true" />
+                    </button>
+                    <button type="button" onClick={() => handleContactClick('whatsapp', whatsAppHref(phone))} className="p-1.5 rounded-full text-[#25D366] hover:bg-black/5 dark:hover:bg-white/10" aria-label={t('contact.option.whatsapp')}>
+                      <WhatsAppIcon />
+                    </button>
+                  </>
+                )}
+                <button type="button" onClick={() => setOpen(false)} className="p-1.5 rounded-full hover:bg-black/5 dark:hover:bg-white/10" aria-label={t('assistant.close')}>
+                  <X className="w-5 h-5" aria-hidden="true" />
+                </button>
+              </div>
             </div>
 
             <div ref={listRef} className="flex-1 overflow-y-auto px-4 py-3 space-y-2.5 text-sm" aria-live="polite">
@@ -323,35 +439,72 @@ export default function SiteLighty({ businessName, leadsSite }: SiteLightyProps)
         )}
       </AnimatePresence>
 
-      {!open && (
-        <>
-          <AnimatePresence>
-            {teaser && (
-              <motion.button
-                key="teaser"
-                type="button"
-                onClick={openChat}
-                initial={still ? false : { opacity: 0, y: 6 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={still ? undefined : { opacity: 0, y: 6 }}
-                className="absolute bottom-[4.5rem] end-0 w-max max-w-[220px] px-3.5 py-2 rounded-2xl rounded-ee-sm shadow-lg text-sm font-semibold bg-light-surface dark:bg-dark-surface text-light-text dark:text-dark-text border border-black/10 dark:border-white/10"
-              >
-                {t('assistant.teaser')}
-              </motion.button>
-            )}
-          </AnimatePresence>
-          <motion.button
-            type="button"
-            onClick={openChat}
-            whileHover={still ? undefined : { scale: 1.06 }}
-            whileTap={still ? undefined : { scale: 0.95 }}
-            aria-label={t('assistant.open')}
-            className="relative w-16 h-16 rounded-full shadow-lg bg-light-surface dark:bg-dark-surface ring-2 ring-primary/40 dark:ring-primary-dark/40 flex items-center justify-center overflow-visible"
-          >
-            <img src={IMG} alt="" className="w-[4.25rem] h-[4.25rem] object-contain -translate-y-1.5 pointer-events-none" draggable={false} />
-          </motion.button>
-        </>
+      {/* The corner: Lighty himself, dragged anywhere (LT-312). */}
+      <div
+        ref={wrapRef}
+        className="fixed bottom-3 end-3 z-50"
+        style={offset.x || offset.y ? { transform: `translate(${offset.x}px, ${offset.y}px)` } : undefined}
+        data-testid="site-lighty"
+      >
+        {!open && (
+          <>
+            <AnimatePresence>
+              {teaser && !dragging && (
+                <motion.button
+                  key="teaser"
+                  type="button"
+                  onClick={openChat}
+                  initial={still ? false : { opacity: 0, y: 6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={still ? undefined : { opacity: 0, y: 6 }}
+                  className={`absolute bottom-[5.75rem] ${leftHalf ? 'left-1 rounded-bl-sm' : 'right-1 rounded-br-sm'} w-max max-w-[220px] px-3.5 py-2 rounded-2xl shadow-lg text-sm font-semibold bg-light-surface dark:bg-dark-surface text-light-text dark:text-dark-text border border-black/10 dark:border-white/10`}
+                >
+                  {t('assistant.teaser')}
+                </motion.button>
+              )}
+            </AnimatePresence>
+            <button
+              type="button"
+              onClick={() => {
+                if (justDragged.current) { justDragged.current = false; return; }
+                openChat();
+              }}
+              onPointerDown={onPointerDown}
+              onPointerMove={onPointerMove}
+              onPointerUp={onPointerEnd}
+              onPointerCancel={onPointerEnd}
+              aria-label={t('assistant.open')}
+              className={`relative block w-20 h-24 select-none touch-none rounded-2xl transition-transform duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 [filter:drop-shadow(0_6px_10px_rgba(0,0,0,0.25))] ${dragging ? 'scale-110 cursor-grabbing' : 'hover:scale-105 active:scale-95 cursor-grab'}`}
+            >
+              {!button3d && (
+                <motion.img
+                  src={IMG}
+                  alt=""
+                  draggable={false}
+                  className="absolute inset-x-0 bottom-0 w-20 h-20 object-contain pointer-events-none"
+                  // Held before the 3D has arrived (or never will): a wriggle stands in for the tantrum.
+                  animate={dragging && !still ? { rotate: [-10, 10] } : { rotate: 0 }}
+                  transition={dragging && !still ? { duration: 0.18, repeat: Infinity, repeatType: 'mirror' } : { duration: 0.2 }}
+                />
+              )}
+              {load3d && (
+                <Suspense fallback={null}>
+                  <SiteLighty3D dragging={dragging} waveKey={waveKey} onReady={() => setButton3d(true)} className="absolute -inset-3 pointer-events-none" />
+                </Suspense>
+              )}
+            </button>
+          </>
+        )}
+      </div>
+
+      {phone && (
+        <ContactModal
+          isOpen={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+          contactLink={modalType === 'whatsapp' ? whatsAppHref(phone) : `tel:${phone}`}
+          type={modalType}
+        />
       )}
-    </div>
+    </>
   );
 }

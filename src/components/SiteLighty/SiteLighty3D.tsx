@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import {
   AnimationMixer,
   LoopOnce,
+  LoopPingPong,
   LoopRepeat,
   Mesh,
   NeutralToneMapping,
@@ -22,12 +23,30 @@ import modelUrl from '../../assets/lighty-support.glb?url';
  * LT-302: the support Lighty (headset, white shirt — Erel's image, a Meshy
  * model with idle / wave / talk; meshy_output/lightor-mascot/support) at the
  * top of the site's assistant. He waves when the chat opens, idles, and talks
- * while an answer is on its way. Loaded only when a visitor opens the chat
- * (three.js and the 1.3 MB model never reach a page nobody asks on). Without
- * WebGL, or with reduced motion, the caller keeps the still image.
+ * while an answer is on its way. Without WebGL, or with reduced motion, the
+ * caller keeps the still image.
+ * LT-312: he is also the corner button on a Plus site, which can be dragged —
+ * picked up, he throws the dashboard Lighty's tantrum in the air (`drag`,
+ * retargeted onto this rig by meshy_output/lightor-mascot/scripts/retarget.py,
+ * played back and forth as it has no seamless loop point). `waveKey` waves once
+ * each time it changes (his hello beside the button).
  */
 
-type Clip = 'idle' | 'wave' | 'talk';
+type Clip = 'idle' | 'wave' | 'talk' | 'drag';
+const CLIPS: Clip[] = ['idle', 'wave', 'talk', 'drag'];
+// Enough for an 80 px character; half the work of every frame.
+const FRAME_MS = 1000 / 30;
+
+interface SiteLighty3DProps {
+  talking?: boolean;
+  dragging?: boolean;
+  /** Wave on load (the chat opening) rather than start idle. */
+  greet?: boolean;
+  /** Each change after the first plays one wave. */
+  waveKey?: number;
+  onReady?: () => void;
+  className?: string;
+}
 
 const FOV = 30;
 // The model is 1 tall, feet at 0; the frame keeps the wave's lean in view.
@@ -35,12 +54,14 @@ const VIEW_H = 1.22;
 const VIEW_W = 1.5;
 const LOOK_Y = 0.55;
 
-export default function SiteLighty3D({ talking, onReady, className = '' }: { talking: boolean; onReady?: () => void; className?: string }) {
+export default function SiteLighty3D({ talking = false, dragging = false, greet = false, waveKey = 0, onReady, className = '' }: SiteLighty3DProps) {
   const hostRef = useRef<HTMLDivElement>(null);
   const [ready, setReady] = useState(false);
   const talkingRef = useRef(talking);
+  const draggingRef = useRef(dragging);
+  const greetRef = useRef(greet);
   const onReadyRef = useRef(onReady);
-  const ctlRef = useRef<((on: boolean) => void) | null>(null);
+  const ctlRef = useRef<{ base: () => void; wave: () => void } | null>(null);
   useEffect(() => { onReadyRef.current = onReady; }, [onReady]);
 
   useEffect(() => {
@@ -92,21 +113,23 @@ export default function SiteLighty3D({ talking, onReady, className = '' }: { tal
     let current: AnimationAction | null = null;
     let oneShot = false;
 
-    const play = (name: Clip, once = false) => {
+    const play = (name: Clip, once = false, fade = 0.3) => {
       const next = actions[name];
       if (!next || !mixer) return;
       oneShot = once;
       if (next === current) return;
       next.reset();
-      next.setLoop(once ? LoopOnce : LoopRepeat, once ? 1 : Infinity);
+      next.setLoop(once ? LoopOnce : name === 'drag' ? LoopPingPong : LoopRepeat, once ? 1 : Infinity);
       next.clampWhenFinished = once;
-      if (current) next.crossFadeFrom(current, 0.3, false);
+      if (current) next.crossFadeFrom(current, fade, false);
       next.play();
       current = next;
     };
+    const base = (): Clip => (draggingRef.current ? 'drag' : talkingRef.current ? 'talk' : 'idle');
     const frame = (now: number) => {
       raf = requestAnimationFrame(frame);
-      const dt = last ? Math.min(0.05, (now - last) / 1000) : 0;
+      if (last && now - last < FRAME_MS - 2) return;
+      const dt = last ? Math.min(0.1, (now - last) / 1000) : 0;
       last = now;
       mixer?.update(dt);
       renderer.render(scene, camera);
@@ -119,13 +142,18 @@ export default function SiteLighty3D({ talking, onReady, className = '' }: { tal
       scene.add(gltf.scene);
       mixer = new AnimationMixer(gltf.scene);
       for (const clip of gltf.animations) {
-        if (clip.name === 'idle' || clip.name === 'wave' || clip.name === 'talk') actions[clip.name] = mixer.clipAction(clip);
+        if (CLIPS.includes(clip.name as Clip)) actions[clip.name as Clip] = mixer.clipAction(clip);
       }
       mixer.addEventListener('finished', (e) => {
-        if (e.action === current) play(talkingRef.current ? 'talk' : 'idle');
+        if (e.action === current) play(base());
       });
-      ctlRef.current = (on) => { if (on || !oneShot) play(on ? 'talk' : 'idle'); };
-      play(talkingRef.current ? 'talk' : 'wave', !talkingRef.current);
+      ctlRef.current = {
+        // A wave in progress finishes first, unless he is picked up or starts talking.
+        base: () => { if (draggingRef.current || talkingRef.current || !oneShot) play(base(), false, draggingRef.current ? 0.15 : 0.3); },
+        wave: () => { if (!draggingRef.current && !talkingRef.current) play('wave', true); },
+      };
+      if (greetRef.current && base() === 'idle') play('wave', true);
+      else play(base());
       setReady(true);
       onReadyRef.current?.();
       running = true;
@@ -159,8 +187,14 @@ export default function SiteLighty3D({ talking, onReady, className = '' }: { tal
 
   useEffect(() => {
     talkingRef.current = talking;
-    ctlRef.current?.(talking);
-  }, [talking]);
+    draggingRef.current = dragging;
+    ctlRef.current?.base();
+  }, [talking, dragging]);
+
+  const firstWave = useRef(waveKey);
+  useEffect(() => {
+    if (waveKey !== firstWave.current) ctlRef.current?.wave();
+  }, [waveKey]);
 
   return <div ref={hostRef} className={className} aria-hidden="true" style={{ opacity: ready ? 1 : 0, transition: 'opacity 0.4s ease' }} />;
 }

@@ -732,15 +732,20 @@ function MainContent() {
         <ErrorBoundary><LightorBadge /></ErrorBoundary>
       )}
 
-      {config.components?.contactButton && showSection(config.components.contactButton.visible) && (
+      {/* LT-312: the floating corner by plan. Free: the contact button, which the
+          owner can hide in the editor. Plus: Lighty, the site's assistant
+          (LT-302), with its call and WhatsApp — in the editor and previews only
+          his picture, since he talks to visitors only on the live site. */}
+      {!config.assistant && config.components?.contactButton && showSection(config.components.contactButton.visible) && (
         <EditSection id="contactButton" type="contactButton" hidden={!config.components.contactButton.visible}>
           <ErrorBoundary><ContactButton phone={config.contact.phone} /></ErrorBoundary>
         </EditSection>
       )}
-
-      {/* LT-302: Lighty, the site's assistant — the live site only, never a preview or the editor. */}
+      {config.assistant && (isPreview || editing) && (
+        <img src="/lighty-support.webp" alt="" aria-hidden="true" className="fixed bottom-3 end-3 z-50 w-20 h-20 object-contain pointer-events-none [filter:drop-shadow(0_6px_10px_rgba(0,0,0,0.25))]" data-testid="site-lighty-still" />
+      )}
       {config.assistant && !isPreview && !editing && (
-        <ErrorBoundary><SiteLighty businessName={config.businessName} leadsSite={!bookable} /></ErrorBoundary>
+        <ErrorBoundary><SiteLighty businessName={config.businessName} leadsSite={!bookable} phone={config.contact?.phone} /></ErrorBoundary>
       )}
 
       {editing && <EditOverlay selected={selection} onPick={onPick} />}
