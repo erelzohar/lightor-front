@@ -311,5 +311,40 @@
   },
   "badge": {
     "builtWith": "Créé avec Lightor"
+  },
+  "assistant": {
+    "title": "Lighty",
+    "subtitle": "L'assistant virtuel de {{name}}",
+    "hello": "Bonjour ! Je suis Lighty 👋 Posez-moi vos questions sur {{name}} : services, tarifs, horaires et plus encore.",
+    "disclaimer": "Lighty est un assistant IA et peut se tromper.",
+    "teaser": "Une question ? Je suis là 👋",
+    "open": "Discuter avec Lighty",
+    "close": "Fermer",
+    "placeholder": "Écrivez votre question…",
+    "send": "Envoyer",
+    "typing": "Lighty écrit…",
+    "sending": "Envoi…",
+    "back": "Retour au chat",
+    "suggest": {
+      "prices": "Combien ça coûte ?",
+      "services": "Quels services proposez-vous ?",
+      "hours": "Quels sont vos horaires ?",
+      "book": "Comment prendre rendez-vous ?",
+      "contact": "Comment vous contacter ?"
+    },
+    "error": {
+      "verify": "Impossible de vérifier votre navigateur. Essayez de recharger la page.",
+      "resting": "Lighty fait une pause — réessayez plus tard ou contactez directement l'entreprise.",
+      "generic": "Une erreur s'est produite. Veuillez réessayer."
+    },
+    "report": {
+      "open": "Signaler un problème",
+      "intro": "Quelque chose ne fonctionne pas sur le site ? Dites-nous ce qui s'est passé et l'équipe Lightor s'en occupera.",
+      "message": "Qu'est-ce qui n'a pas marché ?",
+      "contact": "Téléphone ou e-mail pour vous répondre (facultatif)",
+      "send": "Envoyer le signalement",
+      "thanks": "Merci ! Votre signalement est arrivé à l'équipe Lightor, nous allons l'examiner rapidement.",
+      "limit": "Vous avez déjà envoyé plusieurs signalements aujourd'hui — merci ! Réessayez demain."
+    }
   }
 }

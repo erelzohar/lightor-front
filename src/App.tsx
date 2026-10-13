@@ -13,6 +13,7 @@ import Contact from './components/Layout/Contact';
 import Footer from './components/Layout/Footer';
 import IntroPopup from './components/IntroPopup';
 import ContactButton from './components/ContactButton';
+import SiteLighty from './components/SiteLighty/SiteLighty';
 import LightorBadge from './components/LightorBadge';
 import ErrorBoundary from './components/ErrorBoundary';
 import NotFound from './components/NotFound';
@@ -735,6 +736,11 @@ function MainContent() {
         <EditSection id="contactButton" type="contactButton" hidden={!config.components.contactButton.visible}>
           <ErrorBoundary><ContactButton phone={config.contact.phone} /></ErrorBoundary>
         </EditSection>
+      )}
+
+      {/* LT-302: Lighty, the site's assistant — the live site only, never a preview or the editor. */}
+      {config.assistant && !isPreview && !editing && (
+        <ErrorBoundary><SiteLighty businessName={config.businessName} leadsSite={!bookable} /></ErrorBoundary>
       )}
 
       {editing && <EditOverlay selected={selection} onPick={onPick} />}

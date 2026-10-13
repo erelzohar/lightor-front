@@ -311,5 +311,40 @@
   },
   "badge": {
     "builtWith": "Built with Lightor"
+  },
+  "assistant": {
+    "title": "Lighty",
+    "subtitle": "{{name}}'s virtual assistant",
+    "hello": "Hi! I'm Lighty 👋 Ask me anything about {{name}} — services, prices, opening hours and more.",
+    "disclaimer": "Lighty is an AI assistant and can make mistakes.",
+    "teaser": "Got a question? I'm here 👋",
+    "open": "Chat with Lighty",
+    "close": "Close",
+    "placeholder": "Type a question…",
+    "send": "Send",
+    "typing": "Lighty is typing…",
+    "sending": "Sending…",
+    "back": "Back to chat",
+    "suggest": {
+      "prices": "How much does it cost?",
+      "services": "What services do you offer?",
+      "hours": "What are your opening hours?",
+      "book": "How do I book?",
+      "contact": "How can I get in touch?"
+    },
+    "error": {
+      "verify": "We couldn't verify your browser. Try refreshing the page.",
+      "resting": "Lighty is resting right now — try again later, or contact the business directly.",
+      "generic": "Something went wrong. Please try again."
+    },
+    "report": {
+      "open": "Report a problem",
+      "intro": "Something not working on the site? Tell us what happened and the Lightor team will look into it.",
+      "message": "What went wrong?",
+      "contact": "Phone or email for a reply (optional)",
+      "send": "Send report",
+      "thanks": "Thanks! Your report reached the Lightor team and we'll look into it soon.",
+      "limit": "You've already sent a few reports today — thank you! Please try again tomorrow."
+    }
   }
 }

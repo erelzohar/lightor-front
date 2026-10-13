@@ -311,5 +311,40 @@
   },
   "badge": {
     "builtWith": "Creado con Lightor"
+  },
+  "assistant": {
+    "title": "Lighty",
+    "subtitle": "Asistente virtual de {{name}}",
+    "hello": "¡Hola! Soy Lighty 👋 Pregúntame lo que quieras sobre {{name}}: servicios, precios, horarios y más.",
+    "disclaimer": "Lighty es un asistente de IA y puede equivocarse.",
+    "teaser": "¿Tienes una pregunta? Estoy aquí 👋",
+    "open": "Chatear con Lighty",
+    "close": "Cerrar",
+    "placeholder": "Escribe tu pregunta…",
+    "send": "Enviar",
+    "typing": "Lighty está escribiendo…",
+    "sending": "Enviando…",
+    "back": "Volver al chat",
+    "suggest": {
+      "prices": "¿Cuánto cuesta?",
+      "services": "¿Qué servicios ofrecen?",
+      "hours": "¿Cuál es el horario?",
+      "book": "¿Cómo reservo una cita?",
+      "contact": "¿Cómo puedo contactarlos?"
+    },
+    "error": {
+      "verify": "No pudimos verificar tu navegador. Prueba a recargar la página.",
+      "resting": "Lighty está descansando ahora: inténtalo más tarde o contacta directamente con el negocio.",
+      "generic": "Algo salió mal. Inténtalo de nuevo."
+    },
+    "report": {
+      "open": "Informar de un problema",
+      "intro": "¿Algo no funciona en el sitio? Cuéntanos qué pasó y el equipo de Lightor lo revisará.",
+      "message": "¿Qué falló?",
+      "contact": "Teléfono o email para responderte (opcional)",
+      "send": "Enviar informe",
+      "thanks": "¡Gracias! Tu informe llegó al equipo de Lightor y lo revisaremos pronto.",
+      "limit": "Ya enviaste varios informes hoy, ¡gracias! Vuelve a intentarlo mañana."
+    }
   }
 }

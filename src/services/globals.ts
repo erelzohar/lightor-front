@@ -3,6 +3,8 @@ abstract class Globals {
     public webConfigsUrl :string;
     public imagesUrl:string;
     public messagingUrl:string;
+    /** LT-302: Lighty on the site — questions and problem reports. */
+    public siteAssistantUrl:string;
     // public typesUrl:string;
 }
 
@@ -10,6 +12,7 @@ class DevelopmentGlobals extends Globals {
     public appointmentsUrl = "http://localhost:3000/api/appointments";
     public webConfigsUrl = "http://localhost:3000/api/web-configs";
     public messagingUrl = "http://localhost:3000/api/messaging";
+    public siteAssistantUrl = "http://localhost:3000/api/site-assistant";
     // public typesUrl = "http://localhost:3000/api/appointment-types/";
     public imagesUrl = "http://localhost:3000/api/images/";
     public authUrl = "http://localhost:3000/api/auth/";
@@ -27,6 +30,7 @@ class ProductionGlobals extends Globals {
     public appointmentsUrl = "https://api.lightor.app/api/appointments";
     public webConfigsUrl = "https://api.lightor.app/api/web-configs";
     public messagingUrl = "https://api.lightor.app/api/messaging";
+    public siteAssistantUrl = "https://api.lightor.app/api/site-assistant";
     public imagesUrl = "https://api.lightor.app/api/images/";
     public authUrl = "https://api.lightor.app/api/auth/";
     // public typesUrl = "https://api.ez-lines.com/api/appointment-types/";

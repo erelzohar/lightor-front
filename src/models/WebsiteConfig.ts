@@ -212,7 +212,12 @@ export class WebsiteConfig {
      * LT-199: 'lead' = a leads site — no calendar, the contact form is the
      * conversion. Anything else reads as a booking site.
      */
-    public conversion: Conversion = 'book'
+    public conversion: Conversion = 'book',
+    /**
+     * LT-302: Lighty, the site's assistant (subscribers' sites). Set by the
+     * server only; absent reads as off.
+     */
+    public assistant: boolean = false
   ) {}
 
   static fromJSON(json: any): WebsiteConfig {
@@ -249,7 +254,8 @@ export class WebsiteConfig {
       // The server stores them with no service scope.
       parseBookingFields(json.leadFields),
       json.leadsOpen !== false,
-      json.conversion === 'lead' ? 'lead' : 'book'
+      json.conversion === 'lead' ? 'lead' : 'book',
+      json.assistant === true
     );
   }
 }
