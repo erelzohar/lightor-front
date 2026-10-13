@@ -128,6 +128,35 @@ describe('the site editor bridge (LT-243)', () => {
     expect(parentPost).toHaveBeenLastCalledWith(expect.objectContaining({ path: 'components.hero.cta' }), DASHBOARD);
   });
 
+  it('a second click on a control inside the selection uses it — the dark-mode switch (LT-287)', async () => {
+    const { container } = renderSite();
+    await post({ type: 'PREVIEW_DATA', config: config() });
+    await post({ type: 'LT_EDIT', on: true });
+    // The site speaks Hebrew here, so find the switch by its moon/sun icon.
+    const toggle = await waitFor(() => {
+      const el = container.querySelector<SVGElement>('svg.lucide-moon, svg.lucide-sun')?.closest('button');
+      expect(el).toBeTruthy();
+      return el as HTMLElement;
+    });
+    expect(toggle.closest('[data-lt-section]')).not.toBeNull();
+    parentPost.mockClear();
+    const wasDark = document.documentElement.classList.contains('dark');
+
+    // First click: picks its section for the editor, does nothing on the site.
+    let notCancelled = true;
+    act(() => { notCancelled = toggle.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true })); });
+    expect(notCancelled).toBe(false);
+    expect(parentPost).toHaveBeenCalledWith(expect.objectContaining({ type: 'LT_SELECT', kind: 'section' }), DASHBOARD);
+    expect(document.documentElement.classList.contains('dark')).toBe(wasDark);
+
+    // Second click, on what is now selected: it works, and selects nothing new.
+    parentPost.mockClear();
+    act(() => { notCancelled = toggle.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true })); });
+    expect(notCancelled).toBe(true);
+    expect(parentPost).not.toHaveBeenCalledWith(expect.objectContaining({ type: 'LT_SELECT' }), DASHBOARD);
+    await waitFor(() => expect(document.documentElement.classList.contains('dark')).toBe(!wasDark));
+  });
+
   it("a section's selection lists the fields it shows, once each (LT-249)", async () => {
     const { container } = renderSite();
     await post({ type: 'PREVIEW_DATA', config: config() });

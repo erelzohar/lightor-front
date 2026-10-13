@@ -13,6 +13,25 @@ const boxesFor = (target: EditTarget | null): DOMRect[] => {
   return [];
 };
 
+// LT-287: what a second click may use rather than select.
+const INTERACTIVE = 'button, [role="button"], [role="switch"], [role="tab"], [role="menuitem"], summary, label, input, select, textarea, a[href]';
+
+/**
+ * A click on a control inside what is already selected — the menu button, the
+ * dark-mode switch — does what it does on the site: the first click picks
+ * the section for the editor, the next one uses it. A link that would leave
+ * the page stays held (only in-page "#…" links pass); so do form submits.
+ */
+export const usesSelected = (target: EventTarget | null, picked: ReturnType<typeof pickAtPoint>, selected: EditTarget | null): boolean => {
+  if (!selected || !picked || !(target instanceof Element)) return false;
+  const same = selected.path ? picked.path === selected.path : !!selected.section && picked.section === selected.section;
+  if (!same) return false;
+  const control = target.closest(INTERACTIVE);
+  if (!control) return false;
+  if (control instanceof HTMLAnchorElement) return (control.getAttribute('href') ?? '').startsWith('#');
+  return true;
+};
+
 const sameBoxes = (a: DOMRect[], b: DOMRect[]) =>
   a.length === b.length && a.every((r, i) => r.left === b[i].left && r.top === b[i].top && r.width === b[i].width && r.height === b[i].height);
 
@@ -21,12 +40,16 @@ const sameBoxes = (a: DOMRect[], b: DOMRect[]) =>
  * or section underneath; a click selects it and tells the editor — and goes
  * nowhere else: links, buttons, the booking flow and forms are held while the
  * editor is on (capture phase, ahead of React's own listeners on the root).
+ * LT-287: except a second click on a control inside the selection (see
+ * usesSelected), so the menu and the dark-mode switch can be used.
  */
 const EditOverlay = ({ selected, onPick }: { selected: EditTarget | null; onPick: (message: SiteToEditor) => void }) => {
   const [hover, setHover] = useState<EditTarget | null>(null);
   const [boxes, setBoxes] = useState<{ hover: DOMRect[]; selected: DOMRect[] }>({ hover: [], selected: [] });
   const onPickRef = useRef(onPick);
   useEffect(() => { onPickRef.current = onPick; }, [onPick]);
+  const selectedRef = useRef(selected);
+  useEffect(() => { selectedRef.current = selected; }, [selected]);
 
   useEffect(() => {
     const onMove = (e: PointerEvent) => {
@@ -38,10 +61,12 @@ const EditOverlay = ({ selected, onPick }: { selected: EditTarget | null; onPick
     };
     const onLeave = () => setHover(null);
     const onClick = (e: MouseEvent) => {
+      const picked = pickAtPoint(e.clientX, e.clientY, e.target);
+      if (usesSelected(e.target, picked, selectedRef.current)) return; // LT-287: let it work
       e.preventDefault();
       e.stopPropagation();
       e.stopImmediatePropagation();
-      onPickRef.current(selectMessage(pickAtPoint(e.clientX, e.clientY, e.target)));
+      onPickRef.current(selectMessage(picked));
     };
     const hold = (e: Event) => {
       e.preventDefault();
