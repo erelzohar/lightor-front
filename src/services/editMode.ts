@@ -93,16 +93,30 @@ export const elementForSection = (root: ParentNode, section: string): HTMLElemen
 /**
  * The box an element occupies on screen. A section wrapper is
  * `display: contents` (no box of its own, so it cannot disturb the layout),
- * so its box is the union of what it contains.
+ * so its box is the union of the boxes it contains. LT-289: the boxes, not a
+ * range over the text — a range also counts what a box clips, so the navbar's
+ * closed menu (zero height, its links spilling below) stretched the outline
+ * far down the page.
  */
 export const boxOf = (el: Element): DOMRect | null => {
   const style = typeof getComputedStyle === 'function' ? getComputedStyle(el) : null;
-  let rect: DOMRect;
+  let rect: DOMRect | null;
   if (style?.display === 'contents') {
-    const range = document.createRange();
-    range.selectNodeContents(el);
-    if (typeof range.getBoundingClientRect !== 'function') return null; // jsdom
-    rect = range.getBoundingClientRect();
+    const parts: DOMRect[] = [];
+    for (const node of Array.from(el.childNodes)) {
+      if (node instanceof Element) {
+        const box = boxOf(node);
+        if (box) parts.push(box);
+      } else if (node.nodeType === Node.TEXT_NODE && node.textContent?.trim()) {
+        const range = document.createRange();
+        range.selectNodeContents(node);
+        if (typeof range.getBoundingClientRect === 'function') parts.push(range.getBoundingClientRect()); // not in jsdom
+      }
+    }
+    if (!parts.length) return null;
+    const left = Math.min(...parts.map((r) => r.left));
+    const top = Math.min(...parts.map((r) => r.top));
+    rect = new DOMRect(left, top, Math.max(...parts.map((r) => r.right)) - left, Math.max(...parts.map((r) => r.bottom)) - top);
   } else {
     rect = el.getBoundingClientRect();
   }
@@ -141,12 +155,16 @@ export const pickTarget = (node: EventTarget | null): Picked | null => {
 /**
  * The field under a point, looking through what is drawn on top of it — a
  * gallery caption's gradient, a hero photo's frame — down to the first
- * annotated element; a whole section when nothing there is a field. jsdom has
+ * annotated element of the same section; that section when nothing there is a field. jsdom has
  * no `elementsFromPoint`, so there it reads the event target alone.
  */
 export const pickAtPoint = (x: number, y: number, target: EventTarget | null): Picked | null => {
   const stack = typeof document.elementsFromPoint === 'function' ? document.elementsFromPoint(x, y) : [];
+  // LT-289: only through what belongs to the section on top — the open menu's
+  // dark-mode switch is the navbar's, not the hero headline's drawn beneath it.
+  const top = stack[0]?.closest('[data-lt-section]') ?? null;
   for (const el of stack) {
+    if (top && el.closest('[data-lt-section]') !== top) break;
     const field = el.closest<HTMLElement>('[data-lt-edit]');
     if (field) return pickTarget(field);
   }
