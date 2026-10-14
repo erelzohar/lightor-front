@@ -10,6 +10,7 @@ import {
   setErrorReportingEnabled,
   resetErrorReportingForTests,
 } from '../../services/ErrorReportingService';
+import { stubLocation } from '../helpers/location';
 
 /**
  * The client crash channel (LT-170): production-only, de-duplicated, capped,
@@ -42,10 +43,18 @@ describe('ErrorReportingService', () => {
       stack: 'at x',
       app: 'front',
       kind: 'error',
-      url: window.location.href,
+      url: `${window.location.origin}${window.location.pathname}`,
       userAgent: navigator.userAgent,
     });
     expect(typeof body.timestamp).toBe('string');
+  });
+
+  it('names the page without its query or hash — the manage link carries its token there (LT-315)', async () => {
+    stubLocation('https://salon.lightor.app/manage/abc123?manageToken=secret-token&lang=he#details');
+    await reportClientError({ error: 'manage page crashed' });
+    const body = post.mock.calls[0][1];
+    expect(body.url).toBe('https://salon.lightor.app/manage/abc123');
+    expect(JSON.stringify(body)).not.toContain('secret-token');
   });
 
   it('defaults the kind to a boundary catch', async () => {

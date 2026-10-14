@@ -35,6 +35,7 @@ import SectionHeading from './SectionHeading';
 import type { HeadingScale } from '../../services/artDirection';
 import { Social } from '../../models/Social';
 import { whatsAppHref } from '../../utils/phone';
+import { safeHttpUrl, openExternal } from '../../utils/safeUrl';
 
 // Feature icons are stored in the config by name.
 const FEATURE_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
@@ -136,6 +137,8 @@ const About: React.FC<AboutProps> = ({ config, websiteConfig, layout = 'cards', 
     ].filter(Boolean)
     : [];
 
+  // Owner links, http(s) only (LT-315): the model drops the rest, and this is
+  // where a link becomes clickable, so it is checked again here.
   const socialLinks = [
     websiteConfig.contact.phone && {
       icon: () => (
@@ -151,12 +154,12 @@ const About: React.FC<AboutProps> = ({ config, websiteConfig, layout = 'cards', 
       onClick: () => handleContactClick('whatsapp', whatsAppHref(websiteConfig.contact.phone)),
       color: 'bg-[#25D366]/10 text-[#25D366] hover:bg-[#25D366] hover:text-white dark:hover:text-white'
     },
-    websiteConfig.social.instagram && {
+    safeHttpUrl(websiteConfig.social.instagram) && {
       icon: Instagram,
-      href: websiteConfig.social.instagram,
+      href: safeHttpUrl(websiteConfig.social.instagram),
       color: 'bg-[#F77EB9]/10 text-[#F77EB9] hover:bg-[#F77EB9] hover:text-white dark:hover:text-white'
     },
-    websiteConfig.social.tiktok && {
+    safeHttpUrl(websiteConfig.social.tiktok) && {
       icon: () => (
         <svg
           viewBox="0 0 24 24"
@@ -167,15 +170,15 @@ const About: React.FC<AboutProps> = ({ config, websiteConfig, layout = 'cards', 
           <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1-.1z" />
         </svg>
       ),
-      href: websiteConfig.social.tiktok,
+      href: safeHttpUrl(websiteConfig.social.tiktok),
       color: 'bg-[#000000]/5 text-black hover:bg-[#000000] hover:text-white dark:bg-[#000000]/10 dark:text-white dark:hover:bg-[#000000]'
     },
-    websiteConfig.social.facebook && {
+    safeHttpUrl(websiteConfig.social.facebook) && {
       icon: Facebook,
-      href: websiteConfig.social.facebook,
+      href: safeHttpUrl(websiteConfig.social.facebook),
       color: 'bg-[#1877F2]/10 text-[#1877F2] hover:bg-[#1877F2] hover:text-white dark:hover:text-white'
     },
-    websiteConfig.social.x && {
+    safeHttpUrl(websiteConfig.social.x) && {
       icon: () => (
         <svg
           viewBox="0 0 24 24"
@@ -186,7 +189,7 @@ const About: React.FC<AboutProps> = ({ config, websiteConfig, layout = 'cards', 
           <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
         </svg>
       ),
-      href: websiteConfig.social.x,
+      href: safeHttpUrl(websiteConfig.social.x),
       color: 'bg-[#000000]/5 text-black hover:bg-[#000000] hover:text-white dark:bg-[#000000]/10 dark:text-white dark:hover:bg-[#000000]'
     },
     websiteConfig.contact.phone && {
@@ -489,7 +492,7 @@ const About: React.FC<AboutProps> = ({ config, websiteConfig, layout = 'cards', 
             {socialLinks.map((social, index) => (
               <motion.button
                 key={index}
-                onClick={social.onClick || (() => window.open(social.href, '_blank'))}
+                onClick={social.onClick || (() => openExternal(social.href))}
                 className={`p-3 rounded-xl transition-colors ${social.color}`}
                 whileHover={{ scale: 1.1 }}
                 whileTap={{ scale: 0.95 }}

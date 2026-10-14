@@ -15,7 +15,7 @@ const LightorBadge: React.FC = () => {
       <a
         href="https://register.lightor.app?ref=badge"
         target="_blank"
-        rel="noopener"
+        rel="noopener noreferrer"
         className="flex items-center gap-1.5 hover:text-primary transition-colors"
       >
         <Zap size={14} className="text-primary shrink-0" />

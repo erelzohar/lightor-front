@@ -18,6 +18,7 @@ import { handleWideImageError } from '../../utils/imageFallback';
 import { useIsDarkMode } from '../../hooks/useIsDarkMode';
 import MarqueeStrip from '../MarqueeStrip';
 import { whatsAppHref } from '../../utils/phone';
+import { safeHttpUrl, openExternal } from '../../utils/safeUrl';
 import { loadVantaDeps } from './vantaDeps';
 
 function hexToInt(hex: string): number {
@@ -227,6 +228,8 @@ const Hero: React.FC<HeroProps> = ({ config, social, phone, isContactVisible, ap
     },
   };
 
+  // Owner links, http(s) only (LT-315): the model drops the rest, and this is
+  // where a link becomes clickable, so it is checked again here.
   const socialLinks = [
     phone && {
       icon: () => (
@@ -237,32 +240,32 @@ const Hero: React.FC<HeroProps> = ({ config, social, phone, isContactVisible, ap
       onClick: () => handleContactClick('whatsapp', whatsAppHref(phone)),
       color: 'bg-[#25D366]/10 text-[#10B981] hover:bg-[#25D366] hover:text-white dark:hover:text-white'
     },
-    social.instagram && {
+    safeHttpUrl(social.instagram) && {
       icon: Instagram,
-      href: social.instagram,
+      href: safeHttpUrl(social.instagram),
       color: 'bg-[#F77EB9]/10 text-[#F77EB9] hover:bg-[#F77EB9] hover:text-white dark:hover:text-white'
     },
-    social.tiktok && {
+    safeHttpUrl(social.tiktok) && {
       icon: () => (
         <svg viewBox="0 0 24 24" fill="currentColor" className="h-6 w-6" aria-hidden="true">
           <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1-.1z" />
         </svg>
       ),
-      href: social.tiktok,
+      href: safeHttpUrl(social.tiktok),
       color: 'bg-[#000000]/5 text-black hover:bg-[#000000] hover:text-white dark:bg-[#000000]/10 dark:text-white dark:hover:bg-[#000000]'
     },
-    social.facebook && {
+    safeHttpUrl(social.facebook) && {
       icon: Facebook,
-      href: social.facebook,
+      href: safeHttpUrl(social.facebook),
       color: 'bg-[#1877F2]/10 text-[#1877F2] hover:bg-[#1877F2] hover:text-white dark:hover:text-white'
     },
-    social.x && {
+    safeHttpUrl(social.x) && {
       icon: () => (
         <svg viewBox="0 0 24 24" fill="currentColor" className="h-5 w-5" aria-hidden="true">
           <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
         </svg>
       ),
-      href: social.x,
+      href: safeHttpUrl(social.x),
       color: 'bg-[#000000]/5 text-black hover:bg-[#000000] hover:text-white dark:bg-[#000000]/10 dark:text-white dark:hover:bg-[#000000]'
     },
     phone && {
@@ -390,7 +393,7 @@ const Hero: React.FC<HeroProps> = ({ config, social, phone, isContactVisible, ap
         {socialLinks.map((s, i) => (
           <motion.button
             key={i}
-            onClick={s.onClick || (() => window.open(s.href, '_blank'))}
+            onClick={s.onClick || (() => openExternal(s.href))}
             className={`p-3 rounded-xl transition-colors ${s.color}`}
             whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.95 }}
@@ -853,7 +856,7 @@ const Hero: React.FC<HeroProps> = ({ config, social, phone, isContactVisible, ap
               {socialLinks.map((s, i) => (
                 <motion.button
                   key={i}
-                  onClick={s.onClick || (() => window.open(s.href, '_blank'))}
+                  onClick={s.onClick || (() => openExternal(s.href))}
                   className={`p-3 rounded-xl transition-colors ${s.color}`}
                   whileHover={{ scale: 1.1 }}
                   whileTap={{ scale: 0.95 }}

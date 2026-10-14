@@ -64,7 +64,7 @@ const ContactButton: React.FC<ContactButtonProps> = ({ phone }) => {
               {contactOptions.map((option, index) => (
                 <motion.button
                   key={index}
-                  onClick={option.onClick || (() => window.open(option.action, '_blank'))}
+                  onClick={option.onClick || (() => window.open(option.action, '_blank', 'noopener,noreferrer'))}
                   className={`flex items-center gap-3 p-3 rounded-lg transition-all ${option.color} hover:text-white group w-full`}
                   whileHover={{ x: language === 'he' || language === 'ar' ? -5 : 5 }}
                   whileTap={{ scale: 0.95 }}

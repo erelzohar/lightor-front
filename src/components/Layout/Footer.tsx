@@ -18,6 +18,7 @@ import { handleSquareImageError } from '../../utils/imageFallback';
 import { navLinksFromBlocks, sectionTitlesOf } from '../../services/navLinks';
 import { showsPrices } from '../../utils/servicesHeading';
 import { whatsAppHref } from '../../utils/phone';
+import { safeHttpUrl, openExternal } from '../../utils/safeUrl';
 
 interface WebsiteConfig {
   // LT-168: section titles double as the quick-link labels.
@@ -107,14 +108,16 @@ const Footer: React.FC<FooterProps> = ({ config, social, businessName, logoImage
       { href: "#contact", label: titles.contact ?? t('nav.contact'), visible: websiteConfig?.contact?.visible }
     ].filter(item => item.visible === undefined || item.visible);
 
+  // Owner links, http(s) only (LT-315): the model drops the rest, and this is
+  // where a link becomes clickable, so it is checked again here.
   const socialLinks = [
-    social.instagram && {
+    safeHttpUrl(social.instagram) && {
       icon: Instagram,
-      href: social.instagram,
+      href: safeHttpUrl(social.instagram),
       color: 'bg-[#F77EB9]/10 text-[#F77EB9] hover:bg-[#F77EB9] hover:text-white dark:hover:text-white',
       label: t('footer.social.follow.instagram')
     },
-    social.tiktok && {
+    safeHttpUrl(social.tiktok) && {
       icon: () => (
         <svg
           viewBox="0 0 24 24"
@@ -125,17 +128,17 @@ const Footer: React.FC<FooterProps> = ({ config, social, businessName, logoImage
           <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1-.1z" />
         </svg>
       ),
-      href: social.tiktok,
+      href: safeHttpUrl(social.tiktok),
       color: 'bg-[#000000]/5 text-white hover:bg-[#000000] hover:text-white dark:bg-[#000000]/10 dark:text-white dark:hover:bg-[#000000]',
       label: t('footer.social.follow.tiktok')
     },
-    social.facebook && {
+    safeHttpUrl(social.facebook) && {
       icon: Facebook,
-      href: social.facebook,
+      href: safeHttpUrl(social.facebook),
       color: 'bg-[#1877F2]/10 text-[#1877F2] hover:bg-[#1877F2] hover:text-white dark:hover:text-white',
       label: t('footer.social.follow.facebook')
     },
-    social.x && {
+    safeHttpUrl(social.x) && {
       icon: () => (
         <svg
           viewBox="0 0 24 24"
@@ -146,7 +149,7 @@ const Footer: React.FC<FooterProps> = ({ config, social, businessName, logoImage
           <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
         </svg>
       ),
-      href: social.x,
+      href: safeHttpUrl(social.x),
       color: 'bg-[#000000]/10 text-white hover:bg-[#000000] hover:text-white dark:bg-[#000000]/10 dark:text-white dark:hover:bg-[#000000]',
       label: t('footer.social.follow.x')
     }
@@ -228,7 +231,7 @@ const Footer: React.FC<FooterProps> = ({ config, social, businessName, logoImage
                   {socialLinks.map((social, index) => (
                     <button
                       key={index}
-                      onClick={() => window.open(social.href, '_blank')}
+                      onClick={() => openExternal(social.href)}
                       className="w-8 h-8 rounded-design-sm flex items-center justify-center border border-light-text/15 dark:border-dark-text/15 hover:border-primary transition-colors"
                       aria-label={social.label}
                     >
@@ -288,7 +291,7 @@ const Footer: React.FC<FooterProps> = ({ config, social, businessName, logoImage
                   {socialLinks.map((social, index) => (
                     <motion.button
                       key={index}
-                      onClick={() => window.open(social.href, '_blank')}
+                      onClick={() => openExternal(social.href)}
                       className={`w-10 h-10 rounded-design-sm flex items-center justify-center transition-colors ${social.color}`}
                       whileHover={{ scale: 1.1, rotate: 5 }}
                       whileTap={{ scale: 0.9 }}
@@ -339,7 +342,7 @@ const Footer: React.FC<FooterProps> = ({ config, social, businessName, logoImage
                   {socialLinks.map((social, index) => (
                     <motion.button
                       key={index}
-                      onClick={() => window.open(social.href, '_blank')}
+                      onClick={() => openExternal(social.href)}
                       className={`w-10 h-10 rounded-design-sm flex items-center justify-center transition-colors ${social.color}`}
                       whileHover={{ scale: 1.1, rotate: 5 }}
                       whileTap={{ scale: 0.9 }}

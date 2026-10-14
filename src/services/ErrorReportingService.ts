@@ -90,6 +90,14 @@ export const describeError = (value: unknown): { message: string; stack?: string
 };
 
 /**
+ * The page a report names: origin and path only (LT-315). The query and the
+ * hash can carry secrets — the manage link's `?manageToken=…` lets whoever
+ * holds it read or cancel that booking — and reports end up in server logs
+ * and in Admin → Logs.
+ */
+export const reportUrl = (): string => `${window.location.origin}${window.location.pathname}`;
+
+/**
  * Send one crash report. Resolves true when it was posted, false when it was
  * a duplicate, over budget, ignored noise, or we are not in production.
  */
@@ -106,7 +114,7 @@ export const reportClientError = async (input: ClientErrorInput): Promise<boolea
       stack: input.stack?.slice(0, 20000),
       componentStack: input.componentStack?.slice(0, 20000),
       userInfo: input.userInfo,
-      url: window.location.href,
+      url: reportUrl(),
       userAgent: navigator.userAgent,
       timestamp: new Date().toISOString(),
       app: 'front',

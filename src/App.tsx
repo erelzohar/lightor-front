@@ -48,6 +48,7 @@ import EditOverlay from './components/EditOverlay';
 import { EditContext, elementForSection, elementsForPath, type EditTarget, type EditorToSite, type LayoutBlock, type SiteToEditor } from './services/editMode';
 import { legacyLayout } from './services/legacyLayout';
 import { scrollToSection } from './utils/sections';
+import { awaitsPreviewData } from './services/previewMode';
 
 // Origins permitted to drive this app through a PREVIEW_DATA postMessage.
 // Only the register and dashboard apps embed the public site in an iframe for
@@ -219,10 +220,8 @@ function MainContent() {
     // PREVIEW_DATA (message lost in a race, or X-Frame-Options blocked
     // embedding), stop the infinite loading spinner after 6 seconds so the
     // user sees something useful instead of spinning forever.
-    const isInsideIframe = window.self !== window.top;
-    const hasPreviewFlag = new URLSearchParams(window.location.search).has('preview');
     let fallbackTimer: ReturnType<typeof setTimeout> | undefined;
-    if (isInsideIframe || hasPreviewFlag) {
+    if (awaitsPreviewData()) {
       fallbackTimer = setTimeout(() => {
         if (!isPreviewRef.current) {
           console.warn('[lightor-front] PREVIEW_DATA not received within 6 s — releasing loading state.');
@@ -241,13 +240,9 @@ function MainContent() {
   // Load Config from backend (skipped when preview data has already arrived)
   useEffect(() => {
     const loadConfig = async () => {
-      const isInsideIframe = window.self !== window.top;
-
-      // 2. בדיקה: האם יש לי flag של preview ב-URL?
-      const hasPreviewFlag = new URLSearchParams(window.location.search).has('preview');
-
-      // אם אחד מהם נכון, אנחנו עוצרים הכל ומחכים ל-postMessage
-      if (isInsideIframe || hasPreviewFlag || isPreviewRef.current) {
+      // A framed preview waits for the editor's postMessage instead. `?preview`
+      // alone no longer does on the live site (LT-315): see awaitsPreviewData.
+      if (awaitsPreviewData() || isPreviewRef.current) {
         console.log("Iframe/Preview detected.");
         const style = document.createElement('style');
         console.log(style);

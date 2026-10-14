@@ -3,17 +3,19 @@ import { Instagram, Facebook, Music2, Twitter } from 'lucide-react';
 import type { Social } from '../../models/Social';
 import type { SectionTone } from '../SectionDivider';
 import { TONE_BG } from './blockUtils';
+import { safeHttpUrl } from '../../utils/safeUrl';
 
 interface Props { social: Social; tone?: SectionTone }
 
 /** LT-136: social handles as large tiles — the closer on image-led sites. */
 const SocialTiles: React.FC<Props> = ({ social, tone = 'bg' }) => {
+  // http(s) only (LT-315): a `javascript:` link the owner saved is dropped.
   const links = [
-    social.instagram && { href: social.instagram, label: 'Instagram', Icon: Instagram },
-    social.tiktok && { href: social.tiktok, label: 'TikTok', Icon: Music2 },
-    social.facebook && { href: social.facebook, label: 'Facebook', Icon: Facebook },
-    social.x && { href: social.x, label: 'X', Icon: Twitter },
-  ].filter((l): l is { href: string; label: string; Icon: typeof Instagram } => !!l);
+    { href: safeHttpUrl(social.instagram), label: 'Instagram', Icon: Instagram },
+    { href: safeHttpUrl(social.tiktok), label: 'TikTok', Icon: Music2 },
+    { href: safeHttpUrl(social.facebook), label: 'Facebook', Icon: Facebook },
+    { href: safeHttpUrl(social.x), label: 'X', Icon: Twitter },
+  ].filter((l): l is { href: string; label: string; Icon: typeof Instagram } => !!l.href);
   if (!links.length) return null;
   return (
     <section className={`section-y ${TONE_BG[tone]} transition-colors duration-300`} aria-label="Social">

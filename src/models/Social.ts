@@ -1,3 +1,5 @@
+import { safeHttpUrl } from '../utils/safeUrl';
+
 export class Social {
   constructor(
     public instagram: string | null,
@@ -6,12 +8,17 @@ export class Social {
     public tiktok: string | null
   ) {}
 
+  /**
+   * Only http(s) links survive (LT-315): the server stores whatever string
+   * the owner sends, and a `javascript:` link here ran on every visitor who
+   * clicked the icon. A link that fails is dropped, so its icon never shows.
+   */
   static fromJSON(json: any): Social {
     return new Social(
-      json.instagram || null,
-      json.facebook || null,
-      json.x || null,
-      json.tiktok || null
+      safeHttpUrl(json?.instagram),
+      safeHttpUrl(json?.facebook),
+      safeHttpUrl(json?.x),
+      safeHttpUrl(json?.tiktok)
     );
   }
 
