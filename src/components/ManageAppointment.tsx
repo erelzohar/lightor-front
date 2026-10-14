@@ -17,6 +17,7 @@ import { googleCalendarUrl, downloadIcs, CalendarEventInput } from '../services/
 import { CancelWindowClosedError, DEFAULT_MIN_CANCEL_TIME_MS, formatCancelWindow } from '../utils/cancelWindow';
 import { fieldsForService } from '../models/BookingField';
 import AnswersEditor from './manage/AnswersEditor';
+import { resolveTimeZone } from '../utils/businessTime';
 
 
 
@@ -143,6 +144,7 @@ const ManageAppointment: React.FC = () => {
       year: 'numeric',
       month: 'long',
       day: 'numeric',
+      timeZone: resolveTimeZone(config?.timeZone),
     });
   };
 
@@ -152,6 +154,7 @@ const ManageAppointment: React.FC = () => {
       hour: '2-digit',
       minute: '2-digit',
       hour12: language !== 'he',
+      timeZone: resolveTimeZone(config?.timeZone),
     });
   };
 
@@ -196,6 +199,7 @@ const ManageAppointment: React.FC = () => {
         timeToCancel={minCancelTime || config.minCancelTimeMS}
         bookingHorizonDays={config.bookingHorizonDays}
         bookingFields={config.bookingFields}
+        timeZone={config.timeZone}
         user_id={appointment.user_id}
         isUpdating={true}
         appointmentToUpdate={appointment}

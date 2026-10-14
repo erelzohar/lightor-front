@@ -748,6 +748,9 @@ describe('a cancel or move too close to the appointment (LT-205)', () => {
     minCancelTimeMS: 0, businessName: 'Salon', logoImageName: '', contact: { phone: '' },
     workingDays: openAllWeek, vacations: [] as unknown[], dateOverrides: [] as unknown[],
     appointmentTypes: [haircut], bookingFields: catalog,
+    // The times below are on this machine's clock, so the business sits in
+    // the machine's zone (LT-318).
+    timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
   };
 
   beforeEach(() => {
@@ -864,6 +867,9 @@ describe('a cancel or move too close to the appointment (LT-205)', () => {
           isUpdating={isUpdating}
           appointmentToUpdate={isUpdating ? storedAt(NOW.getTime() + 3 * DAY) : undefined}
           onCancelUpdate={isUpdating ? () => {} : undefined}
+          // NOW and the expected times are on this machine's clock, so the
+          // business sits in the machine's zone (LT-318).
+          timeZone={Intl.DateTimeFormat().resolvedOptions().timeZone}
         />
       );
 

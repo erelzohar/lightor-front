@@ -13,6 +13,7 @@ import { FaqConfig } from './FaqConfig';
 import { DateOverride } from '../utils/workingHours';
 import { BookingField, parseBookingFields } from './BookingField';
 import type { Conversion } from '../services/siteMode';
+import { DEFAULT_TIME_ZONE, resolveTimeZone } from '../utils/businessTime';
 
 /**
  * Every part is optional, and the whole address may be absent — a business can
@@ -217,7 +218,12 @@ export class WebsiteConfig {
      * LT-302: Lighty, the site's assistant (subscribers' sites). Set by the
      * server only; absent reads as off.
      */
-    public assistant: boolean = false
+    public assistant: boolean = false,
+    /**
+     * LT-318: the business's IANA time zone. Booking times are its wall
+     * clock, not the visitor's device clock. Absent reads as Israel.
+     */
+    public timeZone: string = DEFAULT_TIME_ZONE
   ) {}
 
   static fromJSON(json: any): WebsiteConfig {
@@ -255,7 +261,8 @@ export class WebsiteConfig {
       parseBookingFields(json.leadFields),
       json.leadsOpen !== false,
       json.conversion === 'lead' ? 'lead' : 'book',
-      json.assistant === true
+      json.assistant === true,
+      resolveTimeZone(json.timeZone)
     );
   }
 }

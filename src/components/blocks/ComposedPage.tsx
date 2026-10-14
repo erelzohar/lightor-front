@@ -187,6 +187,7 @@ const ComposedPage: React.FC<ComposedPageProps> = ({ config, jitter, isPreview, 
               timeToCancel={config.minCancelTimeMS}
               bookingHorizonDays={config.bookingHorizonDays}
               bookingFields={config.bookingFields}
+              timeZone={config.timeZone}
               vacations={config.vacations}
               dateOverrides={config.dateOverrides}
               appointmentTypes={config.appointmentTypes}
