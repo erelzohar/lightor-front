@@ -198,9 +198,11 @@ describe('the corner Lighty, dragged (LT-312)', () => {
     if (!('PointerEvent' in window)) {
       class PE extends MouseEvent {
         pointerId: number;
-        constructor(type: string, init: MouseEventInit & { pointerId?: number } = {}) {
+        pointerType: string;
+        constructor(type: string, init: MouseEventInit & { pointerId?: number; pointerType?: string } = {}) {
           super(type, init);
           this.pointerId = init.pointerId ?? 1;
+          this.pointerType = init.pointerType ?? '';
         }
       }
       (window as unknown as { PointerEvent: typeof PE }).PointerEvent = PE;
@@ -272,6 +274,29 @@ describe('the corner Lighty, dragged (LT-312)', () => {
     await act(() => new Promise((r) => setTimeout(r, 150)));
     fireEvent.click(lighty());
     expect(screen.getByRole('dialog')).toBeTruthy();
+  });
+
+  it('a finger that wanders a little is still a tap (LT-315)', () => {
+    render(<SiteLighty businessName="Dana Studio" leadsSite={false} />);
+    const touch = (type: 'pointerDown' | 'pointerMove' | 'pointerUp', x: number, y: number) =>
+      act(() => { fireEvent[type](lighty(), { pointerId: 1, pointerType: 'touch', button: 0, buttons: 1, clientX: x, clientY: y }); });
+    touch('pointerDown', 930, 740);
+    touch('pointerMove', 940, 748);
+    touch('pointerUp', 940, 748);
+    fireEvent.click(lighty());
+    expect(screen.getByRole('dialog')).toBeTruthy();
+    expect(wrap().style.transform).toBe('');
+  });
+
+  it('forgets a press released off him: the mouse passing over later does not pick him up (LT-315)', () => {
+    render(<SiteLighty businessName="Dana Studio" leadsSite={false} />);
+    act(() => { fireEvent.pointerDown(lighty(), { pointerId: 1, pointerType: 'mouse', button: 0, buttons: 1, clientX: 930, clientY: 740 }); });
+    // Released just outside him: his own pointerup never comes. Later the
+    // mouse passes over him with no button down.
+    act(() => { fireEvent.pointerMove(lighty(), { pointerId: 1, pointerType: 'mouse', buttons: 0, clientX: 700, clientY: 500 }); });
+    act(() => { fireEvent.pointerMove(lighty(), { pointerId: 1, pointerType: 'mouse', buttons: 0, clientX: 600, clientY: 400 }); });
+    expect(wrap().style.transform).toBe('');
+    expect(screen.getByTestId('button-3d')).toHaveAttribute('data-dragging', 'false');
   });
 
   it('starts where he was left last time', () => {

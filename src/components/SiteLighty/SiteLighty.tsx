@@ -1,4 +1,4 @@
-import { Suspense, lazy, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { Suspense, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import type { FormEvent, KeyboardEvent, PointerEvent as ReactPointerEvent } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { AlertTriangle, ArrowLeft, Phone, Send, X } from 'lucide-react';
@@ -9,11 +9,12 @@ import siteAssistantService, { type AssistantTurn } from '../../services/SiteAss
 import { reducedMotion } from '../../services/generateReveal';
 import { scrollToSection, sectionOf } from '../../utils/sections';
 import { replyParts } from './replyText';
-import { DRAG_START_PX, clampOffset, readOffset, saveOffset, type Home, type Offset } from './floating';
+import { DRAG_START_PX, TOUCH_DRAG_START_PX, clampOffset, readOffset, saveOffset, type Home, type Offset } from './floating';
 import { useContactHandler } from '../../hooks/useContactHandler';
 import { ContactModal } from '../ContactModal';
 import { WhatsAppIcon } from '../ContactButton';
 import { whatsAppHref } from '../../utils/phone';
+import { lazyOptional } from '../../utils/lazyOptional';
 
 /**
  * LT-302 — Lighty, the site's assistant, for subscribers' sites. A visitor
@@ -28,7 +29,10 @@ import { whatsAppHref } from '../../utils/phone';
  * loaded, after the page (and for good with reduced motion or Save-Data).
  */
 
-const SiteLighty3D = lazy(() => import('./SiteLighty3D'));
+// A chunk that fails to load leaves his picture in place (LT-315): the 3D
+// Lighty is a nicety, and his chat — with its call and WhatsApp — must not
+// go down with it.
+const SiteLighty3D = lazyOptional(() => import('./SiteLighty3D'));
 
 const IMG = '/lighty-support.webp';
 const PASS_WAIT_MS = 15000;
@@ -146,9 +150,15 @@ export default function SiteLighty({ businessName, leadsSite, phone }: SiteLight
   const onPointerMove = (e: ReactPointerEvent<HTMLButtonElement>) => {
     const p = press.current;
     if (!p || e.pointerId !== p.id) return;
+    // A press released just off him never reached onPointerEnd (LT-315): a
+    // mouse moving with no button down is not holding him any more.
+    if (e.pointerType === 'mouse' && e.buttons === 0) {
+      onPointerEnd(e);
+      return;
+    }
     const dx = e.clientX - p.x, dy = e.clientY - p.y;
     if (!p.moved) {
-      if (Math.hypot(dx, dy) < DRAG_START_PX) return;
+      if (Math.hypot(dx, dy) < (e.pointerType === 'touch' ? TOUCH_DRAG_START_PX : DRAG_START_PX)) return;
       p.moved = true;
       e.currentTarget.setPointerCapture?.(e.pointerId);
       setDragging(true);

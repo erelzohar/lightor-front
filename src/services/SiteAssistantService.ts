@@ -17,18 +17,25 @@ export interface AssistantResult {
   status?: number;
 }
 
+/** The server's cap on one turn of history (lightor-back siteAssistantDto.ts). */
+export const HISTORY_TURN_MAX = 1500;
+
 const failure = (err: unknown): AssistantResult => {
   const status = (err as { response?: { status?: number } })?.response?.status;
   return { ok: false, ...(status ? { status } : {}) };
 };
 
 class SiteAssistantService {
-  /** A visitor's question, with the conversation so far (the newest six turns). */
+  /**
+   * A visitor's question, with the conversation so far (the newest six
+   * turns). Each turn is cut to the server's cap (LT-315): one long reply
+   * made every later question a 400, and the chat stopped answering.
+   */
   public async ask(subdomain: string, message: string, history: AssistantTurn[], language: string): Promise<AssistantResult> {
     try {
       const res = await axios.post<{ success?: boolean; data?: { reply?: string } }>(
         `${globals.siteAssistantUrl}/${encodeURIComponent(subdomain)}/chat`,
-        { message, history: history.slice(-6), language },
+        { message, history: history.slice(-6).map((turn) => ({ role: turn.role, text: turn.text.slice(0, HISTORY_TURN_MAX) })), language },
         { withCredentials: true }
       );
       const reply = res.data?.data?.reply;

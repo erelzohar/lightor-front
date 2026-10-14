@@ -22,6 +22,8 @@ const STORE = 'lighty.siteOffset';
 export const EDGE = 8;
 /** A press that moves less than this is a tap (it opens the chat), not a drag. */
 export const DRAG_START_PX = 6;
+/** A finger wanders more than a mouse: a sloppy tap still opens the chat (LT-315). */
+export const TOUCH_DRAG_START_PX = 16;
 
 /** Keep him whole on screen: any column, from the top margin down to his home line, never lower. */
 export function clampOffset(home: Home, x: number, y: number, vw: number, vh: number): Offset {

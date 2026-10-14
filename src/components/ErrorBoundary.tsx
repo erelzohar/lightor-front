@@ -1,6 +1,6 @@
 import React, { Component, ReactNode } from 'react';
 import { motion } from 'framer-motion';
-import { useLanguage } from '../contexts/LanguageContext';
+import { useLanguage, type Language } from '../contexts/LanguageContext';
 import { reportClientError } from '../services/ErrorReportingService';
 
 interface ErrorBoundaryProps {
@@ -20,8 +20,8 @@ const ErrorBoundaryWithLanguage: React.FC<ErrorBoundaryProps> = (props) => {
   return <ErrorBoundaryClass {...props} language={language} />;
 };
 
-class ErrorBoundaryClass extends Component<ErrorBoundaryProps & { language: 'en' | 'he' }, ErrorBoundaryState> {
-  constructor(props: ErrorBoundaryProps & { language: 'en' | 'he' }) {
+class ErrorBoundaryClass extends Component<ErrorBoundaryProps & { language: Language }, ErrorBoundaryState> {
+  constructor(props: ErrorBoundaryProps & { language: Language }) {
     super(props);
     this.state = {
       hasError: false,
@@ -52,7 +52,7 @@ class ErrorBoundaryClass extends Component<ErrorBoundaryProps & { language: 'en'
     const { hasError, error, errorInfo } = this.state;
     const { fallback, children, language } = this.props;
 
-    const translations = {
+    const translations: Record<string, { title: string; description: string; stackTrace: string; supportEmail: string }> = {
       en: {
         title: 'Something went wrong...',
         description: 'If the problem persists, please contact support at',
@@ -64,10 +64,31 @@ class ErrorBoundaryClass extends Component<ErrorBoundaryProps & { language: 'en'
         description: 'אם הבעיה נמשכת, אנא צור קשר עם התמיכה בכתובת',
         stackTrace: 'מעקב שגיאה',
         supportEmail: 'lightorapp@gmail.com'
+      },
+      ar: {
+        title: 'حدث خطأ ما...',
+        description: 'إذا استمرت المشكلة، يرجى التواصل مع الدعم على',
+        stackTrace: 'تتبع الخطأ',
+        supportEmail: 'lightorapp@gmail.com'
+      },
+      fr: {
+        title: 'Une erreur est survenue...',
+        description: 'Si le problème persiste, contactez le support à',
+        stackTrace: 'Trace de la pile',
+        supportEmail: 'lightorapp@gmail.com'
+      },
+      es: {
+        title: 'Algo salió mal...',
+        description: 'Si el problema continúa, contacta con soporte en',
+        stackTrace: 'Traza de la pila',
+        supportEmail: 'lightorapp@gmail.com'
       }
     };
 
-    const t = translations[language];
+    // Any language without its own strings falls back to English (LT-315):
+    // an undefined `t` threw inside this fallback, which sent every section
+    // error on an ar/fr/es site up to the root boundary and blanked the page.
+    const t = translations[language] ?? translations.en;
 
     if (hasError) {
       return (
