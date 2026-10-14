@@ -20,6 +20,7 @@ import NotFound from './components/NotFound';
 import SiteNotActive from './components/SiteNotActive';
 import { classifyConfigFailure } from './services/configFailure';
 import ManageAppointment from './components/ManageAppointment';
+import ShortManageLink from './components/ShortManageLink';
 import Loading from './components/Loading';
 import SectionDivider, { type SectionTone } from './components/SectionDivider';
 import ServicesLedger from './components/Layout/ServicesLedger';
@@ -770,6 +771,8 @@ function App() {
     <Routes>
       <Route path="/" element={<MainContent />} />
       <Route path="/manage/:appointment-id" element={<ManageAppointment />} />
+      {/* The short manage link (LT-336). */}
+      <Route path="/m/:code" element={<ShortManageLink />} />
       <Route path="*" element={<NotFound />} />
     </Routes>
   );

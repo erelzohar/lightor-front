@@ -98,6 +98,25 @@ class AppointmentService {
     return new URLSearchParams(window.location.search).get('manageToken');
   }
 
+  /**
+   * The short manage link (LT-336): `/m/<code>` names one appointment. The
+   * API answers its id and a manage token — what the long link carried in
+   * its address — so the manage page opens exactly as before. Null when the
+   * code is unknown, malformed, or another business's.
+   */
+  public async resolveManageCode(code: string): Promise<{ appointmentId: string; manageToken: string } | null> {
+    try {
+      const subdomain = window.location.hostname.split('.')[0];
+      const response = await axios.get<any>(`${this.baseUrl}/manage-code/${encodeURIComponent(code)}`, {
+        params: { subdomain },
+      });
+      const data = response.data?.data;
+      return data?.appointmentId && data?.manageToken ? { appointmentId: data.appointmentId, manageToken: data.manageToken } : null;
+    } catch {
+      return null;
+    }
+  }
+
   public async getAppointmentById(id: string): Promise<Appointment> {
     try {
       const manageToken = AppointmentService.manageTokenFromUrl();
