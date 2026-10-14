@@ -16,6 +16,8 @@ import smsService from '../../services/SmsService';
 import { whatsAppHref } from '../../utils/phone';
 import { BookingField, AnswerValue, answerProblem, answersForRequest } from '../../models/BookingField';
 import { QuestionField } from '../common/QuestionField';
+import { googleMapsHref } from '../../utils/navigation';
+import WazeLink from '../WazeLink';
 import type { Conversion } from '../../services/siteMode';
 import { Turnstile } from '@marsidev/react-turnstile';
 import { visitorPass, useVisitorPass } from '../../services/visitorPass';
@@ -352,7 +354,7 @@ const Contact: React.FC<ContactProps> = ({ config, address, contact, workingDays
       icon: MapPin,
       title: t('about.location'),
       content: fullAddress,
-      action: `https://maps.google.com/?q=${encodeURIComponent(fullAddress)}`,
+      action: googleMapsHref(fullAddress),
       isLink: true,
       color: 'bg-primary/10 text-primary dark:bg-primary-dark/10 dark:text-primary-dark'
     }] : []),
@@ -404,14 +406,17 @@ const Contact: React.FC<ContactProps> = ({ config, address, contact, workingDays
   const displayFont = lang === 'he' || lang === 'ar' ? 'var(--font-heading-rtl)' : 'var(--font-heading)';
   const noTrack = lang === 'ar';
   const phoneDigits = contact.phone.replace(/[^0-9+]/g, '');
-  const mapsHref = fullAddress ? `https://maps.google.com/?q=${encodeURIComponent(fullAddress)}` : undefined;
+  const mapsHref = fullAddress ? googleMapsHref(fullAddress) : undefined;
   const hours = formatWorkingHours();
   const plainLines = (cls = '', opts: { skipPhone?: boolean } = {}) => (
     <div className={`space-y-1 text-lg leading-loose ${cls}`}>
       {fullAddress && (
-        <a href={mapsHref} target="_blank" rel="noopener noreferrer" className="block hover:underline" aria-label={`${t('about.location')}: ${fullAddress}`}>
-          {addressLines.map((line) => <span key={line} className="block">{line}</span>)}
-        </a>
+        <>
+          <a href={mapsHref} target="_blank" rel="noopener noreferrer" className="block hover:underline" aria-label={`${t('about.location')}: ${fullAddress}`}>
+            {addressLines.map((line) => <span key={line} className="block">{line}</span>)}
+          </a>
+          <WazeLink address={fullAddress} />
+        </>
       )}
       {!opts.skipPhone && (
         <button type="button" onClick={() => handleContactClick('phone', `tel:${phoneDigits}`)} className="block hover:underline">
@@ -794,6 +799,7 @@ const Contact: React.FC<ContactProps> = ({ config, address, contact, workingDays
                         {item.title}
                       </h4>
                       {item.isLink ? (
+                        <>
                         <a
                           href={item.action}
                           className="text-light-text/80 dark:text-dark-text/80 hover:text-primary dark:hover:text-primary-dark transition-colors"
@@ -807,6 +813,10 @@ const Contact: React.FC<ContactProps> = ({ config, address, contact, workingDays
                             ))
                             : item.content}
                         </a>
+                        {item.icon === MapPin && fullAddress && (
+                          <div className="mt-2"><WazeLink address={fullAddress} /></div>
+                        )}
+                        </>
                       ) : (
                         <button
                           onClick={item.action}

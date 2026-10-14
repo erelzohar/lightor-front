@@ -35,6 +35,8 @@ import SectionHeading from './SectionHeading';
 import type { HeadingScale } from '../../services/artDirection';
 import { Social } from '../../models/Social';
 import { whatsAppHref } from '../../utils/phone';
+import { googleMapsHref } from '../../utils/navigation';
+import WazeLink from '../WazeLink';
 
 // Feature icons are stored in the config by name.
 const FEATURE_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
@@ -205,7 +207,7 @@ const About: React.FC<AboutProps> = ({ config, websiteConfig, layout = 'cards', 
       icon: MapPin,
       title: t('about.location'),
       content: fullAddress,
-      action: `https://maps.google.com/?q=${encodeURIComponent(fullAddress)}`,
+      action: googleMapsHref(fullAddress),
       isLink: true,
       color: 'bg-primary/10 text-primary dark:bg-primary-dark/10 dark:text-primary-dark'
     }] : []),
@@ -458,18 +460,21 @@ const About: React.FC<AboutProps> = ({ config, websiteConfig, layout = 'cards', 
                       ))}
                     </div>
                   ) : item.isLink ? (
-                    <a
-                      href={item.action as string}
-                      className="max-w-full break-words text-light-text/80 dark:text-dark-text/80 hover:text-primary dark:hover:text-primary-dark transition-colors"
-                      target={item.icon === MapPin ? "_blank" : undefined}
-                      rel={item.icon === MapPin ? "noopener noreferrer" : undefined}
-                    >
-                      {item.icon === MapPin && addressLines.length > 1
-                        ? addressLines.map((line) => (
-                          <span key={line} className="block">{line}</span>
-                        ))
-                        : item.content}
-                    </a>
+                    <div className="flex max-w-full flex-col items-center gap-3">
+                      <a
+                        href={item.action as string}
+                        className="max-w-full break-words text-light-text/80 dark:text-dark-text/80 hover:text-primary dark:hover:text-primary-dark transition-colors"
+                        target={item.icon === MapPin ? "_blank" : undefined}
+                        rel={item.icon === MapPin ? "noopener noreferrer" : undefined}
+                      >
+                        {item.icon === MapPin && addressLines.length > 1
+                          ? addressLines.map((line) => (
+                            <span key={line} className="block">{line}</span>
+                          ))
+                          : item.content}
+                      </a>
+                      {item.icon === MapPin && fullAddress && <WazeLink address={fullAddress} />}
+                    </div>
                   ) : (
                     <button
                       onClick={item.action}

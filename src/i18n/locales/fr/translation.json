@@ -26,6 +26,7 @@
   "about": {
     "title": "À propos de StyleTime Studio",
     "location": "Lieu",
+    "waze": "Y aller avec Waze",
     "phone": "Téléphone",
     "email": "Email",
     "hours": "Horaires",
@@ -33,6 +34,7 @@
   },
   "portfolio": {
     "title": "Nos Dernières Réalisations",
+    "empty_edit": "Pas encore de photos dans la galerie. Cliquez ici pour en ajouter une.",
     "view": {
       "slideshow": "Diaporama",
       "grid": "Grille"

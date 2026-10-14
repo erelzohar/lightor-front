@@ -22,7 +22,7 @@ import { whatsAppHref } from '../../utils/phone';
 interface WebsiteConfig {
   // LT-168: section titles double as the quick-link labels.
   about?: { visible?: boolean; title?: string };
-  portfolio?: { visible?: boolean; title?: string };
+  portfolio?: { visible?: boolean; title?: string; items?: unknown[] };
   contact?: { visible?: boolean; phone?: string; title?: string };
   schedule?: { title?: string };
   faq?: { title?: string };
@@ -102,7 +102,8 @@ const Footer: React.FC<FooterProps> = ({ config, social, businessName, logoImage
     }))
     : [
       { href: "#about", label: titles.about ?? t('nav.about'), visible: websiteConfig?.about?.visible },
-      { href: "#portfolio", label: titles.portfolio ?? t('nav.portfolio'), visible: websiteConfig?.portfolio?.visible },
+      // An empty gallery is not drawn (LT-320), so no link to it.
+      { href: "#portfolio", label: titles.portfolio ?? t('nav.portfolio'), visible: websiteConfig?.portfolio?.items?.length === 0 ? false : websiteConfig?.portfolio?.visible },
       { href: "#schedule", label: titles.schedule ?? t('nav.schedule'), visible: bookable },
       { href: "#contact", label: titles.contact ?? t('nav.contact'), visible: websiteConfig?.contact?.visible }
     ].filter(item => item.visible === undefined || item.visible);

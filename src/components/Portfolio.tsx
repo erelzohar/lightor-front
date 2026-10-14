@@ -8,7 +8,7 @@ import SectionHeading from './Layout/SectionHeading';
 import type { HeadingScale } from '../services/artDirection';
 import globals from '../services/globals';
 import ImagesService from '../services/ImagesService';
-import { useEditAttrs } from '../services/editMode';
+import { useEdit, useEditAttrs } from '../services/editMode';
 import EditText from './EditText';
 import { handleWideImageError } from '../utils/imageFallback';
 
@@ -30,6 +30,7 @@ const MASONRY_ASPECTS = ['aspect-[4/3]', 'aspect-square', 'aspect-[3/4]'];
 
 const Portfolio: React.FC<PortfolioProps> = ({ config, layout = 'grid', masonryPhase = 0, header, headerScale, tone = 'bg' }) => {
   const ed = useEditAttrs();
+  const { editing } = useEdit();
   const [currentSlide, setCurrentSlide] = useState(0);
   // LT-169: the slideshow is the 'carousel' layout — a design-system token
   // like grid/masonry, no longer a per-component `isGrid` flag. With nothing
@@ -117,6 +118,10 @@ const Portfolio: React.FC<PortfolioProps> = ({ config, layout = 'grid', masonryP
     })
   };
 
+  // LT-320: a gallery with no photos is not drawn on the live site. In the
+  // editor it says so, and a click on it selects the gallery, whose panel
+  // adds a photo.
+  if (!config.items.length && !editing) return null;
 
   return (
     <section
@@ -146,7 +151,11 @@ const Portfolio: React.FC<PortfolioProps> = ({ config, layout = 'grid', masonryP
         </motion.div>
 
         <div className="max-w-6xl mx-auto">
-          {!isCarousel ? (
+          {!config.items.length ? (
+            <div className="rounded-design-card border-2 border-dashed border-light-text/25 dark:border-dark-text/25 px-6 py-16 text-center text-lg text-light-text/70 dark:text-dark-text/70" data-testid="portfolio-empty">
+              {t('portfolio.empty_edit')}
+            </div>
+          ) : !isCarousel ? (
             (() => {
               // Shared still-image card; the portfolioLayout token picks how
               // the cards are arranged (grid / masonry / filmstrip…). The
