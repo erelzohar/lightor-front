@@ -244,6 +244,11 @@
     }
   },
   "manage": {
+    "inactive": {
+      "cancelled_title": "Esta cita fue cancelada",
+      "past_title": "Esta cita ya pasó",
+      "book_again": "Reservar una nueva cita"
+    },
     "update": {
       "title": "Actualizar cita",
       "success_title": "Cita actualizada"

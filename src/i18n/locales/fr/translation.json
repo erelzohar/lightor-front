@@ -244,6 +244,11 @@
     }
   },
   "manage": {
+    "inactive": {
+      "cancelled_title": "Ce rendez-vous a été annulé",
+      "past_title": "Ce rendez-vous est passé",
+      "book_again": "Prendre un nouveau rendez-vous"
+    },
     "update": {
       "title": "Modifier le rendez-vous",
       "success_title": "Rendez-vous modifié"

@@ -179,8 +179,50 @@ const ManageAppointment: React.FC = () => {
     );
   }
 
-  if (error || !appointment || appointment.status !== 'scheduled') {
+  if (error || !appointment || !config) {
     return <NotFound />;
+  }
+
+  // A link to a booking that is no longer on (LT-340): cancelled — by the
+  // customer or by the business — or marked done. It used to fall through to
+  // the 404, so a customer following an old SMS read "page not found". Now it
+  // says what became of the booking and offers a new one.
+  if (appointment.status !== 'scheduled') {
+    const cancelled = appointment.status === 'cancelled';
+    return (
+      <div className="min-h-screen bg-light-bg dark:bg-dark-bg flex items-center justify-center p-4 transition-colors duration-300">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="w-full max-w-lg bg-light-surface dark:bg-dark-surface rounded-3xl shadow-xl p-6 md:p-8 text-center transition-colors duration-300"
+        >
+          {config.logoImageName && (
+            <div className="flex justify-center mb-6">
+              <img
+                src={ImagesService.getInstance().getImage(config.logoImageName)}
+                alt={config.businessName}
+                onError={handleSquareImageError}
+                className="h-20 w-auto object-contain"
+              />
+            </div>
+          )}
+          <h2 className="text-2xl font-bold text-light-text dark:text-dark-text mb-2">
+            {t(cancelled ? 'manage.inactive.cancelled_title' : 'manage.inactive.past_title')}
+          </h2>
+          <p className="text-light-text/70 dark:text-dark-text/70 mb-8">
+            {appointment.type?.name ? `${appointment.type.name} · ` : ''}
+            {formatDate(appointment.timestamp)} · <span dir="ltr">{formatTime(appointment.timestamp)}</span>
+          </p>
+          <a
+            href="/#schedule"
+            className="inline-flex items-center justify-center gap-2 w-full py-3 px-6 rounded-xl font-medium bg-primary dark:bg-primary-dark text-white transition-colors"
+          >
+            <Calendar className="w-5 h-5" aria-hidden="true" />
+            {t('manage.inactive.book_again')}
+          </a>
+        </motion.div>
+      </div>
+    );
   }
 
   if (isUpdating && appointment && config) {

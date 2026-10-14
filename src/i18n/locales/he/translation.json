@@ -244,6 +244,11 @@
     }
   },
   "manage": {
+    "inactive": {
+      "cancelled_title": "התור הזה בוטל",
+      "past_title": "התור הזה כבר עבר",
+      "book_again": "קביעת תור חדש"
+    },
     "update": {
       "title": "עדכון תור",
       "success_title": "התור עודכן"

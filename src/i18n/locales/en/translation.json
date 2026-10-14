@@ -244,6 +244,11 @@
     }
   },
   "manage": {
+    "inactive": {
+      "cancelled_title": "This appointment was cancelled",
+      "past_title": "This appointment has passed",
+      "book_again": "Book a new appointment"
+    },
     "update": {
       "title": "Update appointment",
       "success_title": "Appointment Updated"

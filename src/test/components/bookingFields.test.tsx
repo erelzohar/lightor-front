@@ -365,6 +365,36 @@ describe('the manage page (LT-178)', () => {
       vi.unstubAllEnvs();
     }
   });
+
+  // An old SMS link to a booking that is no longer on (LT-340) used to land
+  // on the 404.
+  const withStatus = (status: string) =>
+    Appointment.fromJSON({
+      _id: 'a1', user_id: 'u1', type: { _id: 't1', name: 'Haircut', price: '80', user_id: 'u1', durationMS: '1800000' },
+      name: 'Dana Levi', status, phone: '0501234567', timestamp: String(Date.now() + 3 * DAY), channelType: 'sms',
+      answers: [],
+    });
+
+  it('says a cancelled booking was cancelled and offers a new one (LT-340)', async () => {
+    mocks.getAppointmentById.mockResolvedValue(withStatus('cancelled'));
+
+    render(<ManageAppointment />);
+
+    expect(await screen.findByText('manage.inactive.cancelled_title')).toBeTruthy();
+    expect(screen.getByText(/^Haircut ·/)).toBeTruthy();
+    expect(screen.getByRole('link', { name: 'manage.inactive.book_again' }).getAttribute('href')).toBe('/#schedule');
+    expect(screen.queryByText('manage.button.cancel')).toBeNull();
+    expect(screen.queryByText('manage.button.update')).toBeNull();
+  });
+
+  it('says a booking marked done has passed (LT-340)', async () => {
+    mocks.getAppointmentById.mockResolvedValue(withStatus('completed'));
+
+    render(<ManageAppointment />);
+
+    expect(await screen.findByText('manage.inactive.past_title')).toBeTruthy();
+    expect(screen.queryByText('manage.inactive.cancelled_title')).toBeNull();
+  });
 });
 
 describe('the customer corrects their answers (LT-217)', () => {

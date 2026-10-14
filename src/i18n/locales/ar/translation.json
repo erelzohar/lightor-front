@@ -244,6 +244,11 @@
     }
   },
   "manage": {
+    "inactive": {
+      "cancelled_title": "تم إلغاء هذا الموعد",
+      "past_title": "هذا الموعد قد انقضى",
+      "book_again": "حجز موعد جديد"
+    },
     "update": {
       "title": "تحديث الموعد",
       "success_title": "تم تحديث الموعد"
