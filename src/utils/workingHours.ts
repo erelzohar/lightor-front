@@ -78,10 +78,10 @@ export function toLocalDateKey(date: Date): string {
  * (closed for that date) and including opening a weekday that is normally
  * closed. With no matching override, the weekly value applies.
  *
- * `date` is a calendar-day carrier (utils/businessTime.ts, LT-315) — a
+ * `date` is a calendar-day carrier (utils/businessTime.ts, LT-318) — a
  * local-midnight `new Date(y, m, d)` naming the business's day — so its
  * getDay() and its key are that day's on any device. Never pass an instant:
- * turn one into its Israeli day with businessDayOf first.
+ * turn one into the business's day with zonedDateOf first.
  */
 export function getHoursForDate(
   date: Date,

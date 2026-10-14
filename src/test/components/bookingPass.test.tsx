@@ -96,6 +96,9 @@ const renderWidget = (types: AppointmentType[] = [haircut], workingDays: (string
         appointmentTypes={types}
         header={{ style: 'centered' } as never}
         headerScale={'default' as never}
+        // The sessions below are built on this machine's clock, so the
+        // business sits in the machine's zone (LT-318).
+        timeZone={Intl.DateTimeFormat().resolvedOptions().timeZone}
       />
     </ErrorBoundary>
   );
@@ -234,7 +237,7 @@ describe('booking after the visitor pass expired (review H3)', () => {
 });
 
 describe('class places after a refusal or a booking (review M4)', () => {
-  /** A local wall-clock instant three days from now (tests run on Israel's clock). */
+  /** A wall-clock instant three days from now, on this machine's clock (the business's zone here). */
   const at = (hours: number): number => {
     const day = new Date(Date.now() + 3 * DAY);
     day.setHours(hours, 0, 0, 0);
@@ -287,7 +290,7 @@ describe('class places after a refusal or a booking (review M4)', () => {
 
     expect(await screen.findByText('schedule.success')).toBeTruthy();
     await waitFor(() => expect(mocks.getCalendar).toHaveBeenCalledTimes(2));
-    // The session's own instant goes to the server.
+    // The session's instant goes to the server.
     expect(mocks.createAppointment.mock.calls[0][0].timestamp).toBe(String(at(19)));
   });
 });

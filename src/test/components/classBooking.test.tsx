@@ -80,6 +80,9 @@ const renderWidget = (types = [klass], workingDays: (string | null)[] = [null, n
       appointmentTypes={types}
       header={{ style: 'centered' } as never}
       headerScale={'default' as never}
+      // The sessions below are built on this machine's clock, so the business
+      // sits in the machine's zone (LT-318).
+      timeZone={Intl.DateTimeFormat().resolvedOptions().timeZone}
     />
   );
 

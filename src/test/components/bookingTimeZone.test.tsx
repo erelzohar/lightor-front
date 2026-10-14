@@ -7,11 +7,20 @@ import { ScheduleConfig } from '../../models/ScheduleConfig';
 import { resetVisitorPassForTests } from '../../services/visitorPass';
 
 /**
- * Review M1 (LT-315): the booking widget keeps the business's clock,
- * Israel's, on a phone set to any zone. Before, a London phone saw the
- * owner's 09:00-17:00 as London hours, and its 16:00 was stored as 18:00 in
- * Israel — after closing, and so said the SMS.
+ * LT-318 — the calendar runs on the business's clock, not the visitor's.
+ *
+ * EZ-lines, the predecessor, built slots with the device clock: a phone set
+ * one zone ahead of the business saw "11:00" as free while it was taken, was
+ * texted "11:00", and the booking was saved at 10:00.
+ *
+ * The business here is on Kiritimati (UTC+14, no daylight saving), a zone no
+ * machine running these tests is in, so the device clock and the business
+ * clock always disagree — by a whole calendar day, too.
  */
+const BUSINESS_TZ = 'Pacific/Kiritimati';
+// 10:00 on Wednesday 12 June 2030 in the business; 11 June on most devices.
+const NOW = Date.UTC(2030, 5, 11, 20, 0);
+const businessTime = (hour: number, minute: number) => Date.UTC(2030, 5, 12, hour, minute) - 14 * 3_600_000;
 
 const mocks = vi.hoisted(() => ({
   getCalendar: vi.fn(),
@@ -56,19 +65,115 @@ vi.mock('../../contexts/LanguageContext', () => ({
   useLanguage: () => ({ t: (key: string) => key, language: 'en' }),
 }));
 
-const hourLong = new AppointmentType('t1', 'Consultation', '200', 'u1', '3600000');
-const nineToFive = Array(7).fill('09:00-17:00') as (string | null)[];
+const haircut = new AppointmentType('t1', 'Haircut', '80', 'u1', '1800000');
 
-const booked = Appointment.fromJSON({
-  _id: 'a1', user_id: 'u1', type: { _id: 't1', name: 'Consultation', durationMS: '3600000' },
-  name: 'Dana Levi', status: 'scheduled', phone: '0501234567', timestamp: '0', channelType: 'sms',
-});
-
-const renderWidget = (extra: Partial<React.ComponentProps<typeof Schedule>> = {}) =>
+const renderWidget = () =>
   render(
     <Schedule
       config={new ScheduleConfig('Book', 'Pick')}
-      workingDays={nineToFive}
+      workingDays={Array(7).fill('09:00-17:00') as (string | null)[]}
+      user_id="u1"
+      phone="+972500000000"
+      businessName="Salon"
+      timeToCancel={0}
+      vacations={[]}
+      dateOverrides={[]}
+      appointmentTypes={[haircut]}
+      header={{ style: 'centered' } as never}
+      headerScale={'default' as never}
+      timeZone={BUSINESS_TZ}
+    />
+  );
+
+const openDays = (): HTMLElement[] =>
+  screen.getAllByRole('button').filter((button) => {
+    const label = button.getAttribute('aria-label') ?? '';
+    return label.includes(' - ') && !/^\d/.test(label) && !button.hasAttribute('disabled');
+  });
+
+const timesOnFirstOpenDay = async () => {
+  fireEvent.click(await screen.findByText('Haircut'));
+  await waitFor(() => expect(screen.getByText('schedule.legend.available')).toBeTruthy());
+  const first = openDays()[0];
+  fireEvent.click(first);
+  const times = await screen.findAllByRole('button', { name: /^\d{2}:\d{2}$/ });
+  return { day: first.getAttribute('aria-label')!, times: times.map((t) => t.textContent) };
+};
+
+describe('booking on the business clock (LT-318)', () => {
+  beforeEach(() => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(NOW);
+    Object.values(mocks).forEach((fn) => fn.mockReset());
+    // 11:00 in the business is taken.
+    mocks.getCalendar.mockResolvedValue({ busy: [{ timestamp: String(businessTime(11, 0)), durationMS: '1800000' }], classes: [] });
+    mocks.sendOtp.mockResolvedValue({ ok: true });
+    mocks.verifyOtp.mockResolvedValue('pt_1');
+    mocks.createAppointment.mockImplementation(async (body: { timestamp: string }) => ({ _id: 'n1', ...body }));
+  });
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it("opens on the business's today and offers its hours, not the device's", async () => {
+    renderWidget();
+    const { day, times } = await timesOnFirstOpenDay();
+
+    expect(day.startsWith('Wednesday, June 12 - ')).toBe(true);
+    // It is 10:00 there: 10:30 is the first time still ahead.
+    expect(times[0]).toBe('10:30');
+  });
+
+  it('keeps the taken 11:00 off the list', async () => {
+    renderWidget();
+    const { times } = await timesOnFirstOpenDay();
+
+    expect(times).not.toContain('11:00');
+    expect(times).toContain('11:30');
+  });
+
+  it('saves the time the customer picked on the business clock', async () => {
+    renderWidget();
+    await timesOnFirstOpenDay();
+    fireEvent.click(screen.getByRole('button', { name: '11:30' }));
+
+    fireEvent.change(await screen.findByLabelText('schedule.form.name'), { target: { value: 'Dana Levi' } });
+    fireEvent.change(screen.getByLabelText('schedule.form.phone'), { target: { value: '0501234567' } });
+    fireEvent.submit(screen.getByLabelText('schedule.form.name').closest('form')!);
+
+    // Each box is named for its place in the code (LT-315).
+    const boxes = await waitFor(() => {
+      const found = screen.getAllByLabelText('schedule.form.otpDigit');
+      expect(found).toHaveLength(6);
+      return found;
+    });
+    boxes.forEach((box, index) => fireEvent.change(box, { target: { value: String(index + 1) } }));
+
+    await waitFor(() => expect(mocks.createAppointment).toHaveBeenCalledTimes(1));
+    expect(mocks.createAppointment.mock.calls[0][0].timestamp).toBe(String(businessTime(11, 30)));
+  });
+});
+
+
+/**
+ * LT-315 (review M1), on LT-318's clock: a business in Israel, a phone set to
+ * another zone. Node picks up a changed TZ at once (vi.stubEnv), so the
+ * device's zone is real here. Before, a London phone saw the owner's
+ * 09:00-17:00 as London hours, and its 16:00 was stored as 18:00 in Israel.
+ */
+const ISRAEL = 'Asia/Jerusalem';
+const hourLong = new AppointmentType('t2', 'Consultation', '200', 'u1', '3600000');
+
+const consultation = Appointment.fromJSON({
+  _id: 'a1', user_id: 'u1', type: { _id: 't2', name: 'Consultation', durationMS: '3600000' },
+  name: 'Dana Levi', status: 'scheduled', phone: '0501234567', timestamp: '0', channelType: 'sms',
+});
+
+const renderIsraeliWidget = (extra: Partial<React.ComponentProps<typeof Schedule>> = {}) =>
+  render(
+    <Schedule
+      config={new ScheduleConfig('Book', 'Pick')}
+      workingDays={Array(7).fill('09:00-17:00') as (string | null)[]}
       user_id="u1"
       phone=""
       businessName="Clinic"
@@ -78,6 +183,7 @@ const renderWidget = (extra: Partial<React.ComponentProps<typeof Schedule>> = {}
       appointmentTypes={[hourLong]}
       header={{ style: 'centered' } as never}
       headerScale={'default' as never}
+      timeZone={ISRAEL}
       {...extra}
     />
   );
@@ -86,7 +192,7 @@ const renderWidget = (extra: Partial<React.ComponentProps<typeof Schedule>> = {}
 const dayButton = (label: string): HTMLElement | undefined =>
   screen.getAllByRole('button').find((button) => (button.getAttribute('aria-label') ?? '').startsWith(`${label} - `));
 
-const times = async (): Promise<string[]> =>
+const slotTimes = async (): Promise<string[]> =>
   (await screen.findAllByRole('button', { name: /^\d{2}:\d{2}$/ })).map((button) => button.textContent!);
 
 const openDay = async (label: string) => {
@@ -102,22 +208,21 @@ const book = async (time: string) => {
   fireEvent.submit(screen.getByLabelText('schedule.form.name').closest('form')!);
   const boxes = await screen.findAllByLabelText('schedule.form.otpDigit');
   expect(boxes).toHaveLength(6);
-  // The phone fills the whole code into the first box.
+  // The phone fills the whole code into the first box (LT-315).
   fireEvent.change(boxes[0], { target: { value: '123456' } });
   await waitFor(() => expect(mocks.createAppointment).toHaveBeenCalledTimes(1));
   return Number(mocks.createAppointment.mock.calls[0][0].timestamp);
 };
 
-describe.each(['Europe/London', 'America/New_York'])('a visitor whose phone is set to %s', (zone) => {
+describe.each(['Europe/London', 'America/New_York'])('an Israeli business, a visitor whose phone is set to %s', (zone) => {
   beforeEach(() => {
-    // Node picks up a changed TZ at once: the device's zone, for real.
     vi.stubEnv('TZ', zone);
     Object.values(mocks).forEach((fn) => fn.mockReset());
     resetVisitorPassForTests();
     mocks.getCalendar.mockResolvedValue({ busy: [], classes: [] });
     mocks.sendOtp.mockResolvedValue({ ok: true });
     mocks.verifyOtp.mockResolvedValue('pt_1');
-    mocks.createAppointment.mockResolvedValue(booked);
+    mocks.createAppointment.mockResolvedValue(consultation);
     vi.useFakeTimers({ toFake: ['Date'] });
     // Tuesday 2026-10-20, 07:00 in Israel.
     vi.setSystemTime(Date.UTC(2026, 9, 20, 4, 0));
@@ -128,16 +233,16 @@ describe.each(['Europe/London', 'America/New_York'])('a visitor whose phone is s
   });
 
   it("is offered the owner's hours as Israel keeps them, and 16:00 books 16:00 in Israel", async () => {
-    renderWidget();
+    renderIsraeliWidget();
     await openDay('Wednesday, October 21');
 
-    expect(await times()).toEqual(['09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00']);
+    expect(await slotTimes()).toEqual(['09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00']);
     // 16:00 in Israel on 2026-10-21 (UTC+3) is 13:00 UTC.
     expect(await book('16:00')).toBe(Date.UTC(2026, 9, 21, 13, 0));
   });
 
   it('books across Israel’s clock change at the Israeli winter offset', async () => {
-    renderWidget();
+    renderIsraeliWidget();
     await openDay('Monday, October 26');
 
     // 16:00 in Israel on 2026-10-26 (UTC+2 since the 25th) is 14:00 UTC.
@@ -145,8 +250,8 @@ describe.each(['Europe/London', 'America/New_York'])('a visitor whose phone is s
   });
 
   it("shows a booking being moved at Israel's time", async () => {
-    const at1600 = Appointment.fromJSON({ ...booked, timestamp: String(Date.UTC(2026, 9, 22, 13, 0)), type: { ...booked.type } });
-    renderWidget({ isUpdating: true, appointmentToUpdate: at1600, onCancelUpdate: () => {} });
+    const at1600 = Appointment.fromJSON({ ...consultation, timestamp: String(Date.UTC(2026, 9, 22, 13, 0)), type: { ...consultation.type } });
+    renderIsraeliWidget({ isUpdating: true, appointmentToUpdate: at1600, onCancelUpdate: () => {} });
 
     // en-US, twelve-hour: 16:00 in Israel, whatever the phone's own clock says.
     expect(await screen.findByText('04:00 PM')).toBeTruthy();
@@ -154,7 +259,7 @@ describe.each(['Europe/London', 'America/New_York'])('a visitor whose phone is s
   });
 });
 
-describe('late in the evening on a phone in New York', () => {
+describe('an Israeli business, late in the evening on a phone in New York', () => {
   beforeEach(() => {
     vi.stubEnv('TZ', 'America/New_York');
     Object.values(mocks).forEach((fn) => fn.mockReset());
@@ -171,7 +276,7 @@ describe('late in the evening on a phone in New York', () => {
 
   it("starts the calendar on Israel's today: Tuesday is over, Wednesday is open from 09:00", async () => {
     // Open until 21:00 in Israel.
-    renderWidget({ workingDays: Array(7).fill('09:00-21:00') });
+    renderIsraeliWidget({ workingDays: Array(7).fill('09:00-21:00') });
     fireEvent.click(await screen.findByText('Consultation'));
     await waitFor(() => expect(screen.getByText('schedule.legend.available')).toBeTruthy());
 
@@ -179,6 +284,6 @@ describe('late in the evening on a phone in New York', () => {
     // midnight in Israel, after closing on a day that is already over.
     expect(dayButton('Tuesday, October 20')!.hasAttribute('disabled')).toBe(true);
     fireEvent.click(dayButton('Wednesday, October 21')!);
-    expect((await times())[0]).toBe('09:00');
+    expect((await slotTimes())[0]).toBe('09:00');
   });
 });

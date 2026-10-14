@@ -346,10 +346,11 @@ describe('the manage page (LT-178)', () => {
     expect(screen.queryByText('manage.label.answers')).toBeNull();
   });
 
-  it("shows the booking at Israel's time on a phone set to New York (LT-315)", async () => {
+  it("shows the booking on the business's clock, not the phone's (LT-315, LT-318)", async () => {
     vi.stubEnv('TZ', 'America/New_York');
     try {
-      // 16:00 in Israel on 2030-06-12 (summer time, UTC+3); 09:00 in New York.
+      // The config names no zone, so the business is in Israel (LT-318's
+      // default). 16:00 there on 2030-06-12 (summer time, UTC+3); 09:00 in New York.
       mocks.getAppointmentById.mockResolvedValue(Appointment.fromJSON({
         _id: 'a1', user_id: 'u1', type: { _id: 't1', name: 'Haircut', price: '80', user_id: 'u1', durationMS: '1800000' },
         name: 'Dana Levi', status: 'scheduled', phone: '0501234567', timestamp: String(Date.UTC(2030, 5, 12, 13, 0)), channelType: 'sms',
@@ -768,6 +769,9 @@ describe('a cancel or move too close to the appointment (LT-205)', () => {
     minCancelTimeMS: 0, businessName: 'Salon', logoImageName: '', contact: { phone: '' },
     workingDays: openAllWeek, vacations: [] as unknown[], dateOverrides: [] as unknown[],
     appointmentTypes: [haircut], bookingFields: catalog,
+    // The times below are on this machine's clock, so the business sits in
+    // the machine's zone (LT-318).
+    timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
   };
 
   beforeEach(() => {
@@ -892,6 +896,9 @@ describe('a cancel or move too close to the appointment (LT-205)', () => {
           isUpdating={isUpdating}
           appointmentToUpdate={isUpdating ? storedAt(NOW.getTime() + 3 * DAY) : undefined}
           onCancelUpdate={isUpdating ? () => {} : undefined}
+          // NOW and the expected times are on this machine's clock, so the
+          // business sits in the machine's zone (LT-318).
+          timeZone={Intl.DateTimeFormat().resolvedOptions().timeZone}
         />
       );
 

@@ -17,7 +17,7 @@ import { googleCalendarUrl, downloadIcs, CalendarEventInput } from '../services/
 import { CancelWindowClosedError, DEFAULT_MIN_CANCEL_TIME_MS, formatCancelWindow } from '../utils/cancelWindow';
 import { fieldsForService } from '../models/BookingField';
 import AnswersEditor from './manage/AnswersEditor';
-import { BUSINESS_TIME_ZONE } from '../utils/businessTime';
+import { resolveTimeZone } from '../utils/businessTime';
 
 
 
@@ -137,8 +137,6 @@ const ManageAppointment: React.FC = () => {
     setIsUpdating(true);
   };
 
-  // The booking as the business's clock reads it (LT-315): Israel's, as in
-  // the SMS — not the zone the customer's phone happens to be set to.
   const formatDate = (timestamp: string) => {
     const date = new Date(parseInt(timestamp));
     return date.toLocaleDateString(language === 'he' ? 'he-IL' : 'en-US', {
@@ -146,7 +144,7 @@ const ManageAppointment: React.FC = () => {
       year: 'numeric',
       month: 'long',
       day: 'numeric',
-      timeZone: BUSINESS_TIME_ZONE,
+      timeZone: resolveTimeZone(config?.timeZone),
     });
   };
 
@@ -156,7 +154,7 @@ const ManageAppointment: React.FC = () => {
       hour: '2-digit',
       minute: '2-digit',
       hour12: language !== 'he',
-      timeZone: BUSINESS_TIME_ZONE,
+      timeZone: resolveTimeZone(config?.timeZone),
     });
   };
 
@@ -201,6 +199,7 @@ const ManageAppointment: React.FC = () => {
         timeToCancel={minCancelTime || config.minCancelTimeMS}
         bookingHorizonDays={config.bookingHorizonDays}
         bookingFields={config.bookingFields}
+        timeZone={config.timeZone}
         user_id={appointment.user_id}
         isUpdating={true}
         appointmentToUpdate={appointment}

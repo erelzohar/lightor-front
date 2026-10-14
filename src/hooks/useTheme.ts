@@ -24,37 +24,40 @@ const FONT_STACK: Record<FontFamily, string> = {
 // Rubik stays in every stack as the fallback: it covers Arabic, which the
 // Hebrew-focused families do not, so Arabic glyphs fall through per-character.
 // Bellefair, Secular One and Varela Round ship Hebrew natively (LT-093).
-const RTL_HEADING_STACK: Record<FontFamily, string> = {
+// Every family draws its own Hebrew face (LT-320): archivo, sora and
+// montserrat used to share Heebo, Assistant and Secular One with inter,
+// raleway and secularone, so picking them in the editor changed nothing.
+export const RTL_HEADING_STACK: Record<FontFamily, string> = {
     inter: "'Heebo', 'Rubik', sans-serif",
     raleway: "'Assistant', 'Rubik', sans-serif",
     playfair: "'Frank Ruhl Libre', 'Rubik', serif",
-    montserrat: "'Secular One', 'Rubik', sans-serif",
+    montserrat: "'Miriam Libre', 'Rubik', sans-serif",
     poppins: "'Rubik', sans-serif",
     anton: "'Karantina', 'Rubik', sans-serif",
-    archivo: "'Heebo', 'Rubik', sans-serif",
+    archivo: "'IBM Plex Sans Hebrew', 'Rubik', sans-serif",
     cormorant: "'David Libre', 'Rubik', serif",
     bellefair: "'Bellefair', 'Rubik', serif",
     secularone: "'Secular One', 'Rubik', sans-serif",
     varela: "'Varela Round', 'Rubik', sans-serif",
-    sora: "'Assistant', 'Rubik', sans-serif",
+    sora: "'Alef', 'Rubik', sans-serif",
     spacemono: "'Cousine', 'Rubik', monospace",
 };
 
-// Secular One is display-only (single weight), so montserrat bodies get Heebo.
+// Secular One is display-only (single weight), so secularone bodies get Heebo.
 // Same reasoning for anton bodies (Karantina is condensed display).
-const RTL_BODY_STACK: Record<FontFamily, string> = {
+export const RTL_BODY_STACK: Record<FontFamily, string> = {
     inter: "'Heebo', 'Rubik', sans-serif",
     raleway: "'Assistant', 'Rubik', sans-serif",
     playfair: "'Frank Ruhl Libre', 'Rubik', serif",
-    montserrat: "'Heebo', 'Rubik', sans-serif",
+    montserrat: "'Miriam Libre', 'Rubik', sans-serif",
     poppins: "'Rubik', sans-serif",
     anton: "'Heebo', 'Rubik', sans-serif",
-    archivo: "'Heebo', 'Rubik', sans-serif",
+    archivo: "'IBM Plex Sans Hebrew', 'Rubik', sans-serif",
     cormorant: "'David Libre', 'Rubik', serif",
     bellefair: "'Bellefair', 'Rubik', serif",
     secularone: "'Heebo', 'Rubik', sans-serif",
     varela: "'Varela Round', 'Rubik', sans-serif",
-    sora: "'Assistant', 'Rubik', sans-serif",
+    sora: "'Alef', 'Rubik', sans-serif",
     spacemono: "'Cousine', 'Rubik', monospace",
 };
 

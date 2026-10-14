@@ -33,11 +33,11 @@ import { QuestionField } from '../../common/QuestionField';
 import { DateButton } from './ScheduleCalendar';
 import { CalendarEventInput, googleCalendarUrl, downloadIcs } from '../../../services/calendarLinks';
 import { parseIntervals, getHoursForDate, DateOverride } from '../../../utils/workingHours';
+import { resolveTimeZone, zonedDateOf, zonedParts, zonedSlotMs, zonedTimeLabel, zonedTimeToMs, zonedToday } from '../../../utils/businessTime';
 import { CancelWindowClosedError, DEFAULT_MIN_CANCEL_TIME_MS, formatCancelWindow } from '../../../utils/cancelWindow';
 import ImagesService from '../../../services/ImagesService';
 import { useEdit, editAttrs, servicePath } from '../../../services/editMode';
 import { handleSquareImageError } from '../../../utils/imageFallback';
-import { BUSINESS_TIME_ZONE, businessClockOf, businessDayEnd, businessDayOf, businessTimeOf, businessToday, sameCalendarDay, slotStart } from '../../../utils/businessTime';
 
 interface BookingFormData {
   name: string;
@@ -97,6 +97,11 @@ interface ScheduleProps {
    */
   onCancelWindowClosed?: (minCancelTimeMS?: number) => void;
   isPreview?: boolean;
+  /**
+   * The business's IANA time zone (LT-318). Every slot, day and time on this
+   * calendar is the business's wall clock, never the visitor's device clock.
+   */
+  timeZone?: string;
 }
 
 
@@ -135,7 +140,8 @@ const withFreshPass = async <T,>(call: () => Promise<T>): Promise<T> => {
 /** The visitor's 6-digit code, as typed, pasted or autofilled (LT-315). */
 const OTP_LENGTH = 6;
 
-const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone, businessName, timeToCancel, vacations, dateOverrides = [], appointmentTypes: offeredTypes, isUpdating, appointmentToUpdate, onUpdateComplete, onCancelUpdate, onCancelWindowClosed, isPreview, hideDescription = false, header, headerScale, scheduleStyle = 'card', tone = 'surface', bookingHorizonDays = DEFAULT_BOOKING_HORIZON_DAYS, bookingFields = NO_BOOKING_FIELDS }) => {
+const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone, businessName, timeToCancel, vacations, dateOverrides = [], appointmentTypes: offeredTypes, isUpdating, appointmentToUpdate, onUpdateComplete, onCancelUpdate, onCancelWindowClosed, isPreview, hideDescription = false, header, headerScale, scheduleStyle = 'card', tone = 'surface', bookingHorizonDays = DEFAULT_BOOKING_HORIZON_DAYS, bookingFields = NO_BOOKING_FIELDS, timeZone }) => {
+  const tz = resolveTimeZone(timeZone);
   const { editing } = useEdit();
   // if (!appointmentTypes) {
   //   throw new Error('No appointment types available');
@@ -155,9 +161,8 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
   };
 
   const { t, language } = useLanguage();
-  // The business's month, not the device's (LT-315): near midnight they differ.
   const [currentMonth, setCurrentMonth] = useState(() => {
-    const today = businessToday();
+    const today = zonedToday(tz);
     return new Date(today.getFullYear(), today.getMonth(), 1);
   });
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
@@ -196,13 +201,12 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
         answers: {}
       });
       setSelectedAppointmentType(appointmentToUpdate.type);
-      // The booking's day and time on the business's clock (LT-315), not the device's.
-      const bookedMs = parseInt(appointmentToUpdate.timestamp);
-      setSelectedDate(businessDayOf(bookedMs));
-      setSelectedTime(businessTimeOf(bookedMs));
+      const timestamp = parseInt(appointmentToUpdate.timestamp);
+      setSelectedDate(zonedDateOf(timestamp, tz));
+      setSelectedTime(zonedTimeLabel(timestamp, tz));
       setChannelType(appointmentToUpdate.channelType || 'sms');
     }
-  }, [isUpdating, appointmentToUpdate]);
+  }, [isUpdating, appointmentToUpdate, tz]);
   const [error, setError] = useState<string | null>(null);
   const [bookedAppointments, setBookedAppointments] = useState<BusySlot[]>([]);
   const [classOccurrences, setClassOccurrences] = useState<ClassOccurrence[]>([]);
@@ -454,16 +458,15 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
         }
       }
 
-      // The picked day and time on the business's clock (LT-315): built in
-      // the device's zone, a phone set to London booked 16:00 as 18:00 in
-      // Israel. A class session carries its own instant.
-      const startMs = selectedSession ? selectedSession.startMs : slotStart(selectedDate, selectedTime);
+      // Proceed to create appointment
+      // The business's wall clock, whatever the visitor's device says (LT-318).
+      const fixedDate = new Date(zonedSlotMs(selectedDate, +selectedTime.split(":")[0], +selectedTime.split(":")[1], tz));
 
       const appointmentToCreate = {
         name: formData.name,
         phone: formData.phone,
         type_id: selectedAppointmentType._id,
-        timestamp: String(startMs),
+        timestamp: fixedDate.valueOf().toString(),
         user_id,
         status: "scheduled",
         channelType
@@ -509,8 +512,8 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
         const durationMS = parseInt(selectedAppointmentType.durationMS) || 0;
         setCalendarEvent({
           title: `${selectedAppointmentType.name} — ${businessName}`,
-          start: startMs,
-          end: startMs + durationMS,
+          start: fixedDate.valueOf(),
+          end: fixedDate.valueOf() + durationMS,
         });
       }
       setTimeout(() => {
@@ -589,7 +592,7 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
     } finally {
       setIsSubmitting(false);
     }
-  }, [formData, validateForm, selectedDate, selectedAppointmentType, selectedTime, selectedSession, user_id, t, resetCalendar, isPreview, isUpdating, appointmentToUpdate, channelType, onUpdateComplete, businessName, scopedFields, askedFields, rememberFields, useRemembered, timeToCancel, onCancelWindowClosed, language, refreshCalendar]);
+  }, [formData, validateForm, selectedDate, selectedAppointmentType, selectedTime, user_id, t, resetCalendar, isPreview, isUpdating, appointmentToUpdate, channelType, onUpdateComplete, businessName, scopedFields, askedFields, rememberFields, useRemembered, timeToCancel, onCancelWindowClosed, language, tz, refreshCalendar]);
 
   const handleInputChange = (field: 'name' | 'phone' | 'verificationCode', value: string) => {
     let processedValue = value;
@@ -695,8 +698,8 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
 
   // The function now accepts the duration of the slot being tested (new appointment)
   const isTimeSlotBooked = useCallback((date: Date, timeStr: string, testDurationMS: number) => {
-    // On the business's clock (LT-315).
-    const testSlotStart = new Date(slotStart(date, timeStr));
+    const [hours, minutes] = timeStr.split(':').map(Number);
+    const testSlotStart = new Date(zonedSlotMs(date, hours, minutes, tz));
     const testSlotEnd = testSlotStart.getTime() + testDurationMS; // End time of the new slot
 
     // A class the owner is teaching blocks a private booking even when nobody
@@ -721,7 +724,7 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
 
       return overlapStart1 || overlapStart2;
     });
-  }, [bookedAppointments, classOccurrences]);
+  }, [bookedAppointments, classOccurrences, tz]);
 
   // Inside the Schedule component definition
 
@@ -734,9 +737,11 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
    * @returns true if there is an overlap with vacation, false otherwise.
    */
   const isTimeInVacation = useCallback((date: Date, timeStr: string, testDurationMS: number) => {
-    // 1. Calculate the New Slot Window (Proposed Appointment), on the
-    // business's clock (LT-315)
-    const testSlotStartTime = slotStart(date, timeStr);
+    // 1. Calculate the New Slot Window (Proposed Appointment)
+    const [hours, minutes] = timeStr.split(':').map(Number);
+    const testSlotStart = new Date(zonedSlotMs(date, hours, minutes, tz));
+
+    const testSlotStartTime = testSlotStart.getTime();
     const testSlotEnd = testSlotStartTime + testDurationMS; // End time of the new slot (e.g., 14:00 + 1hr = 15:00)
 
     // 2. Iterate and Check Against Vacation Periods
@@ -755,7 +760,7 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
 
       return vacationStartsBeforeSlotEnds && slotStartsBeforeVacationEnds;
     });
-  }, [vacations]);
+  }, [vacations, tz]);
 
 
 
@@ -785,13 +790,11 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
         const minute = time % 60;
 
         const timeStr = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
-        // The owner's hours are Israeli wall-clock times (LT-315): 16:00 is
-        // 16:00 in Israel, whatever zone the visitor's phone is set to.
-        const slotMs = slotStart(date, timeStr);
+        const slotDateTime = new Date(zonedSlotMs(date, hour, minute, tz));
 
         if (
-          slotMs > now.getTime() &&
-          slotMs >= earliestMs &&
+          slotDateTime.getTime() > now.getTime() &&
+          slotDateTime.getTime() >= earliestMs &&
           // 🚨 CRITICAL FIX HERE: Pass testDurationMS to isTimeInVacation
           !isTimeInVacation(date, timeStr, testDurationMS) &&
           !isTimeSlotBooked(date, timeStr, testDurationMS)
@@ -802,7 +805,7 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
     }
 
     return slots;
-  }, [workingDays, dateOverrides, isTimeInVacation, isTimeSlotBooked, moveLeadMS]);
+  }, [workingDays, dateOverrides, isTimeInVacation, isTimeSlotBooked, moveLeadMS, tz]);
 
   /**
    * The last calendar day a customer may book, to the end of that day
@@ -810,15 +813,15 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
    * calendar is the precise version and the server the guard.
    */
   const lastBookableDay = useMemo(() => {
-    // Counted in calendar days from the business's today (LT-315).
-    const day = businessToday();
-    day.setDate(day.getDate() + bookingHorizonDays);
-    day.setHours(23, 59, 59, 999);
-    return day;
-  }, [bookingHorizonDays]);
+    const today = zonedToday(tz);
+    return new Date(today.getFullYear(), today.getMonth(), today.getDate() + bookingHorizonDays);
+  }, [bookingHorizonDays, tz]);
 
-  /** The same day's end as an instant on the business's clock, for class sessions. */
-  const lastBookableMs = useMemo(() => businessDayEnd(lastBookableDay), [lastBookableDay]);
+  /** The end of that day on the business's clock, for class sessions. */
+  const lastBookableMs = useMemo(
+    () => zonedTimeToMs(lastBookableDay.getFullYear(), lastBookableDay.getMonth(), lastBookableDay.getDate() + 1, 0, 0, tz) - 1,
+    [lastBookableDay, tz]
+  );
 
   const isBeyondWindow = useCallback(
     (date: Date) => date.getTime() > lastBookableDay.getTime(),
@@ -853,18 +856,26 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
    * time step lists them the way it lists free slots for a private service.
    */
   const sessionsOnDate = useCallback((type: AppointmentType | null, date: Date): ClassOccurrence[] =>
-    // The session's date in Israel (LT-315), not the device's.
-    sessionsFor(type).filter(occurrence => sameCalendarDay(businessDayOf(occurrence.startMs), date)),
-    [sessionsFor]);
+    sessionsFor(type).filter(occurrence => {
+      const start = zonedParts(occurrence.startMs, tz);
+      return start.year === date.getFullYear()
+        && start.month === date.getMonth()
+        && start.day === date.getDate();
+    }), [sessionsFor, tz]);
 
-  const isPast = useCallback((date: Date) => date < businessToday(), []);
+  const isPast = useCallback((date: Date) => date < zonedToday(tz), [tz]);
 
   const isSelected = useCallback((date: Date) => {
     if (!selectedDate) return false;
     return date.getTime() === selectedDate.getTime();
   }, [selectedDate]);
 
-  const isToday = useCallback((date: Date) => sameCalendarDay(date, businessToday()), []);
+  const isToday = useCallback((date: Date) => {
+    const today = zonedToday(tz);
+    return date.getDate() === today.getDate() &&
+      date.getMonth() === today.getMonth() &&
+      date.getFullYear() === today.getFullYear();
+  }, [tz]);
 
   /**
    * The duration the calendar reasons with. Since the service is chosen
@@ -889,16 +900,15 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
    * first day that works, which for a working business is today or tomorrow.
    */
   const hasAnyRoomFor = useCallback((durationMS: number) => {
-    const day = businessToday();
+    const day = zonedToday(tz);
 
     for (let i = 0; i <= bookingHorizonDays; i++) {
-      const candidate = new Date(day);
-      candidate.setDate(day.getDate() + i);
+      const candidate = new Date(day.getFullYear(), day.getMonth(), day.getDate() + i);
       if (getHoursForDate(candidate, workingDays, dateOverrides) === null) continue;
       if (generateTimeSlots(candidate, durationMS).length > 0) return true;
     }
     return false;
-  }, [workingDays, dateOverrides, generateTimeSlots, bookingHorizonDays]);
+  }, [workingDays, dateOverrides, generateTimeSlots, bookingHorizonDays, tz]);
 
   const isAvailable = useCallback((date: Date) => {
     // Past the owner's booking window nothing is bookable (LT-156).
@@ -922,10 +932,10 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
   }, [currentMonth]);
 
   const isCurrentMonth = useCallback(() => {
-    const today = businessToday();
+    const today = zonedToday(tz);
     return currentMonth.getMonth() === today.getMonth() &&
       currentMonth.getFullYear() === today.getFullYear();
-  }, [currentMonth]);
+  }, [currentMonth, tz]);
 
 
   const getAvailabilityStatus = useCallback((date: Date): 'full' | 'limited' | 'none' | 'vacation' | 'past' => {
@@ -1023,9 +1033,9 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
       hour: '2-digit',
       minute: '2-digit',
       hour12: language !== 'he',
-      timeZone: BUSINESS_TIME_ZONE,
+      timeZone: tz,
     });
-  }, [language]);
+  }, [language, tz]);
 
   const handleDateSelect = useCallback((date: Date) => {
     if (!isPast(date) && isAvailable(date)) {
@@ -1076,12 +1086,12 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
     if (type.isClass) {
       const first = sessionsFor(type).find(occurrence => !occurrence.isFull);
       if (first) {
-        const start = businessClockOf(first.startMs);
-        setCurrentMonth(new Date(start.year, start.month, 1));
+        const start = zonedDateOf(first.startMs, tz);
+        setCurrentMonth(new Date(start.getFullYear(), start.getMonth(), 1));
       }
     }
     setBookingStep('date');
-  }, [sessionsFor]);
+  }, [sessionsFor, tz]);
 
   /**
    * Taking a place in a class. The chosen occurrence also fills in the date
@@ -1092,9 +1102,9 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
     if (occurrence.isFull) return;
 
     setSelectedSession(occurrence);
-    setSelectedTime(businessTimeOf(occurrence.startMs));
+    setSelectedTime(zonedTimeLabel(occurrence.startMs, tz));
     setBookingStep('details');
-  }, []);
+  }, [tz]);
 
   const handleTimeSelect = useCallback((time: string) => {
     setSelectedTime(time);
@@ -1189,7 +1199,7 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
     }
 
     // Add first 3 days of next month if we're in last 5 days
-    const today = businessToday();
+    const today = zonedToday(tz);
     const isLastFiveDays = today.getMonth() === month && today.getDate() > daysInMonth - 5;
 
     if (isLastFiveDays) {
@@ -1228,7 +1238,8 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
     isNextMonth,
     formatSelectedDate,
     handleDateSelect,
-    getAvailabilityStatus
+    getAvailabilityStatus,
+    tz
   ]);
 
   /** One of the owner's questions on the details step (LT-178); shared with the lead form (LT-197). */
@@ -1307,7 +1318,7 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
                 <div className="flex items-center gap-3 text-primary dark:text-primary-dark font-semibold">
                   <div className="flex items-center gap-1.5">
                     <CalendarIcon className="w-4 h-4" />
-                    {formatSelectedDate(businessDayOf(parseInt(appointmentToUpdate.timestamp)))}
+                    {formatSelectedDate(zonedDateOf(parseInt(appointmentToUpdate.timestamp), tz))}
                   </div>
                   <div className="w-1.5 h-1.5 rounded-full bg-primary/30 dark:bg-primary-dark/30" />
                   <div className="flex items-center gap-1.5">
@@ -1564,8 +1575,7 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
                     {selectedAppointmentType.isClass ? (
                       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                         {sessionsOnDate(selectedAppointmentType, selectedDate).map((occurrence) => {
-                          // Israel's clock (LT-315), as the owner set the timetable.
-                          const time = businessTimeOf(occurrence.startMs);
+                          const time = zonedTimeLabel(occurrence.startMs, tz);
                           // A number only when places are nearly gone; a new
                           // class must not advertise an empty room.
                           const note = occurrence.isFull
