@@ -296,8 +296,8 @@ const Hero: React.FC<HeroProps> = ({ config, social, phone, isContactVisible, ap
           whileTap={{ scale: 0.95 }}
           aria-label={cta.label}
         >
-          <span className="flex items-center justify-center gap-2">
-            <span {...ed('components.hero.cta')}>{cta.label}</span>
+          <span className="flex items-center justify-center gap-2 text-center">
+            <span {...ed('components.hero.cta')} className="text-center">{cta.label}</span>
             <CtaIcon className="h-5 w-5" aria-hidden="true" />
           </span>
         </motion.a>
@@ -313,8 +313,8 @@ const Hero: React.FC<HeroProps> = ({ config, social, phone, isContactVisible, ap
           whileTap={{ scale: 0.95 }}
           aria-label={cta.label}
         >
-          <span className="flex items-center justify-center gap-2">
-            <span {...ed('components.hero.cta')}>{cta.label}</span>
+          <span className="flex items-center justify-center gap-2 text-center">
+            <span {...ed('components.hero.cta')} className="text-center">{cta.label}</span>
             <CtaIcon className="h-5 w-5" aria-hidden="true" />
           </span>
         </motion.a>
@@ -330,8 +330,8 @@ const Hero: React.FC<HeroProps> = ({ config, social, phone, isContactVisible, ap
           whileTap={{ scale: 0.95 }}
           aria-label={cta.label}
         >
-          <span className="flex items-center justify-center gap-2">
-            <span {...ed('components.hero.cta')}>{cta.label}</span>
+          <span className="flex items-center justify-center gap-2 text-center">
+            <span {...ed('components.hero.cta')} className="text-center">{cta.label}</span>
             <CtaIcon className="h-5 w-5" aria-hidden="true" />
           </span>
         </motion.a>
@@ -363,7 +363,7 @@ const Hero: React.FC<HeroProps> = ({ config, social, phone, isContactVisible, ap
           aria-hidden="true"
         />
         <span className="relative text-center flex items-center justify-center gap-2">
-          <span {...ed('components.hero.cta')}>{cta.label}</span>
+          <span {...ed('components.hero.cta')} className="text-center">{cta.label}</span>
           <CtaIcon className="h-5 w-5" aria-hidden="true" />
         </span>
       </motion.a>

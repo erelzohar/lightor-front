@@ -51,7 +51,7 @@ const BookingBand: React.FC<BookingBandProps> = ({ statement, chips, label, stat
         </div>
         <a
           href="#schedule"
-          className="shrink-0 inline-flex items-center gap-3 bg-light-bg text-light-text dark:bg-dark-bg dark:text-dark-text font-bold px-8 py-4 rounded-design min-h-[3.25rem] hover:opacity-90 transition-opacity"
+          className="shrink-0 inline-flex items-center justify-center text-center gap-3 bg-light-bg text-light-text dark:bg-dark-bg dark:text-dark-text font-bold px-8 py-4 rounded-design min-h-[3.25rem] hover:opacity-90 transition-opacity"
         >
           <Calendar className="h-5 w-5" aria-hidden="true" />
           <EditText path="components.hero.cta">{buttonLabel}</EditText>
