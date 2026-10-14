@@ -19,6 +19,7 @@ import { useIsDarkMode } from '../../hooks/useIsDarkMode';
 import MarqueeStrip from '../MarqueeStrip';
 import { whatsAppHref } from '../../utils/phone';
 import { loadVantaDeps } from './vantaDeps';
+import { CUTOUT_CLASS, useCutout } from '../../utils/cutout';
 
 function hexToInt(hex: string): number {
   return parseInt(hex.replace('#', ''), 16);
@@ -148,6 +149,9 @@ const Hero: React.FC<HeroProps> = ({ config, social, phone, isContactVisible, ap
   const noTrack = language === 'ar';
   const animLevel = design?.animLevel ?? 'full';
   const imageTreatment = design?.imageTreatment ?? 'rounded';
+  // A round logo (see-through corners) shows whole, never boxed (LT-317).
+  const heroSrc = config.heroImageSrc ? ImagesService.getInstance().getImage(config.heroImageSrc) : '';
+  const cutout = useCutout(heroSrc);
   const decor = design?.decor ?? 'none';
   const stampText = stampTextFor(config, businessName);
   const animD = (base: number) => animLevel === 'none' ? 0 : animLevel === 'minimal' ? base * 0.25 : base;
@@ -417,14 +421,16 @@ const Hero: React.FC<HeroProps> = ({ config, social, phone, isContactVisible, ap
 
     // Fully static in every design (LT-079/080/081, Erel's direction): no
     // float, no pulsing glow, no hover scale, no offset frame border. The
-    // neutral drop shadow stays.
+    // neutral drop shadow stays — for a cut-out, along its own outline, with
+    // no shape cut and no box (LT-317: a round logo showed a square).
     return (
       <div className="relative">
         <img {...ed('components.hero.heroImageSrc', 'image')}
           src={ImagesService.getInstance().getImage(config.heroImageSrc)}
           alt="intro"
+          data-cutout={cutout || undefined}
           onError={handleWideImageError}
-          className={`relative ${shapedSize} object-cover ${shapeClass} shadow-2xl`}
+          className={cutout ? `relative ${shapedSize} ${CUTOUT_CLASS}` : `relative ${shapedSize} object-cover ${shapeClass} shadow-2xl`}
         />
       </div>
     );
@@ -611,8 +617,9 @@ const Hero: React.FC<HeroProps> = ({ config, social, phone, isContactVisible, ap
               <img {...ed('components.hero.heroImageSrc', 'image')}
                 src={ImagesService.getInstance().getImage(config.heroImageSrc)}
                 alt={config.title}
+                data-cutout={cutout || undefined}
                 onError={handleWideImageError}
-                className="absolute inset-0 w-full h-full object-cover shadow-2xl"
+                className={cutout ? `absolute inset-0 w-full h-full p-6 ${CUTOUT_CLASS}` : 'absolute inset-0 w-full h-full object-cover shadow-2xl'}
               />
               {config.subtitle && (
                 <span className="absolute bottom-0 start-0 bg-primary dark:bg-primary-dark text-on-primary dark:text-on-primary-dark text-xs font-bold tracking-[0.2em] px-4 py-2 max-w-full truncate">

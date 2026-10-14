@@ -2,6 +2,7 @@ import React from 'react';
 import ImagesService from '../../services/ImagesService';
 import { useEditAttrs } from '../../services/editMode';
 import { useLanguage } from '../../contexts/LanguageContext';
+import { CUTOUT_CLASS, useCutout } from '../../utils/cutout';
 
 interface InterludeProps {
   image: string;
@@ -24,12 +25,14 @@ const Interlude: React.FC<InterludeProps> = ({ image, statement, variant, tone =
   const { language } = useLanguage();
   const displayFont = language === 'he' || language === 'ar' ? 'var(--font-heading-rtl)' : 'var(--font-heading)';
   const src = ImagesService.getInstance().getImage(image);
+  // A round logo here shows whole beside the statement, not cropped (LT-317).
+  const cutout = useCutout(src);
 
   if (variant === 1) {
     return (
       <section aria-label={statement ? undefined : 'photo'} className={`${tone === 'surface' ? 'bg-light-surface dark:bg-dark-surface' : 'bg-light-bg dark:bg-dark-bg'} transition-colors duration-300`}>
         <div className="grid md:grid-cols-2 items-stretch md:h-[28rem]">
-          <img {...ed(imagePath, 'image')} src={src} alt="" className="w-full h-72 md:h-full object-cover" />
+          <img {...ed(imagePath, 'image')} src={src} alt="" data-cutout={cutout || undefined} className={cutout ? `w-full h-72 md:h-full p-10 ${CUTOUT_CLASS}` : 'w-full h-72 md:h-full object-cover'} />
           <div className="p-10 md:p-16 flex items-center overflow-hidden">
             {statement && (
               <p {...ed(statementPath)} className="font-bold leading-tight text-light-text dark:text-dark-text line-clamp-5" style={{ fontFamily: displayFont, fontSize: 'clamp(1.75rem, 3.5vw, 3.25rem)' }}>
