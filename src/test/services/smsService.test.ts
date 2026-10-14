@@ -82,12 +82,25 @@ describe('SmsService', () => {
     it('sends the code with the requested channel and language', async () => {
       mock.onPost(`${globals.messagingUrl}/otp/send`).reply(200, { success: true });
 
-      await expect(smsService.sendOtp('0501234567', 'whatsapp', 'he')).resolves.toBe(true);
+      await expect(smsService.sendOtp('0501234567', 'whatsapp', 'he')).resolves.toEqual({ ok: true });
       expect(JSON.parse(mock.history.post[0].data)).toEqual({
         phoneNumber: '0501234567',
         channelType: 'whatsapp',
         languageCode: 'he',
       });
+    });
+
+    it('tells an expired visitor pass apart from other failures (LT-315)', async () => {
+      // The server asks for the pass before it spends an SMS: a 401 is worth
+      // renewing the pass and asking again, anything else is not.
+      mock.onPost(`${globals.messagingUrl}/otp/send`).replyOnce(401, { success: false });
+      await expect(smsService.sendOtp('0501234567')).resolves.toEqual({ ok: false, status: 401 });
+
+      mock.onPost(`${globals.messagingUrl}/otp/send`).replyOnce(500, { success: false });
+      await expect(smsService.sendOtp('0501234567')).resolves.toEqual({ ok: false, status: 500 });
+
+      mock.onPost(`${globals.messagingUrl}/otp/send`).networkErrorOnce();
+      await expect(smsService.sendOtp('0501234567')).resolves.toEqual({ ok: false });
     });
 
     it('defaults to SMS', async () => {

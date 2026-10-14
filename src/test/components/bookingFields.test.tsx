@@ -150,7 +150,8 @@ const sendCodeButton = (): HTMLElement => screen.getByRole('button', { name: 'sc
 /** Type the six digits; the widget submits on the sixth by itself. */
 const enterOtp = async () => {
   const boxes = await waitFor(() => {
-    const found = screen.getAllByRole('textbox').filter((input) => input.getAttribute('maxlength') === '1');
+    // Each box is named for its place in the code (LT-315).
+    const found = screen.getAllByLabelText('schedule.form.otpDigit');
     expect(found).toHaveLength(6);
     return found;
   });
@@ -211,7 +212,7 @@ describe("the owner's questions on the booking form (LT-178)", () => {
   beforeEach(() => {
     Object.values(mocks).forEach((fn) => fn.mockReset());
     mocks.getCalendar.mockResolvedValue({ busy: [], classes: [] });
-    mocks.sendOtp.mockResolvedValue(true);
+    mocks.sendOtp.mockResolvedValue({ ok: true });
     mocks.verifyOtp.mockResolvedValue('pt_1');
     mocks.createAppointment.mockResolvedValue(booked);
   });
@@ -344,6 +345,25 @@ describe('the manage page (LT-178)', () => {
     expect(await screen.findByText('manage.label.name')).toBeTruthy();
     expect(screen.queryByText('manage.label.answers')).toBeNull();
   });
+
+  it("shows the booking at Israel's time on a phone set to New York (LT-315)", async () => {
+    vi.stubEnv('TZ', 'America/New_York');
+    try {
+      // 16:00 in Israel on 2030-06-12 (summer time, UTC+3); 09:00 in New York.
+      mocks.getAppointmentById.mockResolvedValue(Appointment.fromJSON({
+        _id: 'a1', user_id: 'u1', type: { _id: 't1', name: 'Haircut', price: '80', user_id: 'u1', durationMS: '1800000' },
+        name: 'Dana Levi', status: 'scheduled', phone: '0501234567', timestamp: String(Date.UTC(2030, 5, 12, 13, 0)), channelType: 'sms',
+        answers: [],
+      }));
+
+      render(<ManageAppointment />);
+
+      expect(await screen.findByText('04:00 PM')).toBeTruthy();
+      expect(screen.getByText('Wednesday, June 12, 2030')).toBeTruthy();
+    } finally {
+      vi.unstubAllEnvs();
+    }
+  });
 });
 
 describe('the customer corrects their answers (LT-217)', () => {
@@ -455,7 +475,7 @@ describe('details kept from the last booking (LT-217)', () => {
   beforeEach(() => {
     Object.values(mocks).forEach((fn) => fn.mockReset());
     mocks.getCalendar.mockResolvedValue({ busy: [], classes: [] });
-    mocks.sendOtp.mockResolvedValue(true);
+    mocks.sendOtp.mockResolvedValue({ ok: true });
     mocks.verifyOtp.mockResolvedValue('pt_1');
     mocks.createAppointment.mockResolvedValue(booked);
     // Not offered for now (LT-224); the flow under it stays tested.
@@ -533,7 +553,7 @@ describe('the address question with Google suggestions (LT-191)', () => {
   beforeEach(() => {
     Object.values(mocks).forEach((fn) => fn.mockReset());
     mocks.getCalendar.mockResolvedValue({ busy: [], classes: [] });
-    mocks.sendOtp.mockResolvedValue(true);
+    mocks.sendOtp.mockResolvedValue({ ok: true });
     mocks.verifyOtp.mockResolvedValue('pt_1');
     mocks.createAppointment.mockResolvedValue(booked);
     mocks.loadPlaces.mockResolvedValue(undefined);
@@ -753,7 +773,7 @@ describe('a cancel or move too close to the appointment (LT-205)', () => {
   beforeEach(() => {
     Object.values(mocks).forEach((fn) => fn.mockReset());
     mocks.getCalendar.mockResolvedValue({ busy: [], classes: [] });
-    mocks.sendOtp.mockResolvedValue(true);
+    mocks.sendOtp.mockResolvedValue({ ok: true });
     mocks.verifyOtp.mockResolvedValue('pt_1');
     mocks.getWebConfig.mockResolvedValue(site);
   });
@@ -817,6 +837,14 @@ describe('a cancel or move too close to the appointment (LT-205)', () => {
     expect(await screen.findByText('manage.message.too_late (1 hour)')).toBeTruthy();
     expect(screen.queryByText('manage.modal.confirm.title')).toBeNull();
     expect(mocks.updateAppointment).not.toHaveBeenCalled();
+  });
+
+  it('names a short window in words, not as a fraction of an hour (LT-315)', async () => {
+    mocks.getWebConfig.mockResolvedValue({ ...site, minCancelTimeMS: 30 * 60_000 });
+    mocks.getAppointmentById.mockResolvedValue(storedAt(Date.now() + 10 * 60_000));
+    render(<ManageAppointment />);
+
+    expect(await screen.findByText('manage.message.not_cancellable_full (30 minutes)')).toBeTruthy();
   });
 
   describe('moving the booking', () => {

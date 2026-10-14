@@ -62,7 +62,8 @@
     "error": {
       "sendOtp": "Error al enviar el código",
       "invalidOtp": "Código de verificación inválido",
-      "too_soon": "Este horario está demasiado próximo para mover la cita — elige uno que empiece dentro de {{duration}} como mínimo."
+      "too_soon": "Este horario está demasiado próximo para mover la cita — elige uno que empiece dentro de {{duration}} como mínimo.",
+      "passExpired": "Tu sesión ha caducado. Actualiza la página e inténtalo de nuevo."
     },
     "conflictError": "Este horario ya está ocupado, por favor elige otro",
     "alreadyBookedError": "Este número ya está inscrito en esta clase.",
@@ -90,7 +91,8 @@
         "optional": "opcional",
         "noAddresses": "No hay direcciones coincidentes",
         "addressSuggestions": "Sugerencias de direcciones"
-      }
+      },
+      "otpDigit": "Dígito {{index}} de {{total}}"
     },
     "validation": {
       "name": "Por favor ingresa tu nombre completo",
@@ -140,7 +142,9 @@
     "before": "antes de la cita",
     "hours_and_minutes": "{{hours}} horas y {{minutes}} minutos",
     "currency": "₪",
-    "toggle_dark_mode": "Cambiar a modo oscuro"
+    "toggle_dark_mode": "Cambiar a modo oscuro",
+    "actions": "Acciones",
+    "change_language": "Cambiar idioma"
   },
   "day": {
     "0": "Domingo",
@@ -167,7 +171,8 @@
     "72hours": "72 horas",
     "week": "Una semana",
     "2weeks": "Dos semanas",
-    "closed": "Cerrado"
+    "closed": "Cerrado",
+    "minutes": "min"
   },
   "contact": {
     "title": "Contáctanos",
@@ -246,7 +251,7 @@
     "message": {
       "cancellable": "Puedes cancelar o actualizar esta cita",
       "not_cancellable": "No se puede cancelar con menos de ",
-      "not_cancellable_full": "No se puede cancelar con menos de {{hours}} horas de antelación",
+      "not_cancellable_full": "No se puede cancelar con menos de {{duration}} de antelación",
       "hours_before": " horas antes",
       "time_until": "Faltan {{time}} para la cita",
       "started": "La cita ya ha comenzado",
@@ -346,5 +351,9 @@
       "thanks": "¡Gracias! Tu informe llegó al equipo de Lightor y lo revisaremos pronto.",
       "limit": "Ya enviaste varios informes hoy, ¡gracias! Vuelve a intentarlo mañana."
     }
+  },
+  "blocks": {
+    "before": "Antes",
+    "after": "Después"
   }
 }

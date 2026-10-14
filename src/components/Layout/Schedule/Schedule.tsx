@@ -10,8 +10,8 @@ import { BusySlot } from '../../../models/BusySlot';
 import { ClassOccurrence } from '../../../models/ClassOccurrence';
 import { ScheduleConfig } from '../../../models/ScheduleConfig';
 import AppointmentService from '../../../services/AppointmentService';
-import { visitorPass, useVisitorPass } from '../../../services/visitorPass';
-import smsService from '../../../services/SmsService';
+import { visitorPass, useVisitorPass, isPassRefused } from '../../../services/visitorPass';
+import smsService, { type OtpSendResult } from '../../../services/SmsService';
 import { Loader2 } from 'lucide-react';
 import { Vacation } from '../../../models/Vacation';
 import SectionHeading from '../SectionHeading';
@@ -37,6 +37,7 @@ import { CancelWindowClosedError, DEFAULT_MIN_CANCEL_TIME_MS, formatCancelWindow
 import ImagesService from '../../../services/ImagesService';
 import { useEdit, editAttrs, servicePath } from '../../../services/editMode';
 import { handleSquareImageError } from '../../../utils/imageFallback';
+import { BUSINESS_TIME_ZONE, businessClockOf, businessDayEnd, businessDayOf, businessTimeOf, businessToday, sameCalendarDay, slotStart } from '../../../utils/businessTime';
 
 interface BookingFormData {
   name: string;
@@ -104,6 +105,36 @@ const DEFAULT_BOOKING_HORIZON_DAYS = 60;
 /** A stable "no questions" so the scoped list is not recomputed every render. */
 const NO_BOOKING_FIELDS: BookingField[] = [];
 
+/** How long a refused request waits for a fresh visitor pass, as the contact form does. */
+const PASS_WAIT_MS = 20_000;
+/** No fresh pass came, or the server refused the fresh one too (LT-315). */
+const PASS_EXPIRED = 'PASS_EXPIRED';
+
+/**
+ * A request that needs the visitor pass (LT-315). The pass lives an hour,
+ * and a visitor who left the tab open came back to a 401 on every try until
+ * they reloaded. Now a 401 drops the pass — the section shows its Turnstile
+ * again meanwhile and keeps everything typed — and, once a fresh one is in,
+ * the request goes once more. A booking resends the same phone token: it is
+ * good for 15 minutes, and the code that earned it is spent.
+ */
+const withFreshPass = async <T,>(call: () => Promise<T>): Promise<T> => {
+  try {
+    return await call();
+  } catch (err) {
+    if (!isPassRefused(err)) throw err;
+  }
+  if (!(await visitorPass.renew(PASS_WAIT_MS))) throw new Error(PASS_EXPIRED);
+  try {
+    return await call();
+  } catch (err) {
+    throw isPassRefused(err) ? new Error(PASS_EXPIRED) : err;
+  }
+};
+
+/** The visitor's 6-digit code, as typed, pasted or autofilled (LT-315). */
+const OTP_LENGTH = 6;
+
 const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone, businessName, timeToCancel, vacations, dateOverrides = [], appointmentTypes: offeredTypes, isUpdating, appointmentToUpdate, onUpdateComplete, onCancelUpdate, onCancelWindowClosed, isPreview, hideDescription = false, header, headerScale, scheduleStyle = 'card', tone = 'surface', bookingHorizonDays = DEFAULT_BOOKING_HORIZON_DAYS, bookingFields = NO_BOOKING_FIELDS }) => {
   const { editing } = useEdit();
   // if (!appointmentTypes) {
@@ -124,9 +155,10 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
   };
 
   const { t, language } = useLanguage();
+  // The business's month, not the device's (LT-315): near midnight they differ.
   const [currentMonth, setCurrentMonth] = useState(() => {
-    const now = new Date();
-    return new Date(now.getFullYear(), now.getMonth(), 1);
+    const today = businessToday();
+    return new Date(today.getFullYear(), today.getMonth(), 1);
   });
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [selectedTime, setSelectedTime] = useState('');
@@ -164,12 +196,10 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
         answers: {}
       });
       setSelectedAppointmentType(appointmentToUpdate.type);
-      const date = new Date(parseInt(appointmentToUpdate.timestamp));
-      date.setHours(0, 0, 0, 0);
-      setSelectedDate(date);
-      const hours = new Date(parseInt(appointmentToUpdate.timestamp)).getHours().toString().padStart(2, '0');
-      const minutes = new Date(parseInt(appointmentToUpdate.timestamp)).getMinutes().toString().padStart(2, '0');
-      setSelectedTime(`${hours}:${minutes}`);
+      // The booking's day and time on the business's clock (LT-315), not the device's.
+      const bookedMs = parseInt(appointmentToUpdate.timestamp);
+      setSelectedDate(businessDayOf(bookedMs));
+      setSelectedTime(businessTimeOf(bookedMs));
       setChannelType(appointmentToUpdate.channelType || 'sms');
     }
   }, [isUpdating, appointmentToUpdate]);
@@ -190,19 +220,59 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
 
 
 
-  useEffect(() => {
-    if (error) throw error;
-    if (!isAuthorized || isPreview) return;
+  // Whether this page already dropped an expired pass for the calendar and is
+  // waiting on the fresh one — so a second 401 is reported, not looped on.
+  const calendarPassRenewed = useRef(false);
 
+  // A failed fetch is a line under the widget (LT-315). It used to be thrown
+  // on the effect's next run — when the visitor pass changed — and the
+  // section's boundary replaced the whole booking widget with "Something
+  // went wrong".
+  useEffect(() => {
+    if (!isAuthorized || isPreview) return;
+    let live = true;
+
+    AppointmentService.getInstance()
+      .getCalendar(Date.now())
+      .then(({ busy, classes }) => {
+        if (!live) return;
+        calendarPassRenewed.current = false;
+        setBookedAppointments(busy);
+        setClassOccurrences(classes);
+      })
+      .catch((err) => {
+        if (!live) return;
+        // The pass expired (LT-315): drop it once. The section asks Turnstile
+        // again, and this effect runs again when the fresh pass is in.
+        if (isPassRefused(err) && !calendarPassRenewed.current) {
+          calendarPassRenewed.current = true;
+          visitorPass.invalidate();
+          return;
+        }
+        setError(t(isPassRefused(err) ? 'schedule.error.passExpired' : 'schedule.genericError'));
+      });
+
+    return () => {
+      live = false;
+    };
+  // `t` is left out on purpose: a language switch is no reason to refetch.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAuthorized, user_id, isPreview]);
+
+  /**
+   * Fetch busy times AND the class timetable again (LT-315, review M4). After
+   * a booking, or a class that just filled up, the busy list alone left the
+   * full session on offer: its places live on the class occurrences.
+   */
+  const refreshCalendar = useCallback(() => {
     AppointmentService.getInstance()
       .getCalendar(Date.now())
       .then(({ busy, classes }) => {
         setBookedAppointments(busy);
         setClassOccurrences(classes);
       })
-      .catch((err) => setError(err.message || String(err)));
-
-  }, [isAuthorized, user_id, isPreview]);
+      .catch(console.error);
+  }, []);
 
   useEffect(() => {
     let interval: NodeJS.Timeout;
@@ -304,6 +374,18 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
     setBookingStep(isUpdating ? 'date' : 'type');
   }, [isUpdating]);
 
+  /**
+   * Ask for the code. The server asks for the visitor pass before it spends
+   * an SMS (LT-315), so a 401 means nothing was sent: renew the pass and ask
+   * once more.
+   */
+  const sendCode = useCallback(async (): Promise<OtpSendResult> => {
+    const first = await smsService.sendOtp(formData.phone, channelType);
+    if (first.ok || first.status !== 401) return first;
+    if (!(await visitorPass.renew(PASS_WAIT_MS))) return first;
+    return smsService.sendOtp(formData.phone, channelType);
+  }, [formData.phone, channelType]);
+
   const handleDetailsSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validateForm()) return;
@@ -319,13 +401,13 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
         setResendTimer(30);
         setBookingStep('verification');
       } else {
-        const success = await smsService.sendOtp(formData.phone, channelType);
-        if (success) {
+        const sent = await sendCode();
+        if (sent.ok) {
           setError(null);
           setResendTimer(30);
           setBookingStep('verification');
         } else {
-          setError(t('schedule.error.sendOtp'));
+          setError(t(sent.status === 401 ? 'schedule.error.passExpired' : 'schedule.error.sendOtp'));
         }
       }
     } catch (error) {
@@ -333,17 +415,18 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
     } finally {
       setIsSubmitting(false);
     }
-  }, [formData, validateForm, selectedDate, selectedAppointmentType, t, language, channelType, isPreview]);
+  }, [validateForm, selectedDate, selectedAppointmentType, t, isPreview, sendCode]);
 
   const handleResendCode = useCallback(async () => {
     setResendTimer(30);
     if (isPreview) return;
     try {
-      await smsService.sendOtp(formData.phone, channelType);
+      const sent = await sendCode();
+      if (!sent.ok && sent.status === 401) setError(t('schedule.error.passExpired'));
     } catch (error) {
       console.error("Failed to resend code");
     }
-  }, [formData.phone, channelType, isPreview]);
+  }, [isPreview, sendCode, t]);
 
   const handleVerificationSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
@@ -371,16 +454,16 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
         }
       }
 
-      // Proceed to create appointment
-      const fixedDate = new Date(selectedDate);
-      fixedDate.setHours(+selectedTime.split(":")[0])
-      fixedDate.setMinutes(+selectedTime.split(":")[1])
+      // The picked day and time on the business's clock (LT-315): built in
+      // the device's zone, a phone set to London booked 16:00 as 18:00 in
+      // Israel. A class session carries its own instant.
+      const startMs = selectedSession ? selectedSession.startMs : slotStart(selectedDate, selectedTime);
 
       const appointmentToCreate = {
         name: formData.name,
         phone: formData.phone,
         type_id: selectedAppointmentType._id,
-        timestamp: fixedDate.valueOf().toString(),
+        timestamp: String(startMs),
         user_id,
         status: "scheduled",
         channelType
@@ -393,21 +476,22 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
         // suggestions (LT-191): the server takes label and type from the
         // owner's catalog. A reschedule sends the stored appointment back
         // whole, answers included, and the server leaves them untouched.
-        const res = isUpdating && appointmentToUpdate
-          ? await service.updateAppointment({ ...appointmentToUpdate, ...appointmentToCreate })
-          : await service.createAppointment(
+        const res = await withFreshPass(() => (isUpdating && appointmentToUpdate
+          ? service.updateAppointment({ ...appointmentToUpdate, ...appointmentToCreate })
+          : service.createAppointment(
               {
                 ...appointmentToCreate,
                 answers: answersForRequest(askedFields, formData.answers),
                 ...(useRemembered && rememberFields.length > 0 ? { useRemembered: true } : {}),
               },
               phoneToken
-            );
+            )));
 
         // Refetch rather than patching local state: busy slots are anonymous
         // (no id to match on for the reschedule case), and a refetch also picks
-        // up anything booked by someone else while this form was open.
-        service.getAvailability(Date.now()).then(setBookedAppointments).catch(console.error);
+        // up anything booked by someone else while this form was open — and,
+        // for a class, the place just taken (LT-315).
+        refreshCalendar();
 
         if (isUpdating && onUpdateComplete) {
           onUpdateComplete(res);
@@ -425,8 +509,8 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
         const durationMS = parseInt(selectedAppointmentType.durationMS) || 0;
         setCalendarEvent({
           title: `${selectedAppointmentType.name} — ${businessName}`,
-          start: fixedDate.valueOf(),
-          end: fixedDate.valueOf() + durationMS,
+          start: startMs,
+          end: startMs + durationMS,
         });
       }
       setTimeout(() => {
@@ -438,16 +522,18 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
       // is nothing to pick again.
       if (error && error.message === "ALREADY_BOOKED") setError(t('schedule.alreadyBookedError'));
       else if (error && (error.message === "SLOT_TAKEN" || error.message === "CLASS_FULL")) {
-        AppointmentService.getInstance()
-          .getAvailability(Date.now())
-          .then(setBookedAppointments)
-          .catch(console.error);
+        // Busy times and the class places both (LT-315): the busy list alone
+        // kept a full session on offer.
+        refreshCalendar();
         setError(t(error.message === "CLASS_FULL" ? 'schedule.classFullError' : 'schedule.conflictError'));
         setTimeout(() => {
           resetCalendar();
         }, 5000);
       }
       else if (error && error.message === "CUSTOMER_BLOCKED") setError(t('schedule.blockedError'));
+      // No fresh visitor pass, or the fresh one refused too (LT-315): a reload
+      // is what is left.
+      else if (error && error.message === PASS_EXPIRED) setError(t('schedule.error.passExpired'));
       else if (error instanceof CancelWindowClosedError) {
         // The owner's cancellation window (LT-205). The server judges a move
         // by the time it leaves and the time it takes; which one failed
@@ -503,7 +589,7 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
     } finally {
       setIsSubmitting(false);
     }
-  }, [formData, validateForm, selectedDate, selectedAppointmentType, selectedTime, user_id, t, resetCalendar, isPreview, isUpdating, appointmentToUpdate, channelType, onUpdateComplete, businessName, scopedFields, askedFields, rememberFields, useRemembered, timeToCancel, onCancelWindowClosed, language]);
+  }, [formData, validateForm, selectedDate, selectedAppointmentType, selectedTime, selectedSession, user_id, t, resetCalendar, isPreview, isUpdating, appointmentToUpdate, channelType, onUpdateComplete, businessName, scopedFields, askedFields, rememberFields, useRemembered, timeToCancel, onCancelWindowClosed, language, refreshCalendar]);
 
   const handleInputChange = (field: 'name' | 'phone' | 'verificationCode', value: string) => {
     let processedValue = value;
@@ -540,20 +626,54 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
   const lastSubmittedCode = useRef<string | null>(null);
   const otpInputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
+  /**
+   * The code arriving whole (LT-315): iOS and Android offer the SMS code on
+   * the keyboard and fill it into the first box, and a pasted code lands in
+   * whichever box has focus. Either way it is spread across the boxes — from
+   * the first one when it is a whole code — and a full code submits itself.
+   */
+  const fillOtp = (from: number, digits: string) => {
+    const chars = (formData.verificationCode || '').split('');
+    while (chars.length < OTP_LENGTH) chars.push('');
+    const start = digits.length >= OTP_LENGTH ? 0 : from;
+    digits.slice(0, OTP_LENGTH - start).split('').forEach((digit, i) => { chars[start + i] = digit; });
+    handleInputChange('verificationCode', chars.join('').slice(0, OTP_LENGTH));
+    otpInputRefs.current[Math.min(start + digits.length, OTP_LENGTH - 1)]?.focus();
+  };
+
   const handleOtpChange = (index: number, value: string) => {
+    const digits = value.replace(/\D/g, '');
+    if (digits.length > 1) {
+      const old = formData.verificationCode[index];
+      // The first box takes a whole code, so typing over its digit leaves
+      // two in it for a moment: the new one wins.
+      if (digits.length === 2 && value.length === 2 && old && digits.includes(old)) {
+        value = digits[0] === old ? digits[1] : digits[0];
+      } else {
+        fillOtp(index, digits);
+        return;
+      }
+    }
     if (!/^\d*$/.test(value)) return;
 
     const chars = (formData.verificationCode || '').split('');
-    while (chars.length < 6) chars.push('');
+    while (chars.length < OTP_LENGTH) chars.push('');
 
     chars[index] = value;
-    const newCode = chars.join('').slice(0, 6);
+    const newCode = chars.join('').slice(0, OTP_LENGTH);
 
     handleInputChange('verificationCode', newCode);
 
-    if (value && index < 5) {
+    if (value && index < OTP_LENGTH - 1) {
       otpInputRefs.current[index + 1]?.focus();
     }
+  };
+
+  const handleOtpPaste = (index: number, e: React.ClipboardEvent<HTMLInputElement>) => {
+    const digits = e.clipboardData.getData('text').replace(/\D/g, '');
+    if (!digits) return;
+    e.preventDefault();
+    fillOtp(index, digits);
   };
 
   const handleOtpKeyDown = (index: number, e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -575,9 +695,8 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
 
   // The function now accepts the duration of the slot being tested (new appointment)
   const isTimeSlotBooked = useCallback((date: Date, timeStr: string, testDurationMS: number) => {
-    const [hours, minutes] = timeStr.split(':').map(Number);
-    const testSlotStart = new Date(date);
-    testSlotStart.setHours(hours, minutes, 0, 0);
+    // On the business's clock (LT-315).
+    const testSlotStart = new Date(slotStart(date, timeStr));
     const testSlotEnd = testSlotStart.getTime() + testDurationMS; // End time of the new slot
 
     // A class the owner is teaching blocks a private booking even when nobody
@@ -615,12 +734,9 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
    * @returns true if there is an overlap with vacation, false otherwise.
    */
   const isTimeInVacation = useCallback((date: Date, timeStr: string, testDurationMS: number) => {
-    // 1. Calculate the New Slot Window (Proposed Appointment)
-    const [hours, minutes] = timeStr.split(':').map(Number);
-    const testSlotStart = new Date(date);
-    testSlotStart.setHours(hours, minutes, 0, 0);
-
-    const testSlotStartTime = testSlotStart.getTime();
+    // 1. Calculate the New Slot Window (Proposed Appointment), on the
+    // business's clock (LT-315)
+    const testSlotStartTime = slotStart(date, timeStr);
     const testSlotEnd = testSlotStartTime + testDurationMS; // End time of the new slot (e.g., 14:00 + 1hr = 15:00)
 
     // 2. Iterate and Check Against Vacation Periods
@@ -669,12 +785,13 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
         const minute = time % 60;
 
         const timeStr = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
-        const slotDateTime = new Date(date);
-        slotDateTime.setHours(hour, minute, 0, 0);
+        // The owner's hours are Israeli wall-clock times (LT-315): 16:00 is
+        // 16:00 in Israel, whatever zone the visitor's phone is set to.
+        const slotMs = slotStart(date, timeStr);
 
         if (
-          slotDateTime.getTime() > now.getTime() &&
-          slotDateTime.getTime() >= earliestMs &&
+          slotMs > now.getTime() &&
+          slotMs >= earliestMs &&
           // 🚨 CRITICAL FIX HERE: Pass testDurationMS to isTimeInVacation
           !isTimeInVacation(date, timeStr, testDurationMS) &&
           !isTimeSlotBooked(date, timeStr, testDurationMS)
@@ -693,11 +810,15 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
    * calendar is the precise version and the server the guard.
    */
   const lastBookableDay = useMemo(() => {
-    const day = new Date();
-    day.setHours(23, 59, 59, 999);
+    // Counted in calendar days from the business's today (LT-315).
+    const day = businessToday();
     day.setDate(day.getDate() + bookingHorizonDays);
+    day.setHours(23, 59, 59, 999);
     return day;
   }, [bookingHorizonDays]);
+
+  /** The same day's end as an instant on the business's clock, for class sessions. */
+  const lastBookableMs = useMemo(() => businessDayEnd(lastBookableDay), [lastBookableDay]);
 
   const isBeyondWindow = useCallback(
     (date: Date) => date.getTime() > lastBookableDay.getTime(),
@@ -722,9 +843,9 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
         occurrence.type_id === type._id
         && occurrence.startMs > now
         && occurrence.startMs >= now + moveLeadMS
-        && occurrence.startMs <= lastBookableDay.getTime())
+        && occurrence.startMs <= lastBookableMs)
       .sort((a, b) => a.startMs - b.startMs);
-  }, [classOccurrences, lastBookableDay, moveLeadMS]);
+  }, [classOccurrences, lastBookableMs, moveLeadMS]);
 
   /**
    * The runs of a class on one calendar day, soonest first (LT-155). The
@@ -732,30 +853,18 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
    * time step lists them the way it lists free slots for a private service.
    */
   const sessionsOnDate = useCallback((type: AppointmentType | null, date: Date): ClassOccurrence[] =>
-    sessionsFor(type).filter(occurrence => {
-      const start = new Date(occurrence.startMs);
-      return start.getFullYear() === date.getFullYear()
-        && start.getMonth() === date.getMonth()
-        && start.getDate() === date.getDate();
-    }), [sessionsFor]);
+    // The session's date in Israel (LT-315), not the device's.
+    sessionsFor(type).filter(occurrence => sameCalendarDay(businessDayOf(occurrence.startMs), date)),
+    [sessionsFor]);
 
-  const isPast = useCallback((date: Date) => {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    return date < today;
-  }, []);
+  const isPast = useCallback((date: Date) => date < businessToday(), []);
 
   const isSelected = useCallback((date: Date) => {
     if (!selectedDate) return false;
     return date.getTime() === selectedDate.getTime();
   }, [selectedDate]);
 
-  const isToday = useCallback((date: Date) => {
-    const today = new Date();
-    return date.getDate() === today.getDate() &&
-      date.getMonth() === today.getMonth() &&
-      date.getFullYear() === today.getFullYear();
-  }, []);
+  const isToday = useCallback((date: Date) => sameCalendarDay(date, businessToday()), []);
 
   /**
    * The duration the calendar reasons with. Since the service is chosen
@@ -780,8 +889,7 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
    * first day that works, which for a working business is today or tomorrow.
    */
   const hasAnyRoomFor = useCallback((durationMS: number) => {
-    const day = new Date();
-    day.setHours(0, 0, 0, 0);
+    const day = businessToday();
 
     for (let i = 0; i <= bookingHorizonDays; i++) {
       const candidate = new Date(day);
@@ -814,7 +922,7 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
   }, [currentMonth]);
 
   const isCurrentMonth = useCallback(() => {
-    const today = new Date();
+    const today = businessToday();
     return currentMonth.getMonth() === today.getMonth() &&
       currentMonth.getFullYear() === today.getFullYear();
   }, [currentMonth]);
@@ -915,6 +1023,7 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
       hour: '2-digit',
       minute: '2-digit',
       hour12: language !== 'he',
+      timeZone: BUSINESS_TIME_ZONE,
     });
   }, [language]);
 
@@ -967,8 +1076,8 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
     if (type.isClass) {
       const first = sessionsFor(type).find(occurrence => !occurrence.isFull);
       if (first) {
-        const start = new Date(first.startMs);
-        setCurrentMonth(new Date(start.getFullYear(), start.getMonth(), 1));
+        const start = businessClockOf(first.startMs);
+        setCurrentMonth(new Date(start.year, start.month, 1));
       }
     }
     setBookingStep('date');
@@ -981,12 +1090,9 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
    */
   const handleSessionSelect = useCallback((occurrence: ClassOccurrence) => {
     if (occurrence.isFull) return;
-    const start = new Date(occurrence.startMs);
 
     setSelectedSession(occurrence);
-    setSelectedTime(
-      `${start.getHours().toString().padStart(2, '0')}:${start.getMinutes().toString().padStart(2, '0')}`
-    );
+    setSelectedTime(businessTimeOf(occurrence.startMs));
     setBookingStep('details');
   }, []);
 
@@ -1083,7 +1189,7 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
     }
 
     // Add first 3 days of next month if we're in last 5 days
-    const today = new Date();
+    const today = businessToday();
     const isLastFiveDays = today.getMonth() === month && today.getDate() > daysInMonth - 5;
 
     if (isLastFiveDays) {
@@ -1201,7 +1307,7 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
                 <div className="flex items-center gap-3 text-primary dark:text-primary-dark font-semibold">
                   <div className="flex items-center gap-1.5">
                     <CalendarIcon className="w-4 h-4" />
-                    {formatSelectedDate(new Date(parseInt(appointmentToUpdate.timestamp)))}
+                    {formatSelectedDate(businessDayOf(parseInt(appointmentToUpdate.timestamp)))}
                   </div>
                   <div className="w-1.5 h-1.5 rounded-full bg-primary/30 dark:bg-primary-dark/30" />
                   <div className="flex items-center gap-1.5">
@@ -1458,8 +1564,8 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
                     {selectedAppointmentType.isClass ? (
                       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                         {sessionsOnDate(selectedAppointmentType, selectedDate).map((occurrence) => {
-                          const start = new Date(occurrence.startMs);
-                          const time = `${start.getHours().toString().padStart(2, '0')}:${start.getMinutes().toString().padStart(2, '0')}`;
+                          // Israel's clock (LT-315), as the owner set the timetable.
+                          const time = businessTimeOf(occurrence.startMs);
                           // A number only when places are nearly gone; a new
                           // class must not advertise an empty room.
                           const note = occurrence.isFull
@@ -1667,16 +1773,22 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
                   </div>
                   <form onSubmit={handleVerificationSubmit}>
                     <div className="flex justify-center gap-1 sm:gap-2 mb-2 mx-1" dir="ltr">
-                      {[0, 1, 2, 3, 4, 5].map((index) => (
+                      {Array.from({ length: OTP_LENGTH }, (_, index) => (
                         <input
                           key={index.toString()}
                           ref={(el) => (otpInputRefs.current[index] = el)}
                           type="text"
                           inputMode="numeric"
                           pattern="[0-9]*"
-                          maxLength={1}
+                          // The first box is where the phone offers the SMS
+                          // code (LT-315), so it takes a whole one; the
+                          // rest hold a digit each.
+                          autoComplete={index === 0 ? 'one-time-code' : 'off'}
+                          maxLength={index === 0 ? OTP_LENGTH : 1}
+                          aria-label={t('schedule.form.otpDigit', { index: index + 1, total: OTP_LENGTH })}
                           value={formData.verificationCode[index] || ''}
                           onChange={(e) => handleOtpChange(index, e.target.value)}
+                          onPaste={(e) => handleOtpPaste(index, e)}
                           onKeyDown={(e) => handleOtpKeyDown(index, e)}
                           className={`w-11 h-14 sm:w-14 sm:h-16 text-center text-xl font-bold rounded-lg border-2 shadow-sm focus:shadow-md transition-all outline-none
                           ${formErrors.verificationCode

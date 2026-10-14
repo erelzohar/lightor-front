@@ -62,7 +62,8 @@
     "error": {
       "sendOtp": "Error sending verification code",
       "invalidOtp": "Invalid verification code",
-      "too_soon": "That time is too soon to move your appointment to — choose a time at least {{duration}} from now."
+      "too_soon": "That time is too soon to move your appointment to — choose a time at least {{duration}} from now.",
+      "passExpired": "Your session has expired. Please refresh the page and try again."
     },
     "conflictError": "The appointment has been taken please try another one",
     "alreadyBookedError": "This number is already registered for this class.",
@@ -90,7 +91,8 @@
         "optional": "optional",
         "noAddresses": "No matching addresses",
         "addressSuggestions": "Address suggestions"
-      }
+      },
+      "otpDigit": "Digit {{index}} of {{total}}"
     },
     "legend": {
       "available": "Available",
@@ -140,7 +142,9 @@
     "before": "before the appointment",
     "hours_and_minutes": "{{hours}} hours and {{minutes}} minutes",
     "currency": "₪",
-    "toggle_dark_mode": "Toggle dark mode"
+    "toggle_dark_mode": "Toggle dark mode",
+    "actions": "Actions",
+    "change_language": "Change language"
   },
   "day": {
     "0": "Sunday",
@@ -167,7 +171,8 @@
     "72hours": "72 hours",
     "week": "A week",
     "2weeks": "Two weeks",
-    "closed": "Closed"
+    "closed": "Closed",
+    "minutes": "min"
   },
   "contact": {
     "title": "Get in Touch",
@@ -246,7 +251,7 @@
     "message": {
       "cancellable": "You can cancel or update this appointment",
       "not_cancellable": "Cannot cancel or update appointment less than ",
-      "not_cancellable_full": "Cannot cancel or update appointment less than {{hours}} hours before the appointment",
+      "not_cancellable_full": "Cannot cancel or update appointment less than {{duration}} before the appointment",
       "hours_before": " hours before the appointment",
       "time_until": "Only {{time}} until the appointment",
       "started": "The appointment has started",
@@ -346,5 +351,9 @@
       "thanks": "Thanks! Your report reached the Lightor team and we'll look into it soon.",
       "limit": "You've already sent a few reports today — thank you! Please try again tomorrow."
     }
+  },
+  "blocks": {
+    "before": "Before",
+    "after": "After"
   }
 }

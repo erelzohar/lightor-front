@@ -54,6 +54,15 @@ export const visitorPass = {
     set(false);
   },
 
+  /**
+   * The server refused the pass: drop it, so the forms ask Turnstile again,
+   * and wait for the new one (LT-315). False when none came in time.
+   */
+  renew(timeoutMs: number): Promise<boolean> {
+    set(false);
+    return visitorPass.wait(timeoutMs);
+  },
+
   /** Resolves true once a pass exists, false after `timeoutMs` without one. */
   wait(timeoutMs: number): Promise<boolean> {
     if (hasPass) return Promise.resolve(true);
@@ -68,6 +77,10 @@ export const visitorPass = {
     });
   },
 };
+
+/** A request the server refused for want of a valid pass: 401 (LT-315). */
+export const isPassRefused = (err: unknown): boolean =>
+  (err as { response?: { status?: number } } | null)?.response?.status === 401;
 
 const subscribe = (listener: () => void) => {
   listeners.add(listener);

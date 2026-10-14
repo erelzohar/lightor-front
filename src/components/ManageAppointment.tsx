@@ -17,6 +17,7 @@ import { googleCalendarUrl, downloadIcs, CalendarEventInput } from '../services/
 import { CancelWindowClosedError, DEFAULT_MIN_CANCEL_TIME_MS, formatCancelWindow } from '../utils/cancelWindow';
 import { fieldsForService } from '../models/BookingField';
 import AnswersEditor from './manage/AnswersEditor';
+import { BUSINESS_TIME_ZONE } from '../utils/businessTime';
 
 
 
@@ -136,6 +137,8 @@ const ManageAppointment: React.FC = () => {
     setIsUpdating(true);
   };
 
+  // The booking as the business's clock reads it (LT-315): Israel's, as in
+  // the SMS — not the zone the customer's phone happens to be set to.
   const formatDate = (timestamp: string) => {
     const date = new Date(parseInt(timestamp));
     return date.toLocaleDateString(language === 'he' ? 'he-IL' : 'en-US', {
@@ -143,6 +146,7 @@ const ManageAppointment: React.FC = () => {
       year: 'numeric',
       month: 'long',
       day: 'numeric',
+      timeZone: BUSINESS_TIME_ZONE,
     });
   };
 
@@ -152,6 +156,7 @@ const ManageAppointment: React.FC = () => {
       hour: '2-digit',
       minute: '2-digit',
       hour12: language !== 'he',
+      timeZone: BUSINESS_TIME_ZONE,
     });
   };
 
@@ -250,7 +255,9 @@ const ManageAppointment: React.FC = () => {
           <p className="text-light-text/70 dark:text-dark-text/70">
             {isCancellable
               ? t('manage.message.cancellable')
-              : t('manage.message.not_cancellable_full', { hours: minCancelTime ? minCancelTime / (1000 * 60 * 60) : 0 })
+              // The window in words, as `too_late` says it (LT-315): a
+              // 30-minute window read "0.5 hours".
+              : t('manage.message.not_cancellable_full', { duration: formatCancelWindow(minCancelTime || DEFAULT_MIN_CANCEL_TIME_MS, language) })
             }
           </p>
         </div>

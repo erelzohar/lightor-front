@@ -62,7 +62,8 @@
     "error": {
       "sendOtp": "Échec de l'envoi du code",
       "invalidOtp": "Code de vérification invalide",
-      "too_soon": "Cet horaire est trop proche pour y déplacer votre rendez-vous — choisissez-en un dans {{duration}} au moins."
+      "too_soon": "Cet horaire est trop proche pour y déplacer votre rendez-vous — choisissez-en un dans {{duration}} au moins.",
+      "passExpired": "Votre session a expiré. Veuillez actualiser la page et réessayer."
     },
     "conflictError": "Ce créneau est déjà pris, veuillez en choisir un autre",
     "alreadyBookedError": "Ce numéro est déjà inscrit à ce cours.",
@@ -90,7 +91,8 @@
         "optional": "facultatif",
         "noAddresses": "Aucune adresse correspondante",
         "addressSuggestions": "Suggestions d'adresses"
-      }
+      },
+      "otpDigit": "Chiffre {{index}} sur {{total}}"
     },
     "validation": {
       "name": "Veuillez entrer votre nom complet",
@@ -140,7 +142,9 @@
     "before": "avant le rendez-vous",
     "hours_and_minutes": "{{hours}} heures et {{minutes}} minutes",
     "currency": "₪",
-    "toggle_dark_mode": "Basculer le mode sombre"
+    "toggle_dark_mode": "Basculer le mode sombre",
+    "actions": "Actions",
+    "change_language": "Changer de langue"
   },
   "day": {
     "0": "Dimanche",
@@ -167,7 +171,8 @@
     "72hours": "72 heures",
     "week": "Une semaine",
     "2weeks": "Deux semaines",
-    "closed": "Fermé"
+    "closed": "Fermé",
+    "minutes": "min"
   },
   "contact": {
     "title": "Contactez-nous",
@@ -246,7 +251,7 @@
     "message": {
       "cancellable": "Vous pouvez annuler ou modifier ce rendez-vous",
       "not_cancellable": "Impossible d'annuler moins de ",
-      "not_cancellable_full": "Impossible d'annuler moins de {{hours}} heures avant",
+      "not_cancellable_full": "Impossible d'annuler moins de {{duration}} avant",
       "hours_before": " heures avant",
       "time_until": "Plus que {{time}} avant le rendez-vous",
       "started": "Le rendez-vous a commencé",
@@ -346,5 +351,9 @@
       "thanks": "Merci ! Votre signalement est arrivé à l'équipe Lightor, nous allons l'examiner rapidement.",
       "limit": "Vous avez déjà envoyé plusieurs signalements aujourd'hui — merci ! Réessayez demain."
     }
+  },
+  "blocks": {
+    "before": "Avant",
+    "after": "Après"
   }
 }
