@@ -474,7 +474,7 @@ const ManageAppointment: React.FC = () => {
           // client-side from data already on this page — no extra API call.
           const start = parseInt(appointment.timestamp);
           const event: CalendarEventInput = {
-            title: `${appointment.type.name} — ${config.businessName}`,
+            title: `${appointment.type.name} - ${config.businessName}`,
             start,
             end: start + (parseInt(appointment.type.durationMS) || 0),
             location: [config.address?.street, config.address?.city].filter(Boolean).join(', ') || undefined,

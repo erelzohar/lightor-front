@@ -225,7 +225,7 @@ function MainContent() {
     if (awaitsPreviewData()) {
       fallbackTimer = setTimeout(() => {
         if (!isPreviewRef.current) {
-          console.warn('[lightor-front] PREVIEW_DATA not received within 6 s — releasing loading state.');
+          console.warn('[lightor-front] PREVIEW_DATA not received within 6 s - releasing loading state.');
           setLoading(false);
         }
       }, 6000);

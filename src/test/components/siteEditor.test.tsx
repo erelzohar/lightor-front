@@ -98,7 +98,7 @@ describe('the site editor bridge (LT-243)', () => {
     await waitFor(() => expect(container.querySelector('[data-lt-edit]')).toBeNull());
   });
 
-  it("LT-312: the corner by plan — the contact button on a free site, Lighty's picture on a Plus one", async () => {
+  it("LT-312: the corner by plan - the contact button on a free site, Lighty's picture on a Plus one", async () => {
     const { container } = renderSite();
     const withButton = (over: Record<string, unknown> = {}) =>
       config({ ...over, components: { ...config().components, contactButton: { visible: true } } });
@@ -144,7 +144,7 @@ describe('the site editor bridge (LT-243)', () => {
     expect(parentPost).toHaveBeenLastCalledWith(expect.objectContaining({ path: 'components.hero.cta' }), DASHBOARD);
   });
 
-  it('a second click on a control inside the selection uses it — the dark-mode switch (LT-287)', async () => {
+  it('a second click on a control inside the selection uses it - the dark-mode switch (LT-287)', async () => {
     const { container } = renderSite();
     await post({ type: 'PREVIEW_DATA', config: config() });
     await post({ type: 'LT_EDIT', on: true });

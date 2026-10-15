@@ -23,7 +23,7 @@ const PullQuote: React.FC<Props> = ({ text, attribution, tone = 'bg', basePath, 
         <blockquote {...ed(basePath && `${basePath}.text`)} className="m-0 font-bold leading-tight text-light-text dark:text-dark-text" style={{ fontFamily: displayFontFor(language), fontSize: 'clamp(1.75rem, 4vw, 3.5rem)', textWrap: 'balance' }}>
           {text}
         </blockquote>
-        {attribution && <figcaption className="mt-6 text-sm font-semibold text-primary-readable dark:text-primary-dark-readable">— <span {...ed(attributionPath)}>{attribution}</span></figcaption>}
+        {attribution && <figcaption className="mt-6 text-sm font-semibold text-primary-readable dark:text-primary-dark-readable">- <span {...ed(attributionPath)}>{attribution}</span></figcaption>}
       </motion.figure>
     </section>
   );

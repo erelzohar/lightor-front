@@ -99,7 +99,7 @@ const Testimonials: React.FC<TestimonialsProps> = ({ config, tone, layout = 'car
                 transition={{ duration: 0.5 }}
               >
                 <blockquote className="text-2xl md:text-4xl leading-snug text-light-text dark:text-dark-text">{item?.text}</blockquote>
-                <figcaption className="mt-8 text-sm tracking-widest font-semibold text-primary-readable dark:text-primary-dark-readable">— {item?.name}</figcaption>
+                <figcaption className="mt-8 text-sm tracking-widest font-semibold text-primary-readable dark:text-primary-dark-readable">- {item?.name}</figcaption>
               </motion.figure>
             </AnimatePresence>
           </div>
@@ -150,7 +150,7 @@ const Testimonials: React.FC<TestimonialsProps> = ({ config, tone, layout = 'car
                 {item.text}
               </blockquote>
               <figcaption className="mt-6 text-sm tracking-widest font-semibold text-primary-readable dark:text-primary-dark-readable">
-                — <EditText path={`components.testimonials.items.${i}.name`}>{item.name}</EditText>
+                - <EditText path={`components.testimonials.items.${i}.name`}>{item.name}</EditText>
               </figcaption>
             </motion.figure>
           ))}

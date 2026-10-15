@@ -511,7 +511,7 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
       if (!isUpdating) {
         const durationMS = parseInt(selectedAppointmentType.durationMS) || 0;
         setCalendarEvent({
-          title: `${selectedAppointmentType.name} — ${businessName}`,
+          title: `${selectedAppointmentType.name} - ${businessName}`,
           start: fixedDate.valueOf(),
           end: fixedDate.valueOf() + durationMS,
         });

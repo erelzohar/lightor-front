@@ -11,7 +11,7 @@ const DAY = 24 * HOUR;
  * hours" are what a "{{hours}} hours" string makes of the same numbers.
  */
 describe('the cancellation window in words', () => {
-  it('uses days, then hours, then minutes — whichever is whole', () => {
+  it('uses days, then hours, then minutes - whichever is whole', () => {
     expect(formatCancelWindow(30 * MINUTE, 'en')).toBe('30 minutes');
     expect(formatCancelWindow(HOUR, 'en')).toBe('1 hour');
     expect(formatCancelWindow(2 * HOUR, 'en')).toBe('2 hours');

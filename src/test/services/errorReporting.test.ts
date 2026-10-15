@@ -49,7 +49,7 @@ describe('ErrorReportingService', () => {
     expect(typeof body.timestamp).toBe('string');
   });
 
-  it('names the page without its query or hash — the manage link carries its token there (LT-315)', async () => {
+  it('names the page without its query or hash - the manage link carries its token there (LT-315)', async () => {
     stubLocation('https://salon.lightor.app/manage/abc123?manageToken=secret-token&lang=he#details');
     await reportClientError({ error: 'manage page crashed' });
     const body = post.mock.calls[0][1];
