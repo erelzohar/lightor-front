@@ -30,4 +30,23 @@ describe('navigating to the business', () => {
     expect(screen.getByRole('link', { name: 'Google Maps' }).getAttribute('href')).toBe(googleMapsHref(address));
     expect(screen.getByRole('link', { name: 'Waze' }).getAttribute('href')).toBe(wazeHref(address));
   });
+
+  // LT-368: Erel's Waze brand icon on both, in the link's colour, never read out.
+  it('marks both Waze links with the Waze icon', () => {
+    render(
+      <>
+        <WazeLink address={address} />
+        <MapStrip address={{ street: 'הרצל 12', city: 'תל אביב' }} />
+      </>
+    );
+    for (const link of [screen.getByRole('link', { name: 'about.waze' }), screen.getByRole('link', { name: 'Waze' })]) {
+      const icon = link.querySelector('svg[data-icon="waze"]');
+      expect(icon).not.toBeNull();
+      expect(icon!.getAttribute('viewBox')).toBe('0 0 14 14');
+      expect(icon!.getAttribute('fill')).toBe('currentColor');
+      expect(icon!.getAttribute('aria-hidden')).toBe('true');
+      // The old arrow is gone.
+      expect(link.querySelector('svg.lucide-navigation')).toBeNull();
+    }
+  });
 });

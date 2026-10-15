@@ -1,9 +1,10 @@
 import React from 'react';
-import { MapPin, Navigation } from 'lucide-react';
+import { MapPin } from 'lucide-react';
 import { useLanguage } from '../../contexts/LanguageContext';
 import type { SectionTone } from '../SectionDivider';
 import { TONE_BG } from './blockUtils';
 import { googleMapsHref, wazeHref } from '../../utils/navigation';
+import { WazeIcon } from '../common/WazeIcon';
 
 interface Address { street?: string; other?: string; city?: string; state?: string }
 interface Props { address: Address; tone?: SectionTone }
@@ -29,7 +30,7 @@ const MapStrip: React.FC<Props> = ({ address, tone = 'surface' }) => {
             <span className="font-semibold">Google Maps</span>
           </a>
           <a href={wazeHref(full)} target="_blank" rel="noopener noreferrer" className="h-32 rounded-design-sm bg-light-gray/40 dark:bg-dark-gray/40 flex flex-col items-center justify-center gap-2 text-light-text/70 dark:text-dark-text/70 hover:text-primary-readable dark:hover:text-primary-dark-readable transition-colors">
-            <Navigation className="h-8 w-8" aria-hidden="true" />
+            <WazeIcon className="h-8 w-8" />
             <span className="font-semibold">Waze</span>
           </a>
         </div>
