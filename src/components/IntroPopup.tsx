@@ -4,6 +4,9 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useDialogFocus } from '../hooks/useDialogFocus';
 
+/** How long after the page opens the owner's message appears. */
+export const INTRO_POPUP_DELAY_MS = 5000;
+
 interface IntroPopupProps {
   config: {
     visible: boolean;
@@ -19,8 +22,10 @@ const IntroPopup: React.FC<IntroPopupProps> = ({ config }) => {
   // LT-346: a real dialog — focus inside, Escape, Tab kept in, focus back.
   useDialogFocus(isOpen, boxRef, () => setIsOpen(false));
 
+  // Erel (LT-346): five seconds after the page opens, so the visitor sees the
+  // site first (it used to cover it after one second).
   useEffect(() => {
-      const timer = setTimeout(() => setIsOpen(true), 1000);
+      const timer = setTimeout(() => setIsOpen(true), INTRO_POPUP_DELAY_MS);
       return () => clearTimeout(timer);
   }, []);
 
