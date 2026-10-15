@@ -1,5 +1,6 @@
 import React, { memo } from 'react';
-import { ChevronDown, LucideIcon } from 'lucide-react';
+import { LucideIcon } from 'lucide-react';
+import Dropdown from '../../ui/dropdown';
 
 /**
  * The border and text chrome every field on the booking form shares, so the
@@ -14,8 +15,8 @@ const fieldClass = (error?: string) =>
 const LABEL_CLASS = 'absolute start-10 -top-0 px-2 text-sm font-medium text-primary dark:text-primary-dark bg-light-surface dark:bg-dark-surface';
 
 /** A floating label, with the "(optional)" hint after it when there is one. */
-const FieldLabel = ({ htmlFor, label, hint }: { htmlFor: string; label: string; hint?: string }) => (
-    <label htmlFor={htmlFor} className={LABEL_CLASS}>
+const FieldLabel = ({ htmlFor, label, hint, id }: { htmlFor: string; label: string; hint?: string; id?: string }) => (
+    <label htmlFor={htmlFor} id={id} className={LABEL_CLASS}>
         {label}
         {hint && <span className="ms-1 font-normal text-light-text/60 dark:text-dark-text/60">({hint})</span>}
     </label>
@@ -160,12 +161,13 @@ export interface MaterialSelectProps {
     icon: LucideIcon;
     label: string;
     value: string;
-    onChange: (e: React.ChangeEvent<HTMLSelectElement>) => void;
+    onChange: (e: { target: { value: string; name: string } }) => void;
     /** The owner's options, rendered raw. */
     options: string[];
     /** The empty first entry, e.g. "Choose an option". */
     placeholder: string;
     error?: string;
+    /** Checked by the form's own validation; the label's "(optional)" hint says it. */
     required?: boolean;
     name: string;
     id: string;
@@ -181,35 +183,27 @@ export const MaterialSelect = memo(({
     options,
     placeholder,
     error,
-    required = false,
     name,
     id,
     hint
 }: MaterialSelectProps) => (
     <div className="relative pt-2">
-        <FieldLabel htmlFor={id} label={label} hint={hint} />
+        <FieldLabel htmlFor={id} id={`${id}-label`} label={label} hint={hint} />
         <div className="absolute inset-y-0 start-0 ps-3 flex items-center pointer-events-none">
             <Icon className="h-5 w-5 text-primary dark:text-primary-dark" aria-hidden="true" />
         </div>
-        <select
+        {/* LT-365: the animated dropdown, not the browser's select. */}
+        <Dropdown
             id={id}
+            labelledBy={`${id}-label`}
+            describedBy={error ? errorId(id) : undefined}
+            invalid={!!error}
             value={value}
-            onChange={onChange}
-            required={required}
-            name={name}
-            className={`${fieldClass(error)} appearance-none cursor-pointer pe-10`}
-            aria-required={required}
-            aria-invalid={!!error}
-            aria-describedby={error ? errorId(id) : undefined}
-        >
-            <option value="">{placeholder}</option>
-            {options.map((option) => (
-                <option key={option} value={option}>{option}</option>
-            ))}
-        </select>
-        <div className="absolute inset-y-0 end-0 pe-3 flex items-center pointer-events-none">
-            <ChevronDown className="h-5 w-5 text-light-text/60 dark:text-dark-text/60" aria-hidden="true" />
-        </div>
+            onChange={(v) => onChange({ target: { value: v, name } })}
+            items={[{ value: '', label: placeholder }, ...options.map((option) => ({ value: option, label: option }))]}
+            placeholder={placeholder}
+            className={fieldClass(error)}
+        />
         <FieldError id={id} error={error} />
     </div>
 ));

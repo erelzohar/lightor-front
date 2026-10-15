@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent, waitFor, within } from '@testing-library/react';
+import { choose, optionOf } from '../helpers/dropdown';
 import Schedule from '../../components/Layout/Schedule/Schedule';
 import ManageAppointment from '../../components/ManageAppointment';
 import { CancelWindowClosedError } from '../../utils/cancelWindow';
@@ -225,7 +226,8 @@ describe("the owner's questions on the booking form (LT-178)", () => {
     expect(screen.getByLabelText(/^Parking available/)).toBeTruthy();
     expect(screen.getByLabelText(/^Room/)).toBeTruthy();
     // The owner's options, raw.
-    expect(screen.getByRole('option', { name: 'Back' })).toBeTruthy();
+    // (in the dropdown, once it opens: LT-365)
+    expect(optionOf(screen.getByLabelText(/^Room/), 'Back')).toHaveTextContent('Back');
     // Scoped to massages only.
     expect(screen.queryByText(/Car model/)).toBeNull();
   });
@@ -249,7 +251,7 @@ describe("the owner's questions on the booking form (LT-178)", () => {
     fillBasics();
     fireEvent.change(screen.getByLabelText('Address'), { target: { value: 'Herzl 12, Tel Aviv' } });
     fireEvent.click(screen.getByLabelText(/^Parking available/));
-    fireEvent.change(screen.getByLabelText(/^Room/), { target: { value: 'Back' } });
+    choose(screen.getByLabelText(/^Room/), 'Back');
     expect(sendCodeButton().hasAttribute('disabled')).toBe(false);
 
     fireEvent.submit(detailsForm());

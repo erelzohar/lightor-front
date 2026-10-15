@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { choose } from '../helpers/dropdown';
 import Contact from '../../components/Layout/Contact';
 import { ContactConfig } from '../../models/ContactConfig';
 import { BookingField } from '../../models/BookingField';
@@ -104,7 +105,7 @@ describe('lead form (LT-197)', () => {
   it('sends with an empty message, carrying the answers and no message key', async () => {
     renderForm();
     fillBasics();
-    fireEvent.change(screen.getByLabelText('Project'), { target: { value: 'Bath' } });
+    choose(screen.getByLabelText('Project'), 'Bath');
     fireEvent.submit(form());
 
     await waitFor(() => expect(mocks.sendContactMessage).toHaveBeenCalledTimes(1));
@@ -122,7 +123,7 @@ describe('lead form (LT-197)', () => {
 
     renderForm();
     fillBasics();
-    fireEvent.change(screen.getByLabelText('Project'), { target: { value: 'Kitchen' } });
+    choose(screen.getByLabelText('Project'), 'Kitchen');
     const address = screen.getByLabelText(/^Address/) as HTMLInputElement;
     await waitFor(() => expect(address.getAttribute('role')).toBe('combobox'));
     fireEvent.change(address, { target: { value: 'Herz' } });
@@ -142,7 +143,7 @@ describe('lead form (LT-197)', () => {
     mocks.sendContactMessage.mockResolvedValue({ ok: false, code: 'ANSWER_INVALID', details: { key: 'project', label: 'Project' } });
     renderForm();
     fillBasics();
-    fireEvent.change(screen.getByLabelText('Project'), { target: { value: 'Bath' } });
+    choose(screen.getByLabelText('Project'), 'Bath');
     fireEvent.submit(form());
 
     const message = await screen.findByText('schedule.validation.answer.invalid');

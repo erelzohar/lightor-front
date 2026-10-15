@@ -6,6 +6,8 @@ import Navbar from '../../components/Layout/Navbar';
 import Schedule from '../../components/Layout/Schedule/Schedule';
 import AccessibilityMenu from '../../components/a11y/AccessibilityMenu';
 import AccessibilityStatement from '../../components/a11y/AccessibilityStatement';
+import { MaterialSelect } from '../../components/Layout/Schedule/ScheduleForms';
+import { ListChecks } from 'lucide-react';
 import { WebsiteConfig } from '../../models/WebsiteConfig';
 import { getSiteJitter } from '../../services/seed';
 import { openStatement, closeStatement } from '../../services/a11yStatement';
@@ -162,6 +164,17 @@ describe.each(['he', 'en', 'ar'])('no WCAG A/AA violation axe can see (%s)', (la
     expect(slot).toBeDefined();
     fireEvent.click(slot!);
     expect(['details step', ...(await violationsIn(container))]).toEqual(['details step']);
+  });
+
+  it("an owner's choice question, closed and open (LT-365)", async () => {
+    const { container } = render(
+      <MaterialSelect icon={ListChecks} label="Room" value="" options={['Front', 'Back']} placeholder="Choose" onChange={() => {}} name="answer-room" id="q-room" error="Pick one" />
+    );
+    expect(await violationsIn(container)).toEqual([]);
+    fireEvent.click(screen.getByRole('button', { name: /Room/ }));
+    // The open list is portalled to <body>.
+    expect(screen.getByRole('listbox')).toBeTruthy();
+    expect(await violationsIn(document.body)).toEqual([]);
   });
 
   it('the accessibility menu and statement', async () => {
