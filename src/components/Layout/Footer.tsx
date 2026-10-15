@@ -210,7 +210,7 @@ const Footer: React.FC<FooterProps> = ({ config, social, businessName, logoImage
   );
   const year = new Date().getFullYear();
   const compactLegal = (
-    <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-xs opacity-60">
+    <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-xs opacity-80">
       <span>&copy; {year} {businessName}. {t('footer.rights')}</span>
       <button onClick={() => openLegalModal('privacy')} className="hover:opacity-100 hover:underline">{t('footer.policy.privacy')}</button>
       <button onClick={() => openLegalModal('terms')} className="hover:opacity-100 hover:underline">{t('footer.policy.terms')}</button>

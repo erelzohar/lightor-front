@@ -494,7 +494,6 @@ const Portfolio: React.FC<PortfolioProps> = ({ config, layout = 'grid', masonryP
                     role="tab"
                     aria-selected={currentSlide === index}
                     aria-label={t('portfolio.slideshow_dot', { index: index + 1 })}
-                    aria-controls={`slide-${index}`}
                   />
                 ))}
               </div>

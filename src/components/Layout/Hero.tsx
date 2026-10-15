@@ -250,12 +250,14 @@ const Hero: React.FC<HeroProps> = ({ config, social, phone, isContactVisible, ap
         </svg>
       ),
       onClick: () => handleContactClick('whatsapp', whatsAppHref(phone)),
-      color: 'bg-[#25D366]/10 text-[#10B981] hover:bg-[#25D366] hover:text-white dark:hover:text-white'
+      color: 'bg-[#25D366]/10 text-[#10B981] hover:bg-[#25D366] hover:text-white dark:hover:text-white',
+      label: t('contact.option.whatsapp')
     },
     safeHttpUrl(social.instagram) && {
       icon: Instagram,
       href: safeHttpUrl(social.instagram),
-      color: 'bg-[#F77EB9]/10 text-[#F77EB9] hover:bg-[#F77EB9] hover:text-white dark:hover:text-white'
+      color: 'bg-[#F77EB9]/10 text-[#F77EB9] hover:bg-[#F77EB9] hover:text-white dark:hover:text-white',
+      label: t('footer.social.follow.instagram')
     },
     safeHttpUrl(social.tiktok) && {
       icon: () => (
@@ -264,12 +266,14 @@ const Hero: React.FC<HeroProps> = ({ config, social, phone, isContactVisible, ap
         </svg>
       ),
       href: safeHttpUrl(social.tiktok),
-      color: 'bg-[#000000]/5 text-black hover:bg-[#000000] hover:text-white dark:bg-[#000000]/10 dark:text-white dark:hover:bg-[#000000]'
+      color: 'bg-[#000000]/5 text-black hover:bg-[#000000] hover:text-white dark:bg-[#000000]/10 dark:text-white dark:hover:bg-[#000000]',
+      label: t('footer.social.follow.tiktok')
     },
     safeHttpUrl(social.facebook) && {
       icon: Facebook,
       href: safeHttpUrl(social.facebook),
-      color: 'bg-[#1877F2]/10 text-[#1877F2] hover:bg-[#1877F2] hover:text-white dark:hover:text-white'
+      color: 'bg-[#1877F2]/10 text-[#1877F2] hover:bg-[#1877F2] hover:text-white dark:hover:text-white',
+      label: t('footer.social.follow.facebook')
     },
     safeHttpUrl(social.x) && {
       icon: () => (
@@ -278,12 +282,14 @@ const Hero: React.FC<HeroProps> = ({ config, social, phone, isContactVisible, ap
         </svg>
       ),
       href: safeHttpUrl(social.x),
-      color: 'bg-[#000000]/5 text-black hover:bg-[#000000] hover:text-white dark:bg-[#000000]/10 dark:text-white dark:hover:bg-[#000000]'
+      color: 'bg-[#000000]/5 text-black hover:bg-[#000000] hover:text-white dark:bg-[#000000]/10 dark:text-white dark:hover:bg-[#000000]',
+      label: t('footer.social.follow.x')
     },
     phone && {
       icon: Phone,
       onClick: () => handleContactClick('phone', `tel:${phone?.replace(/[^0-9+]/g, '')}`),
-      color: 'bg-[#10B981]/10 text-[#10B981] hover:bg-[#10B981] hover:text-white dark:hover:text-white'
+      color: 'bg-[#10B981]/10 text-[#10B981] hover:bg-[#10B981] hover:text-white dark:hover:text-white',
+      label: t('contact.option.call')
     }
   ].filter(Boolean);
 
@@ -412,11 +418,12 @@ const Hero: React.FC<HeroProps> = ({ config, social, phone, isContactVisible, ap
           <motion.button
             key={i}
             onClick={s.onClick || (() => openExternal(s.href))}
+            aria-label={s.label}
             className={`p-3 rounded-xl transition-colors ${s.color}`}
             whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.95 }}
           >
-            {typeof s.icon === 'function' ? <s.icon /> : <s.icon className="h-6 w-6" />}
+            {typeof s.icon === 'function' ? <s.icon /> : <s.icon className="h-6 w-6" aria-hidden="true" />}
           </motion.button>
         ))}
       </motion.div>
@@ -878,11 +885,12 @@ const Hero: React.FC<HeroProps> = ({ config, social, phone, isContactVisible, ap
                 <motion.button
                   key={i}
                   onClick={s.onClick || (() => openExternal(s.href))}
+                  aria-label={s.label}
                   className={`p-3 rounded-xl transition-colors ${s.color}`}
                   whileHover={{ scale: 1.1 }}
                   whileTap={{ scale: 0.95 }}
                 >
-                  {typeof s.icon === 'function' ? <s.icon /> : <s.icon className="h-6 w-6" />}
+                  {typeof s.icon === 'function' ? <s.icon /> : <s.icon className="h-6 w-6" aria-hidden="true" />}
                 </motion.button>
               ))}
             </motion.div>

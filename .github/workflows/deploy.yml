@@ -34,6 +34,13 @@ jobs:
       - name: Lint (hooks rules)
         run: npm run lint:hooks
 
+      # LT-356: the tests gate the deploy, the accessibility check included
+      # (src/test/a11y/axe.test.tsx): a WCAG A/AA violation axe can see on a
+      # full page, every gallery/footer/contact/hero/navbar layout or any step
+      # of the booking flow, in Hebrew, English or Arabic, stops it here.
+      - name: Test
+        run: npm test
+
       - name: Authorise the runner against the server
         env:
           DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}

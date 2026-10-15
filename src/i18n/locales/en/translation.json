@@ -402,6 +402,14 @@
       "phone": "You can also book by phone:",
       "phoneLead": "You can also get in touch by phone:",
       "updated": "Last updated: {{date}}"
+    },
+    "booking": {
+      "loading": "Loading the calendar",
+      "step": "Step {{n}} of {{total}}: {{name}}",
+      "prevMonth": "Previous month",
+      "nextMonth": "Next month",
+      "details": "Your details",
+      "verification": "Verification code"
     }
   }
 }

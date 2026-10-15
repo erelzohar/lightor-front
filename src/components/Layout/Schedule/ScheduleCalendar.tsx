@@ -72,8 +72,10 @@ export const DateButton = memo(({
                     ? ` - ${language === 'he' ? 'זמינות מוגבלת' : (language === 'ar' ? 'توفر محدود' : (language === 'fr' ? 'Disponibilité limitée' : (language === 'es' ? 'Disponibilidad limitada' : 'Limited Availability')))}`
                     : ` - ${language === 'he' ? 'לא זמין' : (language === 'ar' ? 'غير متاح' : (language === 'fr' ? 'Indisponible' : (language === 'es' ? 'No disponible' : 'Not available')))}`
             }`}
-        aria-selected={isSelected(date)}
-        aria-disabled={isPast(date) || !isAvailable(date)}
+        // LT-356: a button's "chosen" state is aria-pressed (aria-selected
+        // belongs to options and tabs); today is marked as today.
+        aria-pressed={isSelected(date)}
+        aria-current={isToday(date) ? 'date' : undefined}
     >
 
         <div className="flex-1 flex items-center justify-center w-full">

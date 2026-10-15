@@ -437,3 +437,30 @@ html[data-type-scale] .lt-ui h2,
 html .lt-ui h2 { font-size: 1.25rem; line-height: 1.35; }
 html[data-type-scale] .lt-ui h3,
 html .lt-ui h3 { font-size: 1.0625rem; line-height: 1.4; }
+
+/* LT-356: muted text never fades below 4.5:1. useTheme sets --mt-l-<step> /
+   --mt-d-<step> to max(the step's alpha, the lowest alpha this palette's text
+   still reads at), so a step that already passes keeps its look. Disabled
+   states use /30 and stay faint (WCAG exempts them). Same specificity as
+   Tailwind's classes, later in the sheet. */
+.text-light-text\/40 { color: rgb(var(--color-light-text) / var(--mt-l-40, 0.4)); }
+.text-dark-text\/40 { color: rgb(var(--color-dark-text) / var(--mt-d-40, 0.4)); }
+.dark .dark\:text-dark-text\/40 { color: rgb(var(--color-dark-text) / var(--mt-d-40, 0.4)); }
+.text-light-text\/50 { color: rgb(var(--color-light-text) / var(--mt-l-50, 0.5)); }
+.text-dark-text\/50 { color: rgb(var(--color-dark-text) / var(--mt-d-50, 0.5)); }
+.dark .dark\:text-dark-text\/50 { color: rgb(var(--color-dark-text) / var(--mt-d-50, 0.5)); }
+.text-light-text\/60 { color: rgb(var(--color-light-text) / var(--mt-l-60, 0.6)); }
+.text-dark-text\/60 { color: rgb(var(--color-dark-text) / var(--mt-d-60, 0.6)); }
+.dark .dark\:text-dark-text\/60 { color: rgb(var(--color-dark-text) / var(--mt-d-60, 0.6)); }
+.text-light-text\/65 { color: rgb(var(--color-light-text) / var(--mt-l-65, 0.65)); }
+.text-dark-text\/65 { color: rgb(var(--color-dark-text) / var(--mt-d-65, 0.65)); }
+.dark .dark\:text-dark-text\/65 { color: rgb(var(--color-dark-text) / var(--mt-d-65, 0.65)); }
+.text-light-text\/70 { color: rgb(var(--color-light-text) / var(--mt-l-70, 0.7)); }
+.text-dark-text\/70 { color: rgb(var(--color-dark-text) / var(--mt-d-70, 0.7)); }
+.dark .dark\:text-dark-text\/70 { color: rgb(var(--color-dark-text) / var(--mt-d-70, 0.7)); }
+.text-light-text\/80 { color: rgb(var(--color-light-text) / var(--mt-l-80, 0.8)); }
+.text-dark-text\/80 { color: rgb(var(--color-dark-text) / var(--mt-d-80, 0.8)); }
+.dark .dark\:text-dark-text\/80 { color: rgb(var(--color-dark-text) / var(--mt-d-80, 0.8)); }
+.text-light-text\/90 { color: rgb(var(--color-light-text) / var(--mt-l-90, 0.9)); }
+.text-dark-text\/90 { color: rgb(var(--color-dark-text) / var(--mt-d-90, 0.9)); }
+.dark .dark\:text-dark-text\/90 { color: rgb(var(--color-dark-text) / var(--mt-d-90, 0.9)); }

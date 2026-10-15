@@ -39,6 +39,16 @@ import ImagesService from '../../../services/ImagesService';
 import { useEdit, editAttrs, servicePath } from '../../../services/editMode';
 import { handleSquareImageError } from '../../../utils/imageFallback';
 
+/** The booking steps in order (the progress dots, and LT-356's step names). */
+const BOOKING_STEPS = ['type', 'date', 'time', 'details', 'verification'] as const;
+const STEP_NAME: Record<typeof BOOKING_STEPS[number], string> = {
+  type: 'schedule.select.type',
+  date: 'schedule.select.date',
+  time: 'schedule.select.time',
+  details: 'a11y.booking.details',
+  verification: 'a11y.booking.verification',
+};
+
 interface BookingFormData {
   name: string;
   phone: string;
@@ -1053,12 +1063,18 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
   // 'date' after success, which would yank a user who has moved on.
   const cardRef = useRef<HTMLDivElement>(null);
   const prevStepRef = useRef(bookingStep);
+  // LT-356: the new step takes the focus (the control that advanced it is
+  // gone, and focus would drop to the top of the page). The code step focuses
+  // its first box itself.
+  const stepRef = useRef<HTMLDivElement>(null);
+  const successRef = useRef<HTMLSpanElement>(null);
   useEffect(() => {
     if (prevStepRef.current === bookingStep) return;
     prevStepRef.current = bookingStep;
     if (bookingStep !== (isUpdating ? 'date' : 'type')) {
       cardRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
+    if (bookingStep !== 'verification') stepRef.current?.focus({ preventScroll: true });
   }, [bookingStep, isUpdating]);
 
   // On success the tall verification form is replaced by a short view. The
@@ -1070,6 +1086,7 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
     if (!isSuccess) return;
     const id = setTimeout(() => {
       cardRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      successRef.current?.focus({ preventScroll: true });
     }, 550);
     return () => clearTimeout(id);
   }, [isSuccess]);
@@ -1258,8 +1275,9 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
     <section id="schedule" className={`section-y ${TONE_BG[tone]} transition-colors duration-300`}>
       {!isAuthorized ? (
         <div className="flex flex-col items-center py-20 bg-gray-50/50 dark:bg-gray-900/10">
-          <div className="min-h-[25rem] flex items-center justify-center p-4">
-            <Loader2 className="w-8 h-8 text-primary dark:text-primary-dark animate-spin" />
+          <div className="min-h-[25rem] flex items-center justify-center p-4" role="status">
+            <Loader2 className="w-8 h-8 text-primary dark:text-primary-dark animate-spin" aria-hidden="true" />
+            <span className="sr-only">{t('a11y.booking.loading')}</span>
           </div>
           <div className="mt-8">
             <Turnstile
@@ -1377,13 +1395,13 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
                   className="mb-6 text-primary dark:text-primary-dark hover:underline flex items-center gap-2"
                   whileHover={{ x: -5 }}
                 >
-                  <ChevronLeft className={`h-5 w-5 ${language === 'he' || language === 'ar' ? 'rotate-180' : ''}`} />
+                  <ChevronLeft className={`h-5 w-5 ${language === 'he' || language === 'ar' ? 'rotate-180' : ''}`} aria-hidden="true" />
                   {t('common.back')}
                 </motion.button>
               )}
 
-              <div className="flex items-center justify-center gap-2 mb-8">
-                {['type', 'date', 'time', 'details', 'verification'].map((step, index, steps) => (
+              <div className="flex items-center justify-center gap-2 mb-8" aria-hidden="true">
+                {BOOKING_STEPS.map((step, index, steps) => (
                   <div
                     key={step}
                     className={`h-2 rounded-full transition-all ${index === steps.indexOf(bookingStep)
@@ -1394,6 +1412,16 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
                 ))}
               </div>
 
+              {/* LT-356: the step a keyboard or screen-reader visitor is on —
+                  focus lands here on each advance (the button they pressed is
+                  gone), and its name says where they are. */}
+              <div
+                ref={stepRef}
+                tabIndex={-1}
+                role="group"
+                aria-label={t('a11y.booking.step', { n: BOOKING_STEPS.indexOf(bookingStep) + 1, total: BOOKING_STEPS.length, name: t(STEP_NAME[bookingStep]) })}
+                className="outline-none"
+              >
               {bookingStep === 'date' && (
                 <>
                   <div className="flex items-center justify-between mb-6">
@@ -1407,10 +1435,11 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
                       whileHover={!isCurrentMonth() ? { scale: 1.1 } : undefined}
                       whileTap={!isCurrentMonth() ? { scale: 0.9 } : undefined}
                       disabled={isCurrentMonth()}
+                      aria-label={t('a11y.booking.prevMonth')}
                     >
-                      <ChevronLeft className={`h-5 w-5 text-light-text dark:text-dark-text ${language === 'he' || language === 'ar' ? 'rotate-180' : ''}`} />
+                      <ChevronLeft className={`h-5 w-5 text-light-text dark:text-dark-text ${language === 'he' || language === 'ar' ? 'rotate-180' : ''}`} aria-hidden="true" />
                     </motion.button>
-                    <h3 className="text-xl font-semibold text-light-text dark:text-dark-text">
+                    <h3 className="text-xl font-semibold text-light-text dark:text-dark-text" aria-live="polite">
                       {currentMonth.toLocaleDateString(language === 'he' ? 'he-IL' : (language === 'ar' ? 'ar-SA' : (language === 'fr' ? 'fr-FR' : (language === 'es' ? 'es-ES' : 'en-US'))), {
                         month: 'long',
                         year: 'numeric'
@@ -1427,15 +1456,16 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
                       whileTap={canGoToNextMonth ? { scale: 0.9 } : undefined}
                       disabled={!canGoToNextMonth}
                       data-testid="calendar-next-month"
+                      aria-label={t('a11y.booking.nextMonth')}
                     >
-                      <ChevronRight className={`h-5 w-5 text-light-text dark:text-dark-text ${language === 'he' || language === 'ar' ? 'rotate-180' : ''}`} />
+                      <ChevronRight className={`h-5 w-5 text-light-text dark:text-dark-text ${language === 'he' || language === 'ar' ? 'rotate-180' : ''}`} aria-hidden="true" />
                     </motion.button>
                   </div>
 
                   {/* px-1.5 on both grids: a day grows 10% on hover, and the
                       flow's wrapper clips (overflow-hidden, for its exit
                       animation) — the outer columns need room to grow into. */}
-                  <div className="grid grid-cols-7 gap-2 mb-2 px-1.5">
+                  <div className="grid grid-cols-7 gap-2 mb-2 px-1.5" aria-hidden="true">
                     {getDayNames().map((day, index) => (
                       <div
                         key={index}
@@ -1527,13 +1557,13 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
                                 />
                               ) : (
                                 <div className="w-12 h-12 rounded-lg bg-primary/10 dark:bg-primary-dark/10 flex items-center justify-center group-hover:bg-primary/20 dark:group-hover:bg-primary-dark/20">
-                                  <Tag className="h-6 w-6 text-primary dark:text-primary-dark" />
+                                  <Tag className="h-6 w-6 text-primary dark:text-primary-dark" aria-hidden="true" />
                                 </div>
                               )}
-                              <div className="flex-1 text-right">
-                                <h4 {...editAttrs(editing, servicePath(type._id, 'name'))} className="font-semibold text-light-text dark:text-dark-text mb-1">
+                              <div className="flex-1 text-start">
+                                <span {...editAttrs(editing, servicePath(type._id, 'name'))} className="block font-semibold text-light-text dark:text-dark-text mb-1">
                                   {type.name}
-                                </h4>
+                                </span>
                                 <p className="text-sm text-light-text/70 dark:text-dark-text/70">
                                   {/* Price is optional — a service seeded at signup is unpriced
                                       until the owner sets one. Show the duration alone rather
@@ -1601,7 +1631,7 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
                               whileTap={occurrence.isFull ? undefined : { scale: 0.95 }}
                             >
                               <span className="relative flex items-center justify-center gap-2">
-                                <Clock className="h-4 w-4" />
+                                <Clock className="h-4 w-4" aria-hidden="true" />
                                 {time}
                               </span>
                               {note && (
@@ -1630,9 +1660,10 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
                             initial={{ x: '-100%' }}
                             whileHover={{ x: '100%' }}
                             transition={{ duration: 0.3 }}
+                            aria-hidden="true"
                           />
                           <span className="relative flex items-center justify-center gap-2">
-                            <Clock className="h-4 w-4" />
+                            <Clock className="h-4 w-4" aria-hidden="true" />
                             {time}
                           </span>
                         </motion.button>
@@ -1652,11 +1683,11 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
                 >
                   <div className="flex flex-col items-center mb-8 text-center">
                     <div className="flex items-center gap-2 text-lg font-semibold text-light-text dark:text-dark-text">
-                      <CalendarIcon className="h-5 w-5 text-primary/70 dark:text-primary-dark/70" />
+                      <CalendarIcon className="h-5 w-5 text-primary/70 dark:text-primary-dark/70" aria-hidden="true" />
                       <span>{selectedDate ? formatSelectedDate(selectedDate) : ''}</span>
                     </div>
                     <div className="flex items-center gap-2 text-lg font-semibold text-light-text dark:text-dark-text mt-1">
-                      <Clock className="h-5 w-5 text-primary/70 dark:text-primary-dark/70" />
+                      <Clock className="h-5 w-5 text-primary/70 dark:text-primary-dark/70" aria-hidden="true" />
                       <span>{selectedTime}</span>
                     </div>
                   </div>
@@ -1758,7 +1789,7 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
                       disabled={isSubmitting || !formData.name || !formData.phone || !requiredAnswersPresent}
                     >
 
-                      <span className="relative text-center">{isSubmitting ? <Loader2 className="animate-spin m-auto" /> : t('schedule.form.send.code')}</span>
+                      <span className="relative text-center">{isSubmitting ? <><Loader2 className="animate-spin m-auto" aria-hidden="true" /><span className="sr-only">{t('schedule.form.send.code')}</span></> : t('schedule.form.send.code')}</span>
                     </motion.button>
                     <p className="mt-4 text-xs text-light-text/60 dark:text-dark-text/50 text-center">
                       {t('schedule.form.helper')}
@@ -1776,11 +1807,11 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
                 >
                   <div className="flex flex-col items-center mb-8 text-center">
                     <div className="flex items-center gap-2 text-lg font-semibold text-light-text dark:text-dark-text">
-                      <CalendarIcon className="h-5 w-5 text-primary/70 dark:text-primary-dark/70" />
+                      <CalendarIcon className="h-5 w-5 text-primary/70 dark:text-primary-dark/70" aria-hidden="true" />
                       <span>{selectedDate ? formatSelectedDate(selectedDate) : ''}</span>
                     </div>
                     <div className="flex items-center gap-2 text-lg font-semibold text-light-text dark:text-dark-text mt-1">
-                      <Clock className="h-5 w-5 text-primary/70 dark:text-primary-dark/70" />
+                      <Clock className="h-5 w-5 text-primary/70 dark:text-primary-dark/70" aria-hidden="true" />
                       <span>{selectedTime}</span>
                     </div>
                   </div>
@@ -1881,24 +1912,26 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
                       whileTap={{ scale: 0.98 }}
                       disabled={isSubmitting || !formData.verificationCode}
                     >
-                      <span className="relative">{isSubmitting ? <Loader2 className="animate-spin m-auto" /> : t('schedule.form.verify')}</span>
+                      <span className="relative">{isSubmitting ? <><Loader2 className="animate-spin m-auto" aria-hidden="true" /><span className="sr-only">{t('schedule.form.verify')}</span></> : t('schedule.form.verify')}</span>
                     </motion.button>
 
 
                   </form>
                 </motion.div>
               )}
+              </div>
 
               <AnimatePresence>
                 {error && (
                   <motion.div
                     key="error-message"
+                    role="alert"
                     className="mt-6 text-red-500 dark:text-red-400 text-center flex items-center justify-center gap-2"
                     initial={{ opacity: 0, y: -10 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0 }}
                   >
-                    <XCircle className="h-5 w-5" />
+                    <XCircle className="h-5 w-5" aria-hidden="true" />
                     <span>{error}</span>
                   </motion.div>
                 )}
@@ -1922,6 +1955,7 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
                   {/* Check mark draws itself once the circle has landed. */}
                   <motion.svg
                     viewBox="0 0 24 24"
+                    aria-hidden="true"
                     className="w-12 h-12"
                     fill="none"
                     stroke="white"
@@ -1938,7 +1972,10 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
                   </motion.svg>
                 </motion.div>
                 <motion.span
-                  className="mt-6 text-lg font-semibold text-emerald-600 dark:text-emerald-400"
+                  ref={successRef}
+                  tabIndex={-1}
+                  role="status"
+                  className="mt-6 text-lg font-semibold text-emerald-600 dark:text-emerald-400 outline-none"
                   initial={{ opacity: 0, y: 8 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.5 }}
@@ -1958,7 +1995,7 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
                       rel="noopener noreferrer"
                       className="w-full sm:w-auto flex items-center justify-center gap-2 py-2 px-4 rounded-xl border border-primary dark:border-primary-dark text-primary dark:text-primary-dark text-sm font-medium hover:bg-primary/10 dark:hover:bg-primary-dark/10 transition-colors"
                     >
-                      <CalendarIcon className="h-4 w-4" />
+                      <CalendarIcon className="h-4 w-4" aria-hidden="true" />
                       {t('calendar.addGoogle')}
                     </a>
                     <button
@@ -1966,7 +2003,7 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
                       onClick={() => downloadIcs(calendarEvent)}
                       className="w-full sm:w-auto flex items-center justify-center gap-2 py-2 px-4 rounded-xl border border-primary dark:border-primary-dark text-primary dark:text-primary-dark text-sm font-medium hover:bg-primary/10 dark:hover:bg-primary-dark/10 transition-colors"
                     >
-                      <CalendarIcon className="h-4 w-4" />
+                      <CalendarIcon className="h-4 w-4" aria-hidden="true" />
                       {t('calendar.download')}
                     </button>
                   </motion.div>

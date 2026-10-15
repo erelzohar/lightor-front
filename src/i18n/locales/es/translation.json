@@ -402,6 +402,14 @@
       "phone": "También puedes reservar por teléfono:",
       "phoneLead": "También puedes contactar por teléfono:",
       "updated": "Última actualización: {{date}}"
+    },
+    "booking": {
+      "loading": "Cargando el calendario",
+      "step": "Paso {{n}} de {{total}}: {{name}}",
+      "prevMonth": "Mes anterior",
+      "nextMonth": "Mes siguiente",
+      "details": "Tus datos",
+      "verification": "Código de verificación"
     }
   }
 }

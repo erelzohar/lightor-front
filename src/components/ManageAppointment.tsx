@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useId, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Calendar, Clock, User, Phone, CheckCircle, Loader2, AlertTriangle, Edit, Trash, Tag, ClipboardList, Check } from 'lucide-react';
@@ -18,6 +18,8 @@ import { CancelWindowClosedError, DEFAULT_MIN_CANCEL_TIME_MS, formatCancelWindow
 import { fieldsForService } from '../models/BookingField';
 import AnswersEditor from './manage/AnswersEditor';
 import { resolveTimeZone } from '../utils/businessTime';
+import SiteA11y from './a11y/SiteA11y';
+import { useDialogFocus } from '../hooks/useDialogFocus';
 
 
 
@@ -42,6 +44,10 @@ const ManageAppointment: React.FC = () => {
   // The customer corrects their answers here (LT-217).
   const [isEditingDetails, setIsEditingDetails] = useState(false);
   const [detailsSaved, setDetailsSaved] = useState(false);
+  // LT-356: the "cancel this booking?" box is a real dialog.
+  const confirmRef = useRef<HTMLDivElement>(null);
+  const confirmTitleId = useId();
+  useDialogFocus(isConfirmationOpen, confirmRef, () => setIsConfirmationOpen(false));
   const service = AppointmentService.getInstance()
   const configService = WebConfigService.getInstance();
 
@@ -189,8 +195,8 @@ const ManageAppointment: React.FC = () => {
   // says what became of the booking and offers a new one.
   if (appointment.status !== 'scheduled') {
     const cancelled = appointment.status === 'cancelled';
-    return (
-      <div className="min-h-screen bg-light-bg dark:bg-dark-bg flex items-center justify-center p-4 transition-colors duration-300">
+    return (<>
+      <main className="min-h-screen bg-light-bg dark:bg-dark-bg flex items-center justify-center p-4 transition-colors duration-300">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -206,9 +212,9 @@ const ManageAppointment: React.FC = () => {
               />
             </div>
           )}
-          <h2 className="text-2xl font-bold text-light-text dark:text-dark-text mb-2">
+          <h1 className="text-2xl font-bold text-light-text dark:text-dark-text mb-2">
             {t(cancelled ? 'manage.inactive.cancelled_title' : 'manage.inactive.past_title')}
-          </h2>
+          </h1>
           <p className="text-light-text/70 dark:text-dark-text/70 mb-8">
             {appointment.type?.name ? `${appointment.type.name} · ` : ''}
             {formatDate(appointment.timestamp)} · <span dir="ltr">{formatTime(appointment.timestamp)}</span>
@@ -221,12 +227,14 @@ const ManageAppointment: React.FC = () => {
             {t('manage.inactive.book_again')}
           </a>
         </motion.div>
-      </div>
-    );
+      </main>
+      <SiteA11y config={config} />
+    </>);
   }
 
   if (isUpdating && appointment && config) {
-    return (
+    return (<>
+      <main>
       <Schedule
         config={{
           title: t('manage.update.title'),
@@ -258,7 +266,9 @@ const ManageAppointment: React.FC = () => {
           }, 2000);
         }}
       />
-    );
+      </main>
+      <SiteA11y config={config} />
+    </>);
   }
 
   // Once refused as too late, the page stays refused (LT-205): the server's
@@ -272,8 +282,8 @@ const ManageAppointment: React.FC = () => {
     && parseInt(appointment.timestamp) > Date.now();
   const businessPhone = config.contact?.phone?.trim() ?? '';
 
-  return (
-    <div className="min-h-screen bg-light-bg dark:bg-dark-bg flex items-center justify-center p-4 transition-colors duration-300">
+  return (<>
+    <main className="min-h-screen bg-light-bg dark:bg-dark-bg flex items-center justify-center p-4 transition-colors duration-300">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -290,9 +300,9 @@ const ManageAppointment: React.FC = () => {
               />
             </div>
           )}
-          <h2 className="text-2xl font-bold text-light-text dark:text-dark-text mb-2">
+          <h1 className="text-2xl font-bold text-light-text dark:text-dark-text mb-2">
             {t('manage.manage_title')}
-          </h2>
+          </h1>
           <p className="text-light-text/70 dark:text-dark-text/70">
             {isCancellable
               ? t('manage.message.cancellable')
@@ -544,13 +554,18 @@ const ManageAppointment: React.FC = () => {
             onClick={() => setIsConfirmationOpen(false)}
           >
             <motion.div
+              ref={confirmRef}
+              role="alertdialog"
+              aria-modal="true"
+              aria-labelledby={confirmTitleId}
+              tabIndex={-1}
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
               className="bg-light-surface dark:bg-dark-surface rounded-2xl p-6 max-w-sm w-full relative"
               onClick={e => e.stopPropagation()}
             >
-              <h3 className="text-xl font-bold text-light-text dark:text-dark-text mb-4 text-center">
+              <h3 id={confirmTitleId} className="text-xl font-bold text-light-text dark:text-dark-text mb-4 text-center">
                 {t('manage.modal.confirm.title')}
               </h3>
               <p className="text-light-text/70 dark:text-dark-text/70 text-center mb-6">
@@ -573,7 +588,7 @@ const ManageAppointment: React.FC = () => {
                   disabled={isCancelling}
                 >
                   {isCancelling ? (
-                    <Loader2 className="w-5 h-5 animate-spin mx-auto" />
+                    <><Loader2 className="w-5 h-5 animate-spin mx-auto" aria-hidden="true" /><span className="sr-only">{t('manage.modal.button_confirm')}</span></>
                   ) : (
                     t('manage.modal.button_confirm')
                   )}
@@ -586,6 +601,7 @@ const ManageAppointment: React.FC = () => {
         {/* Success Message */}
         {isSuccess && (
           <motion.div
+            role="status"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -640,8 +656,9 @@ const ManageAppointment: React.FC = () => {
           </motion.div>
         )}
       </motion.div>
-    </div>
-  );
+    </main>
+    <SiteA11y config={config} />
+  </>);
 };
 
 export default ManageAppointment;

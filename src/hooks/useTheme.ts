@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { WebsiteConfig } from '../models/WebsiteConfig';
 import type { CardStyle, FontFamily } from '../models/DesignConfig';
-import { ensureReadable, bestTextOn } from '../services/contrast';
+import { ensureReadable, bestTextOn, mutedAlphaFloor, MUTED_ALPHAS } from '../services/contrast';
 
 const FONT_STACK: Record<FontFamily, string> = {
     inter: "'Inter', sans-serif",
@@ -109,6 +109,18 @@ export const useTheme = (config: WebsiteConfig | null, isPreview = false) => {
         root.style.setProperty('--color-primary-dark-readable', hexToRgb(primaryDarkReadable));
         root.style.setProperty('--color-on-primary', hexToRgb(bestTextOn(pallete.colorPrimary)));
         root.style.setProperty('--color-on-primary-dark', hexToRgb(bestTextOn(pallete.colorPrimaryDark)));
+
+        // LT-356: muted text (`text-light-text/60` …) never fades below 4.5:1.
+        // Each step reads max(its own alpha, the palette's floor) through the
+        // --mt-* vars index.css puts on those classes; a step that already
+        // passes keeps its own look.
+        const floorLight = mutedAlphaFloor(pallete.colorLightText, [pallete.colorLightBg, pallete.colorLightSurface]);
+        const floorDark = mutedAlphaFloor(pallete.colorDarkText, [pallete.colorDarkBg, pallete.colorDarkSurface]);
+        for (const alpha of MUTED_ALPHAS) {
+            const step = Math.round(alpha * 100);
+            root.style.setProperty(`--mt-l-${step}`, String(Math.max(alpha, floorLight)));
+            root.style.setProperty(`--mt-d-${step}`, String(Math.max(alpha, floorDark)));
+        }
 
         if (!design) return;
 

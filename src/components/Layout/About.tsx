@@ -154,12 +154,14 @@ const About: React.FC<AboutProps> = ({ config, websiteConfig, layout = 'cards', 
         </svg>
       ),
       onClick: () => handleContactClick('whatsapp', whatsAppHref(websiteConfig.contact.phone)),
-      color: 'bg-[#25D366]/10 text-[#25D366] hover:bg-[#25D366] hover:text-white dark:hover:text-white'
+      color: 'bg-[#25D366]/10 text-[#25D366] hover:bg-[#25D366] hover:text-white dark:hover:text-white',
+      label: t('contact.option.whatsapp')
     },
     safeHttpUrl(websiteConfig.social.instagram) && {
       icon: Instagram,
       href: safeHttpUrl(websiteConfig.social.instagram),
-      color: 'bg-[#F77EB9]/10 text-[#F77EB9] hover:bg-[#F77EB9] hover:text-white dark:hover:text-white'
+      color: 'bg-[#F77EB9]/10 text-[#F77EB9] hover:bg-[#F77EB9] hover:text-white dark:hover:text-white',
+      label: t('footer.social.follow.instagram')
     },
     safeHttpUrl(websiteConfig.social.tiktok) && {
       icon: () => (
@@ -173,12 +175,14 @@ const About: React.FC<AboutProps> = ({ config, websiteConfig, layout = 'cards', 
         </svg>
       ),
       href: safeHttpUrl(websiteConfig.social.tiktok),
-      color: 'bg-[#000000]/5 text-black hover:bg-[#000000] hover:text-white dark:bg-[#000000]/10 dark:text-white dark:hover:bg-[#000000]'
+      color: 'bg-[#000000]/5 text-black hover:bg-[#000000] hover:text-white dark:bg-[#000000]/10 dark:text-white dark:hover:bg-[#000000]',
+      label: t('footer.social.follow.tiktok')
     },
     safeHttpUrl(websiteConfig.social.facebook) && {
       icon: Facebook,
       href: safeHttpUrl(websiteConfig.social.facebook),
-      color: 'bg-[#1877F2]/10 text-[#1877F2] hover:bg-[#1877F2] hover:text-white dark:hover:text-white'
+      color: 'bg-[#1877F2]/10 text-[#1877F2] hover:bg-[#1877F2] hover:text-white dark:hover:text-white',
+      label: t('footer.social.follow.facebook')
     },
     safeHttpUrl(websiteConfig.social.x) && {
       icon: () => (
@@ -192,12 +196,14 @@ const About: React.FC<AboutProps> = ({ config, websiteConfig, layout = 'cards', 
         </svg>
       ),
       href: safeHttpUrl(websiteConfig.social.x),
-      color: 'bg-[#000000]/5 text-black hover:bg-[#000000] hover:text-white dark:bg-[#000000]/10 dark:text-white dark:hover:bg-[#000000]'
+      color: 'bg-[#000000]/5 text-black hover:bg-[#000000] hover:text-white dark:bg-[#000000]/10 dark:text-white dark:hover:bg-[#000000]',
+      label: t('footer.social.follow.x')
     },
     websiteConfig.contact.phone && {
       icon: Phone,
       onClick: () => handleContactClick('phone', `tel:${websiteConfig.contact.phone.replace(/[^0-9+]/g, '')}`),
-      color: 'bg-[#10B981]/10 text-[#10B981] hover:bg-[#10B981] hover:text-white dark:hover:text-white'
+      color: 'bg-[#10B981]/10 text-[#10B981] hover:bg-[#10B981] hover:text-white dark:hover:text-white',
+      label: t('contact.option.call')
     }
   ].filter(Boolean);
 
@@ -498,13 +504,14 @@ const About: React.FC<AboutProps> = ({ config, websiteConfig, layout = 'cards', 
               <motion.button
                 key={index}
                 onClick={social.onClick || (() => openExternal(social.href))}
+                aria-label={social.label}
                 className={`p-3 rounded-xl transition-colors ${social.color}`}
                 whileHover={{ scale: 1.1 }}
                 whileTap={{ scale: 0.95 }}
               >
                 {typeof social.icon === 'function' ?
                   <social.icon /> :
-                  <social.icon className="h-6 w-6" />
+                  <social.icon className="h-6 w-6" aria-hidden="true" />
                 }
               </motion.button>
             ))}

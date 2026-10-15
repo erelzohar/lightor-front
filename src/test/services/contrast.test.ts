@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { contrastRatio, ensureReadable, bestTextOn } from '../../services/contrast';
+import { contrastRatio, ensureReadable, bestTextOn, blendOver, mutedAlphaFloor } from '../../services/contrast';
 
 describe('contrastRatio', () => {
   it('reports the WCAG extremes correctly', () => {
@@ -81,5 +81,22 @@ describe('bestTextOn', () => {
     // Mid-tone where both candidates land close: white wins the tie-break.
     const pick = bestTextOn('#757575');
     expect(['#ffffff', '#111827']).toContain(pick);
+  });
+});
+
+describe('mutedAlphaFloor (LT-356)', () => {
+  it('raises gray-700 on near-white from 0.6 to the first alpha that reads at 4.5:1', () => {
+    expect(contrastRatio(blendOver('#374151', '#f9fafb', 0.6), '#f9fafb')).toBeLessThan(4.5);
+    const floor = mutedAlphaFloor('#374151', ['#f9fafb', '#ffffff']);
+    expect(floor).toBe(0.75);
+    expect(contrastRatio(blendOver('#374151', '#f9fafb', floor), '#f9fafb')).toBeGreaterThanOrEqual(4.5);
+  });
+
+  it('leaves a high-contrast pair low (near-black on white passes at 0.6)', () => {
+    expect(mutedAlphaFloor('#111111', ['#ffffff'])).toBeLessThanOrEqual(0.6);
+  });
+
+  it('is 1 when even the full colour cannot reach the target', () => {
+    expect(mutedAlphaFloor('#bbbbbb', ['#ffffff'])).toBe(1);
   });
 });

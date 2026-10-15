@@ -143,3 +143,28 @@ export const bestTextOn = (bg: string, candidates: string[] = ['#ffffff', '#1118
   }
   return best;
 };
+
+/** `fg` drawn at `alpha` over `bg`, as the colour the eye gets. */
+export const blendOver = (fg: string, bg: string, alpha: number): string => {
+  const f = hexToRgb(fg) ?? { r: 128, g: 128, b: 128 };
+  const b = hexToRgb(bg) ?? { r: 128, g: 128, b: 128 };
+  const mix = (x: number, y: number) => x * alpha + y * (1 - alpha);
+  return rgbToHex({ r: mix(f.r, b.r), g: mix(f.g, b.g), b: mix(f.b, b.b) });
+};
+
+/** The muted-text steps the site uses (`text-light-text/60` …), as alphas. */
+export const MUTED_ALPHAS = [0.4, 0.5, 0.6, 0.65, 0.7, 0.8, 0.9] as const;
+
+/**
+ * LT-356: the lowest alpha at which `text` over every one of `backgrounds`
+ * still reads at `target` (WCAG 4.5:1). Muted text is the text colour at part
+ * opacity, and on most palettes /60 fell well short (gray-700 over near-white
+ * blends to about 3.4:1). Steps of 0.05; 1 when only the full colour will do.
+ */
+export const mutedAlphaFloor = (text: string, backgrounds: string[], target = 4.5): number => {
+  for (let step = 8; step <= 20; step++) {
+    const alpha = step / 20;
+    if (backgrounds.every((bg) => contrastRatio(blendOver(text, bg, alpha), bg) >= target)) return alpha;
+  }
+  return 1;
+};
