@@ -56,7 +56,7 @@ const AccessibilityStatement: React.FC<AccessibilityStatementProps> = ({ busines
         aria-modal="true"
         aria-labelledby={titleId}
         tabIndex={-1}
-        className="relative w-full max-w-2xl max-h-[85svh] overflow-y-auto rounded-2xl bg-light-surface dark:bg-dark-surface text-light-text dark:text-dark-text p-6 md:p-8 shadow-2xl text-start"
+        className="lt-ui relative w-full max-w-2xl max-h-[85svh] overflow-y-auto overflow-x-hidden rounded-2xl bg-light-surface dark:bg-dark-surface text-light-text dark:text-dark-text p-6 md:p-8 shadow-2xl text-start"
       >
         <button
           type="button"
@@ -67,21 +67,21 @@ const AccessibilityStatement: React.FC<AccessibilityStatementProps> = ({ busines
           <X className="h-5 w-5" aria-hidden="true" />
         </button>
 
-        <h2 id={titleId} className="text-2xl font-bold mb-4 pe-10">{t('a11y.statement.title')}</h2>
+        <h2 id={titleId} className="font-bold mb-4 pe-10 break-words">{t('a11y.statement.title')}</h2>
         <p className="mb-5 leading-relaxed">{t('a11y.statement.intro', { name: businessName })}</p>
 
-        <h3 className="text-lg font-semibold mb-2">{t('a11y.statement.levelTitle')}</h3>
+        <h3 className="font-semibold mb-2">{t('a11y.statement.levelTitle')}</h3>
         <p className="mb-5 leading-relaxed">{t('a11y.statement.level')}</p>
 
-        <h3 className="text-lg font-semibold mb-2">{t('a11y.statement.doneTitle')}</h3>
+        <h3 className="font-semibold mb-2">{t('a11y.statement.doneTitle')}</h3>
         <ul className="mb-5 list-disc ps-6 space-y-1 leading-relaxed">
           {DONE_KEYS.map((k) => <li key={k}>{t(`a11y.statement.${k}`)}</li>)}
         </ul>
 
-        <h3 className="text-lg font-semibold mb-2">{t('a11y.statement.limitsTitle')}</h3>
+        <h3 className="font-semibold mb-2">{t('a11y.statement.limitsTitle')}</h3>
         <p className="mb-5 leading-relaxed">{t('a11y.statement.limits')}</p>
 
-        <h3 className="text-lg font-semibold mb-2">{t('a11y.statement.contactTitle')}</h3>
+        <h3 className="font-semibold mb-2">{t('a11y.statement.contactTitle')}</h3>
         <p className="mb-2 leading-relaxed">
           {t(bookable ? 'a11y.statement.contact' : 'a11y.statement.contactLead', { name: ACCESSIBILITY_CONTACT.name.replace(' ', '\u00a0') })}{' '}
           <a href={`mailto:${ACCESSIBILITY_CONTACT.email}`} className="underline underline-offset-2 text-primary-readable dark:text-primary-dark-readable">

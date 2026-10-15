@@ -91,6 +91,14 @@ describe('the accessibility menu', () => {
     expect(document.activeElement).toBe(button);
   });
 
+  it('keeps its own type, out of the site\'s heading scale (index.css .lt-ui: a poster site made its title 70px)', () => {
+    render(<><AccessibilityMenu aboveContactButton={false} /><AccessibilityStatement businessName="Studio" bookable /></>);
+    fireEvent.click(screen.getByRole('button', { name: 'a11y.menu.button' }));
+    expect(screen.getByRole('dialog', { name: 'a11y.menu.title' })).toHaveClass('lt-ui');
+    act(() => openStatement());
+    expect(screen.getByRole('dialog', { name: 'a11y.statement.title' })).toHaveClass('lt-ui');
+  });
+
   it('sits above the free plan\'s contact button, in the corner otherwise', () => {
     const { container, rerender } = render(<AccessibilityMenu aboveContactButton />);
     expect(container.firstElementChild?.className).toContain('bottom-[4.75rem]');

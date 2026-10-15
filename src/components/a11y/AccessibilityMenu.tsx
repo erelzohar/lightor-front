@@ -61,10 +61,10 @@ const AccessibilityMenu: React.FC<AccessibilityMenuProps> = ({ aboveContactButto
           role="dialog"
           aria-labelledby={titleId}
           tabIndex={-1}
-          className="absolute bottom-14 start-0 w-[min(20rem,calc(100vw-2rem))] max-h-[70svh] overflow-y-auto rounded-2xl bg-light-surface dark:bg-dark-surface text-light-text dark:text-dark-text shadow-2xl border border-light-text/10 dark:border-dark-text/15 p-4 text-start"
+          className="lt-ui absolute bottom-14 start-0 w-[min(20rem,calc(100vw-2rem))] max-h-[70svh] overflow-y-auto overflow-x-hidden rounded-2xl bg-light-surface dark:bg-dark-surface text-light-text dark:text-dark-text shadow-2xl border border-light-text/10 dark:border-dark-text/15 p-4 text-start"
         >
-          <div className="flex items-center justify-between mb-3">
-            <h2 id={titleId} className="text-lg font-bold">{t('a11y.menu.title')}</h2>
+          <div className="flex items-center justify-between gap-2 mb-3">
+            <h2 id={titleId} className="min-w-0 break-words font-bold">{t('a11y.menu.title')}</h2>
             <button
               type="button"
               onClick={() => setOpen(false)}

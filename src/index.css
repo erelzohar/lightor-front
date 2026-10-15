@@ -422,3 +422,18 @@ html.a11y-still *::after {
   transition-delay: 0s !important;
   scroll-behavior: auto !important;
 }
+
+/* LT-346: Lightor's own panels (the accessibility menu and statement) keep
+   their own type. The site's scale and heading faces are for its sections:
+   on a poster site the menu's title came out as 70px condensed display type,
+   wider than the panel, and the panel scrolled sideways to its close button.
+   Same opt-out as h2.section-label-title above, one class up in specificity. */
+html .lt-ui :is(h1, h2, h3, h4) {
+  font-family: inherit;
+  letter-spacing: normal;
+  text-transform: none;
+}
+html[data-type-scale] .lt-ui h2,
+html .lt-ui h2 { font-size: 1.25rem; line-height: 1.35; }
+html[data-type-scale] .lt-ui h3,
+html .lt-ui h3 { font-size: 1.0625rem; line-height: 1.4; }
