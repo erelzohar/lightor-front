@@ -104,6 +104,7 @@ const MaterialInput = ({
           } rounded-design-sm transition-all outline-none text-light-text dark:text-dark-text resize-none`}
         aria-required={required}
         aria-invalid={!!error}
+        aria-describedby={error ? `${id}-error` : undefined}
       />
     ) : (
       <input
@@ -119,10 +120,11 @@ const MaterialInput = ({
           } rounded-design-sm transition-all outline-none text-light-text dark:text-dark-text`}
         aria-required={required}
         aria-invalid={!!error}
+        aria-describedby={error ? `${id}-error` : undefined}
       />
     )}
     {error && (
-      <p className="mt-1 text-sm text-red-500 dark:text-red-400">{error}</p>
+      <p id={`${id}-error`} role="alert" className="mt-1 text-sm text-red-500 dark:text-red-400">{error}</p>
     )}
   </div>
 );
@@ -603,7 +605,7 @@ const Contact: React.FC<ContactProps> = ({ config, address, contact, workingDays
   if (layout === 'poster') {
     return (
       <>
-        <section id="contact" aria-label="Contact us" className={`section-y ${plainBg} transition-colors duration-300`}>
+        <section id="contact" aria-label={config.title || t('nav.contact')} className={`section-y ${plainBg} transition-colors duration-300`}>
           <div className="container mx-auto px-4">
             <SectionHeading titlePath="components.contact.title" descriptionPath="components.contact.description" title={config.title} description={config.description || undefined} variant={header} scale={headerScale} mb="mb-10" titleId="contact-title" />
             <div className="grid md:grid-cols-2 border-t border-light-text/15 dark:border-dark-text/15">
@@ -630,7 +632,7 @@ const Contact: React.FC<ContactProps> = ({ config, address, contact, workingDays
   if (layout === 'editorial') {
     return (
       <>
-        <section id="contact" aria-label="Contact us" className={`section-y ${plainBg} transition-colors duration-300`}>
+        <section id="contact" aria-label={config.title || t('nav.contact')} className={`section-y ${plainBg} transition-colors duration-300`}>
           <div className="container mx-auto px-4">
             <SectionHeading titlePath="components.contact.title" descriptionPath="components.contact.description" title={config.title} description={config.description || undefined} variant={header} scale={headerScale} mb="mb-12" titleId="contact-title" />
             <div className="grid md:grid-cols-2 gap-16 max-w-6xl">
@@ -703,7 +705,7 @@ const Contact: React.FC<ContactProps> = ({ config, address, contact, workingDays
   if (layout === 'cards') {
     return (
       <>
-        <section id="contact" aria-label="Contact us" className={`section-y ${plainBg} transition-colors duration-300`}>
+        <section id="contact" aria-label={config.title || t('nav.contact')} className={`section-y ${plainBg} transition-colors duration-300`}>
           <div className="container mx-auto px-4">
             <SectionHeading titlePath="components.contact.title" descriptionPath="components.contact.description" title={config.title} description={config.description || undefined} variant={header} scale={headerScale} mb="mb-12" titleId="contact-title" />
             <div className="grid md:grid-cols-2 gap-8 max-w-6xl mx-auto">
@@ -735,7 +737,7 @@ const Contact: React.FC<ContactProps> = ({ config, address, contact, workingDays
       <section
         id="contact"
         className={`section-y ${plainBg} transition-colors duration-300 relative overflow-hidden`}
-        aria-label="Contact us"
+        aria-label={config.title || t('nav.contact')}
       >
         <motion.div
           className="absolute inset-0 opacity-30"
@@ -778,7 +780,7 @@ const Contact: React.FC<ContactProps> = ({ config, address, contact, workingDays
               <div
                 className={isStacked ? 'flex flex-wrap justify-center gap-x-12 gap-y-8' : 'space-y-8'}
                 role="list"
-                aria-label="Contact information"
+                aria-label={t('nav.contact')}
               >
                 {contactInfo.map((item, index) => (
                   <motion.div

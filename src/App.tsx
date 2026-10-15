@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useMemo, useCallback, Fragment, cloneElement, isValidElement, type ReactNode, type ReactElement } from 'react';
 import { Routes, Route } from 'react-router-dom';
+import { MotionConfig } from 'framer-motion';
 
 // Components & Services
 import Navbar from './components/Layout/Navbar';
@@ -50,6 +51,10 @@ import { EditContext, elementForSection, elementsForPath, type EditTarget, type 
 import { legacyLayout } from './services/legacyLayout';
 import { scrollToSection } from './utils/sections';
 import { awaitsPreviewData } from './services/previewMode';
+import AccessibilityMenu from './components/a11y/AccessibilityMenu';
+import AccessibilityStatement from './components/a11y/AccessibilityStatement';
+import { setA11yMenuEnabled } from './services/a11yPrefs';
+import { useStill } from './hooks/useA11yPrefs';
 
 // Origins permitted to drive this app through a PREVIEW_DATA postMessage.
 // Only the register and dashboard apps embed the public site in an iframe for
@@ -115,7 +120,9 @@ function MainContent() {
   // each one replays the section-by-section cascade (0 = never, no cascade).
   const [generateSeq, setGenerateSeq] = useState(0);
   const isPreviewRef = useRef(false);
-  const { language, setLanguage } = useLanguage();
+  const { language, setLanguage, setContentLanguage, t } = useLanguage();
+  // LT-346: framer-motion holds still too when motion is reduced.
+  const still = useStill();
   // LT-243: the dashboard's site editor — on while it says so, with the
   // field or section it has selected; replies go to the origin it wrote from.
   const [editing, setEditing] = useState(false);
@@ -341,6 +348,12 @@ function MainContent() {
   }, []);
 
   useTheme(config, isPreview);
+  // LT-346: <html lang> names the owner's language, whatever the visitor's
+  // menu language; the menu's choices apply only where the menu is shown.
+  useEffect(() => {
+    setContentLanguage?.((config?.defaultLanguage as Language) || null);
+    setA11yMenuEnabled(config ? config.accessibilityMenu !== false : true);
+  }, [config, setContentLanguage]);
   // LT-222: a shared `/#schedule` lands on its section once the site is drawn.
   useSectionDeepLinks(!loading && !!config);
 
@@ -506,13 +519,30 @@ function MainContent() {
 
   layoutRef.current = '';
 
+  // LT-346: where the statement link can live when the footer is not drawn.
+  const footerShown = config.blocks?.length
+    ? !!config.components?.footer && config.blocks.some((b) => b.type === 'footer' && !b.mod?.hidden)
+    : !!config.components?.footer?.visible;
+  const contactButtonShown = !config.assistant && !!config.components?.contactButton?.visible;
+
   // LT-164: `overflow-x-clip` so nothing a tenant's design does (wide
   // containers, vw-scaled poster headings, drifting decor) can widen the page
   // and put a horizontal scroll under it. `clip` rather than `hidden` so this
   // never becomes a scroll container — sticky and anchors keep working.
   return (
     <EditContext.Provider value={editState}>
+    <MotionConfig reducedMotion={still ? 'always' : 'user'}>
     <div className="min-h-screen overflow-x-clip bg-light-bg dark:bg-dark-bg transition-colors duration-300">
+      {/* LT-346: the first stop for a keyboard: straight past the menu. */}
+      {!editing && (
+        <a
+          href="#main-content"
+          onClick={(e) => { e.preventDefault(); document.getElementById('main-content')?.focus(); }}
+          className="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:start-3 focus:z-[70] focus:rounded-lg focus:bg-light-surface focus:dark:bg-dark-surface focus:text-light-text focus:dark:text-dark-text focus:px-4 focus:py-2 focus:shadow-lg"
+        >
+          {t('a11y.skip')}
+        </a>
+      )}
       {/* LT-243: the popup would cover the page the owner is editing; the
           editor edits its text from its own list instead. */}
       {config.components?.introPopup?.visible && !editing && (
@@ -528,8 +558,11 @@ function MainContent() {
       {/* LT-133: a composed page (blocks present) replaces the section flow
           and the standalone footer; the legacy flow below is untouched. */}
       {config.blocks?.length ? (
-        <ComposedPage config={config} jitter={jitter} isPreview={isPreview} generateSeq={generateSeq} />
+        <main id="main-content" tabIndex={-1} className="outline-none">
+          <ComposedPage config={config} jitter={jitter} isPreview={isPreview} generateSeq={generateSeq} />
+        </main>
       ) : (<>
+      <main id="main-content" tabIndex={-1} className="outline-none">
       {(() => {
         // LT-115: seeded page-order variation — some sites lead with the
         // work. Vibe presets only: legacy sites must never reorder (the
@@ -703,6 +736,7 @@ function MainContent() {
         });
         return widthClass ? <div className={widthClass}>{rendered}</div> : rendered;
       })()}
+      </main>
 
       {config.components?.footer && showSection(config.components.footer.visible) && (
         <EditSection id="footer" type="footer" hidden={!config.components.footer.visible}>
@@ -724,9 +758,10 @@ function MainContent() {
       </>)}
 
       {/* Free-plan badge — deliberately outside the footer conditional, so
-          hiding the footer does not hide it (LT-032). */}
-      {config.branding && (
-        <ErrorBoundary><LightorBadge /></ErrorBoundary>
+          hiding the footer does not hide it (LT-032). LT-346: the same strip
+          carries the accessibility statement's link when there is no footer. */}
+      {(config.branding || !footerShown) && (
+        <ErrorBoundary><LightorBadge badge={config.branding} statementLink={!footerShown} /></ErrorBoundary>
       )}
 
       {/* LT-312: the floating corner by plan. Free: the contact button, which the
@@ -745,8 +780,18 @@ function MainContent() {
         <ErrorBoundary><SiteLighty businessName={config.businessName} leadsSite={!bookable} phone={config.contact?.phone} /></ErrorBoundary>
       )}
 
+      {/* LT-346: the accessibility menu (the owner may hide it) and the
+          statement, which every site has. */}
+      {config.accessibilityMenu && !editing && (
+        <ErrorBoundary><AccessibilityMenu aboveContactButton={contactButtonShown} /></ErrorBoundary>
+      )}
+      <ErrorBoundary>
+        <AccessibilityStatement businessName={config.businessName} phone={config.contact?.phone} bookable={bookable} />
+      </ErrorBoundary>
+
       {editing && <EditOverlay selected={selection} onPick={onPick} />}
     </div>
+    </MotionConfig>
     </EditContext.Provider>
   );
 }

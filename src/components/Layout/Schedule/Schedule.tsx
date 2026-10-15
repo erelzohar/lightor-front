@@ -1722,10 +1722,13 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
                           : t('schedule.channel.sms')}
                       </span>
                       <div className="flex items-center gap-4 py-2" dir="ltr">
-                        <MessagesSquare className={`w-6 h-6 transition-colors ${channelType === 'sms' ? 'text-amber-400' : 'text-gray-400'}`} />
+                        <MessagesSquare aria-hidden="true" className={`w-6 h-6 transition-colors ${channelType === 'sms' ? 'text-amber-400' : 'text-gray-400'}`} />
 
                         <button
                           type="button"
+                          role="switch"
+                          aria-checked={channelType === 'whatsapp'}
+                          aria-label={t('schedule.channel.switch')}
                           onClick={() => setChannelType(prev => prev === 'sms' ? 'whatsapp' : 'sms')}
                           className={`w-12 h-6 rounded-full p-1 transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary ${channelType === 'whatsapp' ? 'bg-green-500' : 'bg-amber-400'
                             }`}
@@ -1810,7 +1813,7 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
                       ))}
                     </div>
                     {formErrors.verificationCode && (
-                      <p className="text-sm text-red-500 text-center mb-4">{formErrors.verificationCode}</p>
+                      <p role="alert" className="text-sm text-red-500 text-center mb-4">{formErrors.verificationCode}</p>
                     )}
 
                     <motion.p
@@ -1828,10 +1831,13 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
                           : t('schedule.channel.sms')}
                       </span>
                       <div className="flex items-center gap-4 py-2" dir="ltr">
-                        <MessagesSquare className={`w-6 h-6 transition-colors ${channelType === 'sms' ? 'text-amber-400' : 'text-gray-400'}`} />
+                        <MessagesSquare aria-hidden="true" className={`w-6 h-6 transition-colors ${channelType === 'sms' ? 'text-amber-400' : 'text-gray-400'}`} />
 
                         <button
                           type="button"
+                          role="switch"
+                          aria-checked={channelType === 'whatsapp'}
+                          aria-label={t('schedule.channel.switch')}
                           onClick={() => setChannelType(prev => prev === 'sms' ? 'whatsapp' : 'sms')}
                           className={`w-12 h-6 rounded-full p-1 transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary ${channelType === 'whatsapp' ? 'bg-green-500' : 'bg-amber-400'
                             }`}

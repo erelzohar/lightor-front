@@ -1,8 +1,9 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useId, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Phone } from 'lucide-react';
 import * as QRCode from 'qrcode.react';
 import { useLanguage } from '../contexts/LanguageContext';
+import { useDialogFocus } from '../hooks/useDialogFocus';
 
 interface ContactModalProps {
   isOpen: boolean;
@@ -16,23 +17,16 @@ export function ContactModal({ isOpen, onClose, contactLink, type }: ContactModa
   const isRTL = language === 'he' || language === 'ar';
   const isWhatsApp = type === 'whatsapp';
 
+  const boxRef = useRef<HTMLDivElement>(null);
+  const titleId = useId();
+  // LT-346: focus inside, Escape, Tab kept in, focus back to the button.
+  useDialogFocus(isOpen, boxRef, onClose);
+
   useEffect(() => {
-    const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && isOpen) {
-        onClose();
-      }
-    };
-
-    if (isOpen) {
-      document.addEventListener('keydown', handleEscape);
-      document.body.style.overflow = 'hidden';
-    }
-
-    return () => {
-      document.removeEventListener('keydown', handleEscape);
-      document.body.style.overflow = '';
-    };
-  }, [isOpen, onClose]);
+    if (!isOpen) return;
+    document.body.style.overflow = 'hidden';
+    return () => { document.body.style.overflow = ''; };
+  }, [isOpen]);
 
   return (
     <AnimatePresence>
@@ -43,17 +37,18 @@ export function ContactModal({ isOpen, onClose, contactLink, type }: ContactModa
           exit={{ opacity: 0 }}
           className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
           onClick={onClose}
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="contact-modal-title"
         >
           <motion.div
+            ref={boxRef}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby={titleId}
+            tabIndex={-1}
             initial={{ scale: 0.9, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.9, opacity: 0 }}
             className="bg-light-surface dark:bg-dark-surface rounded-2xl p-6 max-w-sm w-full relative"
             onClick={e => e.stopPropagation()}
-            role="document"
           >
             <button
               onClick={onClose}
@@ -65,7 +60,7 @@ export function ContactModal({ isOpen, onClose, contactLink, type }: ContactModa
 
             <div className="text-center">
               <h3
-                id="contact-modal-title"
+                id={titleId}
                 className="text-xl font-bold text-light-text dark:text-dark-text mb-4"
               >
 

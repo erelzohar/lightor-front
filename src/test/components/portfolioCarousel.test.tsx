@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { render } from '@testing-library/react';
+import { render, fireEvent } from '@testing-library/react';
 import ComposedPage from '../../components/blocks/ComposedPage';
 import { WebsiteConfig } from '../../models/WebsiteConfig';
 import { getSiteJitter } from '../../services/seed';
@@ -51,7 +51,7 @@ describe('the gallery carousel layout', () => {
     const { container } = renderGallery('carousel');
     const region = container.querySelector('[aria-roledescription="carousel"]');
     expect(region).not.toBeNull();
-    expect(container.querySelector('[role="grid"]')).toBeNull();
+    expect(container.querySelector('[role="list"]')).toBeNull();
     // One frame at a time: the first item is the live slide.
     expect(region?.querySelector('[aria-roledescription="slide"]')?.getAttribute('aria-label')).toBe('One: first');
   });
@@ -59,7 +59,23 @@ describe('the gallery carousel layout', () => {
   it('renders cards, not the slideshow, for every other layout', () => {
     const { container } = renderGallery('grid');
     expect(container.querySelector('[aria-roledescription="carousel"]')).toBeNull();
-    expect(container.querySelectorAll('[role="gridcell"]')).toHaveLength(3);
+    // LT-346: a list of pictures (it was a "grid" of cells with no rows).
+    expect(container.querySelectorAll('[role="listitem"]')).toHaveLength(3);
+    expect([...container.querySelectorAll('[role="listitem"] img')].map((i) => i.getAttribute('alt'))).toEqual(['One', 'Two', 'Three']);
+  });
+
+  it('turns on arrow keys only while the slideshow has focus (LT-346: they used to fire while typing in a form)', () => {
+    const { container } = renderGallery('carousel');
+    const region = container.querySelector('[aria-roledescription="carousel"]') as HTMLElement;
+    // The current slide, by its dot (an outgoing slide lingers in jsdom).
+    const current = () => [...region.querySelectorAll('[role="tab"]')].findIndex((d) => d.getAttribute('aria-selected') === 'true');
+    fireEvent.keyDown(window, { key: 'ArrowRight' });
+    expect(current()).toBe(0);
+    expect(region).toHaveAttribute('tabindex', '0');
+    fireEvent.keyDown(region, { key: 'ArrowRight' });
+    expect(current()).toBe(1);
+    fireEvent.keyDown(region, { key: 'ArrowLeft' });
+    expect(current()).toBe(0);
   });
 
   it('ignores a legacy isGrid flag left in a stored config', () => {

@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useId, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
+import { useDialogFocus } from '../hooks/useDialogFocus';
 
 interface LegalModalProps {
   isOpen: boolean;
@@ -11,8 +12,11 @@ interface LegalModalProps {
 }
 
 export function LegalModal({ isOpen, onClose, title, content }: LegalModalProps) {
-  const { language } = useLanguage();
-  const isRTL = language === 'he' || language === 'ar';
+  const { t } = useLanguage();
+  const boxRef = useRef<HTMLDivElement>(null);
+  const titleId = useId();
+  // LT-346: a real dialog — focus inside, Escape, Tab kept in, focus back.
+  useDialogFocus(isOpen, boxRef, onClose);
 
   return (
     <AnimatePresence>
@@ -25,6 +29,11 @@ export function LegalModal({ isOpen, onClose, title, content }: LegalModalProps)
           onClick={onClose}
         >
           <motion.div
+            ref={boxRef}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby={titleId}
+            tabIndex={-1}
             initial={{ scale: 0.9, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.9, opacity: 0 }}
@@ -32,14 +41,16 @@ export function LegalModal({ isOpen, onClose, title, content }: LegalModalProps)
             onClick={e => e.stopPropagation()}
           >
             <button
+              type="button"
               onClick={onClose}
-              className="absolute top-4 start-4 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors"
+              aria-label={t('a11y.menu.close')}
+              className="absolute top-4 end-4 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors"
             >
-              <X className="w-6 h-6" />
+              <X className="w-6 h-6" aria-hidden="true" />
             </button>
 
             <div className="text-start">
-              <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">{title}</h3>
+              <h3 id={titleId} className="text-2xl font-bold text-gray-900 dark:text-white mb-4 pe-10">{title}</h3>
               <div className="prose prose-lg max-w-none text-gray-600 dark:text-gray-300">
                 {content}
               </div>

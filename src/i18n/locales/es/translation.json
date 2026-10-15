@@ -124,7 +124,8 @@
     },
     "channel": {
       "sms": "Enviar código y actualizaciones por SMS",
-      "whatsapp": "Enviar código y actualizaciones por WhatsApp"
+      "whatsapp": "Enviar código y actualizaciones por WhatsApp",
+      "switch": "Recibir el código y las novedades por WhatsApp"
     },
     "class": {
       "label": "Clase grupal",
@@ -362,5 +363,45 @@
   "blocks": {
     "before": "Antes",
     "after": "Después"
+  },
+  "a11y": {
+    "skip": "Saltar al contenido",
+    "menu": {
+      "button": "Menú de accesibilidad",
+      "title": "Accesibilidad",
+      "close": "Cerrar",
+      "text": "Tamaño del texto",
+      "textSmaller": "Reducir texto",
+      "textLarger": "Aumentar texto",
+      "contrast": "Alto contraste",
+      "links": "Resaltar enlaces",
+      "font": "Fuente legible",
+      "spacing": "Espaciado del texto",
+      "still": "Detener animaciones",
+      "reset": "Restablecer",
+      "statement": "Declaración de accesibilidad"
+    },
+    "statement": {
+      "title": "Declaración de accesibilidad",
+      "intro": "{{name}} quiere que este sitio sea accesible para las personas con discapacidad. El sitio está construido en la plataforma Lightor, operada por EZ Webs.",
+      "levelTitle": "Nivel de accesibilidad",
+      "level": "Trabajamos para adecuar este sitio a las pautas WCAG 2.2 nivel AA y a la norma israelí IS 5568 (nivel AA).",
+      "doneTitle": "Lo que hemos hecho",
+      "done1": "El sitio se puede usar solo con el teclado.",
+      "done2": "El sitio está preparado para funcionar con lectores de pantalla.",
+      "done3": "Un menú de accesibilidad: texto más grande, alto contraste, detener animaciones, enlaces resaltados, fuente legible y espaciado del texto.",
+      "done4": "El sitio respeta el ajuste «reducir movimiento» de tu dispositivo.",
+      "done5": "Los formularios tienen etiquetas y mensajes de error claros.",
+      "done6": "El sitio funciona en teléfonos y ordenadores.",
+      "limitsTitle": "Limitaciones conocidas",
+      "limits": "Es posible que algunas imágenes añadidas por el propietario del sitio aún no tengan descripción. El sitio también usa componentes de terceros, como la verificación de seguridad y los mapas, que no están totalmente bajo nuestro control.",
+      "contactTitle": "¿Encontraste un problema?",
+      "contact": "Si tienes un problema de accesibilidad, o necesitas ayuda para reservar una cita o ponerte en contacto, escribe a {{name}}:",
+      "contactLead": "Si tienes un problema de accesibilidad, o necesitas ayuda para ponerte en contacto, escribe a {{name}}:",
+      "reply": "Te responderemos lo antes posible.",
+      "phone": "También puedes reservar por teléfono:",
+      "phoneLead": "También puedes contactar por teléfono:",
+      "updated": "Última actualización: {{date}}"
+    }
   }
 }

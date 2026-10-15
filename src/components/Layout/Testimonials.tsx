@@ -9,6 +9,7 @@ import type { TestimonialsLayout, SectionHeader, RevealStyle } from '../../model
 import SectionHeading from './SectionHeading';
 import type { HeadingScale } from '../../services/artDirection';
 import type { SectionTone } from '../SectionDivider';
+import { useStill } from '../../hooks/useA11yPrefs';
 
 interface TestimonialsProps {
   config: TestimonialsConfig;
@@ -53,12 +54,19 @@ const Testimonials: React.FC<TestimonialsProps> = ({ config, tone, layout = 'car
   // LT-126 'spotlight': one voice at a time, rotating on its own.
   const [spot, setSpot] = useState(0);
   const count = config.items.length;
+  // LT-346: it pauses while the pointer or focus is on it, stops for good
+  // once the visitor picks a voice, and never turns when motion is reduced
+  // (the device's setting or the accessibility menu) — WCAG 2.2.2.
+  const still = useStill();
+  const [hovered, setHovered] = useState(false);
+  const [picked, setPicked] = useState(false);
+  const rotating = layout === 'spotlight' && count >= 2 && !editing && !still && !hovered && !picked;
   useEffect(() => {
     // LT-243: held still in the site editor, so the owner can point at a voice.
-    if (layout !== 'spotlight' || count < 2 || editing) return;
+    if (!rotating) return;
     const id = window.setInterval(() => setSpot((s) => (s + 1) % count), 6000);
     return () => window.clearInterval(id);
-  }, [layout, count, editing]);
+  }, [rotating, count]);
 
   if (layout === 'marquee') {
     // Cards drifting across the section; two copies loop seamlessly.
@@ -85,11 +93,19 @@ const Testimonials: React.FC<TestimonialsProps> = ({ config, tone, layout = 'car
   if (layout === 'spotlight') {
     const item = config.items[spot % Math.max(count, 1)];
     return (
-      <section id="testimonials" className={`section-y ${TONE_BG[tone]} transition-colors duration-300`}>
+      <section
+        id="testimonials"
+        className={`section-y ${TONE_BG[tone]} transition-colors duration-300`}
+        onMouseEnter={() => setHovered(true)}
+        onMouseLeave={() => setHovered(false)}
+        onFocus={() => setHovered(true)}
+        onBlur={(e) => { if (!e.currentTarget.contains(e.relatedTarget as Node | null)) setHovered(false); }}
+      >
         <div className="container mx-auto px-4 max-w-4xl text-center">
           <SectionHeading titlePath="components.testimonials.title" title={config.title} variant={header} scale={headerScale} mb="mb-12" />
           <Quote className="h-10 w-10 text-primary-readable dark:text-primary-dark-readable mx-auto mb-8" aria-hidden="true" />
-          <div className="min-h-[10rem]" aria-live="polite">
+          {/* Announced only when the visitor turns it, not every 6 s. */}
+          <div className="min-h-[10rem]" aria-live={rotating ? 'off' : 'polite'}>
             <AnimatePresence mode="wait">
               <motion.figure
                 key={spot}
@@ -112,7 +128,7 @@ const Testimonials: React.FC<TestimonialsProps> = ({ config, tone, layout = 'car
                   role="tab"
                   aria-selected={i === spot % count}
                   aria-label={String(i + 1)}
-                  onClick={() => setSpot(i)}
+                  onClick={() => { setSpot(i); setPicked(true); }}
                   className={`h-2.5 rounded-full transition-all ${i === spot % count ? 'w-8 bg-primary dark:bg-primary-dark' : 'w-2.5 bg-light-text/25 dark:bg-dark-text/25'}`}
                 />
               ))}

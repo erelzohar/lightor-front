@@ -121,7 +121,8 @@
     },
     "channel": {
       "sms": "Send code & updates via SMS",
-      "whatsapp": "Send code & updates via WhatsApp"
+      "whatsapp": "Send code & updates via WhatsApp",
+      "switch": "Get the code and updates on WhatsApp"
     },
     "original": {
       "appointment": "Your Appointment"
@@ -362,5 +363,45 @@
   "blocks": {
     "before": "Before",
     "after": "After"
+  },
+  "a11y": {
+    "skip": "Skip to content",
+    "menu": {
+      "button": "Accessibility menu",
+      "title": "Accessibility",
+      "close": "Close",
+      "text": "Text size",
+      "textSmaller": "Smaller text",
+      "textLarger": "Larger text",
+      "contrast": "High contrast",
+      "links": "Highlight links",
+      "font": "Readable font",
+      "spacing": "Text spacing",
+      "still": "Stop animations",
+      "reset": "Reset",
+      "statement": "Accessibility statement"
+    },
+    "statement": {
+      "title": "Accessibility statement",
+      "intro": "{{name}} wants this site to be accessible to people with disabilities. The site is built on the Lightor platform, operated by EZ Webs.",
+      "levelTitle": "Accessibility level",
+      "level": "We work to bring this site in line with WCAG 2.2 level AA and the Israeli Standard IS 5568 (level AA).",
+      "doneTitle": "What we have done",
+      "done1": "The site can be used with a keyboard alone.",
+      "done2": "The site is built to work with screen readers.",
+      "done3": "An accessibility menu: larger text, high contrast, stop animations, highlighted links, a readable font and text spacing.",
+      "done4": "The site follows your device's \"reduce motion\" setting.",
+      "done5": "Forms have labels and clear error messages.",
+      "done6": "The site works on phones and computers.",
+      "limitsTitle": "Known limitations",
+      "limits": "Some pictures added by the site's owner may not have a description yet. The site also uses third-party components, such as the security check and maps, that are not fully under our control.",
+      "contactTitle": "Found a problem?",
+      "contact": "If you run into an accessibility problem, or need help booking an appointment or getting in touch, contact {{name}}:",
+      "contactLead": "If you run into an accessibility problem, or need help getting in touch, contact {{name}}:",
+      "reply": "We will get back to you as soon as we can.",
+      "phone": "You can also book by phone:",
+      "phoneLead": "You can also get in touch by phone:",
+      "updated": "Last updated: {{date}}"
+    }
   }
 }

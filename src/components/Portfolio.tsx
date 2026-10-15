@@ -11,6 +11,7 @@ import ImagesService from '../services/ImagesService';
 import { useEdit, useEditAttrs } from '../services/editMode';
 import EditText from './EditText';
 import { handleWideImageError } from '../utils/imageFallback';
+import { altOf } from '../models/PortfolioItem';
 
 interface PortfolioProps {
   config: PortfolioConfig;
@@ -74,15 +75,17 @@ const Portfolio: React.FC<PortfolioProps> = ({ config, layout = 'grid', masonryP
     setTouchEnd(0);
   };
 
-  const handleKeyDown = useCallback((e: KeyboardEvent) => {
-    if (isCarousel) {
-      if (e.key === 'ArrowLeft') {
-        prevSlide();
-      } else if (e.key === 'ArrowRight') {
-        nextSlide();
-      }
-    }
-  }, [isCarousel, prevSlide, nextSlide]);
+  // LT-346: the arrows work while the slideshow has focus — they used to
+  // listen on the whole window and turned slides while a visitor typed in a
+  // form. Right-to-left pages run the other way (the "previous" button is on
+  // the right there), Arabic included.
+  const isRTL = language === 'he' || language === 'ar';
+  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
+    if (!isCarousel || (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight')) return;
+    e.preventDefault();
+    const forward = (e.key === 'ArrowRight') !== isRTL;
+    if (forward) nextSlide(); else prevSlide();
+  }, [isCarousel, isRTL, prevSlide, nextSlide]);
 
   useEffect(() => {
     const slideElement = slideRef.current;
@@ -90,16 +93,15 @@ const Portfolio: React.FC<PortfolioProps> = ({ config, layout = 'grid', masonryP
       slideElement.addEventListener('touchstart', handleTouchStart as any);
       slideElement.addEventListener('touchmove', handleTouchMove as any);
       slideElement.addEventListener('touchend', handleTouchEnd);
-      window.addEventListener('keydown', handleKeyDown);
 
       return () => {
-        window.removeEventListener('keydown', handleKeyDown);
         slideElement.removeEventListener('touchstart', handleTouchStart as any);
         slideElement.removeEventListener('touchmove', handleTouchMove as any);
         slideElement.removeEventListener('touchend', handleTouchEnd);
       };
     }
-  }, [isCarousel, handleKeyDown]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isCarousel]);
 
   const slideVariants = {
     enter: (direction: number) => ({
@@ -164,13 +166,15 @@ const Portfolio: React.FC<PortfolioProps> = ({ config, layout = 'grid', masonryP
                 <motion.div
                   key={index}
                   className={`group relative ${aspect} rounded-design-card overflow-hidden shadow-card ${extra}`}
-                  role="gridcell"
-                  tabIndex={0}
-                  aria-label={`${item.title}: ${item.description}`}
+                  role="listitem"
+                  aria-hidden={index >= config.items.length || undefined}
                 >
+                  {/* LT-346: the caption shows on hover and is hidden from
+                      screen readers; they get the picture's description here. */}
+                  {item.description && <span className="sr-only">{item.description}</span>}
                   <img {...ed(`components.portfolio.items.${index}.url`, 'image')}
                     src={ImagesService.getInstance().getImage(item.url)}
-                    alt={item.title}
+                    alt={altOf(item)}
                     onError={handleWideImageError}
                     className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                   />
@@ -194,7 +198,7 @@ const Portfolio: React.FC<PortfolioProps> = ({ config, layout = 'grid', masonryP
                 return (
                   <div
                     className="grid grid-cols-2 md:grid-cols-4 auto-rows-[9rem] md:auto-rows-[12rem] gap-3"
-                    role="grid"
+                    role="list"
                     aria-label={t('portfolio.grid_label')}
                   >
                     {config.items.map((item, index) => itemCard(item, index, '', `${spans[index % spans.length]} h-full`))}
@@ -208,8 +212,8 @@ const Portfolio: React.FC<PortfolioProps> = ({ config, layout = 'grid', masonryP
                 const loops = config.items.length >= 3;
                 const track = loops ? [...config.items, ...config.items] : config.items;
                 return (
-                  <div className="overflow-hidden -mx-4 px-4" role="grid" aria-label={t('portfolio.grid_label')}>
-                    <div className={`flex gap-6 w-max ${loops ? 'lt-marquee' : ''}`}>
+                  <div className="overflow-hidden -mx-4 px-4">
+                    <div className={`flex gap-6 w-max ${loops ? 'lt-marquee' : ''}`} role="list" aria-label={t('portfolio.grid_label')}>
                       {track.map((item, index) => itemCard(item, index, 'aspect-video', 'flex-none w-[80vw] md:w-[40rem]'))}
                     </div>
                   </div>
@@ -222,7 +226,7 @@ const Portfolio: React.FC<PortfolioProps> = ({ config, layout = 'grid', masonryP
                 const active = featured % config.items.length;
                 const main = config.items[active];
                 return (
-                  <div role="grid" aria-label={t('portfolio.grid_label')}>
+                  <div role="group" aria-label={t('portfolio.grid_label')}>
                     <AnimatePresence mode="wait">
                       <motion.div
                         key={active}
@@ -231,12 +235,10 @@ const Portfolio: React.FC<PortfolioProps> = ({ config, layout = 'grid', masonryP
                         exit={{ opacity: 0 }}
                         transition={{ duration: 0.35 }}
                         className="relative aspect-video rounded-design-card overflow-hidden shadow-card"
-                        role="gridcell"
-                        aria-label={`${main.title}: ${main.description}`}
                       >
                         <img {...ed(`components.portfolio.items.${active}.url`, 'image')}
                           src={ImagesService.getInstance().getImage(main.url)}
-                          alt={main.title}
+                          alt={altOf(main)}
                           onError={handleWideImageError}
                           className="w-full h-full object-cover"
                         />
@@ -256,7 +258,7 @@ const Portfolio: React.FC<PortfolioProps> = ({ config, layout = 'grid', masonryP
                             aria-selected={index === active}
                             onClick={() => setFeatured(index)}
                             className={`flex-none w-28 aspect-[4/3] rounded-design-sm overflow-hidden border-2 transition-opacity ${index === active ? 'border-primary dark:border-primary-dark' : 'border-transparent opacity-60 hover:opacity-100'}`}
-                            aria-label={item.title}
+                            aria-label={altOf(item) || t('portfolio.slideshow_dot', { index: index + 1 })}
                           >
                             <img {...ed(`components.portfolio.items.${index}.url`, 'image')} src={ImagesService.getInstance().getImage(item.url)} alt="" onError={handleWideImageError} className="w-full h-full object-cover" />
                           </button>
@@ -271,7 +273,7 @@ const Portfolio: React.FC<PortfolioProps> = ({ config, layout = 'grid', masonryP
                 return (
                   <div
                     className="columns-1 md:columns-2 lg:columns-3 gap-8"
-                    role="grid"
+                    role="list"
                     aria-label={t('portfolio.grid_label')}
                   >
                     {config.items.map((item, index) =>
@@ -289,21 +291,19 @@ const Portfolio: React.FC<PortfolioProps> = ({ config, layout = 'grid', masonryP
                 return (
                   <div
                     className="flex flex-wrap justify-center gap-8"
-                    role="grid"
+                    role="list"
                     aria-label={t('portfolio.grid_label')}
                   >
                     {config.items.map((item, index) => (
                       <motion.div
                         key={index}
+                        role="listitem"
                         className={`group bg-white p-3 pb-4 shadow-xl ${tilts[index % tilts.length]} hover:rotate-0 transition-transform w-64`}
-                        role="gridcell"
-                        tabIndex={0}
-                        aria-label={`${item.title}: ${item.description}`}
                       >
                         <div className="aspect-square overflow-hidden">
                           <img {...ed(`components.portfolio.items.${index}.url`, 'image')}
                             src={ImagesService.getInstance().getImage(item.url)}
-                            alt={item.title}
+                            alt={altOf(item)}
                             onError={handleWideImageError}
                             className="w-full h-full object-cover"
                           />
@@ -321,20 +321,18 @@ const Portfolio: React.FC<PortfolioProps> = ({ config, layout = 'grid', masonryP
                 return (
                   <div
                     className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2"
-                    role="grid"
+                    role="list"
                     aria-label={t('portfolio.grid_label')}
                   >
                     {config.items.map((item, index) => (
                       <motion.div
                         key={index}
+                        role="listitem"
                         className="group relative aspect-square overflow-hidden border border-light-text/25 dark:border-dark-text/25"
-                        role="gridcell"
-                        tabIndex={0}
-                        aria-label={`${item.title}: ${item.description}`}
                       >
                         <img {...ed(`components.portfolio.items.${index}.url`, 'image')}
                           src={ImagesService.getInstance().getImage(item.url)}
-                          alt={item.title}
+                          alt={altOf(item)}
                           onError={handleWideImageError}
                           className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                         />
@@ -356,7 +354,7 @@ const Portfolio: React.FC<PortfolioProps> = ({ config, layout = 'grid', masonryP
                 return (
                   <div
                     className="flex overflow-x-auto gap-6 pb-4 snap-x snap-mandatory"
-                    role="grid"
+                    role="list"
                     aria-label={t('portfolio.grid_label')}
                   >
                     {config.items.map((item, index) =>
@@ -372,20 +370,18 @@ const Portfolio: React.FC<PortfolioProps> = ({ config, layout = 'grid', masonryP
               return (
                 <div
                   className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
-                  role="grid"
+                  role="list"
                   aria-label={t('portfolio.grid_label')}
                 >
                   {config.items.map((item, index) => (
                     <motion.div
                       key={index}
+                      role="listitem"
                       className="group relative aspect-[4/3] rounded-design-card overflow-hidden shadow-card"
-                      role="gridcell"
-                      tabIndex={0}
-                      aria-label={`${item.title}: ${item.description}`}
                     >
                       <img {...ed(`components.portfolio.items.${index}.url`, 'image')}
                         src={ImagesService.getInstance().getImage(item.url)}
-                        alt={item.title}
+                        alt={altOf(item)}
                         onError={handleWideImageError}
                         className="w-full h-full object-contain transition-transform duration-500 group-hover:scale-110"
                       />
@@ -411,6 +407,8 @@ const Portfolio: React.FC<PortfolioProps> = ({ config, layout = 'grid', masonryP
               aria-label={t('portfolio.slideshow_label')}
               aria-roledescription="carousel"
               aria-live="polite"
+              tabIndex={0}
+              onKeyDown={handleKeyDown}
             >
               <div className="sr-only">
                 {t('portfolio.slideshow_instruction')}
@@ -431,12 +429,12 @@ const Portfolio: React.FC<PortfolioProps> = ({ config, layout = 'grid', masonryP
                   className="absolute inset-0"
                   role="group"
                   aria-roledescription="slide"
-                  aria-label={`${config.items[currentSlide].title}: ${config.items[currentSlide].description}`}
+                  aria-label={[config.items[currentSlide].title, config.items[currentSlide].description].filter(Boolean).join(': ') || t('portfolio.slideshow_dot', { index: currentSlide + 1 })}
                 >
                   <div className="relative h-full">
                     <img {...ed(`components.portfolio.items.${currentSlide}.url`, 'image')}
                       src={ImagesService.getInstance().getImage(config.items[currentSlide].url)}
-                      alt={config.items[currentSlide].title}
+                      alt={altOf(config.items[currentSlide])}
                       onError={handleWideImageError}
                       className="w-full h-full object-contain"
                       draggable="false"
@@ -466,7 +464,7 @@ const Portfolio: React.FC<PortfolioProps> = ({ config, layout = 'grid', masonryP
                   whileTap={{ scale: 0.9 }}
                   aria-label={t('portfolio.slideshow_prev')}
                 >
-                  <ChevronLeft className={`h-6 w-6 text-light-text dark:text-dark-text ${language === 'he' ? 'rotate-180' : ''}`} aria-hidden="true" />
+                  <ChevronLeft className={`h-6 w-6 text-light-text dark:text-dark-text ${isRTL ? 'rotate-180' : ''}`} aria-hidden="true" />
                 </motion.button>
 
                 <motion.button
@@ -476,7 +474,7 @@ const Portfolio: React.FC<PortfolioProps> = ({ config, layout = 'grid', masonryP
                   whileTap={{ scale: 0.9 }}
                   aria-label={t('portfolio.slideshow_next')}
                 >
-                  <ChevronRight className={`h-6 w-6 text-light-text dark:text-dark-text ${language === 'he' ? 'rotate-180' : ''}`} aria-hidden="true" />
+                  <ChevronRight className={`h-6 w-6 text-light-text dark:text-dark-text ${isRTL ? 'rotate-180' : ''}`} aria-hidden="true" />
                 </motion.button>
               </div>
 

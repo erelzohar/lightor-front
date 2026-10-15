@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useId, useRef } from 'react';
 import { X, Bell } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLanguage } from '../contexts/LanguageContext';
+import { useDialogFocus } from '../hooks/useDialogFocus';
 
 interface IntroPopupProps {
   config: {
@@ -12,8 +13,12 @@ interface IntroPopupProps {
 
 const IntroPopup: React.FC<IntroPopupProps> = ({ config }) => {
   const [isOpen, setIsOpen] = useState(false);
- const { t, language } = useLanguage();
-  
+  const { t } = useLanguage();
+  const boxRef = useRef<HTMLDivElement>(null);
+  const titleId = useId();
+  // LT-346: a real dialog — focus inside, Escape, Tab kept in, focus back.
+  useDialogFocus(isOpen, boxRef, () => setIsOpen(false));
+
   useEffect(() => {
       const timer = setTimeout(() => setIsOpen(true), 1000);
       return () => clearTimeout(timer);
@@ -34,6 +39,11 @@ const IntroPopup: React.FC<IntroPopupProps> = ({ config }) => {
         >
           <motion.div
             key="popup-content"
+            ref={boxRef}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby={titleId}
+            tabIndex={-1}
             initial={{ scale: 0.9, opacity: 0, y: 20 }}
             animate={{ scale: 1, opacity: 1, y: 0 }}
             exit={{ scale: 0.95, opacity: 0, y: 10 }}
@@ -47,17 +57,19 @@ const IntroPopup: React.FC<IntroPopupProps> = ({ config }) => {
                   <div className="w-10 h-10 rounded-full bg-primary/10 dark:bg-primary-dark/10 flex items-center justify-center">
                     <Bell className="h-5 w-5 text-primary dark:text-primary-dark" />
                   </div>
-                  <h3 className="text-xl font-semibold text-light-text dark:text-dark-text">
+                  <h3 id={titleId} className="text-xl font-semibold text-light-text dark:text-dark-text">
                     {t('intro.title')}
                   </h3>
                 </div>
                 <motion.button
+                  type="button"
                   onClick={() => setIsOpen(false)}
+                  aria-label={t('a11y.menu.close')}
                   className="p-2 hover:bg-light-gray dark:hover:bg-dark-gray rounded-full transition-colors"
                   whileHover={{ scale: 1.1 }}
                   whileTap={{ scale: 0.9 }}
                 >
-                  <X className="h-5 w-5 text-light-text/60 dark:text-dark-text/60" />
+                  <X className="h-5 w-5 text-light-text/60 dark:text-dark-text/60" aria-hidden="true" />
                 </motion.button>
               </div>
 
@@ -70,6 +82,7 @@ const IntroPopup: React.FC<IntroPopupProps> = ({ config }) => {
 
               {/* Action button */}
               <motion.button
+                type="button"
                 onClick={() => setIsOpen(false)}
                 className="w-full bg-primary dark:bg-primary-dark text-white dark:text-dark-surface py-3 px-6 rounded-xl transition-colors flex items-center justify-center gap-2 font-medium"
                 whileHover={{ scale: 1.02 }}
@@ -79,14 +92,9 @@ const IntroPopup: React.FC<IntroPopupProps> = ({ config }) => {
               </motion.button>
             </div>
 
-            {/* Auto-close bar */}
-            <motion.div
-              className="absolute bottom-0 start-0 h-0.5 bg-primary dark:bg-primary-dark"
-              initial={{ width: '100%' }}
-              animate={{ width: '0%' }}
-              transition={{ duration: 5, ease: 'linear' }}
-              onAnimationComplete={() => setIsOpen(false)}
-            />
+            {/* LT-346: no auto-close — a message that vanished after 5 s
+                left too little time to read it (WCAG 2.2.1); it stays until
+                the visitor closes it. */}
           </motion.div>
         </motion.div>
       )}

@@ -21,6 +21,7 @@ import { whatsAppHref } from '../../utils/phone';
 import { safeHttpUrl, openExternal } from '../../utils/safeUrl';
 import { loadVantaDeps } from './vantaDeps';
 import { CUTOUT_CLASS, useCutout } from '../../utils/cutout';
+import { useStill } from '../../hooks/useA11yPrefs';
 
 function hexToInt(hex: string): number {
   return parseInt(hex.replace('#', ''), 16);
@@ -127,6 +128,9 @@ const Hero: React.FC<HeroProps> = ({ config, social, phone, isContactVisible, ap
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const vantaInstanceRef = useRef<any>(null);
   const isDarkMode = useIsDarkMode();
+  // LT-346: the device asks for less motion, or the visitor chose "stop
+  // animations": no moving background, no rolling button sheen.
+  const still = useStill();
 
   // The default background is Vanta fog (LT-071, Erel's decision after the
   // LT-062..069 animated-gradient saga — see the missions log).
@@ -173,6 +177,7 @@ const Hero: React.FC<HeroProps> = ({ config, social, phone, isContactVisible, ap
     palette?.colorPrimaryDark   ?? '',
     palette?.colorLightBg       ?? '',
     palette?.colorDarkBg        ?? '',
+    still ? 'still' : 'moving',
   ].join('|');
 
   useEffect(() => {
@@ -182,6 +187,9 @@ const Hero: React.FC<HeroProps> = ({ config, social, phone, isContactVisible, ap
       vantaInstanceRef.current.destroy();
       vantaInstanceRef.current = null;
     }
+
+    // Held still, the section's own background colour is the backdrop.
+    if (still) return;
 
     let cancelled = false;
 
@@ -348,23 +356,29 @@ const Hero: React.FC<HeroProps> = ({ config, social, phone, isContactVisible, ap
         className={`group relative inline-flex items-center justify-center px-8 py-4 bg-primary dark:bg-primary-dark text-on-primary dark:text-on-primary-dark ${btnRadius} ${w} shadow-lg hover:shadow-xl overflow-hidden`}
         whileHover={{ scale: 1.05 }}
         whileTap={{ scale: 0.95 }}
-        role="button"
         aria-label={cta.label}
       >
-        <motion.div
-          className="absolute inset-0 bg-gradient-to-r from-primary via-accent-violet to-primary dark:from-primary-dark dark:via-accent-cyan dark:to-primary-dark"
-          animate={{ backgroundPosition: ['0% 50%', '100% 50%', '0% 50%'] }}
-          transition={{ duration: 5, repeat: Infinity, ease: "linear" }}
-          style={{ backgroundSize: '200% 100%' }}
-          aria-hidden="true"
-        />
-        <motion.div
-          className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent"
-          initial={{ x: '-100%' }}
-          animate={{ x: '100%' }}
-          transition={{ duration: 1.5, repeat: Infinity, repeatType: "loop", ease: "linear", repeatDelay: 3 }}
-          aria-hidden="true"
-        />
+        {still ? (
+          <div
+            className="absolute inset-0 bg-gradient-to-r from-primary via-accent-violet to-primary dark:from-primary-dark dark:via-accent-cyan dark:to-primary-dark"
+            aria-hidden="true"
+          />
+        ) : (<>
+          <motion.div
+            className="absolute inset-0 bg-gradient-to-r from-primary via-accent-violet to-primary dark:from-primary-dark dark:via-accent-cyan dark:to-primary-dark"
+            animate={{ backgroundPosition: ['0% 50%', '100% 50%', '0% 50%'] }}
+            transition={{ duration: 5, repeat: Infinity, ease: "linear" }}
+            style={{ backgroundSize: '200% 100%' }}
+            aria-hidden="true"
+          />
+          <motion.div
+            className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent"
+            initial={{ x: '-100%' }}
+            animate={{ x: '100%' }}
+            transition={{ duration: 1.5, repeat: Infinity, repeatType: "loop", ease: "linear", repeatDelay: 3 }}
+            aria-hidden="true"
+          />
+        </>)}
         <span className="relative text-center flex items-center justify-center gap-2">
           <span {...ed('components.hero.cta')} className="text-center">{cta.label}</span>
           <CtaIcon className="h-5 w-5" aria-hidden="true" />
@@ -430,7 +444,7 @@ const Hero: React.FC<HeroProps> = ({ config, social, phone, isContactVisible, ap
       <div className="relative">
         <img {...ed('components.hero.heroImageSrc', 'image')}
           src={ImagesService.getInstance().getImage(config.heroImageSrc)}
-          alt="intro"
+          alt={businessName || ''}
           data-cutout={cutout || undefined}
           onError={handleWideImageError}
           className={cutout ? `relative ${shapedSize} ${CUTOUT_CLASS}` : `relative ${shapedSize} object-cover ${shapeClass} shadow-2xl`}

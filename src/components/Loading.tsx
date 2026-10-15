@@ -75,7 +75,7 @@ const Loading: React.FC<LoadingProps> = ({ isLoading, onLoadingComplete }) => {
               >
                 <img
                   src="/lightor.png"
-                  alt="Logo"
+                  alt=""
                   className="absolute inset-0 w-full h-full object-contain"
                 />
               </motion.div>

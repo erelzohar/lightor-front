@@ -223,7 +223,12 @@ export class WebsiteConfig {
      * LT-318: the business's IANA time zone. Booking times are its wall
      * clock, not the visitor's device clock. Absent reads as Israel.
      */
-    public timeZone: string = DEFAULT_TIME_ZONE
+    public timeZone: string = DEFAULT_TIME_ZONE,
+    /**
+     * LT-346: the accessibility menu, on unless the owner hid it
+     * (`accessibility.widgetHidden`). The statement shows either way.
+     */
+    public accessibilityMenu: boolean = true
   ) {}
 
   static fromJSON(json: any): WebsiteConfig {
@@ -262,7 +267,8 @@ export class WebsiteConfig {
       json.leadsOpen !== false,
       json.conversion === 'lead' ? 'lead' : 'book',
       json.assistant === true,
-      resolveTimeZone(json.timeZone)
+      resolveTimeZone(json.timeZone),
+      json.accessibility?.widgetHidden !== true
     );
   }
 }

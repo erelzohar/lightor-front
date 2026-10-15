@@ -21,8 +21,10 @@ const FieldLabel = ({ htmlFor, label, hint }: { htmlFor: string; label: string; 
     </label>
 );
 
-const FieldError = ({ error }: { error?: string }) =>
-    error ? <p className="mt-1 text-sm text-red-500 dark:text-red-400">{error}</p> : null;
+/** LT-346: the field's error, tied to it (`aria-describedby`) and announced as it appears. */
+const errorId = (id: string) => `${id}-error`;
+const FieldError = ({ id, error }: { id: string; error?: string }) =>
+    error ? <p id={errorId(id)} role="alert" className="mt-1 text-sm text-red-500 dark:text-red-400">{error}</p> : null;
 
 export interface MaterialInputProps {
     icon: LucideIcon;
@@ -96,8 +98,9 @@ export const MaterialInput = memo(({
             className={fieldClass(error)}
             aria-required={required}
             aria-invalid={!!error}
+            aria-describedby={[inputProps?.['aria-describedby'], error ? errorId(id) : ''].filter(Boolean).join(' ') || undefined}
         />
-        <FieldError error={error} />
+        <FieldError id={id} error={error} />
     </div>
 ));
 
@@ -145,8 +148,9 @@ export const MaterialTextarea = memo(({
             className={`${fieldClass(error)} resize-y min-h-[6rem]`}
             aria-required={required}
             aria-invalid={!!error}
+            aria-describedby={error ? errorId(id) : undefined}
         />
-        <FieldError error={error} />
+        <FieldError id={id} error={error} />
     </div>
 ));
 
@@ -196,6 +200,7 @@ export const MaterialSelect = memo(({
             className={`${fieldClass(error)} appearance-none cursor-pointer pe-10`}
             aria-required={required}
             aria-invalid={!!error}
+            aria-describedby={error ? errorId(id) : undefined}
         >
             <option value="">{placeholder}</option>
             {options.map((option) => (
@@ -205,7 +210,7 @@ export const MaterialSelect = memo(({
         <div className="absolute inset-y-0 end-0 pe-3 flex items-center pointer-events-none">
             <ChevronDown className="h-5 w-5 text-light-text/60 dark:text-dark-text/60" aria-hidden="true" />
         </div>
-        <FieldError error={error} />
+        <FieldError id={id} error={error} />
     </div>
 ));
 
@@ -251,13 +256,14 @@ export const MaterialCheckbox = memo(({
                 className="mt-0.5 h-5 w-5 shrink-0 cursor-pointer accent-primary dark:accent-primary-dark"
                 aria-required={required}
                 aria-invalid={!!error}
+                aria-describedby={error ? errorId(id) : undefined}
             />
             <span className="text-light-text dark:text-dark-text">
                 {label}
                 {hint && <span className="ms-1 text-sm text-light-text/60 dark:text-dark-text/60">({hint})</span>}
             </span>
         </label>
-        <FieldError error={error} />
+        <FieldError id={id} error={error} />
     </div>
 ));
 

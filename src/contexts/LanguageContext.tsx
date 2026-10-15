@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useCallback, useEffect } from 'react';
+import React, { createContext, useContext, useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 export type Language = 'en' | 'he' | 'ar' | 'fr' | 'es';
@@ -7,6 +7,13 @@ interface LanguageContextType {
   language: Language;
   setLanguage: (lang: Language) => void;
   t: (key: string, params?: Record<string, string | number>) => string;
+  /**
+   * LT-346: the language the site's own text is written in (the owner's
+   * default). <html lang> names it, not the visitor's menu language — a
+   * visitor who switches the buttons to English still reads Hebrew content,
+   * and a screen reader must pronounce it as Hebrew (WCAG 3.1.1).
+   */
+  setContentLanguage: (lang: Language | null) => void;
 }
 
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
@@ -22,6 +29,8 @@ export const LanguageProvider: React.FC<LanguageProviderProps> = ({ children, de
   // Normalize the language code (e.g., "he-IL" -> "he")
   const currentLang = (i18n.language?.split('-')[0] || defaultLanguage) as Language;
 
+  const [contentLanguage, setContentLanguage] = useState<Language | null>(null);
+
   const setLanguage = useCallback((lang: Language) => {
     if (i18n.language !== lang) {
       i18n.changeLanguage(lang);
@@ -36,12 +45,12 @@ export const LanguageProvider: React.FC<LanguageProviderProps> = ({ children, de
   // [dir="rtl"] font override in index.css applied to EVERY site in EVERY
   // language, silently overriding the configured font tokens (LT-039).
   useEffect(() => {
-    document.documentElement.lang = currentLang;
+    document.documentElement.lang = contentLanguage ?? currentLang;
     document.documentElement.dir = isRTL ? 'rtl' : 'ltr';
-  }, [currentLang, isRTL]);
+  }, [currentLang, isRTL, contentLanguage]);
 
   return (
-    <LanguageContext.Provider value={{ language: currentLang, setLanguage, t }}>
+    <LanguageContext.Provider value={{ language: currentLang, setLanguage, t, setContentLanguage }}>
       <div dir={isRTL ? 'rtl' : 'ltr'} className={isRTL ? 'rtl-grid' : 'ltr-grid'}>
         {children}
       </div>

@@ -320,6 +320,7 @@ html[data-heading-accent="none"] .heading-accent {
 .animation-delay-4000 {
   animation-delay: 4s;
 }
+@media (prefers-reduced-motion: reduce) { .animate-blob { animation: none; } }
 
 /* LT-126: auto-scrolling strips (portfolio 'scroller', testimonials
    'marquee') and the striped section backdrop. The track holds two copies
@@ -342,4 +343,82 @@ html[data-heading-accent="none"] .heading-accent {
 [data-lt-hidden] > * {
   opacity: 0.35;
   filter: grayscale(0.7);
+}
+
+/* LT-346: a visible focus ring wherever a component did not draw its own
+   (inputs and the controls that do keep theirs: their classes win). */
+:focus-visible {
+  outline: 2px solid rgb(var(--color-primary-readable));
+  outline-offset: 2px;
+}
+.dark :focus-visible {
+  outline-color: rgb(var(--color-primary-dark-readable));
+}
+
+/* LT-346: the accessibility menu's choices (services/a11yPrefs), one class
+   on <html> each. `!important` because useTheme writes the palette and fonts
+   inline on <html>, and the visitor's choice must win over the design. */
+html.a11y-text-1 { font-size: 115% !important; }
+html.a11y-text-2 { font-size: 130% !important; }
+html.a11y-text-3 { font-size: 150% !important; }
+
+/* High contrast: black on white (or white on black in dark mode) with one
+   strong accent; the light/dark grey tokens stay, since they serve as both
+   fills and muted text. */
+html.a11y-contrast {
+  --color-light-bg: 255 255 255 !important;
+  --color-light-surface: 255 255 255 !important;
+  --color-light-text: 0 0 0 !important;
+  --color-primary: 0 56 168 !important;
+  --color-primary-readable: 0 56 168 !important;
+  --color-on-primary: 255 255 255 !important;
+  --color-dark-bg: 0 0 0 !important;
+  --color-dark-surface: 0 0 0 !important;
+  --color-dark-text: 255 255 255 !important;
+  --color-primary-dark: 255 214 0 !important;
+  --color-primary-dark-readable: 255 214 0 !important;
+  --color-on-primary-dark: 0 0 0 !important;
+}
+
+html.a11y-links a[href] {
+  text-decoration: underline !important;
+  text-decoration-thickness: 2px !important;
+  text-underline-offset: 0.2em;
+  outline: 2px dashed currentColor;
+  outline-offset: 2px;
+}
+html.a11y-links :focus-visible {
+  outline: 3px solid rgb(var(--color-primary-readable)) !important;
+  outline-offset: 3px !important;
+}
+html.a11y-links.dark :focus-visible,
+html.a11y-links .dark :focus-visible {
+  outline-color: rgb(var(--color-primary-dark-readable)) !important;
+}
+
+/* Arial carries Hebrew and Arabic on desktops; Rubik (loaded) covers phones. */
+html.a11y-font * {
+  font-family: Arial, 'Rubik', sans-serif !important;
+  font-style: normal !important;
+}
+
+/* WCAG 1.4.12 text spacing; Arabic keeps its letters joined. */
+html.a11y-spacing body * {
+  line-height: 1.6 !important;
+  letter-spacing: 0.06em !important;
+  word-spacing: 0.16em !important;
+}
+html.a11y-spacing[lang="ar"] body * { letter-spacing: normal !important; }
+
+/* Stop animations: the CSS half. Vanta, framer-motion, the 3D Lighty and the
+   testimonials rotation stop through useStill / reducedMotion(). */
+html.a11y-still *,
+html.a11y-still *::before,
+html.a11y-still *::after {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  animation-delay: 0s !important;
+  transition-duration: 0.01ms !important;
+  transition-delay: 0s !important;
+  scroll-behavior: auto !important;
 }

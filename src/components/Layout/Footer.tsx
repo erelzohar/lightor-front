@@ -19,6 +19,7 @@ import { navLinksFromBlocks, sectionTitlesOf } from '../../services/navLinks';
 import { showsPrices } from '../../utils/servicesHeading';
 import { whatsAppHref } from '../../utils/phone';
 import { safeHttpUrl, openExternal } from '../../utils/safeUrl';
+import { STATEMENT_HASH, onStatementLinkClick } from '../../services/a11yStatement';
 
 interface WebsiteConfig {
   // LT-168: section titles double as the quick-link labels.
@@ -214,6 +215,7 @@ const Footer: React.FC<FooterProps> = ({ config, social, businessName, logoImage
       <button onClick={() => openLegalModal('privacy')} className="hover:opacity-100 hover:underline">{t('footer.policy.privacy')}</button>
       <button onClick={() => openLegalModal('terms')} className="hover:opacity-100 hover:underline">{t('footer.policy.terms')}</button>
       <button onClick={() => openLegalModal('security')} className="hover:opacity-100 hover:underline">{t('footer.policy.security')}</button>
+      <a href={STATEMENT_HASH} onClick={onStatementLinkClick} className="hover:opacity-100 hover:underline">{t('a11y.menu.statement')}</a>
       <a href="https://register.lightor.app" target="_blank" rel="noopener noreferrer" className="hover:opacity-100 hover:underline">{t('footer.business_link')}</a>
     </div>
   );
@@ -281,7 +283,7 @@ const Footer: React.FC<FooterProps> = ({ config, social, businessName, logoImage
               <div className="flex items-center gap-2">
                 <img {...editAttrs(editing, 'logoImageName', 'image')}
                   src={ImagesService.getInstance().getImage(logoImageName)}
-                  alt="Logo"
+                  alt=""
                   onError={handleSquareImageError}
                   className="h-10 w-10 rounded-full object-cover"
                 />
@@ -315,7 +317,7 @@ const Footer: React.FC<FooterProps> = ({ config, social, businessName, logoImage
               <div className="flex items-center justify-center md:justify-start gap-2 mb-6">
                 <img {...editAttrs(editing, 'logoImageName', 'image')}
                   src={ImagesService.getInstance().getImage(logoImageName)}
-                  alt="Logo"
+                  alt=""
                   onError={handleSquareImageError}
                   className="h-10 w-10 rounded-full object-cover"
                 />
@@ -430,27 +432,31 @@ const Footer: React.FC<FooterProps> = ({ config, social, businessName, logoImage
             <p>
               &copy; {new Date().getFullYear()} {businessName}. {t('footer.rights')}
             </p>
-            <div className="flex justify-center items-center gap-4 text-sm">
+            <div className="flex flex-wrap justify-center items-center gap-x-4 gap-y-2 text-sm">
               <button
                 onClick={() => openLegalModal('privacy')}
                 className="hover:text-primary-dark transition-colors"
               >
                 {t('footer.policy.privacy')}
               </button>
-              <span>•</span>
+              <span aria-hidden="true">•</span>
               <button
                 onClick={() => openLegalModal('terms')}
                 className="hover:text-primary-dark transition-colors"
               >
                 {t('footer.policy.terms')}
               </button>
-              <span>•</span>
+              <span aria-hidden="true">•</span>
               <button
                 onClick={() => openLegalModal('security')}
                 className="hover:text-primary-dark transition-colors"
               >
                 {t('footer.policy.security')}
               </button>
+              <span aria-hidden="true">•</span>
+              <a href={STATEMENT_HASH} onClick={onStatementLinkClick} className="hover:text-primary-dark transition-colors">
+                {t('a11y.menu.statement')}
+              </a>
             </div>
             <motion.a
               href="https://register.lightor.app"

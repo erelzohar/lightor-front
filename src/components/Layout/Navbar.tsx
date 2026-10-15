@@ -236,7 +236,7 @@ const Navbar: React.FC<NavbarProps> = ({ websiteConfig, isPreview }) => {
   );
   const logo = (cls = 'h-12 w-12') => (
     <button onClick={handleScrollToTop} className={BRAND_CLS} aria-label={t('nav.home')}>
-      <img {...editAttrs(editing, 'logoImageName', 'image')} src={ImagesService.getInstance().getImage(websiteConfig.logoImageName)} onError={handleSquareImageError} alt="Logo" className={`${cls} rounded-full object-cover flex-shrink-0`} />
+      <img {...editAttrs(editing, 'logoImageName', 'image')} src={ImagesService.getInstance().getImage(websiteConfig.logoImageName)} onError={handleSquareImageError} alt="" className={`${cls} rounded-full object-cover flex-shrink-0`} />
       <span {...editAttrs(editing, 'businessName')} className={`${NAME_CLS} text-lg sm:text-xl`}>{websiteConfig.businessName}</span>
     </button>
   );
@@ -380,7 +380,7 @@ const Navbar: React.FC<NavbarProps> = ({ websiteConfig, isPreview }) => {
               src={ImagesService.getInstance().getImage(websiteConfig.logoImageName)}
               onError={handleSquareImageError}
               // src={isPreview && websiteConfig.logoImageName?.startsWith('blob:') ? websiteConfig.logoImageName : globals.imagesUrl + websiteConfig.logoImageName}
-              alt="Logo"
+              alt=""
               className="h-12 w-12 rounded-full object-cover flex-shrink-0"
             />
             <span {...editAttrs(editing, 'businessName')} className={`${NAME_CLS} text-lg sm:text-xl lg:text-2xl`}>

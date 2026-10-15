@@ -124,7 +124,8 @@
     },
     "channel": {
       "sms": "Envoyer le code et les mises à jour par SMS",
-      "whatsapp": "Envoyer le code et les mises à jour via WhatsApp"
+      "whatsapp": "Envoyer le code et les mises à jour via WhatsApp",
+      "switch": "Recevoir le code et les mises à jour sur WhatsApp"
     },
     "class": {
       "label": "Cours collectif",
@@ -362,5 +363,45 @@
   "blocks": {
     "before": "Avant",
     "after": "Après"
+  },
+  "a11y": {
+    "skip": "Aller au contenu",
+    "menu": {
+      "button": "Menu d'accessibilité",
+      "title": "Accessibilité",
+      "close": "Fermer",
+      "text": "Taille du texte",
+      "textSmaller": "Réduire le texte",
+      "textLarger": "Agrandir le texte",
+      "contrast": "Contraste élevé",
+      "links": "Souligner les liens",
+      "font": "Police lisible",
+      "spacing": "Espacement du texte",
+      "still": "Arrêter les animations",
+      "reset": "Réinitialiser",
+      "statement": "Déclaration d'accessibilité"
+    },
+    "statement": {
+      "title": "Déclaration d'accessibilité",
+      "intro": "{{name}} souhaite que ce site soit accessible aux personnes en situation de handicap. Le site est construit sur la plateforme Lightor, exploitée par EZ Webs.",
+      "levelTitle": "Niveau d'accessibilité",
+      "level": "Nous travaillons à rendre ce site conforme aux règles WCAG 2.2 niveau AA et à la norme israélienne IS 5568 (niveau AA).",
+      "doneTitle": "Ce que nous avons fait",
+      "done1": "Le site peut être utilisé uniquement au clavier.",
+      "done2": "Le site est conçu pour fonctionner avec les lecteurs d'écran.",
+      "done3": "Un menu d'accessibilité : texte agrandi, contraste élevé, arrêt des animations, liens soulignés, police lisible et espacement du texte.",
+      "done4": "Le site respecte le réglage « réduire les animations » de votre appareil.",
+      "done5": "Les formulaires ont des libellés et des messages d'erreur clairs.",
+      "done6": "Le site fonctionne sur téléphone et sur ordinateur.",
+      "limitsTitle": "Limites connues",
+      "limits": "Certaines images ajoutées par le propriétaire du site n'ont peut-être pas encore de description. Le site utilise aussi des composants tiers, comme la vérification de sécurité et les cartes, qui ne sont pas entièrement sous notre contrôle.",
+      "contactTitle": "Un problème ?",
+      "contact": "Si vous rencontrez un problème d'accessibilité, ou si vous avez besoin d'aide pour prendre rendez-vous ou nous contacter, écrivez à {{name}} :",
+      "contactLead": "Si vous rencontrez un problème d'accessibilité, ou si vous avez besoin d'aide pour nous contacter, écrivez à {{name}} :",
+      "reply": "Nous vous répondrons dès que possible.",
+      "phone": "Vous pouvez aussi réserver par téléphone :",
+      "phoneLead": "Vous pouvez aussi nous contacter par téléphone :",
+      "updated": "Dernière mise à jour : {{date}}"
+    }
   }
 }
