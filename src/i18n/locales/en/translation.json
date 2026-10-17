@@ -338,6 +338,12 @@
     "typing": "Lighty is typing…",
     "sending": "Sending…",
     "back": "Back to chat",
+    "demo": {
+      "hello": "This is a preview 👋 Once the site is live, I'll answer visitors' questions about {{name}} here - services, prices, opening hours - and point them to booking.",
+      "helloLeads": "This is a preview 👋 Once the site is live, I'll answer visitors' questions about {{name}} here - services, prices, opening hours - and point them to the contact form.",
+      "reply": "On the live site I'll answer this here, from the details on your site.",
+      "input": "Lighty starts answering visitors once the site is live"
+    },
     "suggest": {
       "prices": "How much does it cost?",
       "services": "What services do you offer?",

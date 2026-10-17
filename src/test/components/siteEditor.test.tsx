@@ -114,6 +114,29 @@ describe('the site editor bridge (LT-243)', () => {
     expect(screen.queryByTestId('site-lighty')).toBeNull();
   });
 
+  it("LT-387: the register wizard's preview has Lighty as a demo, in place of the contact button; the editor keeps his picture", async () => {
+    const { container } = renderSite();
+    const withButton = config({ components: { ...config().components, contactButton: { visible: true } } });
+    const contactButton = () => container.querySelector('button[aria-label="Contact options"], button[aria-label="אפשרויות יצירת קשר"]');
+    // Without the flag (the dashboard's previews) the free corner stays.
+    await post({ type: 'PREVIEW_DATA', config: withButton });
+    await waitFor(() => expect(screen.getAllByText('Sharp cuts').length).toBeGreaterThan(0));
+    expect(screen.queryByTestId('site-lighty')).toBeNull();
+    const before = contactButton();
+    expect(before).not.toBeNull();
+
+    await post({ type: 'PREVIEW_DATA', config: withButton, assistantDemo: true }, 'https://register.lightor.app');
+    await waitFor(() => expect(screen.getByTestId('site-lighty')).toBeTruthy());
+    expect(screen.queryByTestId('site-lighty-still')).toBeNull();
+    expect(container.contains(before)).toBe(false);
+
+    // The editor never shows the demo: his picture, as on any Plus site.
+    await post({ type: 'PREVIEW_DATA', config: { ...withButton, assistant: true }, assistantDemo: true }, 'https://register.lightor.app');
+    await post({ type: 'LT_EDIT', on: true }, 'https://register.lightor.app');
+    await waitFor(() => expect(screen.getByTestId('site-lighty-still')).toBeTruthy());
+    expect(screen.queryByTestId('site-lighty')).toBeNull();
+  });
+
   it('turns a click into LT_SELECT for the editor, and the click goes nowhere else', async () => {
     const { container } = renderSite();
     await post({ type: 'PREVIEW_DATA', config: config() });

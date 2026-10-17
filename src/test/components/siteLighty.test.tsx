@@ -315,4 +315,43 @@ describe('the corner Lighty, dragged (LT-312)', () => {
     fireEvent.click(lighty());
     expect(screen.queryByLabelText('contact.option.call')).toBeNull();
   });
+
+  describe('demo in the register wizard (LT-387)', () => {
+    it('tells the owner what he will do, answers a suggestion itself, and sends nothing', () => {
+      render(<SiteLighty businessName="Dana Studio" leadsSite={false} demo />);
+      openChat();
+      expect(screen.getByText('assistant.demo.hello')).toBeTruthy();
+      expect(screen.queryByText('assistant.hello')).toBeNull();
+      expect(screen.queryByText('assistant.disclaimer')).toBeNull();
+      expect(screen.queryByText('assistant.report.open')).toBeNull();
+      expect((screen.getByLabelText('assistant.demo.input') as HTMLTextAreaElement).disabled).toBe(true);
+
+      fireEvent.click(screen.getByText('assistant.suggest.book'));
+      // Asked once: it stays in the thread and leaves the suggestions.
+      expect(screen.getAllByText('assistant.suggest.book').length).toBe(1);
+      expect(screen.getByText('assistant.demo.reply')).toBeTruthy();
+      expect(screen.getByText('assistant.suggest.prices')).toBeTruthy();
+      expect(mocks.ask).not.toHaveBeenCalled();
+      expect(mocks.handshake).not.toHaveBeenCalled();
+      expect(screen.queryByTestId('lighty-turnstile')).toBeNull();
+    });
+
+    it('greets a leads site with its own hello', () => {
+      render(<SiteLighty businessName="Dana Studio" leadsSite demo />);
+      openChat();
+      expect(screen.getByText('assistant.demo.helloLeads')).toBeTruthy();
+    });
+
+    it('says hello on every preview, even after the live one did this session', () => {
+      vi.useFakeTimers();
+      try {
+        sessionStorage.setItem('lighty.teaser.shown', '1');
+        render(<SiteLighty businessName="Dana Studio" leadsSite={false} demo />);
+        act(() => { vi.advanceTimersByTime(2600); });
+        expect(screen.getByText('assistant.teaser')).toBeTruthy();
+      } finally {
+        vi.useRealTimers();
+      }
+    });
+  });
 });

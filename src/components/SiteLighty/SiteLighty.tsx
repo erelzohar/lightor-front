@@ -47,6 +47,12 @@ interface SiteLightyProps {
   leadsSite: boolean;
   /** The business's phone: call and WhatsApp in the chat's header. */
   phone?: string;
+  /**
+   * LT-387: the register wizard's preview, before the site exists. He looks
+   * and moves as on the live site; his chat tells the owner what he will do,
+   * a suggestion gets a canned answer, and nothing goes to the server.
+   */
+  demo?: boolean;
 }
 
 /** Load the 3D button only when it costs the visitor nothing they asked for. */
@@ -71,7 +77,7 @@ function Reply({ text, onSection }: { text: string; onSection: (section: string)
   );
 }
 
-export default function SiteLighty({ businessName, leadsSite, phone }: SiteLightyProps) {
+export default function SiteLighty({ businessName, leadsSite, phone, demo = false }: SiteLightyProps) {
   const { t, language } = useLanguage();
   const [open, setOpen] = useState(false);
   const [mode, setMode] = useState<Mode>('chat');
@@ -179,19 +185,20 @@ export default function SiteLighty({ businessName, leadsSite, phone }: SiteLight
     saveOffset(offsetRef.current);
   };
 
-  // A hello beside the button, once a session, a few seconds in.
+  // A hello beside the button, once a session, a few seconds in. The demo
+  // says it on every preview, sooner: that is where the owner meets him.
   useEffect(() => {
     let shown = false;
-    try { shown = sessionStorage.getItem(TEASER_KEY) === '1'; } catch { /* private mode */ }
+    try { shown = !demo && sessionStorage.getItem(TEASER_KEY) === '1'; } catch { /* private mode */ }
     if (shown) return;
     const show = window.setTimeout(() => {
       setTeaser(true);
       setWaveKey((k) => k + 1);
-      try { sessionStorage.setItem(TEASER_KEY, '1'); } catch { /* private mode */ }
-    }, 4000);
-    const hide = window.setTimeout(() => setTeaser(false), 11000);
+      if (!demo) try { sessionStorage.setItem(TEASER_KEY, '1'); } catch { /* private mode */ }
+    }, demo ? 2500 : 4000);
+    const hide = window.setTimeout(() => setTeaser(false), demo ? 12000 : 11000);
     return () => { window.clearTimeout(show); window.clearTimeout(hide); };
-  }, []);
+  }, [demo]);
 
   useEffect(() => {
     // The button's 3D Lighty and the chat's take turns; each one's picture stands in until it reloads.
@@ -237,6 +244,10 @@ export default function SiteLighty({ businessName, leadsSite, phone }: SiteLight
   const ask = async (text: string) => {
     const message = text.trim().slice(0, MESSAGE_MAX);
     if (!message || busy) return;
+    if (demo) {
+      setTurns((now) => [...now, { role: 'user', text: message }, { role: 'assistant', text: t('assistant.demo.reply') }]);
+      return;
+    }
     const history = turns;
     setTurns([...history, { role: 'user', text: message }]);
     setInput('');
@@ -287,6 +298,8 @@ export default function SiteLighty({ businessName, leadsSite, phone }: SiteLight
   const suggestions = leadsSite
     ? [t('assistant.suggest.services'), t('assistant.suggest.hours'), t('assistant.suggest.contact')]
     : [t('assistant.suggest.prices'), t('assistant.suggest.hours'), t('assistant.suggest.book')];
+  // The demo keeps offering the ones not tried yet.
+  const offered = demo ? suggestions.filter((s) => !turns.some((turn) => turn.role === 'user' && turn.text === s)) : suggestions;
 
   return (
     <>
@@ -300,8 +313,10 @@ export default function SiteLighty({ businessName, leadsSite, phone }: SiteLight
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={still ? undefined : { opacity: 0, y: 16, scale: 0.97 }}
             transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
-            className={`fixed z-50 bottom-3 inset-x-3 sm:inset-x-auto ${leftHalf ? 'sm:left-4' : 'sm:right-4'} sm:bottom-4 sm:w-[360px] flex flex-col max-h-[min(600px,82vh)] rounded-2xl overflow-hidden shadow-2xl border border-black/10 dark:border-white/10 bg-light-surface dark:bg-dark-surface text-light-text dark:text-dark-text`}
+            className={`fixed z-[60] bottom-3 inset-x-3 sm:inset-x-auto ${leftHalf ? 'sm:left-4' : 'sm:right-4'} sm:bottom-4 sm:w-[360px] flex flex-col max-h-[min(600px,82vh)] rounded-2xl overflow-hidden shadow-2xl border border-black/10 dark:border-white/10 bg-light-surface dark:bg-dark-surface text-light-text dark:text-dark-text`}
           >
+            {/* Over the accessibility button (z-50, later in the page), which sat
+                on a phone's input row while the chat is open (LT-387). */}
             {/* Lighty himself: 3D once loaded, his picture until then (and for good with reduced motion). */}
             <div className="relative flex items-end gap-3 px-4 pt-3 pb-2 bg-primary/10 dark:bg-primary-dark/15">
               <div className="relative w-20 h-20 shrink-0">
@@ -338,9 +353,11 @@ export default function SiteLighty({ businessName, leadsSite, phone }: SiteLight
               {mode === 'chat' && (
                 <>
                   <div className="max-w-[88%] rounded-2xl rounded-ss-sm px-3 py-2 bg-black/5 dark:bg-white/10">
-                    {t('assistant.hello', { name: businessName })}
+                    {demo
+                      ? t(leadsSite ? 'assistant.demo.helloLeads' : 'assistant.demo.hello', { name: businessName })
+                      : t('assistant.hello', { name: businessName })}
                   </div>
-                  <p className="text-[11px] opacity-55 px-1">{t('assistant.disclaimer')}</p>
+                  {!demo && <p className="text-[11px] opacity-55 px-1">{t('assistant.disclaimer')}</p>}
                   {turns.map((turn, i) => (
                     <div
                       key={i}
@@ -358,9 +375,9 @@ export default function SiteLighty({ businessName, leadsSite, phone }: SiteLight
                       ))}
                     </div>
                   )}
-                  {!turns.length && !busy && (
+                  {(demo ? offered.length > 0 : !turns.length) && !busy && (
                     <div className="flex flex-wrap gap-1.5 pt-1">
-                      {suggestions.map((s) => (
+                      {offered.map((s) => (
                         <button key={s} type="button" onClick={() => void ask(s)} className="px-3 py-1.5 rounded-full text-xs border border-primary/40 dark:border-primary-dark/40 hover:bg-primary/10 dark:hover:bg-primary-dark/15">
                           {s}
                         </button>
@@ -424,9 +441,10 @@ export default function SiteLighty({ businessName, leadsSite, phone }: SiteLight
                     onKeyDown={onKeyDown}
                     rows={1}
                     maxLength={MESSAGE_MAX}
-                    placeholder={t('assistant.placeholder')}
-                    aria-label={t('assistant.placeholder')}
-                    className="flex-1 min-w-0 max-h-24 resize-none rounded-xl border border-black/15 dark:border-white/15 bg-transparent px-3 py-2 text-base sm:text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 [field-sizing:content]"
+                    disabled={demo}
+                    placeholder={demo ? t('assistant.demo.input') : t('assistant.placeholder')}
+                    aria-label={demo ? t('assistant.demo.input') : t('assistant.placeholder')}
+                    className="flex-1 min-w-0 max-h-24 resize-none rounded-xl border border-black/15 dark:border-white/15 bg-transparent px-3 py-2 text-base sm:text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 disabled:opacity-60 [field-sizing:content]"
                   />
                   <button type="submit" disabled={busy || !input.trim()} aria-label={t('assistant.send')} className="w-10 h-10 shrink-0 rounded-xl flex items-center justify-center bg-primary dark:bg-primary-dark text-on-primary dark:text-on-primary-dark disabled:opacity-40">
                     <Send className="w-4 h-4 rtl:-scale-x-100" aria-hidden="true" />
@@ -438,7 +456,7 @@ export default function SiteLighty({ businessName, leadsSite, phone }: SiteLight
                   {t('assistant.back')}
                 </button>
               )}
-              {mode === 'chat' && (
+              {mode === 'chat' && !demo && (
                 <button type="button" onClick={() => { setMode('report'); setNotice(null); }} className="mt-1.5 inline-flex items-center gap-1.5 text-xs opacity-70 hover:opacity-100">
                   <AlertTriangle className="w-3.5 h-3.5" aria-hidden="true" />
                   {t('assistant.report.open')}

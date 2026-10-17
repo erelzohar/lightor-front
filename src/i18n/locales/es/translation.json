@@ -338,6 +338,12 @@
     "typing": "Lighty está escribiendo…",
     "sending": "Enviando…",
     "back": "Volver al chat",
+    "demo": {
+      "hello": "Esta es una vista previa 👋 Cuando el sitio esté en línea, responderé aquí a las preguntas de los visitantes sobre {{name}} - servicios, precios, horarios - y los guiaré a reservar una cita.",
+      "helloLeads": "Esta es una vista previa 👋 Cuando el sitio esté en línea, responderé aquí a las preguntas de los visitantes sobre {{name}} - servicios, precios, horarios - y los guiaré al formulario de contacto.",
+      "reply": "En el sitio en línea responderé aquí a esto con los datos de tu sitio.",
+      "input": "Lighty empezará a responder a los visitantes cuando el sitio esté en línea"
+    },
     "suggest": {
       "prices": "¿Cuánto cuesta?",
       "services": "¿Qué servicios ofrecen?",

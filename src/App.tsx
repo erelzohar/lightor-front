@@ -114,6 +114,9 @@ function MainContent() {
   const [config, setConfig] = useState<WebsiteConfig | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [isPreview, setIsPreview] = useState<boolean>(false);
+  // LT-387: the register wizard's preview shows Lighty as a demo - every new
+  // account's site has him (Plus is free at first), though its config does not say so yet.
+  const [assistantDemo, setAssistantDemo] = useState(false);
   // LT-200: the business exists but its site is not live yet (API 403).
   const [inactive, setInactive] = useState<boolean>(false);
   // Counts the generations the register wizard has posted with `generate` —
@@ -210,6 +213,7 @@ function MainContent() {
         }
         setConfig(cfg);
         setIsPreview(true);
+        setAssistantDemo(event.data.assistantDemo === true);
         setLoading(false);
         setLanguageRef.current(cfg.defaultLanguage as Language);
         if (event.data.generate) {
@@ -523,7 +527,9 @@ function MainContent() {
   const footerShown = config.blocks?.length
     ? !!config.components?.footer && config.blocks.some((b) => b.type === 'footer' && !b.mod?.hidden)
     : !!config.components?.footer?.visible;
-  const contactButtonShown = !config.assistant && !!config.components?.contactButton?.visible;
+  const lightyDemo = isPreview && assistantDemo && !editing;
+  const assistant = config.assistant || lightyDemo;
+  const contactButtonShown = !assistant && !!config.components?.contactButton?.visible;
 
   // LT-164: `overflow-x-clip` so nothing a tenant's design does (wide
   // containers, vw-scaled poster headings, drifting decor) can widen the page
@@ -767,17 +773,18 @@ function MainContent() {
       {/* LT-312: the floating corner by plan. Free: the contact button, which the
           owner can hide in the editor. Plus: Lighty, the site's assistant
           (LT-302), with its call and WhatsApp — in the editor and previews only
-          his picture, since he talks to visitors only on the live site. */}
-      {!config.assistant && config.components?.contactButton && showSection(config.components.contactButton.visible) && (
+          his picture, since he talks to visitors only on the live site. The
+          register wizard's preview has him as a demo (LT-387). */}
+      {!assistant && config.components?.contactButton && showSection(config.components.contactButton.visible) && (
         <EditSection id="contactButton" type="contactButton" hidden={!config.components.contactButton.visible}>
           <ErrorBoundary><ContactButton phone={config.contact.phone} /></ErrorBoundary>
         </EditSection>
       )}
-      {config.assistant && (isPreview || editing) && (
+      {config.assistant && (isPreview || editing) && !lightyDemo && (
         <img src="/lighty-support.webp" alt="" aria-hidden="true" className="fixed bottom-3 end-3 z-50 w-20 h-20 object-contain pointer-events-none [filter:drop-shadow(0_6px_10px_rgba(0,0,0,0.25))]" data-testid="site-lighty-still" />
       )}
-      {config.assistant && !isPreview && !editing && (
-        <ErrorBoundary><SiteLighty businessName={config.businessName} leadsSite={!bookable} phone={config.contact?.phone} /></ErrorBoundary>
+      {((config.assistant && !isPreview && !editing) || lightyDemo) && (
+        <ErrorBoundary><SiteLighty businessName={config.businessName} leadsSite={!bookable} phone={config.contact?.phone} demo={lightyDemo} /></ErrorBoundary>
       )}
 
       {/* LT-346: the accessibility menu (the owner may hide it) and the
