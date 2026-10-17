@@ -340,8 +340,16 @@ const Navbar: React.FC<NavbarProps> = ({ websiteConfig, isPreview }) => {
       <nav ref={navRef} className={`fixed top-0 inset-x-0 z-50 transition-all duration-300 transform bg-white/95 dark:bg-dark-surface/95 backdrop-blur-md shadow-sm ${slide}`}>
         <div className="px-4 py-3 container mx-auto">
           <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-4">
-            {linksRow('hidden md:flex items-center gap-6 text-sm font-medium', linkCls)}
-            <div className={cramped ? '' : 'md:hidden'}>{burger}</div>
+            {/* One cell for the links and the burger (LT-379): when the links
+                do not fit, the burger stands in their place. As two grid
+                items the burger took the logo's column, the logo the
+                buttons', and the buttons dropped to a second row. The row
+                stays (invisible) under the burger so the watcher can tell
+                when the links fit again. */}
+            <div className="relative min-w-0 flex items-center">
+              {linksRow('hidden md:flex w-full items-center gap-6 text-sm font-medium', linkCls)}
+              <div className={cramped ? 'md:absolute md:inset-y-0 md:start-0 md:flex md:items-center' : 'md:hidden'}>{burger}</div>
+            </div>
             <div className="justify-self-center">{logo('h-10 w-10')}</div>
             <div className="hidden md:flex items-center justify-end gap-3">
               {languageSwitcher && <LanguageSwitcher />}

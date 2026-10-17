@@ -84,5 +84,16 @@ describe('navbar overflow', () => {
     expect(controls.className).toContain('md:end-0');
     expect(controls.className).not.toMatch(/inset-inline/);
   });
+
+  // LT-379: as two grid items the burger took the logo's column and the
+  // buttons dropped to a second row; it shares the links' cell instead.
+  it('split: the burger stands in the links\' own cell, so the bar stays one row', () => {
+    rowContent = 900; rowRoom = 500;
+    const { container } = render(<Navbar websiteConfig={config('split')} />);
+    const grid = container.querySelector<HTMLElement>('.grid')!;
+    const cellOf = (el: HTMLElement) => Array.from(grid.children).find((cell) => cell.contains(el));
+    expect(cellOf(burgerOf(container))).toBe(cellOf(rowOf(container)));
+    expect(grid.children).toHaveLength(4);
+  });
 });
 
