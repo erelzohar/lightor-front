@@ -302,7 +302,10 @@ const Navbar: React.FC<NavbarProps> = ({ websiteConfig, isPreview }) => {
         <div className="px-4 py-2 container mx-auto">
           <div className="flex items-center justify-between md:justify-center relative">
             {logo('h-10 w-10')}
-            <div className="md:absolute md:inset-inline-end-0 flex items-center gap-3">
+            {/* At the inline end (LT-373): \`inset-inline-end-0\` is not a
+                Tailwind class, so the box had no offset and sat where a lone
+                flex item would - centred, over the business name. */}
+            <div className="md:absolute md:end-0 flex items-center gap-3">
               <span className="hidden md:flex items-center gap-3">{languageSwitcher && <LanguageSwitcher />}{themeButton}</span>
               {burger}
             </div>

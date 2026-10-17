@@ -73,4 +73,16 @@ describe('navbar overflow', () => {
     expect(name.className).toContain('break-words');
     expect(container.querySelector('button[aria-label="nav.home"]')?.className).toContain('min-w-0');
   });
+
+  // LT-373: the centered bar's controls sit at the inline end; with an
+  // invalid inset class the box had no offset and covered the name.
+  it('centered: the dark-mode button sits at the end of the bar, not over the name', () => {
+    rowContent = 480; rowRoom = 600;
+    const { container } = render(<Navbar websiteConfig={config('centered')} />);
+    const controls = container.querySelector<HTMLElement>('button[aria-label="Toggle dark mode"]')!.closest('div')!;
+    expect(controls.className).toContain('md:absolute');
+    expect(controls.className).toContain('md:end-0');
+    expect(controls.className).not.toMatch(/inset-inline/);
+  });
 });
+
