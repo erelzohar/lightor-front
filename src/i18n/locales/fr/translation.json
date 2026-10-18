@@ -144,7 +144,6 @@
     "until": "dans {{time}}",
     "before": "avant le rendez-vous",
     "hours_and_minutes": "{{hours}} heures et {{minutes}} minutes",
-    "currency": "₪",
     "toggle_dark_mode": "Basculer le mode sombre",
     "actions": "Actions",
     "change_language": "Changer de langue"

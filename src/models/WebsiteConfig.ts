@@ -14,6 +14,7 @@ import { DateOverride } from '../utils/workingHours';
 import { BookingField, parseBookingFields } from './BookingField';
 import type { Conversion } from '../services/siteMode';
 import { DEFAULT_TIME_ZONE, resolveTimeZone } from '../utils/businessTime';
+import { Currency, DEFAULT_CURRENCY, currencyOf } from '../utils/currency';
 
 /**
  * Every part is optional, and the whole address may be absent — a business can
@@ -228,7 +229,9 @@ export class WebsiteConfig {
      * LT-346: the accessibility menu, on unless the owner hid it
      * (`accessibility.widgetHidden`). The statement shows either way.
      */
-    public accessibilityMenu: boolean = true
+    public accessibilityMenu: boolean = true,
+    /** LT-395: the money its prices are in. Absent reads as shekels. */
+    public currency: Currency = DEFAULT_CURRENCY
   ) {}
 
   static fromJSON(json: any): WebsiteConfig {
@@ -268,7 +271,8 @@ export class WebsiteConfig {
       json.conversion === 'lead' ? 'lead' : 'book',
       json.assistant === true,
       resolveTimeZone(json.timeZone),
-      json.accessibility?.widgetHidden !== true
+      json.accessibility?.widgetHidden !== true,
+      currencyOf(json.currency)
     );
   }
 }

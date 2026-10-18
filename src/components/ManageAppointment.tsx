@@ -250,6 +250,7 @@ const ManageAppointment: React.FC = () => {
         bookingHorizonDays={config.bookingHorizonDays}
         bookingFields={config.bookingFields}
         timeZone={config.timeZone}
+        currency={config.currency}
         user_id={appointment.user_id}
         isUpdating={true}
         appointmentToUpdate={appointment}

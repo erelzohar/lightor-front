@@ -144,7 +144,6 @@
     "until": "בעוד {{time}}",
     "before": "לפני התור",
     "hours_and_minutes": "{{hours}} שעות ו-{{minutes}} דקות",
-    "currency": "₪",
     "toggle_dark_mode": "שנה מצב תצוגה",
     "actions": "פעולות",
     "change_language": "החלפת שפה"

@@ -9,6 +9,7 @@ import ImagesService from '../../services/ImagesService';
 import { useEditAttrs, servicePath } from '../../services/editMode';
 import { handleWideImageError } from '../../utils/imageFallback';
 import { servicesHeading } from '../../utils/servicesHeading';
+import { formatPrice } from '../../utils/currency';
 
 interface Props {
   appointmentTypes: AppointmentType[];
@@ -16,6 +17,8 @@ interface Props {
   title?: string;
   /** LT-199: without a calendar on the page a card leads to the contact form. */
   bookable?: boolean;
+  /** LT-395: the business's currency; absent reads as shekels. */
+  currency?: string;
 }
 
 const minutes = (ms: string | number | undefined): number | null => {
@@ -24,13 +27,12 @@ const minutes = (ms: string | number | undefined): number | null => {
 };
 
 /** LT-136: services as cards with duration and price; the first is highlighted. */
-const PriceCards: React.FC<Props> = ({ appointmentTypes, tone = 'bg', title, bookable = true }) => {
+const PriceCards: React.FC<Props> = ({ appointmentTypes, tone = 'bg', title, bookable = true, currency }) => {
   const { t, language } = useLanguage();
   const ed = useEditAttrs();
   const rows = (appointmentTypes ?? []).filter((a) => a?.name).slice(0, 6);
   if (!rows.length) return null;
   const heading = servicesHeading(title, rows, t, language);
-  const price = (p?: string) => (!p?.trim() ? '' : /^\d+(\.\d+)?$/.test(p.trim()) ? `₪${p.trim()}` : p.trim());
   return (
     <section id="services" className={`section-y ${TONE_BG[tone]} transition-colors duration-300`} aria-label={heading}>
       <div className="container mx-auto px-4">
@@ -62,7 +64,7 @@ const PriceCards: React.FC<Props> = ({ appointmentTypes, tone = 'bg', title, boo
                   />
                 )}
                 <h3 {...ed(servicePath(a._id, 'name'))} className="text-xl font-semibold mb-4">{a.name}</h3>
-                <div {...ed(servicePath(a._id, 'price'))} className={`text-3xl font-bold ${featured ? '' : 'text-light-text dark:text-dark-text'}`} style={{ fontVariantNumeric: 'tabular-nums' }}>{price(a.price)}</div>
+                <div {...ed(servicePath(a._id, 'price'))} className={`text-3xl font-bold ${featured ? '' : 'text-light-text dark:text-dark-text'}`} style={{ fontVariantNumeric: 'tabular-nums' }}>{formatPrice(a.price, currency)}</div>
                 {mins && (
                   <div className={`mt-3 flex items-center gap-2 text-sm ${featured ? 'opacity-90' : 'text-light-text/70 dark:text-dark-text/70'}`}>
                     <Clock className="h-4 w-4" aria-hidden="true" />

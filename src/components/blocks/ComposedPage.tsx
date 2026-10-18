@@ -125,7 +125,7 @@ const ComposedPage: React.FC<ComposedPageProps> = ({ config, jitter, isPreview, 
           : null;
       case 'ledger':
         return (config.appointmentTypes ?? []).some((a) => a?.name)
-          ? <ServicesLedger appointmentTypes={config.appointmentTypes} tone="bg" title={c?.services?.title} />
+          ? <ServicesLedger appointmentTypes={config.appointmentTypes} tone="bg" title={c?.services?.title} currency={config.currency} />
           : null;
       case 'interlude': {
         const image = (typeof p.image === 'string' && p.image) || c?.portfolio?.items?.[1]?.url || c?.hero?.heroImageSrc;
@@ -159,7 +159,7 @@ const ComposedPage: React.FC<ComposedPageProps> = ({ config, jitter, isPreview, 
       case 'process':
         return Array.isArray(p.steps) ? <Process steps={p.steps as ProcessStep[]} title={typeof p.title === 'string' ? p.title : undefined} variant={v} basePath={`blocks.${b.id}.props`} /> : null;
       case 'priceCards':
-        return <PriceCards appointmentTypes={config.appointmentTypes ?? []} bookable={bookable} title={c?.services?.title} />;
+        return <PriceCards appointmentTypes={config.appointmentTypes ?? []} bookable={bookable} title={c?.services?.title} currency={config.currency} />;
       case 'hours':
         return <Hours workingDays={config.workingDays ?? []} variant={v} />;
       case 'photoPair': {
@@ -188,6 +188,7 @@ const ComposedPage: React.FC<ComposedPageProps> = ({ config, jitter, isPreview, 
               bookingHorizonDays={config.bookingHorizonDays}
               bookingFields={config.bookingFields}
               timeZone={config.timeZone}
+              currency={config.currency}
               vacations={config.vacations}
               dateOverrides={config.dateOverrides}
               appointmentTypes={config.appointmentTypes}

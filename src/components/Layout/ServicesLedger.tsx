@@ -11,6 +11,7 @@ import ImagesService from '../../services/ImagesService';
 import { useEditAttrs, servicePath } from '../../services/editMode';
 import { handleSquareImageError } from '../../utils/imageFallback';
 import { servicesHeading } from '../../utils/servicesHeading';
+import { formatPrice } from '../../utils/currency';
 
 interface ServicesLedgerProps {
   appointmentTypes: AppointmentType[];
@@ -22,6 +23,8 @@ interface ServicesLedgerProps {
   reveal?: RevealStyle;
   /** LT-220: the owner's heading (`components.services.title`); blank = the default. */
   title?: string;
+  /** LT-395: the business's currency; absent reads as shekels. */
+  currency?: string;
 }
 
 const TONE_BG: Record<SectionTone, string> = {
@@ -43,19 +46,13 @@ const LEGACY_VARIANTS = {
 // LT-109: the canvas price ledger — numbered rows with dotted leaders,
 // display type, built from the business's REAL services. Rendered only when
 // the servicesLayout token asks for it and priced services exist.
-const ServicesLedger: React.FC<ServicesLedgerProps> = ({ appointmentTypes, tone, header, headerScale, reveal, title }) => {
+const ServicesLedger: React.FC<ServicesLedgerProps> = ({ appointmentTypes, tone, header, headerScale, reveal, title, currency }) => {
   const ed = useEditAttrs();
   const { t, language } = useLanguage();
   const { container: containerVariants, item: itemVariants } = revealVariants(reveal, LEGACY_VARIANTS);
   const rows = appointmentTypes.filter((a) => a?.name);
   if (!rows.length) return null;
 
-  // Prices arrive as free strings ('70', '100 ₪', '80 ש"ח'); prefix the
-  // shekel sign only when the string is purely numeric.
-  const formatPrice = (price?: string) => {
-    if (!price?.trim()) return '';
-    return /^\d+(\.\d+)?$/.test(price.trim()) ? `₪${price.trim()}` : price.trim();
-  };
 
   return (
     <section
@@ -104,7 +101,7 @@ const ServicesLedger: React.FC<ServicesLedgerProps> = ({ appointmentTypes, tone,
                 className="text-xl md:text-2xl text-light-text dark:text-dark-text"
                 style={{ fontFamily: language === 'he' || language === 'ar' ? 'var(--font-heading-rtl)' : 'var(--font-heading)' }}
               >
-                {formatPrice(item.price)}
+                {formatPrice(item.price, currency)}
               </span>
             </motion.div>
           ))}

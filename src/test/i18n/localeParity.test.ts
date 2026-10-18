@@ -52,9 +52,10 @@ describe('booking site translations', () => {
     expect(orphans).toEqual([]);
   });
 
-  it.each(languages)('%s prices in shekels (LT-218)', (lang) => {
-    // There is no currency setting: English sites said "$" to Israeli customers.
-    expect(locales[lang]['common.currency']).toBe('₪');
+  it.each(languages)('%s has no currency of its own (LT-218, LT-395)', (lang) => {
+    // The business's currency decides, not the language: English sites once
+    // said "$" to Israeli customers.
+    expect(locales[lang]['common.currency']).toBeUndefined();
   });
 
   it.each(languages)('%s has no blank strings', (lang) => {

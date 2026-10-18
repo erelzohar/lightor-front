@@ -444,7 +444,7 @@ function MainContent() {
     const tone = flow.length && flow[flow.length - 1].tone === 'bg' ? 'surface' as const : 'bg' as const;
     flow.push({
       key: 'services', tone,
-      node: <ServicesLedger appointmentTypes={config.appointmentTypes} tone={tone} title={config.components?.services?.title} />
+      node: <ServicesLedger appointmentTypes={config.appointmentTypes} tone={tone} title={config.components?.services?.title} currency={config.currency} />
     });
   }
 
@@ -482,6 +482,7 @@ function MainContent() {
             bookingHorizonDays={config.bookingHorizonDays}
             bookingFields={config.bookingFields}
             timeZone={config.timeZone}
+            currency={config.currency}
             vacations={config.vacations}
             dateOverrides={config.dateOverrides}
             appointmentTypes={config.appointmentTypes}

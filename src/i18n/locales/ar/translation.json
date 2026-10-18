@@ -144,7 +144,6 @@
     "until": "خلال {{time}}",
     "before": "قبل الموعد",
     "hours_and_minutes": "{{hours}} ساعة و {{minutes}} دقيقة",
-    "currency": "₪",
     "toggle_dark_mode": "تبديل الوضع الداكن",
     "actions": "إجراءات",
     "change_language": "تغيير اللغة"

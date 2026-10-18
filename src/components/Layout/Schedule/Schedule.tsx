@@ -38,6 +38,7 @@ import { CancelWindowClosedError, DEFAULT_MIN_CANCEL_TIME_MS, formatCancelWindow
 import ImagesService from '../../../services/ImagesService';
 import { useEdit, editAttrs, servicePath } from '../../../services/editMode';
 import { handleSquareImageError } from '../../../utils/imageFallback';
+import { formatPrice } from '../../../utils/currency';
 
 /** The booking steps in order (the progress dots, and LT-356's step names). */
 const BOOKING_STEPS = ['type', 'date', 'time', 'details', 'verification'] as const;
@@ -112,6 +113,8 @@ interface ScheduleProps {
    * calendar is the business's wall clock, never the visitor's device clock.
    */
   timeZone?: string;
+  /** LT-395: the business's currency; absent reads as shekels. */
+  currency?: string;
 }
 
 
@@ -150,7 +153,7 @@ const withFreshPass = async <T,>(call: () => Promise<T>): Promise<T> => {
 /** The visitor's 6-digit code, as typed, pasted or autofilled (LT-315). */
 const OTP_LENGTH = 6;
 
-const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone, businessName, timeToCancel, vacations, dateOverrides = [], appointmentTypes: offeredTypes, isUpdating, appointmentToUpdate, onUpdateComplete, onCancelUpdate, onCancelWindowClosed, isPreview, hideDescription = false, header, headerScale, scheduleStyle = 'card', tone = 'surface', bookingHorizonDays = DEFAULT_BOOKING_HORIZON_DAYS, bookingFields = NO_BOOKING_FIELDS, timeZone }) => {
+const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone, businessName, timeToCancel, vacations, dateOverrides = [], appointmentTypes: offeredTypes, isUpdating, appointmentToUpdate, onUpdateComplete, onCancelUpdate, onCancelWindowClosed, isPreview, hideDescription = false, header, headerScale, scheduleStyle = 'card', tone = 'surface', bookingHorizonDays = DEFAULT_BOOKING_HORIZON_DAYS, bookingFields = NO_BOOKING_FIELDS, timeZone, currency }) => {
   const tz = resolveTimeZone(timeZone);
   const { editing } = useEdit();
   // if (!appointmentTypes) {
@@ -1569,7 +1572,7 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
                                       until the owner sets one. Show the duration alone rather
                                       than a lone currency symbol. */}
                                   {parseInt(type.durationMS) / 60000} {t('common.minutes')}
-                                  {type.price?.trim() ? ` | ${t('common.currency')}${type.price}` : ''}
+                                  {type.price?.trim() ? ` | ${formatPrice(type.price, currency)}` : ''}
                                   {type.isClass ? ` | ${t('schedule.class.label')}` : ''}
                                 </p>
                               </div>
@@ -1594,7 +1597,7 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
                     </h4>
                     <p className="text-sm text-light-text/70 dark:text-dark-text/70">
                       {parseInt(selectedAppointmentType.durationMS) / 60000} {t('common.minutes')}
-                      {selectedAppointmentType.price?.trim() ? ` | ${t('common.currency')}${selectedAppointmentType.price}` : ''}
+                      {selectedAppointmentType.price?.trim() ? ` | ${formatPrice(selectedAppointmentType.price, currency)}` : ''}
                     </p>
                   </div>
 
