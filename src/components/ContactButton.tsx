@@ -4,7 +4,7 @@ import { Phone, AlertTriangle, X, MessageCircle } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
 import { ContactModal } from './ContactModal';
 import { useContactHandler } from '../hooks/useContactHandler';
-import { whatsAppHref } from '../utils/phone';
+import { telHref, whatsAppHref } from '../utils/phone';
 
 interface ContactButtonProps {
   phone: string;
@@ -27,19 +27,22 @@ const ContactButton: React.FC<ContactButtonProps> = ({ phone }) => {
   const { language, t } = useLanguage();
   const { isModalOpen, setIsModalOpen, modalType, handleContactClick } = useContactHandler();
 
+  // A landline has no WhatsApp (LT-404): its option is left out.
+  const waHref = whatsAppHref(phone);
+
   const contactOptions = [
     {
       icon: Phone,
       label: t('contact.option.call'),
-      onClick: () => handleContactClick('phone', `tel:${phone}`),
+      onClick: () => handleContactClick('phone', telHref(phone)),
       color: 'bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500 dark:text-emerald-400 dark:hover:bg-emerald-400'
     },
-    {
+    ...(waHref ? [{
       icon: WhatsAppIcon,
       label: t('contact.option.whatsapp'),
-      onClick: () => handleContactClick('whatsapp', whatsAppHref(phone)),
+      onClick: () => handleContactClick('whatsapp', waHref),
       color: 'bg-[#25D366]/10 text-[#25D366] hover:bg-[#25D366] dark:text-[#25D366] dark:hover:bg-[#25D366]'
-    },
+    }] : []),
     {
       icon: AlertTriangle,
       label: t('contact.option.report'),
@@ -103,9 +106,9 @@ const ContactButton: React.FC<ContactButtonProps> = ({ phone }) => {
       <ContactModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        contactLink={modalType === 'whatsapp'
-          ? whatsAppHref(phone)
-          : `tel:${phone}`}
+        contactLink={modalType === 'whatsapp' && waHref
+          ? waHref
+          : telHref(phone)}
         type={modalType}
       />
     </div>

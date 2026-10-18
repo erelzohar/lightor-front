@@ -854,8 +854,8 @@ describe('a cancel or move too close to the appointment (LT-205)', () => {
 
     expect(await screen.findByText('manage.message.too_late (1 hour)')).toBeTruthy();
     const call = callLink()!;
-    expect(call.getAttribute('href')).toBe('tel:0501234567');
-    expect(within(call).getByText('050-123 4567').getAttribute('dir')).toBe('ltr');
+    expect(call.getAttribute('href')).toBe('tel:+972501234567');
+    expect(within(call).getByText('050-1234567').getAttribute('dir')).toBe('ltr');
   });
 
   it('a page left open past the window closes the dialog and says so, sending nothing', async () => {
@@ -956,7 +956,7 @@ describe('a cancel or move too close to the appointment (LT-205)', () => {
       expect(await screen.findByText('manage.message.too_late (1 hour)')).toBeTruthy();
       expect(screen.queryByText('schedule.legend.available')).toBeNull();
       expect(pageButton('manage.button.update').disabled).toBe(true);
-      expect(callLink()!.getAttribute('href')).toBe('tel:0501112222');
+      expect(callLink()!.getAttribute('href')).toBe('tel:+972501112222');
     });
 
     it('refused only for its new time: back to the times, which now start outside the window', async () => {

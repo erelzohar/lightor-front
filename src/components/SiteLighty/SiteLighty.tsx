@@ -13,7 +13,7 @@ import { DRAG_START_PX, TOUCH_DRAG_START_PX, clampOffset, readOffset, saveOffset
 import { useContactHandler } from '../../hooks/useContactHandler';
 import { ContactModal } from '../ContactModal';
 import { WhatsAppIcon } from '../ContactButton';
-import { whatsAppHref } from '../../utils/phone';
+import { telHref, whatsAppHref } from '../../utils/phone';
 import { lazyOptional } from '../../utils/lazyOptional';
 
 /**
@@ -94,6 +94,8 @@ export default function SiteLighty({ businessName, leadsSite, phone, demo = fals
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const still = reducedMotion();
   const { isModalOpen, setIsModalOpen, modalType, handleContactClick } = useContactHandler();
+  // A landline has no WhatsApp (LT-404): the header keeps only the call.
+  const waHref = whatsAppHref(phone);
 
   // ── The 3D button (LT-312): after the page, never in its way ───────────
   const [load3d, setLoad3d] = useState(false);
@@ -335,12 +337,14 @@ export default function SiteLighty({ businessName, leadsSite, phone, demo = fals
                 {/* The contact button's call and WhatsApp, which Lighty's corner replaces (LT-312). */}
                 {phone && (
                   <>
-                    <button type="button" onClick={() => handleContactClick('phone', `tel:${phone}`)} className="p-1.5 rounded-full text-emerald-600 dark:text-emerald-400 hover:bg-black/5 dark:hover:bg-white/10" aria-label={t('contact.option.call')}>
+                    <button type="button" onClick={() => handleContactClick('phone', telHref(phone))} className="p-1.5 rounded-full text-emerald-600 dark:text-emerald-400 hover:bg-black/5 dark:hover:bg-white/10" aria-label={t('contact.option.call')}>
                       <Phone className="w-[18px] h-[18px]" aria-hidden="true" />
                     </button>
-                    <button type="button" onClick={() => handleContactClick('whatsapp', whatsAppHref(phone))} className="p-1.5 rounded-full text-[#25D366] hover:bg-black/5 dark:hover:bg-white/10" aria-label={t('contact.option.whatsapp')}>
-                      <WhatsAppIcon />
-                    </button>
+                    {waHref && (
+                      <button type="button" onClick={() => handleContactClick('whatsapp', waHref)} className="p-1.5 rounded-full text-[#25D366] hover:bg-black/5 dark:hover:bg-white/10" aria-label={t('contact.option.whatsapp')}>
+                        <WhatsAppIcon />
+                      </button>
+                    )}
                   </>
                 )}
                 <button type="button" onClick={() => setOpen(false)} className="p-1.5 rounded-full hover:bg-black/5 dark:hover:bg-white/10" aria-label={t('assistant.close')}>
@@ -529,7 +533,7 @@ export default function SiteLighty({ businessName, leadsSite, phone, demo = fals
         <ContactModal
           isOpen={isModalOpen}
           onClose={() => setIsModalOpen(false)}
-          contactLink={modalType === 'whatsapp' ? whatsAppHref(phone) : `tel:${phone}`}
+          contactLink={modalType === 'whatsapp' && waHref ? waHref : telHref(phone)}
           type={modalType}
         />
       )}

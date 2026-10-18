@@ -2,6 +2,7 @@ import React, { useEffect, useId, useRef, useSyncExternalStore } from 'react';
 import { X } from 'lucide-react';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useDialogFocus } from '../../hooks/useDialogFocus';
+import { displayPhone, telHref } from '../../utils/phone';
 import {
   ACCESSIBILITY_CONTACT, STATEMENT_HASH, STATEMENT_UPDATED,
   closeStatement, isStatementOpen, openStatement, subscribeStatement,
@@ -43,7 +44,7 @@ const AccessibilityStatement: React.FC<AccessibilityStatementProps> = ({ busines
   try {
     updated = new Intl.DateTimeFormat(language, { dateStyle: 'long', timeZone: 'UTC' }).format(new Date(`${STATEMENT_UPDATED}T00:00:00Z`));
   } catch { /* keep the ISO date */ }
-  const tel = phone?.replace(/[^0-9+]/g, '');
+  const tel = phone?.trim() ? telHref(phone) : '';
 
   return (
     <div
@@ -93,7 +94,7 @@ const AccessibilityStatement: React.FC<AccessibilityStatementProps> = ({ busines
         {tel && (
           <p className="mb-5 leading-relaxed">
             {t(bookable ? 'a11y.statement.phone' : 'a11y.statement.phoneLead')}{' '}
-            <a href={`tel:${tel}`} className="underline underline-offset-2 text-primary-readable dark:text-primary-dark-readable"><bdi>{phone}</bdi></a>
+            <a href={tel} className="underline underline-offset-2 text-primary-readable dark:text-primary-dark-readable"><bdi>{displayPhone(phone)}</bdi></a>
           </p>
         )}
 

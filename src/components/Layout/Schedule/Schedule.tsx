@@ -39,6 +39,7 @@ import ImagesService from '../../../services/ImagesService';
 import { useEdit, editAttrs, servicePath } from '../../../services/editMode';
 import { handleSquareImageError } from '../../../utils/imageFallback';
 import { formatPrice } from '../../../utils/currency';
+import { displayPhone, telHref } from '../../../utils/phone';
 
 /** The booking steps in order (the progress dots, and LT-356's step names). */
 const BOOKING_STEPS = ['type', 'date', 'time', 'details', 'verification'] as const;
@@ -1367,8 +1368,8 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
                 </dl>
               </div>
               {phone && (
-                <a href={`tel:${phone.replace(/[^0-9+]/g, '')}`} className="block text-2xl font-bold text-light-text dark:text-dark-text hover:text-primary-readable dark:hover:text-primary-dark-readable transition-colors">
-                  <span dir="ltr">{phone}</span>
+                <a href={telHref(phone)} className="block text-2xl font-bold text-light-text dark:text-dark-text hover:text-primary-readable dark:hover:text-primary-dark-readable transition-colors">
+                  <span dir="ltr">{displayPhone(phone)}</span>
                 </a>
               )}
             </aside>

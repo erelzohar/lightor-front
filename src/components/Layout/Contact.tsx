@@ -13,7 +13,7 @@ import { TONE_BG } from '../blocks/blockUtils';
 import { ContactModal } from '../../components/ContactModal';
 import { useContactHandler } from '../../hooks/useContactHandler';
 import smsService from '../../services/SmsService';
-import { whatsAppHref } from '../../utils/phone';
+import { displayPhone, telHref, whatsAppHref } from '../../utils/phone';
 import { BookingField, AnswerValue, answerProblem, answersForRequest } from '../../models/BookingField';
 import { QuestionField } from '../common/QuestionField';
 import { googleMapsHref } from '../../utils/navigation';
@@ -363,8 +363,8 @@ const Contact: React.FC<ContactProps> = ({ config, address, contact, workingDays
     {
       icon: Phone,
       title: t('about.phone'),
-      content: contact.phone,
-      action: () => handleContactClick('phone', `tel:${contact.phone.replace(/[^0-9+]/g, '')}`),
+      content: displayPhone(contact.phone),
+      action: () => handleContactClick('phone', telHref(contact.phone)),
       isLink: false,
       color: 'bg-primary/10 text-primary dark:bg-primary-dark/10 dark:text-primary-dark'
     },
@@ -407,7 +407,10 @@ const Contact: React.FC<ContactProps> = ({ config, address, contact, workingDays
   const { language: lang } = useLanguage();
   const displayFont = lang === 'he' || lang === 'ar' ? 'var(--font-heading-rtl)' : 'var(--font-heading)';
   const noTrack = lang === 'ar';
-  const phoneDigits = contact.phone.replace(/[^0-9+]/g, '');
+  const phoneTel = telHref(contact.phone);
+  const phoneText = displayPhone(contact.phone);
+  // A landline has no WhatsApp (LT-404): no chat button for it.
+  const waHref = whatsAppHref(contact.phone);
   const mapsHref = fullAddress ? googleMapsHref(fullAddress) : undefined;
   const hours = formatWorkingHours();
   const plainLines = (cls = '', opts: { skipPhone?: boolean } = {}) => (
@@ -421,8 +424,8 @@ const Contact: React.FC<ContactProps> = ({ config, address, contact, workingDays
         </>
       )}
       {!opts.skipPhone && (
-        <button type="button" onClick={() => handleContactClick('phone', `tel:${phoneDigits}`)} className="block hover:underline">
-          <span dir="ltr">{contact.phone}</span>
+        <button type="button" onClick={() => handleContactClick('phone', phoneTel)} className="block hover:underline">
+          <span dir="ltr">{phoneText}</span>
         </button>
       )}
       <a href={`mailto:${contact.mail}`} className="block hover:underline">{contact.mail}</a>
@@ -575,20 +578,22 @@ const Contact: React.FC<ContactProps> = ({ config, address, contact, workingDays
       <div className="flex flex-col sm:flex-row gap-3 justify-center">
         <button
           type="button"
-          onClick={() => handleContactClick('phone', `tel:${phoneDigits}`)}
+          onClick={() => handleContactClick('phone', phoneTel)}
           className="flex items-center justify-center gap-2 bg-primary dark:bg-primary-dark text-on-primary dark:text-on-primary-dark py-3 px-6 rounded-design shadow-lg hover:shadow-xl transition-all"
         >
           <Phone className="h-5 w-5" aria-hidden="true" />
           <span>{t('contact.option.call')}</span>
         </button>
-        <button
-          type="button"
-          onClick={() => handleContactClick('whatsapp', whatsAppHref(phoneDigits))}
-          className="flex items-center justify-center gap-2 border-2 border-primary dark:border-primary-dark text-primary-readable dark:text-primary-dark-readable py-3 px-6 rounded-design transition-all"
-        >
-          <MessageCircle className="h-5 w-5" aria-hidden="true" />
-          <span>{t('contact.option.whatsapp')}</span>
-        </button>
+        {waHref && (
+          <button
+            type="button"
+            onClick={() => handleContactClick('whatsapp', waHref)}
+            className="flex items-center justify-center gap-2 border-2 border-primary dark:border-primary-dark text-primary-readable dark:text-primary-dark-readable py-3 px-6 rounded-design transition-all"
+          >
+            <MessageCircle className="h-5 w-5" aria-hidden="true" />
+            <span>{t('contact.option.whatsapp')}</span>
+          </button>
+        )}
       </div>
     </motion.div>
   );
@@ -597,7 +602,7 @@ const Contact: React.FC<ContactProps> = ({ config, address, contact, workingDays
     <ContactModal
       isOpen={isModalOpen}
       onClose={() => setIsModalOpen(false)}
-      contactLink={modalType === 'whatsapp' ? whatsAppHref(phoneDigits) : `tel:${phoneDigits}`}
+      contactLink={modalType === 'whatsapp' && waHref ? waHref : phoneTel}
       type={modalType}
     />
   );
@@ -612,11 +617,11 @@ const Contact: React.FC<ContactProps> = ({ config, address, contact, workingDays
               <div className="py-12 md:pe-12 md:border-e border-light-text/15 dark:border-dark-text/15">
                 <button
                   type="button"
-                  onClick={() => handleContactClick('phone', `tel:${phoneDigits}`)}
+                  onClick={() => handleContactClick('phone', phoneTel)}
                   className="font-bold leading-none text-light-text dark:text-dark-text hover:text-primary-readable dark:hover:text-primary-dark-readable transition-colors break-all"
                   style={{ fontFamily: displayFont, fontSize: 'clamp(2.5rem, 7vw, 5.5rem)' }}
                 >
-                  <span dir="ltr">{contact.phone}</span>
+                  <span dir="ltr">{phoneText}</span>
                 </button>
                 {plainLines('mt-8 text-light-text/80 dark:text-dark-text/80', { skipPhone: true })}
               </div>
@@ -660,7 +665,7 @@ const Contact: React.FC<ContactProps> = ({ config, address, contact, workingDays
             <div className="mt-10 flex flex-wrap items-baseline gap-x-4 gap-y-2 text-lg opacity-90">
               <a href={`mailto:${contact.mail}`} className="hover:underline">{contact.mail}</a>
               <span aria-hidden="true">·</span>
-              <button type="button" onClick={() => handleContactClick('phone', `tel:${phoneDigits}`)} className="hover:underline"><span dir="ltr">{contact.phone}</span></button>
+              <button type="button" onClick={() => handleContactClick('phone', phoneTel)} className="hover:underline"><span dir="ltr">{phoneText}</span></button>
               {fullAddress && (
                 <>
                   <span aria-hidden="true">·</span>
@@ -862,9 +867,7 @@ const Contact: React.FC<ContactProps> = ({ config, address, contact, workingDays
       <ContactModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        contactLink={modalType === 'whatsapp'
-          ? whatsAppHref(contact.phone)
-          : `tel:${contact.phone.replace(/[^0-9+]/g, '')}`}
+        contactLink={modalType === 'whatsapp' && waHref ? waHref : phoneTel}
         type={modalType}
       />
     </>

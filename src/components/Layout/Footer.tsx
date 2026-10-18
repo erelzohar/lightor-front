@@ -17,7 +17,7 @@ import MarqueeStrip from '../MarqueeStrip';
 import { handleSquareImageError } from '../../utils/imageFallback';
 import { navLinksFromBlocks, sectionTitlesOf } from '../../services/navLinks';
 import { showsPrices } from '../../utils/servicesHeading';
-import { whatsAppHref } from '../../utils/phone';
+import { telHref, whatsAppHref } from '../../utils/phone';
 import { safeHttpUrl, openExternal } from '../../utils/safeUrl';
 import { STATEMENT_HASH, onStatementLinkClick } from '../../services/a11yStatement';
 
@@ -194,9 +194,8 @@ const Footer: React.FC<FooterProps> = ({ config, social, businessName, logoImage
       <ContactModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        contactLink={modalType === 'whatsapp'
-          ? whatsAppHref(websiteConfig.contact?.phone)
-          : `tel:${websiteConfig.contact?.phone?.replace(/[^0-9+]/g, '')}`}
+        contactLink={(modalType === 'whatsapp' && whatsAppHref(websiteConfig.contact?.phone))
+          || telHref(websiteConfig.contact?.phone)}
         type={modalType}
       />
 

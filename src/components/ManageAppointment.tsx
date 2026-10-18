@@ -20,6 +20,7 @@ import AnswersEditor from './manage/AnswersEditor';
 import { resolveTimeZone } from '../utils/businessTime';
 import SiteA11y from './a11y/SiteA11y';
 import { useDialogFocus } from '../hooks/useDialogFocus';
+import { displayPhone, telHref } from '../utils/phone';
 
 
 
@@ -335,14 +336,14 @@ const ManageAppointment: React.FC = () => {
                   </p>
                   {businessPhone && (
                     <motion.a
-                      href={`tel:${businessPhone.replace(/[^0-9+]/g, '')}`}
+                      href={telHref(businessPhone)}
                       className="inline-flex items-center gap-2 min-h-12 py-3 px-6 rounded-xl bg-primary dark:bg-primary-dark text-white text-sm font-medium"
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
                     >
                       <Phone className="w-4 h-4 flex-shrink-0" aria-hidden="true" />
                       <span>{t('contact.modal.button_call')}</span>
-                      <span dir="ltr">{businessPhone}</span>
+                      <span dir="ltr">{displayPhone(businessPhone)}</span>
                     </motion.a>
                   )}
                 </motion.div>
@@ -407,7 +408,7 @@ const ManageAppointment: React.FC = () => {
                 {t('manage.label.phone')}
               </div>
               <div className="font-medium text-light-text dark:text-dark-text">
-                {appointment.phone}
+                {displayPhone(appointment.phone)}
               </div>
             </div>
           </div>

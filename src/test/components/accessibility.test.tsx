@@ -124,7 +124,7 @@ describe('the accessibility statement', () => {
     expect(dialog.textContent).toContain('Studio Noa');
     expect(screen.getByRole('link', { name: 'ezwebsisr@gmail.com' })).toHaveAttribute('href', 'mailto:ezwebsisr@gmail.com');
     expect(dialog.textContent).toContain('a11y.statement.contact EZ\u00a0Webs');
-    expect(screen.getByRole('link', { name: '050-1234567' })).toHaveAttribute('href', 'tel:0501234567');
+    expect(screen.getByRole('link', { name: '050-1234567' })).toHaveAttribute('href', 'tel:+972501234567');
   });
 
   it('a leads site offers contact, not booking, by phone', () => {

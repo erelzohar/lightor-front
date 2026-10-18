@@ -4,6 +4,7 @@ import { X, Phone } from 'lucide-react';
 import * as QRCode from 'qrcode.react';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useDialogFocus } from '../hooks/useDialogFocus';
+import { displayPhone } from '../utils/phone';
 
 interface ContactModalProps {
   isOpen: boolean;
@@ -88,7 +89,7 @@ export function ContactModal({ isOpen, onClose, contactLink, type }: ContactModa
               ) : (
                 <div className="mb-6">
                   <p className="text-light-text/80 dark:text-dark-text/80 text-lg">
-                    {contactLink.replace(/[^0-9+]/g, '').replace(/(\d{3})(\d{3})(\d{4})/, '$1-$2-$3')}
+                    {displayPhone(contactLink.replace(/^tel:/, ''))}
                   </p>
                 </div>
               )}
