@@ -22,6 +22,11 @@ i18n
   .init({
     resources,
     fallbackLng: 'he',
+    // LT-408: a visitor language the sites do not speak (a Russian browser)
+    // falls back to Hebrew whole - it used to stay "ru", so a page shown
+    // before the site's own language arrives (the not-live page, not found)
+    // read Hebrew laid out left to right.
+    supportedLngs: Object.keys(resources),
     load: 'languageOnly', // We only use 'en', 'he', etc.
     interpolation: {
       escapeValue: false,
