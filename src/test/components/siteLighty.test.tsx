@@ -178,6 +178,57 @@ describe('the reply as drawn (LT-302)', () => {
       { kind: 'text', text: ' [x](https://e.com)' },
     ]);
   });
+
+  it('keeps a section link the model wrapped in bold a link (LT-432)', () => {
+    // Zohar Sweets' reply, as Erel saw it drawn as raw markup.
+    expect(replyParts('לקבל את התפריט המלא דרך **[השאירו פרטים](#contact)** או בטלפון')).toEqual([
+      { kind: 'text', text: 'לקבל את התפריט המלא דרך ' },
+      { kind: 'link', text: 'השאירו פרטים', section: 'contact' },
+      { kind: 'text', text: ' או בטלפון' },
+    ]);
+    expect(replyParts('**See [prices](#services) today**')).toEqual([
+      { kind: 'bold', text: 'See ' },
+      { kind: 'link', text: 'prices', section: 'services' },
+      { kind: 'bold', text: ' today' },
+    ]);
+    expect(replyParts('**[x](#evil)**')).toEqual([{ kind: 'bold', text: 'x' }]);
+    expect(replyParts('[**Book**](#schedule)')).toEqual([{ kind: 'link', text: 'Book', section: 'schedule' }]);
+  });
+
+  it('makes a phone number one call link, however it is written (LT-432)', () => {
+    expect(replyParts('או בטלפון 050-8801872.')).toEqual([
+      { kind: 'text', text: 'או בטלפון ' },
+      { kind: 'phone', text: '050-8801872', href: 'tel:+972508801872' },
+      { kind: 'text', text: '.' },
+    ]);
+    const phone = (reply: string) => replyParts(reply).find((p) => p.kind === 'phone');
+    expect(phone('Call 0508801872')).toEqual({ kind: 'phone', text: '050-8801872', href: 'tel:+972508801872' });
+    expect(phone('Call 050 880 1872')).toEqual({ kind: 'phone', text: '050-8801872', href: 'tel:+972508801872' });
+    expect(phone('Call +972 50-880-1872')).toEqual({ kind: 'phone', text: '050-8801872', href: 'tel:+972508801872' });
+    expect(phone('Call 03-1234567')).toEqual({ kind: 'phone', text: '03-1234567', href: 'tel:+97231234567' });
+    expect(phone('Call 077-1234567')).toEqual({ kind: 'phone', text: '077-1234567', href: 'tel:+972771234567' });
+    expect(replyParts('**050-8801872**')).toEqual([{ kind: 'phone', text: '050-8801872', href: 'tel:+972508801872' }]);
+  });
+
+  it('leaves prices, hours, dates and other numbers as text (LT-432)', () => {
+    for (const reply of ['₪1,200 for 12 people', 'Open 09:00-18:00', 'On 21.10.2026', 'Order 12345678901', 'Code 0501234567890', 'Call 1-800-200-300', 'Ref 12050-8801872']) {
+      expect(replyParts(reply).some((p) => p.kind === 'phone')).toBe(false);
+    }
+  });
+
+  it('draws the phone as a call link that reads left to right and never wraps (LT-432)', async () => {
+    mocks.ask.mockResolvedValueOnce({ ok: true, reply: 'Write **[here](#contact)** or call 050-8801872.' });
+    render(<SiteLighty businessName="Dana Studio" leadsSite={false} />);
+    openChat();
+    ask('How do I order?');
+
+    const call = await screen.findByRole('link', { name: '050-8801872' });
+    expect(call.getAttribute('href')).toBe('tel:+972508801872');
+    expect(call.getAttribute('dir')).toBe('ltr');
+    expect(call.className).toContain('whitespace-nowrap');
+    expect(screen.getByRole('button', { name: 'here' })).toBeTruthy();
+    expect(screen.queryByText(/\(#contact\)/)).toBeNull();
+  });
 });
 
 describe('the assistant flag (LT-302)', () => {

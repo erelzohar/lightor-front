@@ -71,6 +71,12 @@ function Reply({ text, onSection }: { text: string; onSection: (section: string)
             <button key={i} type="button" onClick={() => onSection(part.section)} className="underline underline-offset-2 font-semibold text-primary-readable dark:text-primary-dark-readable">
               {part.text}
             </button>
+          ) : part.kind === 'phone' ? (
+            // One piece (LT-432): dials on a tap, reads left to right in a
+            // Hebrew line, never breaks at its hyphen.
+            <a key={i} href={part.href} dir="ltr" className="whitespace-nowrap underline underline-offset-2 font-semibold text-primary-readable dark:text-primary-dark-readable">
+              {part.text}
+            </a>
           ) : <span key={i}>{part.text}</span>
       )}
     </>
