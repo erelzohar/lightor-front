@@ -74,7 +74,7 @@ const Loading: React.FC<LoadingProps> = ({ isLoading, onLoadingComplete }) => {
                 }}
               >
                 <img
-                  src="/lightor.png"
+                  src="/lightor-loading.webp"
                   alt=""
                   className="absolute inset-0 w-full h-full object-contain"
                 />

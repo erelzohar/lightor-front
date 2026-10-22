@@ -32,7 +32,7 @@ const Interlude: React.FC<InterludeProps> = ({ image, statement, variant, tone =
     return (
       <section aria-label={statement ? undefined : 'photo'} className={`${tone === 'surface' ? 'bg-light-surface dark:bg-dark-surface' : 'bg-light-bg dark:bg-dark-bg'} transition-colors duration-300`}>
         <div className="grid md:grid-cols-2 items-stretch md:h-[28rem]">
-          <img {...ed(imagePath, 'image')} src={src} alt="" data-cutout={cutout || undefined} className={cutout ? `w-full h-72 md:h-full p-10 ${CUTOUT_CLASS}` : 'w-full h-72 md:h-full object-cover'} />
+          <img loading="lazy" {...ed(imagePath, 'image')} src={src} alt="" data-cutout={cutout || undefined} className={cutout ? `w-full h-72 md:h-full p-10 ${CUTOUT_CLASS}` : 'w-full h-72 md:h-full object-cover'} />
           <div className="p-10 md:p-16 flex items-center overflow-hidden">
             {statement && (
               <p {...ed(statementPath)} className="font-bold leading-tight text-light-text dark:text-dark-text line-clamp-5" style={{ fontFamily: displayFont, fontSize: 'clamp(1.75rem, 3.5vw, 3.25rem)' }}>
@@ -47,7 +47,7 @@ const Interlude: React.FC<InterludeProps> = ({ image, statement, variant, tone =
 
   return (
     <section className="relative h-[55vh] min-h-[22rem] overflow-hidden" aria-label={statement ? undefined : 'photo'}>
-      <img {...ed(imagePath, 'image')} src={src} alt="" className="absolute inset-0 w-full h-full object-cover" />
+      <img loading="lazy" {...ed(imagePath, 'image')} src={src} alt="" className="absolute inset-0 w-full h-full object-cover" />
       <div className="absolute inset-0 bg-black/50" aria-hidden="true" />
       {statement && (
         <div className="relative h-full container mx-auto px-4 flex items-center justify-center text-center">

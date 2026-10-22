@@ -272,7 +272,7 @@ const ComposedPage: React.FC<ComposedPageProps> = ({ config, jitter, isPreview, 
         const wrapped = backdrop !== 'none' ? (
           <div className={`relative isolate bg-light-bg dark:bg-dark-bg [&>section]:!bg-transparent ${extra}`}>
             {backdrop === 'photo' && heroImg && (
-              <img src={ImagesService.getInstance().getImage(heroImg)} alt="" aria-hidden="true" className="absolute inset-0 -z-10 w-full h-full object-cover opacity-[0.08] dark:opacity-[0.12]" />
+              <img loading="lazy" src={ImagesService.getInstance().getImage(heroImg)} alt="" aria-hidden="true" className="absolute inset-0 -z-10 w-full h-full object-cover opacity-[0.08] dark:opacity-[0.12]" />
             )}
             {backdrop === 'tinted' && <div className="absolute inset-0 -z-10 bg-primary/[0.06] dark:bg-primary-dark/[0.09]" aria-hidden="true" />}
             {backdrop === 'pattern' && <div className="absolute inset-0 -z-10 lt-pattern" aria-hidden="true" />}

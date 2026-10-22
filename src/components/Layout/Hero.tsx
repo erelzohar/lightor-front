@@ -27,6 +27,11 @@ function hexToInt(hex: string): number {
   return parseInt(hex.replace('#', ''), 16);
 }
 
+// LT-445: the hero picture is the page's largest paint (LCP): fetched first,
+// never lazily. Lowercase, as React 18 passes an attribute it does not know.
+const SOFT_VANTA = new Set(['clouds', 'clouds2', 'fog']);
+const HERO_IMAGE = { fetchpriority: 'high', loading: 'eager' } as Record<string, string>;
+
 function buildVantaOptions(type: string, isDark: boolean, palette: Palette | undefined): Record<string, any> {
   const primary = palette?.colorPrimary ?? '#2563eb';
   const primaryDark = palette?.colorPrimaryDark ?? '#14b8a6';
@@ -207,14 +212,37 @@ const Hero: React.FC<HeroProps> = ({ config, social, phone, isContactVisible, ap
           minHeight: 200,
           minWidth: 200,
           ...buildVantaOptions(bgType, isDarkMode, palette),
+          // LT-445: on a phone the background is drawn at fewer pixels (Vanta
+          // divides devicePixelRatio by this): the soft ones (clouds, fog) at
+          // one per CSS pixel, a ninth of a 3x screen's; the line drawings
+          // (net, birds...) at 2x at most, so their lines stay sharp. After
+          // the effect's options, which carried scaleMobile: 1.
+          scaleMobile: Math.max(1, (window.devicePixelRatio || 1) / (SOFT_VANTA.has(bgType) ? 1 : 2)),
         });
       } catch {
         vantaInstanceRef.current = null;
       }
     }).catch(() => {});
 
+    // LT-445: scrolled away, its loop stops altogether. Vanta only skips the
+    // drawing off screen and still measures the hero on every frame.
+    const host = vantaRef.current;
+    const io = typeof IntersectionObserver === 'function' ? new IntersectionObserver(([entry]) => {
+      const vanta = vantaInstanceRef.current;
+      if (!vanta || typeof vanta.animationLoop !== 'function') return;
+      if (entry.isIntersecting) {
+        if (!vanta.req) vanta.animationLoop();
+      } else {
+        window.cancelAnimationFrame(vanta.req);
+        vanta.req = 0;
+        vanta.prevNow = 0;
+      }
+    }) : null;
+    io?.observe(host);
+
     return () => {
       cancelled = true;
+      io?.disconnect();
       if (vantaInstanceRef.current) {
         vantaInstanceRef.current.destroy();
         vantaInstanceRef.current = null;
@@ -452,7 +480,7 @@ const Hero: React.FC<HeroProps> = ({ config, social, phone, isContactVisible, ap
     // no shape cut and no box (LT-317: a round logo showed a square).
     return (
       <div className="relative">
-        <img {...ed('components.hero.heroImageSrc', 'image')}
+        <img {...ed('components.hero.heroImageSrc', 'image')} {...HERO_IMAGE}
           src={ImagesService.getInstance().getImage(config.heroImageSrc)}
           alt={businessName || ''}
           data-cutout={cutout || undefined}
@@ -565,7 +593,7 @@ const Hero: React.FC<HeroProps> = ({ config, social, phone, isContactVisible, ap
       return (
         <motion.div className="relative" variants={containerVariants}>
           <motion.div className="relative h-[60vh] min-h-[24rem] overflow-hidden" variants={itemVariants}>
-            <img {...ed('components.hero.heroImageSrc', 'image')}
+            <img {...ed('components.hero.heroImageSrc', 'image')} {...HERO_IMAGE}
               src={ImagesService.getInstance().getImage(config.heroImageSrc)}
               alt={config.title}
               onError={handleWideImageError}
@@ -641,7 +669,7 @@ const Hero: React.FC<HeroProps> = ({ config, social, phone, isContactVisible, ap
               DOM order, and the seeded flip keeps its md:order-first. */}
           <motion.div className={`relative w-full max-w-md md:max-w-none mx-auto md:mx-0 order-first ${jitter?.flipPosterSplit ? 'md:order-first' : 'md:order-none'}`} variants={itemVariants}>
             <div className="relative h-full min-h-[22rem] md:min-h-[28rem]">
-              <img {...ed('components.hero.heroImageSrc', 'image')}
+              <img {...ed('components.hero.heroImageSrc', 'image')} {...HERO_IMAGE}
                 src={ImagesService.getInstance().getImage(config.heroImageSrc)}
                 alt={config.title}
                 data-cutout={cutout || undefined}

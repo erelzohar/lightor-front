@@ -280,7 +280,7 @@ const Footer: React.FC<FooterProps> = ({ config, social, businessName, logoImage
                the long description are dropped. Legal block below is shared. */
             <motion.div variants={itemVariants} className="flex flex-col items-center gap-6 mb-12 text-center">
               <div className="flex items-center gap-2">
-                <img {...editAttrs(editing, 'logoImageName', 'image')}
+                <img loading="lazy" {...editAttrs(editing, 'logoImageName', 'image')}
                   src={ImagesService.getInstance().getImage(logoImageName)}
                   alt=""
                   onError={handleSquareImageError}
@@ -314,7 +314,7 @@ const Footer: React.FC<FooterProps> = ({ config, social, businessName, logoImage
             {/* Logo and Description */}
             <motion.div variants={itemVariants} className="text-center md:text-start">
               <div className="flex items-center justify-center md:justify-start gap-2 mb-6">
-                <img {...editAttrs(editing, 'logoImageName', 'image')}
+                <img loading="lazy" {...editAttrs(editing, 'logoImageName', 'image')}
                   src={ImagesService.getInstance().getImage(logoImageName)}
                   alt=""
                   onError={handleSquareImageError}

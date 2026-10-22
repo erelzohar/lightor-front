@@ -16,11 +16,34 @@ const cache = new Map<string, Promise<boolean>>();
 const SIZE = 32;
 const CLEAR = 8; // alpha at or below this is see-through
 
+/**
+ * LT-445: only a picture that can be see-through is read - a PNG, WebP, GIF,
+ * AVIF or SVG. A JPEG never is, and neither are the stock photos without an
+ * extension (picsum, Unsplash): the copy was a second download of the
+ * page's largest picture, on a phone's slow line, for nothing.
+ */
+export const canBeClear = (src: string): boolean => {
+  if (src.startsWith('data:')) return /^data:image\/(png|webp|gif|avif|svg)/i.test(src);
+  const path = src.split(/[?#]/)[0];
+  return /\.(png|webp|gif|avif|svg)$/i.test(path);
+};
+
+/** The page's own copy of the picture, once it has loaded (or failed): the read waits for it, never racing it. */
+const pageCopyDone = (src: string): Promise<void> => {
+  const shown = Array.from(document.images).find((img) => img.getAttribute('src') === src && !img.complete);
+  if (!shown) return Promise.resolve();
+  return new Promise((resolve) => {
+    shown.addEventListener('load', () => resolve(), { once: true });
+    shown.addEventListener('error', () => resolve(), { once: true });
+  });
+};
+
 export const isCutout = (src: string | undefined | null): Promise<boolean> => {
   if (!src || typeof Image === 'undefined' || typeof document === 'undefined') return Promise.resolve(false);
+  if (!canBeClear(src)) return Promise.resolve(false);
   const known = cache.get(src);
   if (known) return known;
-  const answer = new Promise<boolean>((resolve) => {
+  const answer = pageCopyDone(src).then(() => new Promise<boolean>((resolve) => {
     const img = new Image();
     img.crossOrigin = 'anonymous';
     img.onload = () => {
@@ -41,7 +64,7 @@ export const isCutout = (src: string | undefined | null): Promise<boolean> => {
     };
     img.onerror = () => resolve(false);
     img.src = src;
-  });
+  }));
   cache.set(src, answer);
   return answer;
 };

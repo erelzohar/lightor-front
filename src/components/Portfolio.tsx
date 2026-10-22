@@ -172,7 +172,7 @@ const Portfolio: React.FC<PortfolioProps> = ({ config, layout = 'grid', masonryP
                   {/* LT-346: the caption shows on hover and is hidden from
                       screen readers; they get the picture's description here. */}
                   {item.description && <span className="sr-only">{item.description}</span>}
-                  <img {...ed(`components.portfolio.items.${index}.url`, 'image')}
+                  <img loading="lazy" {...ed(`components.portfolio.items.${index}.url`, 'image')}
                     src={ImagesService.getInstance().getImage(item.url)}
                     alt={altOf(item)}
                     onError={handleWideImageError}
@@ -236,7 +236,7 @@ const Portfolio: React.FC<PortfolioProps> = ({ config, layout = 'grid', masonryP
                         transition={{ duration: 0.35 }}
                         className="relative aspect-video rounded-design-card overflow-hidden shadow-card"
                       >
-                        <img {...ed(`components.portfolio.items.${active}.url`, 'image')}
+                        <img loading="lazy" {...ed(`components.portfolio.items.${active}.url`, 'image')}
                           src={ImagesService.getInstance().getImage(main.url)}
                           alt={altOf(main)}
                           onError={handleWideImageError}
@@ -260,7 +260,7 @@ const Portfolio: React.FC<PortfolioProps> = ({ config, layout = 'grid', masonryP
                             className={`flex-none w-28 aspect-[4/3] rounded-design-sm overflow-hidden border-2 transition-opacity ${index === active ? 'border-primary dark:border-primary-dark' : 'border-transparent opacity-60 hover:opacity-100'}`}
                             aria-label={altOf(item) || t('portfolio.slideshow_dot', { index: index + 1 })}
                           >
-                            <img {...ed(`components.portfolio.items.${index}.url`, 'image')} src={ImagesService.getInstance().getImage(item.url)} alt="" onError={handleWideImageError} className="w-full h-full object-cover" />
+                            <img loading="lazy" {...ed(`components.portfolio.items.${index}.url`, 'image')} src={ImagesService.getInstance().getImage(item.url)} alt="" onError={handleWideImageError} className="w-full h-full object-cover" />
                           </button>
                         ))}
                       </div>
@@ -301,7 +301,7 @@ const Portfolio: React.FC<PortfolioProps> = ({ config, layout = 'grid', masonryP
                         className={`group bg-white p-3 pb-4 shadow-xl ${tilts[index % tilts.length]} hover:rotate-0 transition-transform w-64`}
                       >
                         <div className="aspect-square overflow-hidden">
-                          <img {...ed(`components.portfolio.items.${index}.url`, 'image')}
+                          <img loading="lazy" {...ed(`components.portfolio.items.${index}.url`, 'image')}
                             src={ImagesService.getInstance().getImage(item.url)}
                             alt={altOf(item)}
                             onError={handleWideImageError}
@@ -330,7 +330,7 @@ const Portfolio: React.FC<PortfolioProps> = ({ config, layout = 'grid', masonryP
                         role="listitem"
                         className="group relative aspect-square overflow-hidden border border-light-text/25 dark:border-dark-text/25"
                       >
-                        <img {...ed(`components.portfolio.items.${index}.url`, 'image')}
+                        <img loading="lazy" {...ed(`components.portfolio.items.${index}.url`, 'image')}
                           src={ImagesService.getInstance().getImage(item.url)}
                           alt={altOf(item)}
                           onError={handleWideImageError}
@@ -379,7 +379,7 @@ const Portfolio: React.FC<PortfolioProps> = ({ config, layout = 'grid', masonryP
                       role="listitem"
                       className="group relative aspect-[4/3] rounded-design-card overflow-hidden shadow-card"
                     >
-                      <img {...ed(`components.portfolio.items.${index}.url`, 'image')}
+                      <img loading="lazy" {...ed(`components.portfolio.items.${index}.url`, 'image')}
                         src={ImagesService.getInstance().getImage(item.url)}
                         alt={altOf(item)}
                         onError={handleWideImageError}
@@ -432,7 +432,7 @@ const Portfolio: React.FC<PortfolioProps> = ({ config, layout = 'grid', masonryP
                   aria-label={[config.items[currentSlide].title, config.items[currentSlide].description].filter(Boolean).join(': ') || t('portfolio.slideshow_dot', { index: currentSlide + 1 })}
                 >
                   <div className="relative h-full">
-                    <img {...ed(`components.portfolio.items.${currentSlide}.url`, 'image')}
+                    <img loading="lazy" {...ed(`components.portfolio.items.${currentSlide}.url`, 'image')}
                       src={ImagesService.getInstance().getImage(config.items[currentSlide].url)}
                       alt={altOf(config.items[currentSlide])}
                       onError={handleWideImageError}
