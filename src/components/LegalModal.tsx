@@ -1,8 +1,8 @@
 import React, { useId, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useDialogFocus } from '../hooks/useDialogFocus';
+import { DialogTop } from './ui/DialogTop';
 
 interface LegalModalProps {
   isOpen: boolean;
@@ -37,20 +37,22 @@ export function LegalModal({ isOpen, onClose, title, content }: LegalModalProps)
             initial={{ scale: 0.9, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.9, opacity: 0 }}
-            className="bg-white dark:bg-dark-surface rounded-2xl p-6 max-w-2xl w-full max-h-[80vh] overflow-y-auto relative"
+            // LT-446: the title and the X stay on top; only the text scrolls.
+            className="bg-white dark:bg-dark-surface rounded-2xl max-w-2xl w-full max-h-[85svh] flex flex-col overflow-hidden text-start"
             onClick={e => e.stopPropagation()}
           >
-            <button
-              type="button"
-              onClick={onClose}
-              aria-label={t('a11y.menu.close')}
-              className="absolute top-4 end-4 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors"
-            >
-              <X className="w-6 h-6" aria-hidden="true" />
-            </button>
-
-            <div className="text-start">
-              <h3 id={titleId} className="text-2xl font-bold text-gray-900 dark:text-white mb-4 pe-10">{title}</h3>
+            <DialogTop
+              titleId={titleId}
+              title={title}
+              level={3}
+              onClose={onClose}
+              closeLabel={t('a11y.menu.close')}
+              className="px-6 pt-5 pb-3 border-b border-gray-100 dark:border-white/10"
+              titleClassName="text-2xl font-bold text-gray-900 dark:text-white"
+              buttonClassName="bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-white/10 dark:text-gray-100 dark:hover:bg-white/20"
+            />
+            {/* Focusable, so the keyboard can scroll a text with no links in it. */}
+            <div tabIndex={0} className="min-h-0 flex-1 overflow-y-auto px-6 pt-4 pb-6" data-testid="dialog-text">
               <div className="prose prose-lg max-w-none text-gray-600 dark:text-gray-300">
                 {content}
               </div>

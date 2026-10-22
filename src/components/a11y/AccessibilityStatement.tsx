@@ -1,7 +1,7 @@
 import React, { useEffect, useId, useRef, useSyncExternalStore } from 'react';
-import { X } from 'lucide-react';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useDialogFocus } from '../../hooks/useDialogFocus';
+import { DialogTop } from '../ui/DialogTop';
 import { displayPhone, telHref } from '../../utils/phone';
 import {
   ACCESSIBILITY_CONTACT, STATEMENT_HASH, STATEMENT_UPDATED,
@@ -57,18 +57,20 @@ const AccessibilityStatement: React.FC<AccessibilityStatementProps> = ({ busines
         aria-modal="true"
         aria-labelledby={titleId}
         tabIndex={-1}
-        className="lt-ui relative w-full max-w-2xl max-h-[85svh] overflow-y-auto overflow-x-hidden rounded-2xl bg-light-surface dark:bg-dark-surface text-light-text dark:text-dark-text p-6 md:p-8 shadow-2xl text-start"
+        // LT-446: the title and the X stay on top; only the text scrolls.
+        className="lt-ui relative w-full max-w-2xl max-h-[85svh] flex flex-col overflow-hidden rounded-2xl bg-light-surface dark:bg-dark-surface text-light-text dark:text-dark-text shadow-2xl text-start"
       >
-        <button
-          type="button"
-          onClick={closeStatement}
-          aria-label={t('a11y.menu.close')}
-          className="absolute top-3 end-3 p-2 rounded-full hover:bg-light-gray dark:hover:bg-dark-gray"
-        >
-          <X className="h-5 w-5" aria-hidden="true" />
-        </button>
-
-        <h2 id={titleId} className="font-bold mb-4 pe-10 break-words">{t('a11y.statement.title')}</h2>
+        <DialogTop
+          titleId={titleId}
+          title={t('a11y.statement.title')}
+          onClose={closeStatement}
+          closeLabel={t('a11y.menu.close')}
+          className="px-6 md:px-8 pt-5 pb-3 border-b border-light-gray dark:border-dark-gray"
+          titleClassName="font-bold"
+          buttonClassName="bg-light-gray text-light-text hover:opacity-80 dark:bg-dark-gray dark:text-dark-text"
+        />
+        {/* Focusable, so the keyboard can scroll it. */}
+        <div tabIndex={0} className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden px-6 md:px-8 pt-4 pb-6 md:pb-8" data-testid="dialog-text">
         <p className="mb-5 leading-relaxed">{t('a11y.statement.intro', { name: businessName })}</p>
 
         <h3 className="font-semibold mb-2">{t('a11y.statement.levelTitle')}</h3>
@@ -99,6 +101,7 @@ const AccessibilityStatement: React.FC<AccessibilityStatementProps> = ({ busines
         )}
 
         <p className="text-sm opacity-75">{t('a11y.statement.updated', { date: updated })}</p>
+        </div>
       </div>
     </div>
   );
