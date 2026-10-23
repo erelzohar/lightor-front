@@ -122,7 +122,7 @@ describe('the accessibility statement', () => {
     const dialog = screen.getByRole('dialog', { name: 'a11y.statement.title' });
     expect(dialog).toHaveAttribute('aria-modal', 'true');
     expect(dialog.textContent).toContain('Studio Noa');
-    expect(screen.getByRole('link', { name: 'ezwebsisr@gmail.com' })).toHaveAttribute('href', 'mailto:ezwebsisr@gmail.com');
+    expect(screen.getByRole('link', { name: 'support@lightor.app' })).toHaveAttribute('href', 'mailto:support@lightor.app');
     expect(dialog.textContent).toContain('a11y.statement.contact EZ\u00a0Webs');
     expect(screen.getByRole('link', { name: '050-1234567' })).toHaveAttribute('href', 'tel:+972501234567');
   });

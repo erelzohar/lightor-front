@@ -57,31 +57,31 @@ class ErrorBoundaryClass extends Component<ErrorBoundaryProps & { language: Lang
         title: 'Something went wrong...',
         description: 'If the problem persists, please contact support at',
         stackTrace: 'Stack trace',
-        supportEmail: 'lightorapp@gmail.com'
+        supportEmail: 'support@lightor.app'
       },
       he: {
         title: 'משהו השתבש...',
         description: 'אם הבעיה נמשכת, אנא צור קשר עם התמיכה בכתובת',
         stackTrace: 'מעקב שגיאה',
-        supportEmail: 'lightorapp@gmail.com'
+        supportEmail: 'support@lightor.app'
       },
       ar: {
         title: 'حدث خطأ ما...',
         description: 'إذا استمرت المشكلة، يرجى التواصل مع الدعم على',
         stackTrace: 'تتبع الخطأ',
-        supportEmail: 'lightorapp@gmail.com'
+        supportEmail: 'support@lightor.app'
       },
       fr: {
         title: 'Une erreur est survenue...',
         description: 'Si le problème persiste, contactez le support à',
         stackTrace: 'Trace de la pile',
-        supportEmail: 'lightorapp@gmail.com'
+        supportEmail: 'support@lightor.app'
       },
       es: {
         title: 'Algo salió mal...',
         description: 'Si el problema continúa, contacta con soporte en',
         stackTrace: 'Traza de la pila',
-        supportEmail: 'lightorapp@gmail.com'
+        supportEmail: 'support@lightor.app'
       }
     };
 

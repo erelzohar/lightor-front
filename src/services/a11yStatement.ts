@@ -9,10 +9,10 @@
 export const STATEMENT_HASH = '#accessibility';
 
 /** The day the statement's wording last changed (shown on it). */
-export const STATEMENT_UPDATED = '2026-10-15';
+export const STATEMENT_UPDATED = '2026-10-23';
 
-/** Who answers accessibility requests on every Lightor site (Erel 2026-10-15, LT-339 D4). */
-export const ACCESSIBILITY_CONTACT = { name: 'EZ Webs', email: 'ezwebsisr@gmail.com' } as const;
+/** Who answers accessibility requests on every Lightor site (Erel 2026-10-15, LT-339 D4; support@lightor.app since LT-448). */
+export const ACCESSIBILITY_CONTACT = { name: 'EZ Webs', email: 'support@lightor.app' } as const;
 
 let open = false;
 const listeners = new Set<() => void>();
