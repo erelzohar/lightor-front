@@ -9,7 +9,7 @@ import { BookingField, AnswerValue, fieldsForService, answerProblem, answersForR
 import { BusySlot } from '../../../models/BusySlot';
 import { ClassOccurrence } from '../../../models/ClassOccurrence';
 import { ScheduleConfig } from '../../../models/ScheduleConfig';
-import AppointmentService from '../../../services/AppointmentService';
+import AppointmentService, { type SameDayBooking, type AppointmentDraft } from '../../../services/AppointmentService';
 import { visitorPass, useVisitorPass, isPassRefused } from '../../../services/visitorPass';
 import smsService, { type OtpSendResult } from '../../../services/SmsService';
 import { Loader2 } from 'lucide-react';
@@ -154,6 +154,12 @@ const withFreshPass = async <T,>(call: () => Promise<T>): Promise<T> => {
 /** The visitor's 6-digit code, as typed, pasted or autofilled (LT-315). */
 const OTP_LENGTH = 6;
 
+/** The booking being made, as the form sends it once the number is proven. */
+type NewBooking = { name: string; phone: string; type_id: string; timestamp: string; user_id: string; status: string; channelType: 'sms' | 'whatsapp' };
+
+/** LT-451: the question "you already have a booking that day", and what answers it needs. */
+type SameDayChoice = { held: SameDayBooking[]; phoneToken: string | null; appointment: NewBooking };
+
 const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone, businessName, timeToCancel, vacations, dateOverrides = [], appointmentTypes: offeredTypes, isUpdating, appointmentToUpdate, onUpdateComplete, onCancelUpdate, onCancelWindowClosed, isPreview, hideDescription = false, header, headerScale, scheduleStyle = 'card', tone = 'surface', bookingHorizonDays = DEFAULT_BOOKING_HORIZON_DAYS, bookingFields = NO_BOOKING_FIELDS, timeZone, currency }) => {
   const tz = resolveTimeZone(timeZone);
   const { editing } = useEdit();
@@ -205,6 +211,9 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
   // The just-booked slot, kept for the add-to-calendar buttons after the
   // selection state itself is reset. (LT-044)
   const [calendarEvent, setCalendarEvent] = useState<CalendarEventInput | null>(null);
+  // LT-451: the number just proven already holds a booking that day - the
+  // form asks before booking twice: another one, or update the one held.
+  const [sameDay, setSameDay] = useState<SameDayChoice | null>(null);
 
   useEffect(() => {
     if (isUpdating && appointmentToUpdate) {
@@ -381,6 +390,7 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
 
   const resetCalendar = useCallback(() => {
     setError(null);
+    setSameDay(null);
     setIsSuccess(false);
     setCalendarEvent(null);
     setSelectedDate(null);
@@ -446,46 +456,21 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
     }
   }, [isPreview, sendCode, t]);
 
-  const handleVerificationSubmit = useCallback(async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!validateForm()) return;
-    if (!selectedDate || !selectedAppointmentType) return; // Should be set if we are here
-
-    lastSubmittedCode.current = formData.verificationCode;
-
+  /**
+   * The booking itself, once the number is proven (LT-005): a new one, the
+   * manage page's reschedule, or - LT-451 - the booking held that day
+   * taking this choice (`held`, with the question to put back if that fails).
+   */
+  const finishBooking = useCallback(async (
+    phoneToken: string | null,
+    appointmentToCreate: NewBooking,
+    held?: SameDayBooking,
+    heldChoice?: SameDayChoice,
+  ) => {
+    if (!selectedDate || !selectedAppointmentType) return;
+    const fixedDate = new Date(parseInt(appointmentToCreate.timestamp, 10));
     setIsSubmitting(true);
     try {
-      // The verification code is now genuinely checked. Both this call and the
-      // send above used to be commented out, so the code in the SMS was never
-      // validated for anyone. On success the API returns a short-lived token
-      // proving this number was verified; createAppointment requires it and
-      // matches it against the number being booked. (LT-005)
-      let phoneToken: string | null = null;
-      if (!isPreview) {
-        phoneToken = await smsService.verifyOtp(formData.phone, formData.verificationCode);
-        if (!phoneToken) {
-          setError(t('schedule.error.invalidOtp'));
-          setIsSubmitting(false);
-          formData.verificationCode = "";
-          otpInputRefs.current[0]?.focus();
-          return;
-        }
-      }
-
-      // Proceed to create appointment
-      // The business's wall clock, whatever the visitor's device says (LT-318).
-      const fixedDate = new Date(zonedSlotMs(selectedDate, +selectedTime.split(":")[0], +selectedTime.split(":")[1], tz));
-
-      const appointmentToCreate = {
-        name: formData.name,
-        phone: formData.phone,
-        type_id: selectedAppointmentType._id,
-        timestamp: fixedDate.valueOf().toString(),
-        user_id,
-        status: "scheduled",
-        channelType
-      }
-      
       if (!isPreview) {
         const service = AppointmentService.getInstance();
         // A new booking carries the answers as key and value (LT-178) — plus
@@ -493,16 +478,17 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
         // suggestions (LT-191): the server takes label and type from the
         // owner's catalog. A reschedule sends the stored appointment back
         // whole, answers included, and the server leaves them untouched.
-        const res = await withFreshPass(() => (isUpdating && appointmentToUpdate
-          ? service.updateAppointment({ ...appointmentToUpdate, ...appointmentToCreate })
-          : service.createAppointment(
-              {
-                ...appointmentToCreate,
-                answers: answersForRequest(askedFields, formData.answers),
-                ...(useRemembered && rememberFields.length > 0 ? { useRemembered: true } : {}),
-              },
-              phoneToken
-            )));
+        const draft: AppointmentDraft = {
+          ...appointmentToCreate,
+          answers: answersForRequest(askedFields, formData.answers),
+          ...(useRemembered && rememberFields.length > 0 ? { useRemembered: true } : {}),
+        };
+        // LT-451: the booking held that day takes this choice instead.
+        const res = await withFreshPass(() => (held
+          ? service.updateHeldBooking(held, draft)
+          : isUpdating && appointmentToUpdate
+            ? service.updateAppointment({ ...appointmentToUpdate, ...appointmentToCreate })
+            : service.createAppointment(draft, phoneToken)));
 
         // Refetch rather than patching local state: busy slots are anonymous
         // (no id to match on for the reschedule case), and a refetch also picks
@@ -516,7 +502,7 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
       }
 
       setError(null);
-      setSuccessMessage(isUpdating ? t('schedule.update.success') : t('schedule.success'));
+      setSuccessMessage(held ? t('schedule.sameDay.updated') : isUpdating ? t('schedule.update.success') : t('schedule.success'));
       setIsSuccess(true);
 
       // New bookings show add-to-calendar buttons with the success message, so
@@ -556,11 +542,15 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
         // by the time it leaves and the time it takes; which one failed
         // decides what the customer can still do.
         const windowMS = error.minCancelTimeMS || timeToCancel || DEFAULT_MIN_CANCEL_TIME_MS;
-        const leavingMs = parseInt(appointmentToUpdate?.timestamp ?? '', 10);
+        const leavingMs = parseInt((held?.timestamp ?? appointmentToUpdate?.timestamp) ?? '', 10);
         if (!(leavingMs - Date.now() >= windowMS)) {
           // The booking itself is inside the window: nothing about it can
           // change online. The manage page takes over and offers a call.
-          if (onCancelWindowClosed) onCancelWindowClosed(error.minCancelTimeMS);
+          if (held && heldChoice) {
+            setSameDay(heldChoice);
+            setError(t('schedule.sameDay.tooLate', { duration: formatCancelWindow(windowMS, language) }));
+          }
+          else if (onCancelWindowClosed) onCancelWindowClosed(error.minCancelTimeMS);
           else setError(t('manage.message.too_late', { duration: formatCancelWindow(windowMS, language) }));
         } else {
           // Only the new time was too near: chosen at the window's edge, or
@@ -606,7 +596,87 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
     } finally {
       setIsSubmitting(false);
     }
-  }, [formData, validateForm, selectedDate, selectedAppointmentType, selectedTime, user_id, t, resetCalendar, isPreview, isUpdating, appointmentToUpdate, channelType, onUpdateComplete, businessName, scopedFields, askedFields, rememberFields, useRemembered, timeToCancel, onCancelWindowClosed, language, tz, refreshCalendar]);
+  }, [formData, selectedDate, selectedAppointmentType, t, resetCalendar, isPreview, isUpdating, appointmentToUpdate, onUpdateComplete, businessName, scopedFields, askedFields, rememberFields, useRemembered, timeToCancel, onCancelWindowClosed, language, refreshCalendar]);
+
+  const handleVerificationSubmit = useCallback(async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!validateForm()) return;
+    if (!selectedDate || !selectedAppointmentType) return; // Should be set if we are here
+
+    lastSubmittedCode.current = formData.verificationCode;
+
+    setIsSubmitting(true);
+    try {
+      // The verification code is now genuinely checked. Both this call and the
+      // send above used to be commented out, so the code in the SMS was never
+      // validated for anyone. On success the API returns a short-lived token
+      // proving this number was verified; createAppointment requires it and
+      // matches it against the number being booked. (LT-005)
+      let phoneToken: string | null = null;
+      if (!isPreview) {
+        phoneToken = await smsService.verifyOtp(formData.phone, formData.verificationCode);
+        if (!phoneToken) {
+          setError(t('schedule.error.invalidOtp'));
+          setIsSubmitting(false);
+          formData.verificationCode = "";
+          otpInputRefs.current[0]?.focus();
+          return;
+        }
+      }
+
+      // Proceed to create appointment
+      // The business's wall clock, whatever the visitor's device says (LT-318).
+      const fixedDate = new Date(zonedSlotMs(selectedDate, +selectedTime.split(":")[0], +selectedTime.split(":")[1], tz));
+
+      const appointmentToCreate: NewBooking = {
+        name: formData.name,
+        phone: formData.phone,
+        type_id: selectedAppointmentType._id,
+        timestamp: fixedDate.valueOf().toString(),
+        user_id,
+        status: "scheduled",
+        channelType
+      }
+      
+      // LT-451: this number may already hold a booking that day. Asked only
+      // now, after the code: the lookup takes the proof, and answers that
+      // number's own bookings. A class keeps its own rule (one seat each).
+      if (!isPreview && !isUpdating && !selectedAppointmentType.isClass && phoneToken) {
+        // A lookup that fails never stops the booking.
+        let held: SameDayBooking[] = [];
+        try {
+          held = await AppointmentService.getInstance().findSameDay({
+            user_id,
+            phone: formData.phone,
+            phoneToken,
+            timestamp: appointmentToCreate.timestamp,
+          });
+        } catch {
+          held = [];
+        }
+        if (held.length > 0) {
+          setSameDay({ held, phoneToken, appointment: appointmentToCreate });
+          setError(null);
+          return;
+        }
+      }
+      setIsSubmitting(false);
+      await finishBooking(phoneToken, appointmentToCreate);
+    } catch {
+      setError(t('schedule.genericError'));
+    } finally {
+      setIsSubmitting(false);
+    }
+  }, [formData, validateForm, selectedDate, selectedAppointmentType, selectedTime, user_id, t, isPreview, isUpdating, channelType, tz, finishBooking]);
+
+  /** LT-451: the customer's answer to "you already have a booking that day". */
+  const chooseSameDay = useCallback((held?: SameDayBooking) => {
+    if (!sameDay) return;
+    const choice = sameDay;
+    setSameDay(null);
+    setError(null);
+    void finishBooking(choice.phoneToken, choice.appointment, held, choice);
+  }, [sameDay, finishBooking]);
 
   const handleInputChange = (field: 'name' | 'phone' | 'verificationCode', value: string) => {
     let processedValue = value;
@@ -1809,6 +1879,43 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
                   exit={{ opacity: 0 }}
                   className="space-y-6"
                 >
+                  {sameDay ? (
+                    /* LT-451: after the code, this number already holds a booking that day. */
+                    <div role="group" aria-labelledby="same-day-title" className="space-y-5 text-center" data-testid="same-day">
+                      <div>
+                        <p id="same-day-title" className="text-lg font-semibold text-light-text dark:text-dark-text">{t('schedule.sameDay.title')}</p>
+                        <p className="mt-1 text-sm text-light-text/70 dark:text-dark-text/70">{t('schedule.sameDay.body', { time: selectedTime })}</p>
+                      </div>
+                      <ul className="space-y-3">
+                        {sameDay.held.map((booking) => (
+                          <li key={booking._id} className="rounded-design border border-light-gray dark:border-dark-gray p-4 flex flex-col gap-3">
+                            <div className="flex flex-wrap items-center justify-center gap-x-2 gap-y-1 font-medium text-light-text dark:text-dark-text">
+                              <Clock className="h-4 w-4 text-primary/70 dark:text-primary-dark/70" aria-hidden="true" />
+                              <span dir="ltr">{zonedTimeLabel(parseInt(booking.timestamp, 10), tz)}</span>
+                              <span aria-hidden="true">·</span>
+                              <span>{booking.type.name}</span>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => chooseSameDay(booking)}
+                              disabled={isSubmitting}
+                              className="w-full bg-primary dark:bg-primary-dark text-on-primary dark:text-on-primary-dark py-3 px-5 rounded-design shadow-md hover:shadow-lg transition-shadow disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                              {t('schedule.sameDay.update', { time: selectedTime })}
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
+                      <button
+                        type="button"
+                        onClick={() => chooseSameDay()}
+                        disabled={isSubmitting}
+                        className="w-full py-3 px-5 rounded-design border-2 border-primary dark:border-primary-dark text-primary-readable dark:text-primary-dark-readable font-medium hover:bg-primary/5 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        {t('schedule.sameDay.another')}
+                      </button>
+                    </div>
+                  ) : (<>
                   <div className="flex flex-col items-center mb-8 text-center">
                     <div className="flex items-center gap-2 text-lg font-semibold text-light-text dark:text-dark-text">
                       <CalendarIcon className="h-5 w-5 text-primary/70 dark:text-primary-dark/70" aria-hidden="true" />
@@ -1921,6 +2028,7 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
 
 
                   </form>
+                  </>)}
                 </motion.div>
               )}
               </div>

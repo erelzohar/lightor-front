@@ -136,6 +136,14 @@
       "use": "Usar los datos de mi última reserva",
       "hint": "Usaremos lo que indicaste la última vez: {{fields}}",
       "missing": "No lo tenemos guardado de la última vez; complétalo, por favor"
+    },
+    "sameDay": {
+      "title": "Ya tienes una cita ese día",
+      "body": "¿Reservar otra cita, o cambiar la que tienes a las {{time}}?",
+      "update": "Cambiar esta a las {{time}}",
+      "another": "Reservar otra",
+      "updated": "¡Tu cita se actualizó!",
+      "tooLate": "La cita que tienes ya no se puede cambiar en línea - se puede hasta {{duration}} antes. Aún puedes reservar otra."
     }
   },
   "common": {

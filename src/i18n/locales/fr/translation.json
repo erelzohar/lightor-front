@@ -136,6 +136,14 @@
       "use": "Utiliser les informations de ma dernière réservation",
       "hint": "Nous reprendrons ce que vous avez indiqué la dernière fois : {{fields}}",
       "missing": "Nous ne l’avons pas gardé de la dernière fois - merci de le renseigner"
+    },
+    "sameDay": {
+      "title": "Vous avez déjà un rendez-vous ce jour-là",
+      "body": "Réserver un autre rendez-vous, ou déplacer celui que vous avez à {{time}} ?",
+      "update": "Déplacer celui-ci à {{time}}",
+      "another": "Réserver un autre",
+      "updated": "Votre rendez-vous a été mis à jour !",
+      "tooLate": "Le rendez-vous que vous avez ne peut plus être modifié en ligne - c'est possible jusqu'à {{duration}} avant. Vous pouvez en réserver un autre."
     }
   },
   "common": {

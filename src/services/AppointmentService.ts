@@ -41,6 +41,18 @@ export class BookingRefusedError extends Error {
 
 const ANSWER_CODES = ['ANSWER_REQUIRED', 'ANSWER_INVALID'] as const;
 
+/**
+ * A booking the number already holds with the business on the day being
+ * booked (LT-451), with the manage token its own link carries - what
+ * updating it takes.
+ */
+export interface SameDayBooking {
+  _id: string;
+  timestamp: string;
+  type: { _id: string; name: string; durationMS: string };
+  manageToken: string;
+}
+
 class AppointmentService {
   private static instance: AppointmentService;
   private readonly baseUrl: string;
@@ -167,6 +179,48 @@ class AppointmentService {
         throw new BookingRefusedError(error.response.data.code, error.response.data.details);
       }
       console.error('Error creating appointment:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * After the code (LT-451): the bookings this number already holds with
+   * the business on the day being booked. Never throws - no answer means the
+   * booking simply goes on.
+   */
+  public async findSameDay(input: { user_id: string; phone: string; phoneToken: string; timestamp: string }): Promise<SameDayBooking[]> {
+    try {
+      const response = await axios.post<{ data?: unknown }>(`${this.baseUrl}/same-day`, input);
+      return Array.isArray(response.data?.data) ? (response.data.data as SameDayBooking[]) : [];
+    } catch {
+      return [];
+    }
+  }
+
+  /**
+   * LT-451: the booking held that day takes the time and the service just
+   * chosen, with that service's answers. Its own manage token authorises it.
+   * Refusals come back as the codes the booking form already handles.
+   */
+  public async updateHeldBooking(held: SameDayBooking, draft: AppointmentDraft): Promise<Appointment> {
+    try {
+      const response = await axios.put<{ data?: unknown }>(`${this.baseUrl}/${held._id}`, {
+        timestamp: draft.timestamp,
+        type_id: draft.type_id,
+        status: 'scheduled',
+        ...(draft.answers ? { answers: draft.answers } : {}),
+      }, { params: { manageToken: held.manageToken } });
+      return Appointment.fromJSON(response.data?.data);
+    } catch (error) {
+      const response = axios.isAxiosError(error) ? error.response : undefined;
+      const status = response?.status;
+      const body = response?.data as { code?: string; details?: { key?: string; label?: string; minCancelTimeMS?: number } } | undefined;
+      const code = body?.code;
+      if (status === 409) throw new Error(code === 'CLASS_FULL' || code === 'ALREADY_BOOKED' ? code : 'SLOT_TAKEN');
+      if (status === 403 && code === 'CUSTOMER_BLOCKED') throw new Error('CUSTOMER_BLOCKED');
+      if (status === 400 && code === CANCEL_WINDOW_CLOSED) throw new CancelWindowClosedError(body?.details?.minCancelTimeMS);
+      if (status === 400 && (code === 'ANSWER_REQUIRED' || code === 'ANSWER_INVALID')) throw new BookingRefusedError(code, body?.details);
+      console.error(`Error updating appointment with id ${held._id}:`, error);
       throw error;
     }
   }

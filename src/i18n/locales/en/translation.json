@@ -136,6 +136,14 @@
       "use": "Use the details from my last booking",
       "hint": "We'll use what you gave last time: {{fields}}",
       "missing": "We don't have this saved from last time - please fill it in"
+    },
+    "sameDay": {
+      "title": "You already have a booking that day",
+      "body": "Book another, or update the one you have to {{time}}?",
+      "update": "Update this one to {{time}}",
+      "another": "Book another",
+      "updated": "Your booking was updated!",
+      "tooLate": "The booking you have can no longer be changed online - that is possible up to {{duration}} before it. You can still book another."
     }
   },
   "common": {
