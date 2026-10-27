@@ -15,6 +15,7 @@ import smsService, { type OtpSendResult } from '../../../services/SmsService';
 import { Loader2 } from 'lucide-react';
 import { Vacation } from '../../../models/Vacation';
 import SectionHeading from '../SectionHeading';
+import BookingClosed from './BookingClosed';
 import type { HeadingScale } from '../../../services/artDirection';
 import type { SectionHeader, ScheduleStyle } from '../../../models/DesignConfig';
 import type { SectionTone } from '../../SectionDivider';
@@ -116,7 +117,16 @@ interface ScheduleProps {
   timeZone?: string;
   /** LT-395: the business's currency; absent reads as shekels. */
   currency?: string;
+  /**
+   * LT-458: false while the site is not taking bookings online (the
+   * business's payment failed, or its free month or plan is full): call /
+   * WhatsApp buttons instead of the form. A reschedule is unaffected.
+   */
+  bookingOpen?: boolean;
 }
+
+/** The server's refusals that mean "not taking bookings online now" (LT-458). */
+const BOOKING_CLOSED_CODES = new Set(['PAYMENT_FAILED', 'FREE_PERIOD_CARD_REQUIRED', 'BOOKINGS_CAP_REACHED']);
 
 
 /** The booking window of a business that never chose one (LT-156). */
@@ -160,7 +170,7 @@ type NewBooking = { name: string; phone: string; type_id: string; timestamp: str
 /** LT-451: the question "you already have a booking that day", and what answers it needs. */
 type SameDayChoice = { held: SameDayBooking[]; phoneToken: string | null; appointment: NewBooking };
 
-const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone, businessName, timeToCancel, vacations, dateOverrides = [], appointmentTypes: offeredTypes, isUpdating, appointmentToUpdate, onUpdateComplete, onCancelUpdate, onCancelWindowClosed, isPreview, hideDescription = false, header, headerScale, scheduleStyle = 'card', tone = 'surface', bookingHorizonDays = DEFAULT_BOOKING_HORIZON_DAYS, bookingFields = NO_BOOKING_FIELDS, timeZone, currency }) => {
+const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone, businessName, timeToCancel, vacations, dateOverrides = [], appointmentTypes: offeredTypes, isUpdating, appointmentToUpdate, onUpdateComplete, onCancelUpdate, onCancelWindowClosed, isPreview, hideDescription = false, header, headerScale, scheduleStyle = 'card', tone = 'surface', bookingHorizonDays = DEFAULT_BOOKING_HORIZON_DAYS, bookingFields = NO_BOOKING_FIELDS, timeZone, currency, bookingOpen = true }) => {
   const tz = resolveTimeZone(timeZone);
   const { editing } = useEdit();
   // if (!appointmentTypes) {
@@ -181,6 +191,9 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
   };
 
   const { t, language } = useLanguage();
+  // The server refused a booking as closed (LT-458): the cached config lagged.
+  const [refusedClosed, setRefusedClosed] = useState(false);
+  const closed = !isUpdating && (!bookingOpen || refusedClosed);
   const [currentMonth, setCurrentMonth] = useState(() => {
     const today = zonedToday(tz);
     return new Date(today.getFullYear(), today.getMonth(), 1);
@@ -564,6 +577,9 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
           setSelectedSession(null);
           setBookingStep('time');
         }
+      }
+      else if (error && BOOKING_CLOSED_CODES.has(error.code)) {
+        setRefusedClosed(true);
       }
       else if (error && (error.code === 'ANSWER_REQUIRED' || error.code === 'ANSWER_INVALID')) {
         // The server refused an answer after the OTP (LT-178): back to the
@@ -1344,6 +1360,28 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
       idPrefix="schedule-answer"
     />
   );
+
+  if (closed) {
+    return (
+      <section id="schedule" className={`section-y ${TONE_BG[tone]} transition-colors duration-300`}>
+        <div className="container mx-auto px-4">
+          <div className={header && header !== 'centered' ? 'mb-12' : 'text-center mb-12'}>
+            {header && header !== 'centered' ? (
+              <SectionHeading titlePath="components.schedule.title" descriptionPath="components.schedule.description"
+                title={config.title}
+                variant={header} scale={headerScale}
+                mb="mb-0"
+                titleId="schedule-title"
+              />
+            ) : (
+              <h2 className="text-4xl font-bold text-light-text dark:text-dark-text">{config.title}</h2>
+            )}
+          </div>
+          <BookingClosed phone={phone} />
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section id="schedule" className={`section-y ${TONE_BG[tone]} transition-colors duration-300`}>

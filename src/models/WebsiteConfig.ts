@@ -231,7 +231,13 @@ export class WebsiteConfig {
      */
     public accessibilityMenu: boolean = true,
     /** LT-395: the money its prices are in. Absent reads as shekels. */
-    public currency: Currency = DEFAULT_CURRENCY
+    public currency: Currency = DEFAULT_CURRENCY,
+    /**
+     * LT-458: false while the site is not taking bookings online (the
+     * server's `bookingClosed`): call / WhatsApp buttons in the form's place.
+     * Absent reads as open - older payloads and the register preview.
+     */
+    public bookingOpen: boolean = true
   ) {}
 
   static fromJSON(json: any): WebsiteConfig {
@@ -272,7 +278,8 @@ export class WebsiteConfig {
       json.assistant === true,
       resolveTimeZone(json.timeZone),
       json.accessibility?.widgetHidden !== true,
-      currencyOf(json.currency)
+      currencyOf(json.currency),
+      !json.bookingClosed
     );
   }
 }

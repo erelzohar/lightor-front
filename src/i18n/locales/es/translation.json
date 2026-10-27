@@ -47,6 +47,7 @@
     "slideshow_dot": "Ir a la diapositiva {{index}}"
   },
   "schedule": {
+    "closedOnline": "Ahora mismo no se pueden reservar citas por el sitio: llámanos o escríbenos por WhatsApp.",
     "title": "Programa tu visita",
     "select": {
       "date": "Elegir fecha",

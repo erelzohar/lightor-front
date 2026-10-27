@@ -47,6 +47,7 @@
     "slideshow_dot": "Aller à la diapositive {{index}}"
   },
   "schedule": {
+    "closedOnline": "La prise de rendez-vous en ligne n'est pas disponible pour le moment - appelez-nous ou envoyez un message WhatsApp.",
     "title": "Planifiez votre visite",
     "select": {
       "date": "Choisir une date",

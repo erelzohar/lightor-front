@@ -483,6 +483,7 @@ function MainContent() {
             bookingFields={config.bookingFields}
             timeZone={config.timeZone}
             currency={config.currency}
+            bookingOpen={config.bookingOpen}
             vacations={config.vacations}
             dateOverrides={config.dateOverrides}
             appointmentTypes={config.appointmentTypes}

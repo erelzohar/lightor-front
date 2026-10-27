@@ -47,6 +47,7 @@
     "slideshow_dot": "Go to slide {{index}}"
   },
   "schedule": {
+    "closedOnline": "We're not taking bookings through the site right now - call us or send a WhatsApp message.",
     "title": "Schedule Your Visit",
     "select": {
       "date": "Select Date",
