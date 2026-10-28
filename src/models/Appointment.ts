@@ -16,7 +16,12 @@ export class Appointment {
      * cancel or reschedule that sends the whole appointment back carries
      * them unchanged; the server ignores them on update either way.
      */
-    public answers: AppointmentAnswer[] = []
+    public answers: AppointmentAnswer[] = [],
+    /**
+     * Changes the manage link still allows (LT-466); null when the server
+     * did not say. At 0 the page says to call the business up front.
+     */
+    public changesLeft: number | null = null
   ) {}
 
   static fromJSON(json: any): Appointment {
@@ -29,7 +34,8 @@ export class Appointment {
       json.phone,
       json.timestamp,
       json.channelType || 'sms',
-      parseAnswers(json.answers)
+      parseAnswers(json.answers),
+      typeof json.changesLeft === 'number' ? json.changesLeft : null
     );
   }
 }

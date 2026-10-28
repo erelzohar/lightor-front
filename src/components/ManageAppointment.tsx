@@ -276,6 +276,9 @@ const ManageAppointment: React.FC = () => {
   // Once refused as too late, the page stays refused (LT-205): the server's
   // clock is the one that counts, and this page's may run behind it.
   const isCancellable = lateWindowMS === null && canCancelAppointment(appointment.timestamp);
+  // LT-466: the link's changes are used up - said up front, with the call
+  // button, instead of after the time, the phone and a code. Cancelling stays.
+  const changesUsed = appointment.changesLeft === 0;
   // The booked service's questions; editable while the booking is ahead and
   // scheduled (the server checks the same), whatever the cancel window.
   const editableFields = fieldsForService(config?.bookingFields ?? [], appointment.type?._id);
@@ -514,7 +517,24 @@ const ManageAppointment: React.FC = () => {
           );
         })()}
 
+        {isCancellable && changesUsed && (
+          <div role="status" className="mb-6 p-4 bg-primary/10 dark:bg-primary-dark/10 rounded-xl space-y-3">
+            <p className="text-light-text dark:text-dark-text text-sm">{t('schedule.error.changesLimit')}</p>
+            {businessPhone && (
+              <a
+                href={telHref(businessPhone)}
+                className="inline-flex items-center gap-2 min-h-12 py-3 px-6 rounded-xl bg-primary dark:bg-primary-dark text-white text-sm font-medium"
+              >
+                <Phone className="w-4 h-4 flex-shrink-0" aria-hidden="true" />
+                <span>{t('contact.modal.button_call')}</span>
+                <span dir="ltr">{displayPhone(businessPhone)}</span>
+              </a>
+            )}
+          </div>
+        )}
+
         <div className="flex flex-col md:flex-row gap-4">
+          {!changesUsed && (
           <motion.button
             onClick={handleUpdate}
             className={`w-full md:flex-1 py-3 px-6 rounded-xl font-medium transition-colors flex items-center justify-center gap-2 ${isCancellable
@@ -528,6 +548,7 @@ const ManageAppointment: React.FC = () => {
             <Edit className="w-4 h-4" />
             {t('manage.button.update')}
           </motion.button>
+          )}
 
           <motion.button
             onClick={() => setIsConfirmationOpen(true)}
