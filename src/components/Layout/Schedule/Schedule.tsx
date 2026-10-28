@@ -9,7 +9,7 @@ import { BookingField, AnswerValue, fieldsForService, answerProblem, answersForR
 import { BusySlot } from '../../../models/BusySlot';
 import { ClassOccurrence } from '../../../models/ClassOccurrence';
 import { ScheduleConfig } from '../../../models/ScheduleConfig';
-import AppointmentService, { type SameDayBooking, type AppointmentDraft } from '../../../services/AppointmentService';
+import AppointmentService, { CHANGES_LIMIT, type SameDayBooking, type AppointmentDraft } from '../../../services/AppointmentService';
 import { visitorPass, useVisitorPass, isPassRefused } from '../../../services/visitorPass';
 import smsService, { type OtpSendResult } from '../../../services/SmsService';
 import { Loader2 } from 'lucide-react';
@@ -537,6 +537,8 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
       // This phone is already in the class: say so, and let them be — there
       // is nothing to pick again.
       if (error && error.message === "ALREADY_BOOKED") setError(t('schedule.alreadyBookedError'));
+      // LT-464: changed through the link the most times allowed - a call now.
+      else if (error && error.message === CHANGES_LIMIT) setError(t('schedule.error.changesLimit'));
       else if (error && (error.message === "SLOT_TAKEN" || error.message === "CLASS_FULL")) {
         // Busy times and the class places both (LT-315): the busy list alone
         // kept a full session on offer.

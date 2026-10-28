@@ -66,7 +66,8 @@
       "sendOtp": "Error sending verification code",
       "invalidOtp": "Invalid verification code",
       "too_soon": "That time is too soon to move your appointment to - choose a time at least {{duration}} from now.",
-      "passExpired": "Your session has expired. Please refresh the page and try again."
+      "passExpired": "Your session has expired. Please refresh the page and try again.",
+      "changesLimit": "This appointment was already changed the most times allowed online. To change it again, please call the business."
     },
     "conflictError": "The appointment has been taken please try another one",
     "alreadyBookedError": "This number is already registered for this class.",

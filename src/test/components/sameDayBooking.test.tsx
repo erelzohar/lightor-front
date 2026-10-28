@@ -212,6 +212,21 @@ describe('a second booking the same day (LT-451)', () => {
     expect(mocks.createAppointment).not.toHaveBeenCalled();
   });
 
+  // LT-464: the link changes a booking at most three times, then the customer calls.
+  it('says to call the business once the booking held that day has used its changes', async () => {
+    mocks.findSameDay.mockResolvedValue([heldToday]);
+    mocks.updateHeldBooking.mockRejectedValueOnce(new Error('CHANGES_LIMIT'));
+    renderWidget();
+    await reachDetails();
+    await sendDetails();
+    await enterOtp();
+    fireEvent.click(await screen.findByRole('button', { name: 'schedule.sameDay.update' }));
+
+    expect(await screen.findByText('schedule.error.changesLimit')).toBeTruthy();
+    expect(screen.queryByText('schedule.sameDay.updated')).toBeNull();
+    expect(mocks.createAppointment).not.toHaveBeenCalled();
+  });
+
   it('books straight on when the number holds nothing that day, or the lookup fails', async () => {
     renderWidget();
     await reachDetails();

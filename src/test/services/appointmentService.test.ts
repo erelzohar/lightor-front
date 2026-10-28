@@ -240,6 +240,13 @@ describe('AppointmentService', () => {
       );
     });
 
+    it('translates a booking changed the most times allowed into its own code (LT-464)', async () => {
+      stubLocation('https://demo.lightor.app/manage/a1?manageToken=mt_1');
+      mock.onPut(`${base}/a1`).reply(409, { success: false, error: 'limit', code: 'CHANGES_LIMIT' });
+
+      await expect(service.updateAppointment({ _id: 'a1', timestamp: '1700003600000' })).rejects.toThrow('CHANGES_LIMIT');
+    });
+
     it('translates a closed cancellation window into an error carrying the window (LT-205)', async () => {
       // Too close to cancel or move online. The manage page names the window
       // and offers a call, so the server's own figure has to reach it.

@@ -66,7 +66,8 @@
       "sendOtp": "Échec de l'envoi du code",
       "invalidOtp": "Code de vérification invalide",
       "too_soon": "Cet horaire est trop proche pour y déplacer votre rendez-vous - choisissez-en un dans {{duration}} au moins.",
-      "passExpired": "Votre session a expiré. Veuillez actualiser la page et réessayer."
+      "passExpired": "Votre session a expiré. Veuillez actualiser la page et réessayer.",
+      "changesLimit": "Ce rendez-vous a déjà été modifié le nombre maximal de fois en ligne. Pour le modifier encore, veuillez appeler l'établissement."
     },
     "conflictError": "Ce créneau est déjà pris, veuillez en choisir un autre",
     "alreadyBookedError": "Ce numéro est déjà inscrit à ce cours.",

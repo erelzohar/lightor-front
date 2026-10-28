@@ -23,6 +23,8 @@ export type AppointmentDraft = Partial<Omit<Appointment, 'answers'>> & {
 
 /** The booking can no longer change: past, or not scheduled (LT-217). */
 export const BOOKING_CLOSED = 'BOOKING_CLOSED';
+/** LT-464: the customer has changed this booking the most times the link allows. */
+export const CHANGES_LIMIT = 'CHANGES_LIMIT';
 
 /**
  * The server refused an answer to one of the owner's questions (LT-178).
@@ -216,6 +218,8 @@ class AppointmentService {
       const status = response?.status;
       const body = response?.data as { code?: string; details?: { key?: string; label?: string; minCancelTimeMS?: number } } | undefined;
       const code = body?.code;
+      // LT-464: the link changes a booking at most three times, then the customer calls.
+      if (status === 409 && code === CHANGES_LIMIT) throw new Error(CHANGES_LIMIT);
       if (status === 409) throw new Error(code === 'CLASS_FULL' || code === 'ALREADY_BOOKED' ? code : 'SLOT_TAKEN');
       if (status === 403 && code === 'CUSTOMER_BLOCKED') throw new Error('CUSTOMER_BLOCKED');
       if (status === 400 && code === CANCEL_WINDOW_CLOSED) throw new CancelWindowClosedError(body?.details?.minCancelTimeMS);
@@ -236,6 +240,11 @@ class AppointmentService {
       // A blocked customer may still cancel, but a reschedule is refused (LT-122).
       if (error?.response?.status === 403 && error.response.data?.code === 'CUSTOMER_BLOCKED') {
         throw new Error("CUSTOMER_BLOCKED");
+      }
+      // LT-464: the link changes a booking at most three times; after that
+      // the customer calls the business. Cancelling stays open.
+      if (error?.response?.status === 409 && error.response.data?.code === CHANGES_LIMIT) {
+        throw new Error(CHANGES_LIMIT);
       }
       // Inside the owner's cancellation window (LT-205): the manage page says
       // so and offers a call, instead of falling to its 404. Keyed on the

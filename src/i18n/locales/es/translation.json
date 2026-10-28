@@ -66,7 +66,8 @@
       "sendOtp": "Error al enviar el código",
       "invalidOtp": "Código de verificación inválido",
       "too_soon": "Este horario está demasiado próximo para mover la cita - elige uno que empiece dentro de {{duration}} como mínimo.",
-      "passExpired": "Tu sesión ha caducado. Actualiza la página e inténtalo de nuevo."
+      "passExpired": "Tu sesión ha caducado. Actualiza la página e inténtalo de nuevo.",
+      "changesLimit": "Esta cita ya se cambió el máximo de veces permitido en línea. Para cambiarla otra vez, por favor, llama al negocio."
     },
     "conflictError": "Este horario ya está ocupado, por favor elige otro",
     "alreadyBookedError": "Este número ya está inscrito en esta clase.",
