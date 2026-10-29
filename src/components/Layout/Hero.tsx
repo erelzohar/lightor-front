@@ -102,7 +102,8 @@ const VANTA_IMPORTERS: Record<string, () => Promise<any>> = {
   clouds: () => import('vanta/dist/vanta.clouds.min'),
   fog: () => import('vanta/dist/vanta.fog.min'),
   clouds2: () => import('vanta/dist/vanta.clouds2.min'),
-  topology: () => import('vanta/dist/vanta.topology.min'),
+  // Vanta's own, with its grid fixed for a background that grows (LT-485).
+  topology: () => import('./vantaTopology'),
   trunk: () => import('vanta/dist/vanta.trunk.min'),
   birds: () => import('vanta/dist/vanta.birds.min'),
   net: () => import('vanta/dist/vanta.net.min'),
