@@ -190,6 +190,7 @@
     "title": "Contáctanos",
     "closed": "Ahora mismo no recibimos mensajes por el sitio: llámanos o escríbenos por WhatsApp.",
     "form": {
+      "title": "Formulario de contacto",
       "name": "Nombre",
       "phone": "Teléfono",
       "message": "Mensaje",

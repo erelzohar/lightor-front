@@ -193,3 +193,13 @@ describe('WebsiteConfig leads (LT-197)', () => {
     expect(WebsiteConfig.fromJSON({ ...RAW_AI_RESPONSE_SHAPE, leadsOpen: false }).leadsOpen).toBe(false);
   });
 });
+
+// LT-484 (the hands-on pass): the form's screen-reader heading was English
+// "Contact Form" on every site, whatever its language.
+describe('contact form - its name for screen readers', () => {
+  it("is the site's language, through i18n", () => {
+    renderForm();
+    expect(screen.getByRole('form', { name: 'contact.form.title' })).toBeInTheDocument();
+    expect(screen.queryByText('Contact Form')).toBeNull();
+  });
+});

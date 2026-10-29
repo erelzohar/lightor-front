@@ -444,7 +444,8 @@ const Contact: React.FC<ContactProps> = ({ config, address, contact, workingDays
       variants={itemVariants}
       aria-labelledby="contact-form-title"
     >
-      <h3 id="contact-form-title" className="sr-only">Contact Form</h3>
+      {/* LT-484: read by screen readers in the site's language, not English. */}
+      <h3 id="contact-form-title" className="sr-only">{t('contact.form.title')}</h3>
 
       <MaterialInput
         icon={User}

@@ -4,11 +4,13 @@ import type { Social } from '../../models/Social';
 import type { SectionTone } from '../SectionDivider';
 import { TONE_BG } from './blockUtils';
 import { safeHttpUrl } from '../../utils/safeUrl';
+import { useLanguage } from '../../contexts/LanguageContext';
 
 interface Props { social: Social; tone?: SectionTone }
 
 /** LT-136: social handles as large tiles — the closer on image-led sites. */
 const SocialTiles: React.FC<Props> = ({ social, tone = 'bg' }) => {
+  const { t } = useLanguage();
   // http(s) only (LT-315): a `javascript:` link the owner saved is dropped.
   const links = [
     { href: safeHttpUrl(social.instagram), label: 'Instagram', Icon: Instagram },
@@ -18,7 +20,7 @@ const SocialTiles: React.FC<Props> = ({ social, tone = 'bg' }) => {
   ].filter((l): l is { href: string; label: string; Icon: typeof Instagram } => !!l.href);
   if (!links.length) return null;
   return (
-    <section className={`section-y ${TONE_BG[tone]} transition-colors duration-300`} aria-label="Social">
+    <section className={`section-y ${TONE_BG[tone]} transition-colors duration-300`} aria-label={t('footer.follow')}>
       <div className={`container mx-auto px-4 grid gap-4 ${links.length === 1 ? 'max-w-md' : links.length === 2 ? 'sm:grid-cols-2' : 'sm:grid-cols-2 lg:grid-cols-4'}`}>
         {links.map((l) => (
           <a key={l.label} href={l.href} target="_blank" rel="noopener noreferrer" className="card-design p-8 flex items-center justify-center gap-4 text-xl font-semibold text-light-text dark:text-dark-text hover:text-primary-readable dark:hover:text-primary-dark-readable transition-colors">

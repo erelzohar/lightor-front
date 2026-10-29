@@ -190,6 +190,7 @@
     "title": "Contactez-nous",
     "closed": "Le formulaire n'est pas disponible pour le moment - appelez-nous ou envoyez un message WhatsApp.",
     "form": {
+      "title": "Formulaire de contact",
       "name": "Nom",
       "phone": "Téléphone",
       "message": "Message",
