@@ -85,6 +85,7 @@ const ComposedPage: React.FC<ComposedPageProps> = ({ config, jitter, isPreview, 
             phone={config.contact.phone}
             isContactVisible={config.blocks.some((x) => x.type === 'contact' && !x.mod?.hidden)}
             businessName={config.businessName}
+            logo={config.logoImageName}
             appointmentTypes={config.appointmentTypes}
             conversion={config.conversion}
             isPreview={isPreview}

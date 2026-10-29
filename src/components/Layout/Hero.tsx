@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Calendar, MessageSquare, Phone, Instagram, Facebook } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useLanguage } from '../../contexts/LanguageContext';
@@ -85,6 +85,8 @@ interface HeroProps {
   isContactVisible: boolean;
   /** LT-174: last-resort text for the stamp decor. */
   businessName?: string;
+  /** LT-496: the site's logo (logoImageName), the heritage hero's mark. */
+  logo?: string;
   /** The business's real services — the ticker band lists these (LT-117). */
   appointmentTypes?: AppointmentType[];
   /** LT-199: a leads site's main button goes to the contact form. */
@@ -125,7 +127,9 @@ const radiusClassMap: Record<BorderRadius, string> = {
   full: 'rounded-full',
 };
 
-const Hero: React.FC<HeroProps> = ({ config, social, phone, isContactVisible, appointmentTypes, conversion, isPreview, palette, design, jitter, businessName }) => {
+const Hero: React.FC<HeroProps> = ({ config, social, phone, isContactVisible, appointmentTypes, conversion, isPreview, palette, design, jitter, businessName, logo }) => {
+  // LT-496: the heritage mark's logo failed to load: the ornament stands instead.
+  const [markFailed, setMarkFailed] = useState(false);
   const ed = useEditAttrs();
   const { t, language } = useLanguage();
   const { isModalOpen, setIsModalOpen, modalType, handleContactClick } = useContactHandler();
@@ -504,13 +508,28 @@ const Hero: React.FC<HeroProps> = ({ config, social, phone, isContactVisible, ap
         >
           <motion.div className="max-w-xs sm:max-w-sm" variants={itemVariants}>
             {decor === 'monogram' ? (
-              // LT-113 (Firm artboard): the understated bordered monogram in
-              // place of a photo — classical firms lead with type, not faces.
-              <div className="w-20 h-20 mx-auto border border-primary-readable dark:border-primary-dark-readable flex items-center justify-center" aria-hidden="true">
-                <span className="text-4xl text-primary-readable dark:text-primary-dark-readable" style={{ fontFamily: 'inherit' }}>
-                  {(config.title || '·').trim().charAt(0)}
-                </span>
-              </div>
+              // LT-113 (Firm artboard) set the title's first letter in an
+              // understated bordered box here, in place of a photo. Erel
+              // (LT-496) did not like the letter: the site's own logo stands
+              // in that thin frame now, as in the navbar; with none, or one
+              // that fails to load, a ruled ornament.
+              logo && !markFailed ? (
+                <div className="w-24 h-24 sm:w-28 sm:h-28 mx-auto p-1.5 border border-primary-readable dark:border-primary-dark-readable" data-testid="hero-mark">
+                  <img
+                    {...ed('logoImageName', 'image')}
+                    src={ImagesService.getInstance().getImage(logo)}
+                    alt=""
+                    onError={() => setMarkFailed(true)}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+              ) : (
+                <div className="flex items-center justify-center gap-3 py-6" aria-hidden="true" data-testid="hero-ornament">
+                  <span className="h-px w-12 bg-primary-readable dark:bg-primary-dark-readable opacity-60" />
+                  <span className="w-2.5 h-2.5 rotate-45 border border-primary-readable dark:border-primary-dark-readable" />
+                  <span className="h-px w-12 bg-primary-readable dark:bg-primary-dark-readable opacity-60" />
+                </div>
+              )
             ) : renderImage('w-48 h-48 sm:w-64 sm:h-64')}
           </motion.div>
 

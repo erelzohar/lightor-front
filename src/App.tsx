@@ -407,6 +407,7 @@ function MainContent() {
           phone={config.contact.phone}
           isContactVisible={config.components?.contact?.visible ?? false}
           businessName={config.businessName}
+          logo={config.logoImageName}
           appointmentTypes={config.appointmentTypes}
           conversion={config.conversion}
           isPreview={isPreview}
