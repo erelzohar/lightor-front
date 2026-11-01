@@ -134,7 +134,7 @@ const ComposedPage: React.FC<ComposedPageProps> = ({ config, jitter, isPreview, 
           : null;
       case 'ledger':
         return (config.appointmentTypes ?? []).some((a) => a?.name)
-          ? <ServicesLedger appointmentTypes={config.appointmentTypes} tone="bg" title={c?.services?.title} currency={config.currency} />
+          ? <ServicesLedger appointmentTypes={config.appointmentTypes} tone="bg" title={c?.services?.title} currency={config.currency} look={v} bookable={bookable} />
           : null;
       case 'interlude': {
         const image = (typeof p.image === 'string' && p.image) || c?.portfolio?.items?.[1]?.url || c?.hero?.heroImageSrc;
@@ -149,8 +149,9 @@ const ComposedPage: React.FC<ComposedPageProps> = ({ config, jitter, isPreview, 
       case 'bookingBand': {
         const statement = (typeof p.text === 'string' && p.text) || c?.schedule?.description?.trim();
         const chips = v === 'chips' ? (config.appointmentTypes ?? []).map((a) => a?.name).filter((n): n is string => !!n) : undefined;
+        const bandLook = v === 'chips' || v === 'plain' ? undefined : v;
         const statementPath = typeof p.text === 'string' && p.text ? `blocks.${b.id}.props.text` : 'components.schedule.description';
-        return statement && bookable ? <BookingBand statement={statement} statementPath={statementPath} chips={chips} label={c?.hero?.cta} /> : null;
+        return statement && bookable ? <BookingBand statement={statement} statementPath={statementPath} chips={chips} label={c?.hero?.cta} look={bandLook} /> : null;
       }
       // LT-136 — the fourteen phase-3 blocks.
       case 'ticker':
@@ -158,7 +159,7 @@ const ComposedPage: React.FC<ComposedPageProps> = ({ config, jitter, isPreview, 
       case 'announcement':
         return typeof p.text === 'string' && p.text.trim() ? <Announcement text={p.text.trim()} basePath={`blocks.${b.id}.props`} /> : null;
       case 'manifesto':
-        return typeof p.text === 'string' && p.text.trim() ? <Manifesto text={p.text.trim()} basePath={`blocks.${b.id}.props`} /> : null;
+        return typeof p.text === 'string' && p.text.trim() ? <Manifesto text={p.text.trim()} basePath={`blocks.${b.id}.props`} look={v} /> : null;
       case 'stats':
         return Array.isArray(p.items) ? <Stats items={p.items as StatItem[]} basePath={`blocks.${b.id}.props`} /> : null;
       case 'pullQuote':

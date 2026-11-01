@@ -111,12 +111,15 @@ describe.each(['he', 'en', 'ar'])('no WCAG A/AA violation axe can see (%s)', (la
     const layouts: [string, string[]][] = [
       ['footer', ['columns', 'minimal', 'line', 'ticker']],
       ['quote', ['cards', 'quote', 'bubbles', 'spotlight', 'editorial']],
+      ['ledger', ['ledger', 'roman', 'menu', 'board', 'table', 'tags', 'soft', 'arch', 'index']],
+      ['bookingBand', ['poster', 'slant', 'quiet', 'card', 'ticket', 'split']],
+      ['manifesto', ['display', 'ruled', 'outline', 'marker', 'soft']],
       ['contact', ['split', 'stacked', 'poster', 'editorial', 'statement', 'band', 'cards']],
       ['hero', ['centered', 'split', 'image-right', 'poster-split', 'poster-statement', 'parallax', 'expand', 'aero', 'collage']],
     ];
     for (const [type, variants] of layouts) {
       for (const variant of variants) {
-        const { container, unmount } = render(<ComposedPage config={fullConfig([{ type, variant }])} jitter={getSiteJitter('axe')} isPreview />);
+        const { container, unmount } = render(<ComposedPage config={fullConfig([{ type, variant, props: { text: 'A line' } }])} jitter={getSiteJitter('axe')} isPreview />);
         const label = `${type}:${variant}`;
         expect([label, ...(await violationsIn(container))]).toEqual([label]);
         unmount();
