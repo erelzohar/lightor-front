@@ -54,7 +54,7 @@ export const SUPPORTED_BLOCKS = new Set<Block['type']>([
 ]);
 
 const INTRO_LAYOUT: Record<string, AboutLayout> = { plain: 'cards', manifesto: 'manifesto', columns: 'wall' };
-const FEATURES_LAYOUT: Record<string, AboutLayout> = { tiles: 'cards', band: 'band', wall: 'wall', timeline: 'timeline', sticky: 'sticky' };
+const FEATURES_LAYOUT: Record<string, AboutLayout> = { tiles: 'cards', band: 'band', wall: 'wall', timeline: 'timeline', sticky: 'sticky', bento: 'bento' };
 
 /**
  * LT-133 (Composer phase 1): renders a stored `blocks` array through the
@@ -67,6 +67,7 @@ const ComposedPage: React.FC<ComposedPageProps> = ({ config, jitter, isPreview, 
   const c = config.components;
   const design = config.design;
   const hasBand = config.blocks.some((b) => b.type === 'bookingBand');
+  const hasProcess = config.blocks.some((b) => b.type === 'process' && !b.mod?.hidden);
   // LT-167: nothing to book → no schedule and no band pointing at it.
   // LT-199: nor on a leads site, whatever its services.
   const bookable = takesBookings(config.conversion, config.appointmentTypes);
@@ -99,7 +100,8 @@ const ComposedPage: React.FC<ComposedPageProps> = ({ config, jitter, isPreview, 
       case 'visit': {
         if (!c?.about) return null;
         const layout = b.type === 'intro' ? (INTRO_LAYOUT[v ?? 'plain'] ?? 'cards')
-          : b.type === 'features' ? (FEATURES_LAYOUT[v ?? 'tiles'] ?? 'cards') : 'cards';
+          // LT-530: beside the steps a numbered rail read as the same section twice.
+          : b.type === 'features' ? (v === 'timeline' && hasProcess ? 'bento' : FEATURES_LAYOUT[v ?? 'tiles'] ?? 'cards') : 'cards';
         return (
           <About
             config={c.about}

@@ -33,7 +33,7 @@ export type ImageTreatment = 'rounded' | 'circle' | 'arch' | 'blob';
 // 'manifesto' (LT-109): big display pull-quote beside the paragraphs — the
 // artboard's statement composition.
 // LT-126 structural layouts: 'wall' (typographic feature wall), 'timeline' (numbered rail), 'sticky' (pinned intro beside stacked rows).
-export type AboutLayout = 'cards' | 'split' | 'band' | 'manifesto' | 'wall' | 'timeline' | 'sticky';
+export type AboutLayout = 'cards' | 'split' | 'band' | 'manifesto' | 'wall' | 'timeline' | 'sticky' | 'bento';
 // LT-126: 'bento' (mosaic of mixed tile sizes), 'scroller' (auto-scrolling cinematic strip), 'spotlight' (one featured tile + thumbs).
 // LT-169: 'carousel' is the one-frame-at-a-time slideshow (arrows, dots,
 // swipe) — once the legacy `isGrid: false` mode, now a layout like the rest.

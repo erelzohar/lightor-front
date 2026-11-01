@@ -1,4 +1,8 @@
 ﻿{
+  "editor": {
+    "stepTitle": "Nombre del paso",
+    "statLabel": "Qué mide este número"
+  },
   "nav": {
     "home": "Inicio",
     "about": "Nosotros",

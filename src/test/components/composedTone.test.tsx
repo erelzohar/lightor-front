@@ -91,3 +91,24 @@ describe('the schedule section tone in a composed page', () => {
     expect(sectionClass(container, 'schedule')).toContain('bg-light-surface');
   });
 });
+
+describe('features beside the steps (LT-530)', () => {
+  const features = (variant: string) => ({ id: 'f', type: 'features', variant, source: 'about.features' });
+  const process = { id: 'p', type: 'process', variant: 'rail', props: { steps: STEPS } };
+  const railInFeatures = (container: HTMLElement) => container.querySelector('#about-features ol') !== null;
+
+  it('draws no numbered rail twice on a page', () => {
+    const { container } = renderBlocks([features('timeline'), process]);
+    expect(railInFeatures(container)).toBe(false);
+  });
+
+  it('keeps the rail on a page without steps', () => {
+    const { container } = renderBlocks([features('timeline')]);
+    expect(railInFeatures(container)).toBe(true);
+  });
+
+  it('draws the chosen bento', () => {
+    const { container } = renderBlocks([features('bento')]);
+    expect(container.querySelector('#about-features .lg\\:grid-cols-3')).not.toBeNull();
+  });
+});

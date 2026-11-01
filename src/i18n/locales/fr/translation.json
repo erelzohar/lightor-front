@@ -1,4 +1,8 @@
 ﻿{
+  "editor": {
+    "stepTitle": "Nom de l’étape",
+    "statLabel": "Ce que ce chiffre mesure"
+  },
   "nav": {
     "home": "Accueil",
     "about": "À propos",

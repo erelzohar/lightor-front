@@ -345,6 +345,36 @@ const About: React.FC<AboutProps> = ({ config, websiteConfig, layout = 'cards', 
     </motion.div>
   );
 
+  // LT-530 'bento': uneven tiles, the first in the site's colour (21st.dev
+  // "Feature Section with Bento Grid"). Wide tiles fall so that every row fills.
+  const bentoSpan = (index: number, count: number): string => {
+    if (count === 3 && index === 2) return 'sm:col-span-2 lg:col-span-3';
+    return index % 4 === 0 || index % 4 === 3 ? 'sm:col-span-2' : '';
+  };
+  const featureBento = !showPart('features') ? null : (
+    <motion.div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-20" variants={containerVariants}>
+      {config.features.map((feature, index) => {
+        const Icon = FEATURE_ICONS[feature.icon] ?? Star;
+        const filled = index === 0;
+        return (
+          <motion.div
+            key={index}
+            className={`rounded-design p-6 md:p-8 flex flex-col justify-between gap-10 min-h-[15rem] ${bentoSpan(index, config.features.length)} ${filled ? 'bg-primary dark:bg-primary-dark text-on-primary dark:text-on-primary-dark' : 'bg-primary/10 dark:bg-primary-dark/15 text-light-text dark:text-dark-text'}`}
+            variants={itemVariants}
+          >
+            {featureStyle === 'icons'
+              ? <Icon className={`h-9 w-9 ${filled ? '' : 'text-primary dark:text-primary-dark'}`} aria-hidden="true" />
+              : <span className="font-bold text-2xl leading-none" aria-hidden="true">{String(index + 1).padStart(2, '0')}</span>}
+            <div>
+              <h3 {...ed(`components.about.features.${index}.title`)} className="text-2xl font-semibold mb-2">{feature.title}</h3>
+              <p {...ed(`components.about.features.${index}.description`)} className={filled ? 'opacity-90' : 'text-light-text/80 dark:text-dark-text/80'}>{feature.description}</p>
+            </div>
+          </motion.div>
+        );
+      })}
+    </motion.div>
+  );
+
   // 'split': features as compact icon rows beside the text column.
   const featureRows = !showPart('features') ? null : (
     <motion.div className="space-y-8" variants={containerVariants}>
@@ -555,6 +585,12 @@ const About: React.FC<AboutProps> = ({ config, websiteConfig, layout = 'cards', 
                 </motion.p>
               </div>}
               {featureWall}
+              {visitOn && renderVisitCard()}
+            </>
+          ) : layout === 'bento' ? (
+            <>
+              {paragraphs()}
+              {featureBento}
               {visitOn && renderVisitCard()}
             </>
           ) : layout === 'timeline' ? (

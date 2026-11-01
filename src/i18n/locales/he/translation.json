@@ -1,4 +1,8 @@
 ﻿{
+  "editor": {
+    "stepTitle": "שם השלב",
+    "statLabel": "מה המספר מודד"
+  },
   "nav": {
     "home": "בית",
     "about": "אודות",

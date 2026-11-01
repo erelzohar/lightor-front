@@ -1,4 +1,8 @@
 ﻿{
+  "editor": {
+    "stepTitle": "Step name",
+    "statLabel": "What this number counts"
+  },
   "nav": {
     "home": "Home",
     "about": "About",
