@@ -110,6 +110,7 @@ describe.each(['he', 'en', 'ar'])('no WCAG A/AA violation axe can see (%s)', (la
   it('every footer, contact and hero layout', async () => {
     const layouts: [string, string[]][] = [
       ['footer', ['columns', 'minimal', 'line', 'ticker']],
+      ['quote', ['cards', 'quote', 'bubbles', 'spotlight', 'editorial']],
       ['contact', ['split', 'stacked', 'poster', 'editorial', 'statement', 'band', 'cards']],
       ['hero', ['centered', 'split', 'image-right', 'poster-split', 'poster-statement', 'parallax', 'expand', 'aero', 'collage']],
     ];

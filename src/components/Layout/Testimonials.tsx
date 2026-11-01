@@ -7,6 +7,7 @@ import EditText from '../EditText';
 import { TestimonialsConfig } from '../../models/TestimonialsConfig';
 import type { TestimonialsLayout, SectionHeader, RevealStyle } from '../../models/DesignConfig';
 import SectionHeading from './SectionHeading';
+import EditorialQuotes from './EditorialQuotes';
 import type { HeadingScale } from '../../services/artDirection';
 import type { SectionTone } from '../SectionDivider';
 import { useStill } from '../../hooks/useA11yPrefs';
@@ -85,6 +86,17 @@ const Testimonials: React.FC<TestimonialsProps> = ({ config, tone, layout = 'car
               <figcaption {...ed(`components.testimonials.items.${i % count}.name`)} className="mt-6 font-semibold text-light-text dark:text-dark-text">{item.name}</figcaption>
             </figure>
           ))}
+        </div>
+      </section>
+    );
+  }
+
+  if (layout === 'editorial') {
+    return (
+      <section id="testimonials" className={`section-y ${TONE_BG[tone]} transition-colors duration-300`}>
+        <div className="container mx-auto px-4">
+          <SectionHeading titlePath="components.testimonials.title" title={config.title} variant={header} scale={headerScale} mb="mb-12" />
+          <EditorialQuotes items={config.items} />
         </div>
       </section>
     );

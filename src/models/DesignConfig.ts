@@ -54,7 +54,8 @@ export type FooterLayout = 'columns' | 'minimal' | 'line' | 'ticker';
 // LT-093 axes. First value = the pre-LT-093 rendering, picked by
 // DEFAULT_TOKENS and by every pre-existing preset, so live sites don't move.
 // LT-126: 'marquee' (auto-scrolling row) and 'spotlight' (one rotating quote).
-export type TestimonialsLayout = 'cards' | 'quote' | 'bubbles' | 'marquee' | 'spotlight';
+// LT-535: 'editorial' (heritage): one voice beside a large thin number, ruled lines to turn it.
+export type TestimonialsLayout = 'cards' | 'quote' | 'bubbles' | 'marquee' | 'spotlight' | 'editorial';
 export type FaqStyle = 'cards' | 'lines' | 'numbered' | 'pills' | 'split';
 // A site's out-of-the-box theme. The visitor's own choice (localStorage)
 // always wins; this only decides what a first-time visitor sees.
