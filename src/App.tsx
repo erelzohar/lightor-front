@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useMemo, useCallback, Fragment, cloneElement, isValidElement, type ReactNode, type ReactElement } from 'react';
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, useLocation } from 'react-router-dom';
 import { MotionConfig } from 'framer-motion';
 
 // Components & Services
@@ -27,6 +27,7 @@ import SectionDivider, { type SectionTone } from './components/SectionDivider';
 import ServicesLedger from './components/Layout/ServicesLedger';
 import BookingBand from './components/Layout/BookingBand';
 import { takesBookings } from './services/siteMode';
+import { sitePageOf } from './services/sitePages';
 import { pickBandSlot } from './services/bandSlot';
 
 // Contexts & Hooks
@@ -111,6 +112,8 @@ const postToEditor = (message: SiteToEditor, origin: string | null) => {
 };
 
 function MainContent() {
+  // LT-539: every address of the site runs through here, one shell around its pages.
+  const page = sitePageOf(useLocation().pathname);
   const [config, setConfig] = useState<WebsiteConfig | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [isPreview, setIsPreview] = useState<boolean>(false);
@@ -377,7 +380,7 @@ function MainContent() {
     setA11yMenuEnabled(config ? config.accessibilityMenu !== false : true);
   }, [config, setContentLanguage]);
   // LT-222: a shared `/#schedule` lands on its section once the site is drawn.
-  useSectionDeepLinks(!loading && !!config);
+  useSectionDeepLinks(!loading && !!config && page.kind === 'home');
 
   const editState = useMemo(() => ({ editing }), [editing]);
   useEffect(() => {
@@ -397,6 +400,7 @@ function MainContent() {
 
   if (loading) return <Loading isLoading={true} />;
   if (!config) return inactive ? <SiteNotActive /> : <NotFound />;
+  if (page.kind === 'missing') return <NotFound />;
 
   // Build the in-flow content sections with their solid background "tone".
   // The page alternates bg <-> surface; dividers are interleaved between
@@ -842,11 +846,10 @@ function App() {
 
   return (
     <Routes>
-      <Route path="/" element={<MainContent />} />
       <Route path="/manage/:appointment-id" element={<ManageAppointment />} />
       {/* The short manage link (LT-336). */}
       <Route path="/m/:code" element={<ShortManageLink />} />
-      <Route path="*" element={<NotFound />} />
+      <Route path="*" element={<MainContent />} />
     </Routes>
   );
 }
