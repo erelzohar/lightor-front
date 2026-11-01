@@ -335,6 +335,31 @@ html[data-heading-accent="none"] .heading-accent {
    roll on every device and screen. */
 @media (hover: hover) { .lt-marquee:not(.lt-marquee-always):hover, .lt-marquee:not(.lt-marquee-always):focus-within { animation-play-state: paused; } }
 @media (prefers-reduced-motion: reduce) { .lt-marquee:not(.lt-marquee-always) { animation: none; } }
+
+/* LT-525: the moving galleries. The clothesline's breeze is CSS, so the frame
+   loop can stop at rest. The curve's keyframes read the loop's size from its
+   band; a tile is placed by its negative delay, so paused it stands a finished still. */
+@keyframes lt-sway { from { transform: rotate(-0.8deg); } to { transform: rotate(0.8deg); } }
+.lt-sway { transform-origin: 50% 0; animation: lt-sway 2.7s ease-in-out infinite alternate; }
+[data-asleep] .lt-sway { animation-play-state: paused; }
+.lt-peg { position: absolute; left: 50%; top: 0; width: 10px; height: 26px; margin-left: -5px; border-radius: 2px; background: linear-gradient(90deg, #c9a67a, #e3c9a1 45%, #b8915f); box-shadow: 0 2px 3px rgba(0, 0, 0, 0.25); }
+.lt-peg::after { content: ''; position: absolute; left: 4px; top: 8px; width: 2px; height: 7px; border-radius: 1px; background: rgba(80, 60, 30, 0.45); }
+@keyframes lt-cap-in { from { transform: translateY(0.75rem); opacity: 0; } to { transform: none; opacity: 1; } }
+.lt-cap-in { animation: lt-cap-in 0.45s cubic-bezier(0.2, 0.8, 0.2, 1) backwards; }
+.lt-dot { position: relative; }
+.lt-dot::after { content: ''; position: absolute; inset: -10px -4px; }
+@keyframes lt-orbit {
+  from { transform: translateZ(var(--lt-r)) rotateY(calc(var(--lt-sweep) * -1)) translateZ(calc(var(--lt-r) * -1)); }
+  to { transform: translateZ(var(--lt-r)) rotateY(var(--lt-sweep)) translateZ(calc(var(--lt-r) * -1)); }
+}
+.lt-orbit { animation: lt-orbit 20s linear infinite; }
+[dir="rtl"] .lt-orbit { animation-direction: reverse; }
+[data-asleep] .lt-orbit, [data-still] .lt-orbit { animation-play-state: paused; }
+@media (hover: hover) { .lt-curve:hover .lt-orbit { animation-play-state: paused; } }
+@media (prefers-reduced-motion: reduce) {
+  .lt-sway, .lt-cap-in { animation: none; }
+  .lt-orbit { animation-play-state: paused; }
+}
 .lt-pattern { background-image: repeating-linear-gradient(45deg, rgb(var(--color-primary) / 0.07) 0 2px, transparent 2px 16px); }
 .dark .lt-pattern { background-image: repeating-linear-gradient(45deg, rgb(var(--color-primary-dark) / 0.09) 0 2px, transparent 2px 16px); }
 

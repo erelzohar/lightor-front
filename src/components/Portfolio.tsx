@@ -12,6 +12,9 @@ import { useEdit, useEditAttrs } from '../services/editMode';
 import EditText from './EditText';
 import { handleWideImageError } from '../utils/imageFallback';
 import { altOf } from '../models/PortfolioItem';
+import Clothesline from './gallery/Clothesline';
+import CurveReel from './gallery/CurveReel';
+import TiltCascade from './gallery/TiltCascade';
 
 interface PortfolioProps {
   config: PortfolioConfig;
@@ -125,6 +128,14 @@ const Portfolio: React.FC<PortfolioProps> = ({ config, layout = 'grid', masonryP
   // adds a photo.
   if (!config.items.length && !editing) return null;
 
+  // LT-525: the stages that run the width of the page, outside its column. The
+  // curve needs a row to run; under three photos it falls to the grid.
+  const Stage = !config.items.length ? null
+    : layout === 'clothesline' ? Clothesline
+    : layout === 'cascade' ? TiltCascade
+    : layout === 'curve' && config.items.length >= 3 ? CurveReel
+    : null;
+
   return (
     <section
       id="portfolio"
@@ -146,13 +157,13 @@ const Portfolio: React.FC<PortfolioProps> = ({ config, layout = 'grid', masonryP
             title={config.title}
             description={config.description}
             variant={header} scale={headerScale}
-            mb="mb-20"
+            mb={Stage ? 'mb-6 md:mb-10' : 'mb-20'}
             descClass="text-xl text-light-text/80 dark:text-dark-text/80 max-w-2xl mx-auto mb-8"
             titleId="portfolio-title"
           />
         </motion.div>
 
-        <div className="max-w-6xl mx-auto">
+        {!Stage && <div className="max-w-6xl mx-auto">
           {!config.items.length ? (
             <div className="rounded-design-card border-2 border-dashed border-light-text/25 dark:border-dark-text/25 px-6 py-16 text-center text-lg text-light-text/70 dark:text-dark-text/70" data-testid="portfolio-empty">
               {t('portfolio.empty_edit')}
@@ -500,8 +511,9 @@ const Portfolio: React.FC<PortfolioProps> = ({ config, layout = 'grid', masonryP
               </div>
             </div>
           )}
-        </div>
+        </div>}
       </motion.div>
+      {Stage && <Stage items={config.items} />}
     </section>
   );
 };

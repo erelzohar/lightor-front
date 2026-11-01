@@ -100,7 +100,7 @@ describe.each(['he', 'en', 'ar'])('no WCAG A/AA violation axe can see (%s)', (la
   });
 
   it('every gallery layout', async () => {
-    for (const variant of ['grid', 'masonry', 'filmstrip', 'polaroid', 'bento', 'scroller', 'spotlight', 'carousel']) {
+    for (const variant of ['grid', 'masonry', 'filmstrip', 'polaroid', 'bento', 'scroller', 'spotlight', 'carousel', 'clothesline', 'curve', 'cascade']) {
       const { container, unmount } = render(<ComposedPage config={fullConfig([{ type: 'gallery', variant }])} jitter={getSiteJitter('axe')} isPreview />);
       expect([variant, ...(await violationsIn(container))]).toEqual([variant]);
       unmount();

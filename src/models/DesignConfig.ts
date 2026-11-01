@@ -37,7 +37,10 @@ export type AboutLayout = 'cards' | 'split' | 'band' | 'manifesto' | 'wall' | 't
 // LT-126: 'bento' (mosaic of mixed tile sizes), 'scroller' (auto-scrolling cinematic strip), 'spotlight' (one featured tile + thumbs).
 // LT-169: 'carousel' is the one-frame-at-a-time slideshow (arrows, dots,
 // swipe) — once the legacy `isGrid: false` mode, now a layout like the rest.
-export type PortfolioLayout = 'grid' | 'masonry' | 'filmstrip' | 'polaroid' | 'flash' | 'bento' | 'scroller' | 'spotlight' | 'carousel';
+// LT-525: three stages, each one style's own: 'clothesline' (earthy, prints pegged
+// to a sagging string), 'curve' (gallery, a row round the inside of a cylinder),
+// 'cascade' (electric, square photos on a slanted line).
+export type PortfolioLayout = 'grid' | 'masonry' | 'filmstrip' | 'polaroid' | 'flash' | 'bento' | 'scroller' | 'spotlight' | 'carousel' | 'clothesline' | 'curve' | 'cascade';
 // LT-124: the canvas lower halves — 'poster' (giant phone, ruled columns),
 // 'editorial' (plain lines beside the form), 'statement' (inverted block, no
 // form), 'band' (primary-painted with a card form), 'cards' (form + info
