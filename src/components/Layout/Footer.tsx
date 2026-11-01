@@ -227,7 +227,7 @@ const Footer: React.FC<FooterProps> = ({ config, social, businessName, logoImage
           <div className="container mx-auto px-4 flex flex-col gap-5">
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 text-sm">
               <span className="font-semibold">{tagline}</span>
-              {config.description && <span {...editAttrs(editing, 'components.footer.description')} className="opacity-70 md:max-w-md md:truncate">{config.description}</span>}
+              {config.description && <span {...editAttrs(editing, 'components.footer.description')} className="opacity-70 md:max-w-md">{config.description}</span>}
               {socialLinks.length > 0 && (
                 <div className="flex gap-2">
                   {socialLinks.map((social, index) => (

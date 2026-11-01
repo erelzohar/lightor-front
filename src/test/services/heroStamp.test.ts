@@ -10,6 +10,11 @@ describe('stampTextFor', () => {
     expect(stampTextFor({ title: 'Authentic Game Jerseys', subtitle: 'Since 2019' }, 'Pro NBA Kits')).toBe('Since 2019');
     expect(stampTextFor({ title: 'Authentic Game Jerseys', subtitle: '' }, 'Pro NBA Kits')).toBe('Pro NBA Kits');
   });
+  it('skips a line too long for the circle (LT-510)', () => {
+    const long = 'A subtitle far too long to fit inside the small round stamp';
+    expect(stampTextFor({ title: 'Jerseys', subtitle: long }, 'Pro NBA Kits')).toBe('Pro NBA Kits');
+    expect(stampTextFor({ title: 'Jerseys', subtitle: long }, long)).toBe('');
+  });
   it('never repeats the title, whatever the punctuation or case', () => {
     expect(stampTextFor({ title: 'Authentic Game Jerseys', subtitle: 'authentic game jerseys.', stamp: 'AUTHENTIC GAME JERSEYS!' }, 'Pro NBA Kits')).toBe('Pro NBA Kits');
     expect(stampTextFor({ title: 'רגעים מתוקים', subtitle: 'רגעים מתוקים!' }, 'רגעים מתוקים')).toBe('');

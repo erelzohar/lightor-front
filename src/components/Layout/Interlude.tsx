@@ -15,6 +15,10 @@ interface InterludeProps {
   tone?: 'bg' | 'surface';
 }
 
+// LT-510 (Erel): the statement is never cut. The band grows around it, and past
+// this length it drops from display size to one a paragraph can carry.
+const LONG_STATEMENT = 110;
+
 /**
  * LT-131: a photo breather between sections — the canvas pages had imagery
  * running through the page, not only in the portfolio. The statement is the
@@ -27,15 +31,18 @@ const Interlude: React.FC<InterludeProps> = ({ image, statement, variant, tone =
   const src = ImagesService.getInstance().getImage(image);
   // A round logo here shows whole beside the statement, not cropped (LT-317).
   const cutout = useCutout(src);
+  const long = (statement?.length ?? 0) > LONG_STATEMENT;
 
   if (variant === 1) {
     return (
       <section aria-label={statement ? undefined : 'photo'} className={`${tone === 'surface' ? 'bg-light-surface dark:bg-dark-surface' : 'bg-light-bg dark:bg-dark-bg'} transition-colors duration-300`}>
-        <div className="grid md:grid-cols-2 items-stretch md:h-[28rem]">
-          <img loading="lazy" {...ed(imagePath, 'image')} src={src} alt="" data-cutout={cutout || undefined} className={cutout ? `w-full h-72 md:h-full p-10 ${CUTOUT_CLASS}` : 'w-full h-72 md:h-full object-cover'} />
-          <div className="p-10 md:p-16 flex items-center overflow-hidden">
+        <div className="grid md:grid-cols-2 items-stretch md:min-h-[28rem]">
+          <div className="relative h-72 md:h-auto">
+            <img loading="lazy" {...ed(imagePath, 'image')} src={src} alt="" data-cutout={cutout || undefined} className={cutout ? `absolute inset-0 w-full h-full p-10 ${CUTOUT_CLASS}` : 'absolute inset-0 w-full h-full object-cover'} />
+          </div>
+          <div className="p-10 md:p-16 flex items-center">
             {statement && (
-              <p {...ed(statementPath)} className="font-bold leading-tight text-light-text dark:text-dark-text line-clamp-5" style={{ fontFamily: displayFont, fontSize: 'clamp(1.75rem, 3.5vw, 3.25rem)' }}>
+              <p {...ed(statementPath)} className="font-bold leading-tight text-light-text dark:text-dark-text" style={{ fontFamily: displayFont, fontSize: long ? 'clamp(1.25rem, 2.2vw, 2rem)' : 'clamp(1.75rem, 3.5vw, 3.25rem)' }}>
                 {statement}
               </p>
             )}
@@ -46,12 +53,12 @@ const Interlude: React.FC<InterludeProps> = ({ image, statement, variant, tone =
   }
 
   return (
-    <section className="relative h-[55vh] min-h-[22rem] overflow-hidden" aria-label={statement ? undefined : 'photo'}>
+    <section className="relative flex min-h-[max(55vh,22rem)] overflow-hidden" aria-label={statement ? undefined : 'photo'}>
       <img loading="lazy" {...ed(imagePath, 'image')} src={src} alt="" className="absolute inset-0 w-full h-full object-cover" />
       <div className="absolute inset-0 bg-black/50" aria-hidden="true" />
       {statement && (
-        <div className="relative h-full container mx-auto px-4 flex items-center justify-center text-center">
-          <p {...ed(statementPath)} className="text-white font-bold leading-tight max-w-4xl line-clamp-4" style={{ fontFamily: displayFont, fontSize: 'clamp(1.75rem, 4vw, 3.75rem)' }}>
+        <div className="relative container mx-auto px-4 py-12 flex items-center justify-center text-center">
+          <p {...ed(statementPath)} className="text-white font-bold leading-tight max-w-4xl" style={{ fontFamily: displayFont, fontSize: long ? 'clamp(1.375rem, 2.6vw, 2.5rem)' : 'clamp(1.75rem, 4vw, 3.75rem)' }}>
             {statement}
           </p>
         </div>

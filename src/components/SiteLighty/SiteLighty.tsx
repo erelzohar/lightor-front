@@ -337,7 +337,7 @@ export default function SiteLighty({ businessName, leadsSite, phone, demo = fals
               </div>
               <div className="flex-1 min-w-0 pb-1">
                 <p className="font-bold leading-tight">{t('assistant.title')}</p>
-                <p className="text-xs opacity-70 truncate">{t('assistant.subtitle', { name: businessName })}</p>
+                <p className="text-xs opacity-70">{t('assistant.subtitle', { name: businessName })}</p>
               </div>
               <div className="self-start flex items-center gap-0.5">
                 {/* The contact button's call and WhatsApp, which Lighty's corner replaces (LT-312). */}

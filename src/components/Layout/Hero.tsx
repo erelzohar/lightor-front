@@ -612,7 +612,7 @@ const Hero: React.FC<HeroProps> = ({ config, social, phone, isContactVisible, ap
     if (heroLayout === 'fullbleed') {
       return (
         <motion.div className="relative" variants={containerVariants}>
-          <motion.div className="relative h-[60vh] min-h-[24rem] overflow-hidden" variants={itemVariants}>
+          <motion.div className="relative flex items-end justify-between gap-8 min-h-[max(60vh,24rem)] p-6 md:p-10 overflow-hidden" variants={itemVariants}>
             <img {...ed('components.hero.heroImageSrc', 'image')} {...HERO_IMAGE}
               src={ImagesService.getInstance().getImage(config.heroImageSrc)}
               alt={config.title}
@@ -620,11 +620,11 @@ const Hero: React.FC<HeroProps> = ({ config, social, phone, isContactVisible, ap
               className="absolute inset-0 w-full h-full object-cover"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" aria-hidden="true" />
-            <div className="absolute bottom-6 start-6 md:bottom-10 md:start-10 text-white max-w-[70%]">
+            <div className="relative min-w-0 text-white max-w-[70%]">
               <div className="text-xs tracking-[0.3em] uppercase text-white/70"><EditText path="components.hero.subtitle">{config.subtitle}</EditText></div>
               <h1 className="font-bold leading-tight mt-2"><EditText path="components.hero.title">{config.title}</EditText></h1>
             </div>
-            <div className="hidden md:block absolute bottom-10 end-10 text-xs tracking-[0.3em] uppercase text-white/70 max-w-[25%] text-end">
+            <div className="relative hidden md:block text-xs tracking-[0.3em] uppercase text-white/70 max-w-[25%] text-end">
               <EditText path="components.hero.description">{config.description}</EditText>
             </div>
           </motion.div>
@@ -697,7 +697,7 @@ const Hero: React.FC<HeroProps> = ({ config, social, phone, isContactVisible, ap
                 className={cutout ? `absolute inset-0 w-full h-full p-6 ${CUTOUT_CLASS}` : 'absolute inset-0 w-full h-full object-cover shadow-2xl'}
               />
               {config.subtitle && (
-                <span className="absolute bottom-0 start-0 bg-primary dark:bg-primary-dark text-on-primary dark:text-on-primary-dark text-xs font-bold tracking-[0.2em] px-4 py-2 max-w-full truncate">
+                <span className="absolute bottom-0 start-0 bg-primary dark:bg-primary-dark text-on-primary dark:text-on-primary-dark text-xs font-bold tracking-[0.2em] px-4 py-2 max-w-full">
                   <EditText path="components.hero.subtitle">{config.subtitle}</EditText>
                 </span>
               )}
@@ -883,7 +883,7 @@ const Hero: React.FC<HeroProps> = ({ config, social, phone, isContactVisible, ap
             aria-hidden="true"
           >
             <div className="w-[5.5rem] h-[5.5rem] rounded-full border border-primary-readable/60 dark:border-primary-dark-readable/60 flex items-center justify-center p-2">
-              <span className="text-[11px] font-bold tracking-widest text-center leading-tight text-primary-readable dark:text-primary-dark-readable line-clamp-3">
+              <span className={`${stampText.length > 20 ? 'text-[9px] tracking-wide' : 'text-[11px] tracking-widest'} font-bold text-center leading-tight text-primary-readable dark:text-primary-dark-readable`}>
                 <EditText path="components.hero.stamp">{stampText}</EditText>
               </span>
             </div>

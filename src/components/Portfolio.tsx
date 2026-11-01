@@ -162,6 +162,7 @@ const Portfolio: React.FC<PortfolioProps> = ({ config, layout = 'grid', masonryP
               // Shared still-image card; the portfolioLayout token picks how
               // the cards are arranged (grid / masonry / filmstrip…). The
               // 'carousel' layout is the one-frame slideshow further below.
+              // LT-510: a caption taller than its picture scrolls, never cut.
               const itemCard = (item: typeof config.items[number], index: number, aspect: string, extra = '') => (
                 <motion.div
                   key={index}
@@ -182,7 +183,7 @@ const Portfolio: React.FC<PortfolioProps> = ({ config, layout = 'grid', masonryP
                     className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"
                     aria-hidden="true"
                   >
-                    <div className="absolute bottom-0 inset-x-0 p-4 md:p-6">
+                    <div className="absolute bottom-0 inset-x-0 p-4 md:p-6 max-h-full overflow-y-auto">
                       <h3 {...ed(`components.portfolio.items.${index}.title`)} className="text-lg md:text-xl font-bold text-white mb-1 md:mb-2">{item.title}</h3>
                       <p {...ed(`components.portfolio.items.${index}.description`)} className="text-sm md:text-base text-white/80">{item.description}</p>
                     </div>
@@ -242,7 +243,7 @@ const Portfolio: React.FC<PortfolioProps> = ({ config, layout = 'grid', masonryP
                           onError={handleWideImageError}
                           className="w-full h-full object-cover"
                         />
-                        <div className="absolute inset-x-0 bottom-0 p-6 md:p-10 bg-gradient-to-t from-black/70 to-transparent">
+                        <div className="absolute inset-x-0 bottom-0 p-6 md:p-10 max-h-full overflow-y-auto bg-gradient-to-t from-black/70 to-transparent">
                           <h3 {...ed(`components.portfolio.items.${active}.title`)} className="text-2xl md:text-4xl font-bold text-white">{main.title}</h3>
                           {main.description && <p {...ed(`components.portfolio.items.${active}.description`)} className="text-white/80 mt-2 max-w-2xl">{main.description}</p>}
                         </div>
@@ -340,7 +341,7 @@ const Portfolio: React.FC<PortfolioProps> = ({ config, layout = 'grid', masonryP
                           className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"
                           aria-hidden="true"
                         >
-                          <div className="absolute bottom-0 inset-x-0 p-3">
+                          <div className="absolute bottom-0 inset-x-0 p-3 max-h-full overflow-y-auto">
                             <h3 {...ed(`components.portfolio.items.${index}.title`)} className="text-base font-bold text-white">{item.title}</h3>
                           </div>
                         </div>
@@ -389,7 +390,7 @@ const Portfolio: React.FC<PortfolioProps> = ({ config, layout = 'grid', masonryP
                         className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"
                         aria-hidden="true"
                       >
-                        <div className="absolute bottom-0 inset-x-0 p-4 md:p-6">
+                        <div className="absolute bottom-0 inset-x-0 p-4 md:p-6 max-h-full overflow-y-auto">
                           <h3 {...ed(`components.portfolio.items.${index}.title`)} className="text-lg md:text-xl font-bold text-white mb-1 md:mb-2">{item.title}</h3>
                           <p {...ed(`components.portfolio.items.${index}.description`)} className="text-sm md:text-base text-white/80">{item.description}</p>
                         </div>
@@ -443,7 +444,7 @@ const Portfolio: React.FC<PortfolioProps> = ({ config, layout = 'grid', masonryP
                       className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent"
                       aria-hidden="true"
                     >
-                      <div className="absolute bottom-0 inset-x-0 p-4 md:p-8">
+                      <div className="absolute bottom-0 inset-x-0 p-4 md:p-8 max-h-full overflow-y-auto">
                         <h3 className="text-xl md:text-3xl font-bold mb-1 md:mb-2 text-white">
                           <EditText path={`components.portfolio.items.${currentSlide}.title`}>{config.items[currentSlide].title}</EditText>
                         </h3>
