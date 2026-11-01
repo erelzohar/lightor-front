@@ -42,9 +42,10 @@ interface WebsiteConfig {
   design?: {
     navbarStyle?: 'floating' | 'solid' | 'transparent' | 'minimal' | 'centered' | 'pill' | 'split';
     borderRadius?: string;
+    heroLayout?: string;
   };
   /** LT-137: a composed page — links come from these, not the section flags. */
-  blocks?: { type: string; id: string; mod?: { hidden?: boolean } }[];
+  blocks?: { type: string; id: string; variant?: string; mod?: { hidden?: boolean } }[];
   /** LT-167: nothing bookable → no "Book" link or button. */
   appointmentTypes?: { name?: string | null; durationMS?: string | number | null }[];
   /** LT-199: a leads site's button goes to the contact form. */
@@ -66,7 +67,10 @@ const Navbar: React.FC<NavbarProps> = ({ websiteConfig, isPreview }) => {
   // Derived from the `dark` class, never from localStorage: the design's
   // defaultTheme (and the preview) set that class without touching storage.
   const darkMode = useIsDarkMode();
-  const [isScrolled, setIsScrolled] = useState(false);
+  const [pastTop, setIsScrolled] = useState(false);
+  // LT-531: at the top of a parallax hero the bar stands on a photo: it is painted from the start.
+  const heroLayout = websiteConfig.blocks?.find((b) => b.type === 'hero')?.variant ?? websiteConfig.design?.heroLayout;
+  const isScrolled = pastTop || heroLayout === 'parallax';
   const [isVisible, setIsVisible] = useState(true);
   const lastScrollY = useRef(0);
   const { t } = useLanguage();

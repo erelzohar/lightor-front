@@ -17,7 +17,10 @@ export type NavbarStyle = 'floating' | 'solid' | 'transparent' | 'minimal' | 'ce
 // 'poster-statement' (LT-113): the Ink-artboard hero — text-only stacked
 // poster with an outline-stroke second line, no image. 'fullbleed' (LT-113):
 // the Lens-artboard hero — edge-to-edge image with the title overlaid.
-export type HeroLayout = 'image-right' | 'centered' | 'split' | 'text-first' | 'poster-split' | 'poster-statement' | 'fullbleed';
+// LT-531, each one style's own: 'parallax' (earthy, a layered scroll over the photo),
+// 'expand' (atelier, the photo opens to the whole screen as the page scrolls),
+// 'aero' (crisp, half photo, half tight type), 'collage' (serene, three framed pictures).
+export type HeroLayout = 'image-right' | 'centered' | 'split' | 'text-first' | 'poster-split' | 'poster-statement' | 'fullbleed' | 'parallax' | 'expand' | 'aero' | 'collage';
 export type SectionDivider = 'none' | 'wave' | 'diagonal' | 'curve' | 'scallop' | 'zigzag';
 export type Density = 'compact' | 'comfortable' | 'spacious';
 // 'poster' (LT-108): the vibe-canvas hero manner — enormous condensed
@@ -59,7 +62,9 @@ export type DefaultTheme = 'light' | 'dark';
 // LT-107 vibe signatures (from the LT-092 canvas): a hero decoration —
 // repeating text strips (ticker/marquee), a rotated stamp badge, confetti
 // dots, or a line-drawn sun. 'none' = pre-LT-107 rendering.
-export type Decor = 'none' | 'ticker' | 'marquee' | 'stamp' | 'confetti' | 'sun' | 'monogram';
+// LT-531: two backdrops for the fold: 'sonar' (underground, a dot field that answers a
+// tap with rings) and 'metal' (industrial, liquid metal ribbons in the site's colour).
+export type Decor = 'none' | 'ticker' | 'marquee' | 'stamp' | 'confetti' | 'sun' | 'monogram' | 'sonar' | 'metal';
 // How About features are marked: icon tiles (legacy), big two-digit numbers
 // (industrial ledger feel), or roman numerals (heritage).
 export type FeatureStyle = 'icons' | 'numbered' | 'roman';

@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { lazy, Suspense, useEffect, useRef, useState } from 'react';
 import { Calendar, MessageSquare, Phone, Instagram, Facebook } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useLanguage } from '../../contexts/LanguageContext';
@@ -11,7 +11,7 @@ import { DesignConfig, BorderRadius } from '../../models/DesignConfig';
 import { AppointmentType } from '../../models/AppointmentType';
 import { Conversion, mainCta } from '../../services/siteMode';
 import { stampTextFor } from '../../services/heroStamp';
-import { useEditAttrs } from '../../services/editMode';
+import { useEdit, useEditAttrs } from '../../services/editMode';
 import EditText from '../EditText';
 import ImagesService from '../../services/ImagesService';
 import { handleWideImageError } from '../../utils/imageFallback';
@@ -22,15 +22,23 @@ import { safeHttpUrl, openExternal } from '../../utils/safeUrl';
 import { loadVantaDeps } from './vantaDeps';
 import { CUTOUT_CLASS, useCutout } from '../../utils/cutout';
 import { useStill } from '../../hooks/useA11yPrefs';
+import { HERO_IMAGE } from './heroes/common';
+import ParallaxHero from './heroes/ParallaxHero';
+import ExpandHero from './heroes/ExpandHero';
+import AeroHero, { type HeroStat } from './heroes/AeroHero';
+import CollageHero from './heroes/CollageHero';
+import SonarField from './heroes/SonarField';
+
+// Its own chunk: a per-pixel shader that only one style shows.
+const MetalRibbons = lazy(() => import('./heroes/MetalRibbons'));
 
 function hexToInt(hex: string): number {
   return parseInt(hex.replace('#', ''), 16);
 }
 
-// LT-445: the hero picture is the page's largest paint (LCP): fetched first,
-// never lazily. Lowercase, as React 18 passes an attribute it does not know.
 const SOFT_VANTA = new Set(['clouds', 'clouds2', 'fog']);
-const HERO_IMAGE = { fetchpriority: 'high', loading: 'eager' } as Record<string, string>;
+// LT-531: the heroes that run edge to edge and draw their own backdrop.
+const FULL_HEROES = new Set(['parallax', 'expand', 'aero']);
 
 function buildVantaOptions(type: string, isDark: boolean, palette: Palette | undefined): Record<string, any> {
   const primary = palette?.colorPrimary ?? '#2563eb';
@@ -97,6 +105,12 @@ interface HeroProps {
   /** LT-113 seeded per-site variation (LT-053 contract): swaps the poster
    *  template pair, mirrors the poster-split columns, moves decor corners. */
   jitter?: { posterAlt: boolean; flipPosterSplit: boolean; decorStart: boolean };
+  /** LT-531: the gallery's pictures, for the heroes that show more than one. */
+  thumbs?: string[];
+  /** LT-531: the owner's own figures (blockCopy), for the heroes with a fact row. */
+  stats?: HeroStat[];
+  /** LT-531: the tone of the section below, which the parallax hero melts into. */
+  belowTone?: 'bg' | 'surface';
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -127,10 +141,11 @@ const radiusClassMap: Record<BorderRadius, string> = {
   full: 'rounded-full',
 };
 
-const Hero: React.FC<HeroProps> = ({ config, social, phone, isContactVisible, appointmentTypes, conversion, isPreview, palette, design, jitter, businessName, logo }) => {
+const Hero: React.FC<HeroProps> = ({ config, social, phone, isContactVisible, appointmentTypes, conversion, isPreview, palette, design, jitter, businessName, logo, thumbs = [], stats = [], belowTone }) => {
   // LT-496: the heritage mark's logo failed to load: the ornament stands instead.
   const [markFailed, setMarkFailed] = useState(false);
   const ed = useEditAttrs();
+  const { editing } = useEdit();
   const { t, language } = useLanguage();
   const { isModalOpen, setIsModalOpen, modalType, handleContactClick } = useContactHandler();
 
@@ -156,7 +171,8 @@ const Hero: React.FC<HeroProps> = ({ config, social, phone, isContactVisible, ap
   // LT-113: the two poster compositions are one template family — half the
   // sites of a poster vibe open on the split (image) fold, half on the
   // statement (type-only) fold, seeded per site.
-  const heroLayout = jitter?.posterAlt && (rawHeroLayout === 'poster-split' || rawHeroLayout === 'poster-statement')
+  // LT-531: a backdrop of its own wants the fold to itself, so those stay on the statement.
+  const posterLayout = jitter?.posterAlt && design?.decor !== 'sonar' && design?.decor !== 'metal' && (rawHeroLayout === 'poster-split' || rawHeroLayout === 'poster-statement')
     ? (rawHeroLayout === 'poster-split' ? 'poster-statement' : 'poster-split')
     : rawHeroLayout;
   const decorStart = jitter?.decorStart ?? false;
@@ -167,7 +183,15 @@ const Hero: React.FC<HeroProps> = ({ config, social, phone, isContactVisible, ap
   // A round logo (see-through corners) shows whole, never boxed (LT-317).
   const heroSrc = config.heroImageSrc ? ImagesService.getInstance().getImage(config.heroImageSrc) : '';
   const cutout = useCutout(heroSrc);
+  // LT-531: a hero that is one big photo cannot stand on a round logo, nor on no picture.
+  const bigPhoto = posterLayout === 'parallax' || posterLayout === 'expand' || posterLayout === 'aero';
+  const heroLayout = bigPhoto && !heroSrc ? 'poster-statement' : bigPhoto && cutout ? 'split' : posterLayout;
+  const full = FULL_HEROES.has(heroLayout);
+  const rtl = language === 'he' || language === 'ar';
   const decor = design?.decor ?? 'none';
+  const accent = isDarkMode ? palette?.colorPrimaryDark : palette?.colorPrimary;
+  // Its own backdrop: no Vanta under it, and no three.js to fetch for it.
+  const ownBackdrop = full || heroLayout === 'collage' || decor === 'sonar' || decor === 'metal';
   const stampText = stampTextFor(config, businessName);
   const animD = (base: number) => animLevel === 'none' ? 0 : animLevel === 'minimal' ? base * 0.25 : base;
 
@@ -188,6 +212,7 @@ const Hero: React.FC<HeroProps> = ({ config, social, phone, isContactVisible, ap
     palette?.colorLightBg       ?? '',
     palette?.colorDarkBg        ?? '',
     still ? 'still' : 'moving',
+    ownBackdrop ? 'own' : '',
   ].join('|');
 
   useEffect(() => {
@@ -199,7 +224,7 @@ const Hero: React.FC<HeroProps> = ({ config, social, phone, isContactVisible, ap
     }
 
     // Held still, the section's own background colour is the backdrop.
-    if (still) return;
+    if (still || ownBackdrop) return;
 
     let cancelled = false;
 
@@ -336,11 +361,12 @@ const Hero: React.FC<HeroProps> = ({ config, social, phone, isContactVisible, ap
   // None on a booking site with nothing to book yet (LT-167).
   const cta = mainCta({ conversion, types: appointmentTypes, own: config.cta }, t);
   const CtaIcon = cta?.target === 'contact' ? MessageSquare : Calendar;
-  const renderBookButton = (fullWidth = false) => {
+  // LT-531: on a photo an outline or a bare word cannot be read: those go solid.
+  const renderBookButton = (fullWidth = false, onPhoto = false) => {
     if (!cta) return null;
     const w = fullWidth ? 'w-full' : '';
 
-    if (buttonStyle === 'solid') {
+    if (buttonStyle === 'solid' || (onPhoto && (buttonStyle === 'outline' || buttonStyle === 'ghost'))) {
       return (
         <motion.a
           href={cta.href}
@@ -499,6 +525,22 @@ const Hero: React.FC<HeroProps> = ({ config, social, phone, isContactVisible, ap
   // ── Layout variants ───────────────────────────────────────────────────────
 
   const renderContent = () => {
+    // ── LT-531: the heroes in their own files ─────────────────────────────
+    const buttons = <>{renderBookButton(false)}{renderContactButton(false)}</>;
+    const photoButtons = <>{renderBookButton(false, true)}{renderContactButton(false)}</>;
+    if (heroLayout === 'parallax') {
+      return <ParallaxHero config={config} alt={businessName || ''} actions={photoButtons} social={renderSocialRow('justify-center')} belowTone={belowTone} flip={decorStart} />;
+    }
+    if (heroLayout === 'expand') {
+      return <ExpandHero config={config} alt={businessName || ''} actions={photoButtons} social={renderSocialRow('justify-center')} rtl={rtl} />;
+    }
+    if (heroLayout === 'aero') {
+      return <AeroHero config={config} alt={businessName || ''} cta={cta} contact={renderContactButton(false)} social={renderSocialRow('')} thumbs={thumbs} stat={stats[0]} services={tickerItems} rtl={rtl} noTrack={noTrack} />;
+    }
+    if (heroLayout === 'collage') {
+      return <CollageHero config={config} alt={businessName || ''} actions={buttons} social={renderSocialRow('justify-center lg:justify-start')} thumbs={thumbs} stats={stats} item={itemVariants} container={containerVariants} />;
+    }
+
     // ── Centered: image top-center, text below ────────────────────────────
     if (heroLayout === 'centered') {
       return (
@@ -856,7 +898,8 @@ const Hero: React.FC<HeroProps> = ({ config, social, phone, isContactVisible, ap
       <section
         ref={vantaRef}
         id="home"
-        className="min-h-screen relative overflow-hidden bg-light-bg dark:bg-dark-bg transition-colors duration-300"
+        // LT-531: the expand hero's stage is sticky, so this box must not clip it.
+        className={`min-h-screen relative ${heroLayout === 'expand' ? '' : 'overflow-hidden'} bg-light-bg dark:bg-dark-bg transition-colors duration-300`}
         // The business's own name (it announced "Welcome to StyleTime", the
         // product's old name, on every site).
         aria-label={businessName ? t('hero.welcome_label', { name: businessName }) : undefined}
@@ -869,7 +912,13 @@ const Hero: React.FC<HeroProps> = ({ config, social, phone, isContactVisible, ap
             readable-primary contrast math meaningful here. Vanta injects its
             canvas as the section's first child, so this sibling paints above
             the canvas and below the content. */}
-        <div className="absolute inset-0 bg-light-bg/50 dark:bg-dark-bg/55 pointer-events-none" aria-hidden="true" />
+        {!full && decor === 'metal' && (
+          <Suspense fallback={null}>
+            <MetalRibbons color={accent ?? '#d8dade'} dark={isDarkMode} still={still || editing} rtl={rtl} />
+          </Suspense>
+        )}
+        {!full && decor !== 'sonar' && <div className={`absolute inset-0 ${decor === 'metal' ? 'bg-light-bg/20 dark:bg-dark-bg/20' : 'bg-light-bg/50 dark:bg-dark-bg/55'} pointer-events-none`} aria-hidden="true" />}
+        {!full && decor === 'sonar' && <SonarField color={accent ?? '#7a5cff'} still={still || editing} />}
 
         {/* Vibe signature decorations (LT-107, from the LT-092 canvas). All
             static and aria-hidden — identity, not content.
@@ -877,7 +926,7 @@ const Hero: React.FC<HeroProps> = ({ config, social, phone, isContactVisible, ap
             siblings that precede the content container, so without it the
             hero image simply painted over them — a stamp or sun sliced in
             half by the photo's edge. */}
-        {decor === 'stamp' && stampText && (
+        {!full && decor === 'stamp' && stampText && (
           <div
             className={`hidden md:flex absolute z-10 top-24 ${decorStart ? 'start-10 lg:start-20' : 'end-10 lg:end-20'} w-28 h-28 rounded-full border-2 border-primary-readable dark:border-primary-dark-readable items-center justify-center -rotate-12 pointer-events-none`}
             aria-hidden="true"
@@ -889,7 +938,7 @@ const Hero: React.FC<HeroProps> = ({ config, social, phone, isContactVisible, ap
             </div>
           </div>
         )}
-        {decor === 'confetti' && (
+        {!full && decor === 'confetti' && (
           <div className="absolute inset-0 z-10 pointer-events-none" aria-hidden="true">
             <span className="absolute top-[14%] start-[12%] w-3 h-3 rounded-full bg-primary/70 dark:bg-primary-dark/70" />
             <span className="absolute top-[26%] end-[9%] w-2 h-2 rounded-full bg-primary-dark/60 dark:bg-primary/60" />
@@ -899,7 +948,7 @@ const Hero: React.FC<HeroProps> = ({ config, social, phone, isContactVisible, ap
             <span className="absolute bottom-[30%] start-[22%] w-2 h-2 rounded-full bg-primary/60 dark:bg-primary-dark/60" />
           </div>
         )}
-        {decor === 'sun' && (
+        {!full && decor === 'sun' && (
           <svg
             viewBox="0 0 40 40"
             className={`hidden md:block absolute z-10 top-24 ${decorStart ? 'start-12 lg:start-24' : 'end-12 lg:end-24'} w-14 h-14 text-primary-readable dark:text-primary-dark-readable pointer-events-none`}
@@ -914,7 +963,9 @@ const Hero: React.FC<HeroProps> = ({ config, social, phone, isContactVisible, ap
           </svg>
         )}
 
-        <motion.div
+        {full ? (
+          <motion.div initial="hidden" animate="visible" variants={containerVariants}>{renderContent()}</motion.div>
+        ) : <motion.div
           // Starts below the fixed navbar whatever its height (LT-163). The
           // offsets over the bar keep desktop where it was for the common
           // 72px bar (72 + 56 = the old 128px); the fallback is the tallest
@@ -946,7 +997,7 @@ const Hero: React.FC<HeroProps> = ({ config, social, phone, isContactVisible, ap
               ))}
             </motion.div>
           )}
-        </motion.div>
+        </motion.div>}
 
         {/* Repeating-text strip (LT-107): the industrial ticker / electric
             marquee band along the hero's bottom edge. It lists what the
@@ -954,7 +1005,7 @@ const Hero: React.FC<HeroProps> = ({ config, social, phone, isContactVisible, ap
             and the booking form use — and rolls continuously in the reading
             direction (LT-164), so a long Hebrew menu is never cut at the
             phone's edge. */}
-        {(decor === 'ticker' || decor === 'marquee') && (
+        {!full && (decor === 'ticker' || decor === 'marquee') && (
           <MarqueeStrip
             items={tickerSource}
             className={`absolute bottom-0 inset-x-0 py-2 bg-primary dark:bg-primary-dark text-on-primary dark:text-on-primary-dark select-none ${decor === 'marquee' ? `font-bold uppercase italic ${noTrack ? '' : 'tracking-widest'} text-sm` : `${noTrack ? '' : 'tracking-[0.25em]'} text-xs font-semibold`}`}

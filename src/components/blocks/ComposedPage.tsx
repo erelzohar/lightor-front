@@ -72,6 +72,9 @@ const ComposedPage: React.FC<ComposedPageProps> = ({ config, jitter, isPreview, 
   // LT-199: nor on a leads site, whatever its services.
   const bookable = takesBookings(config.conversion, config.appointmentTypes);
 
+  // LT-531: the owner's figures, for a hero with a fact row: its own, else the stats block's.
+  const statsBlock = (config.blocks.find((b) => b.type === 'stats')?.props?.items ?? []) as StatItem[];
+
   // `tone` is passed explicitly because the flow's cloneElement below only reaches
   // component nodes, and the schedule sits inside a plain div (LT-166).
   const render = (b: Block, tone: SectionTone): ReactNode => {
@@ -93,6 +96,8 @@ const ComposedPage: React.FC<ComposedPageProps> = ({ config, jitter, isPreview, 
             palette={config.pallete}
             design={v ? { ...design, heroLayout: v as HeroLayout } : design}
             jitter={{ posterAlt: jitter.posterAlt, flipPosterSplit: jitter.flipPosterSplit, decorStart: jitter.decorStart }}
+            thumbs={(c.portfolio?.items ?? []).map((item) => item.url).filter(Boolean)}
+            stats={Array.isArray(p.stats) ? p.stats as StatItem[] : statsBlock}
           />
         ) : null;
       case 'intro':
@@ -266,7 +271,7 @@ const ComposedPage: React.FC<ComposedPageProps> = ({ config, jitter, isPreview, 
           <GenerateReveal seq={generateSeq} index={i}>
             <ErrorBoundary>
               {isValidElement(node) && typeof (node as ReactElement).type !== 'string'
-                ? cloneElement(node as ReactElement, { header: design?.sectionHeader, tone, reveal: design?.revealStyle, headerScale: b.mod?.scale } as Record<string, unknown>)
+                ? cloneElement(node as ReactElement, { header: design?.sectionHeader, tone, reveal: design?.revealStyle, headerScale: b.mod?.scale, ...(b.type === 'hero' ? { belowTone: items[i + 1]?.tone } : {}) } as Record<string, unknown>)
                 : node}
             </ErrorBoundary>
           </GenerateReveal>

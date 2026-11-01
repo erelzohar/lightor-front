@@ -111,7 +111,7 @@ describe.each(['he', 'en', 'ar'])('no WCAG A/AA violation axe can see (%s)', (la
     const layouts: [string, string[]][] = [
       ['footer', ['columns', 'minimal', 'line', 'ticker']],
       ['contact', ['split', 'stacked', 'poster', 'editorial', 'statement', 'band', 'cards']],
-      ['hero', ['centered', 'split', 'image-right', 'poster-split', 'poster-statement']],
+      ['hero', ['centered', 'split', 'image-right', 'poster-split', 'poster-statement', 'parallax', 'expand', 'aero', 'collage']],
     ];
     for (const [type, variants] of layouts) {
       for (const variant of variants) {

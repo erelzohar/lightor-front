@@ -356,8 +356,11 @@ html[data-heading-accent="none"] .heading-accent {
 [dir="rtl"] .lt-orbit { animation-direction: reverse; }
 [data-asleep] .lt-orbit, [data-still] .lt-orbit { animation-play-state: paused; }
 @media (hover: hover) { .lt-curve:hover .lt-orbit { animation-play-state: paused; } }
+/* LT-531: the collage hero's soft shapes drift on the compositor. */
+@keyframes lt-float { from { transform: translateY(4px); } to { transform: translateY(-8px); } }
+.lt-float { animation: lt-float 3s ease-in-out infinite alternate; }
 @media (prefers-reduced-motion: reduce) {
-  .lt-sway, .lt-cap-in { animation: none; }
+  .lt-sway, .lt-cap-in, .lt-float { animation: none; }
   .lt-orbit { animation-play-state: paused; }
 }
 .lt-pattern { background-image: repeating-linear-gradient(45deg, rgb(var(--color-primary) / 0.07) 0 2px, transparent 2px 16px); }
