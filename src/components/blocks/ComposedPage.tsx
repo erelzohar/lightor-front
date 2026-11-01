@@ -73,7 +73,7 @@ const ComposedPage: React.FC<ComposedPageProps> = ({ config, jitter, isPreview, 
   const bookable = takesBookings(config.conversion, config.appointmentTypes);
 
   // LT-531: the owner's figures, for a hero with a fact row: its own, else the stats block's.
-  const statsBlock = (config.blocks.find((b) => b.type === 'stats')?.props?.items ?? []) as StatItem[];
+  const statsBlock = config.blocks.find((b) => b.type === 'stats');
 
   // `tone` is passed explicitly because the flow's cloneElement below only reaches
   // component nodes, and the schedule sits inside a plain div (LT-166).
@@ -97,7 +97,8 @@ const ComposedPage: React.FC<ComposedPageProps> = ({ config, jitter, isPreview, 
             design={v ? { ...design, heroLayout: v as HeroLayout } : design}
             jitter={{ posterAlt: jitter.posterAlt, flipPosterSplit: jitter.flipPosterSplit, decorStart: jitter.decorStart }}
             thumbs={(c.portfolio?.items ?? []).map((item) => item.url).filter(Boolean)}
-            stats={Array.isArray(p.stats) ? p.stats as StatItem[] : statsBlock}
+            stats={(Array.isArray(p.items) ? p.items : statsBlock?.props?.items ?? []) as StatItem[]}
+            statsPath={`blocks.${Array.isArray(p.items) ? b.id : statsBlock?.id}.props.items`}
           />
         ) : null;
       case 'intro':

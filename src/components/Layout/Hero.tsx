@@ -109,6 +109,8 @@ interface HeroProps {
   thumbs?: string[];
   /** LT-531: the owner's own figures (blockCopy), for the heroes with a fact row. */
   stats?: HeroStat[];
+  /** LT-531: where those figures live, for the site editor. */
+  statsPath?: string;
   /** LT-531: the tone of the section below, which the parallax hero melts into. */
   belowTone?: 'bg' | 'surface';
 }
@@ -141,7 +143,7 @@ const radiusClassMap: Record<BorderRadius, string> = {
   full: 'rounded-full',
 };
 
-const Hero: React.FC<HeroProps> = ({ config, social, phone, isContactVisible, appointmentTypes, conversion, isPreview, palette, design, jitter, businessName, logo, thumbs = [], stats = [], belowTone }) => {
+const Hero: React.FC<HeroProps> = ({ config, social, phone, isContactVisible, appointmentTypes, conversion, isPreview, palette, design, jitter, businessName, logo, thumbs = [], stats = [], statsPath, belowTone }) => {
   // LT-496: the heritage mark's logo failed to load: the ornament stands instead.
   const [markFailed, setMarkFailed] = useState(false);
   const ed = useEditAttrs();
@@ -535,10 +537,10 @@ const Hero: React.FC<HeroProps> = ({ config, social, phone, isContactVisible, ap
       return <ExpandHero config={config} alt={businessName || ''} actions={photoButtons} social={renderSocialRow('justify-center')} rtl={rtl} />;
     }
     if (heroLayout === 'aero') {
-      return <AeroHero config={config} alt={businessName || ''} cta={cta} contact={renderContactButton(false)} social={renderSocialRow('')} thumbs={thumbs} stat={stats[0]} services={tickerItems} rtl={rtl} noTrack={noTrack} />;
+      return <AeroHero config={config} alt={businessName || ''} cta={cta} contact={renderContactButton(false)} social={renderSocialRow('')} thumbs={thumbs} stat={stats[0]} statPath={statsPath && `${statsPath}.0`} services={tickerItems} rtl={rtl} noTrack={noTrack} />;
     }
     if (heroLayout === 'collage') {
-      return <CollageHero config={config} alt={businessName || ''} actions={buttons} social={renderSocialRow('justify-center lg:justify-start')} thumbs={thumbs} stats={stats} item={itemVariants} container={containerVariants} />;
+      return <CollageHero config={config} alt={businessName || ''} actions={buttons} social={renderSocialRow('justify-center lg:justify-start')} thumbs={thumbs} stats={stats} statsPath={statsPath} item={itemVariants} container={containerVariants} />;
     }
 
     // ── Centered: image top-center, text below ────────────────────────────

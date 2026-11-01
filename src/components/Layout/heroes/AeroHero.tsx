@@ -21,6 +21,8 @@ interface AeroHeroProps {
   /** Pictures for the row of small circles: the gallery's. */
   thumbs: string[];
   stat?: HeroStat;
+  /** Where the fact lives, for the site editor. */
+  statPath?: string;
   services: string[];
   rtl: boolean;
   noTrack: boolean;
@@ -33,7 +35,7 @@ interface AeroHeroProps {
  * reference had client logos, and the fact comes from the owner's own words
  * (a stat that survived blockCopy, else the stamp line): never an invented number.
  */
-const AeroHero: React.FC<AeroHeroProps> = ({ config, alt, cta, contact, social, thumbs, stat, services, rtl, noTrack }) => {
+const AeroHero: React.FC<AeroHeroProps> = ({ config, alt, cta, contact, social, thumbs, stat, statPath, services, rtl, noTrack }) => {
   const ed = useEditAttrs();
   const Arrow = rtl ? ArrowUpLeft : ArrowUpRight;
   const circles = thumbs.slice(0, 4);
@@ -73,10 +75,8 @@ const AeroHero: React.FC<AeroHeroProps> = ({ config, alt, cta, contact, social, 
               )}
               {factLabel && (
                 <div className="min-w-0 leading-tight text-light-text dark:text-dark-text">
-                  {fact && <div className="text-lg md:text-xl font-semibold" dir="auto">{fact}</div>}
-                  <div className="text-sm md:text-base text-light-text/80 dark:text-dark-text/80">
-                    {stat ? factLabel : <EditText path="components.hero.stamp">{factLabel}</EditText>}
-                  </div>
+                  {fact && <div {...ed(statPath && `${statPath}.value`)} className="text-lg md:text-xl font-semibold" dir="auto">{fact}</div>}
+                  <div {...ed(stat ? statPath && `${statPath}.label` : 'components.hero.stamp')} className="text-sm md:text-base text-light-text/80 dark:text-dark-text/80">{factLabel}</div>
                 </div>
               )}
             </div>

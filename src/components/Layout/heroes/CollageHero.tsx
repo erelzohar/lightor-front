@@ -32,6 +32,8 @@ interface CollageHeroProps {
   /** The gallery's pictures: the collage's other two frames. */
   thumbs: string[];
   stats: HeroStat[];
+  /** Where the figures live, for the site editor. */
+  statsPath?: string;
   item: Variants;
   container: Variants;
 }
@@ -42,7 +44,7 @@ interface CollageHeroProps {
  * The frames are the hero picture and the gallery's first two; the numbers are
  * the owner's own (stats that survived blockCopy), else the social links.
  */
-const CollageHero: React.FC<CollageHeroProps> = ({ config, alt, actions, social, thumbs, stats, item, container }) => {
+const CollageHero: React.FC<CollageHeroProps> = ({ config, alt, actions, social, thumbs, stats, statsPath, item, container }) => {
   const ed = useEditAttrs();
   const still = useStill();
   const pictures = [config.heroImageSrc, ...thumbs.filter((src) => src !== config.heroImageSrc)].filter(Boolean).slice(0, 3);
@@ -68,8 +70,8 @@ const CollageHero: React.FC<CollageHeroProps> = ({ config, alt, actions, social,
                     <Icon className="w-5 h-5" aria-hidden="true" />
                   </span>
                   <div>
-                    <p className="text-xl font-bold text-light-text dark:text-dark-text" dir="auto">{stat.value}</p>
-                    <p className="text-sm text-light-text/80 dark:text-dark-text/80">{stat.label}</p>
+                    <p {...ed(statsPath && `${statsPath}.${i}.value`)} className="text-xl font-bold text-light-text dark:text-dark-text" dir="auto">{stat.value}</p>
+                    <p {...ed(statsPath && `${statsPath}.${i}.label`)} className="text-sm text-light-text/80 dark:text-dark-text/80">{stat.label}</p>
                   </div>
                 </div>
               );
@@ -78,7 +80,8 @@ const CollageHero: React.FC<CollageHeroProps> = ({ config, alt, actions, social,
         ) : <div className="mt-8">{social}</div>}
       </motion.div>
 
-      <motion.div className="relative h-[22rem] sm:h-[31rem] lg:h-[35rem] w-full max-w-xl mx-auto" variants={container}>
+      {/* On a phone the pictures lead, as in every other hero with an image. */}
+      <motion.div className="relative order-first lg:order-none h-[22rem] sm:h-[31rem] lg:h-[35rem] w-full max-w-xl mx-auto" variants={container}>
         {SHAPES.map((shape, i) => (
           <span key={i} className={`absolute bg-primary/15 dark:bg-primary-dark/20 ${shape} ${still ? '' : 'lt-float'}`} style={{ animationDelay: `${-i * 1.1}s` }} aria-hidden="true" />
         ))}

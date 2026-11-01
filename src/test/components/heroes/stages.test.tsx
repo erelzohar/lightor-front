@@ -137,6 +137,12 @@ describe('the aero hero', () => {
     expect(screen.getByText('שנות ניסיון')).toBeInTheDocument();
   });
 
+  it('lets the owner edit the figure, in the field the editor already knows', () => {
+    const { container } = render(<EditContext.Provider value={{ editing: true }}>{hero('aero', { stats: STATS, statsPath: 'blocks.h.props.items' })}</EditContext.Provider>);
+    expect(container.querySelector('[data-lt-edit="blocks.h.props.items.0.value"]')?.textContent).toBe('12');
+    expect(container.querySelector('[data-lt-edit="blocks.h.props.items.0.label"]')?.textContent).toBe('שנות ניסיון');
+  });
+
   it('falls to the stamp line with no figures', () => {
     render(hero('aero', { thumbs: ['a.jpg', 'b.jpg'] }));
     expect(screen.getByText('אפייה טרייה מדי בוקר')).toBeInTheDocument();
