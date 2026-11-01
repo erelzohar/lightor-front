@@ -104,6 +104,22 @@ describe('site assistant (LT-302)', () => {
     schedule.remove();
   });
 
+  it('shows Lighty thinking in words, not dots, until the answer is back (LT-524)', async () => {
+    let answer: (value: { ok: true; reply: string }) => void = () => {};
+    mocks.ask.mockReturnValue(new Promise((resolve) => { answer = resolve; }));
+    render(<SiteLighty businessName="Dana Studio" leadsSite={false} />);
+    openChat();
+    ask('Hours?');
+
+    const line = await screen.findByTestId('site-lighty-thinking');
+    expect(line).toHaveTextContent('assistant.thinking');
+    expect(line).toHaveClass('thinking-shimmer');
+    expect(document.querySelector('.animate-bounce')).toBeNull();
+
+    await act(async () => { answer({ ok: true, reply: 'Sunday to Thursday.' }); });
+    expect(screen.queryByTestId('site-lighty-thinking')).toBeNull();
+  });
+
   it('asks for a new pass once when the server refuses an expired one', async () => {
     mocks.ask
       .mockResolvedValueOnce({ ok: false, status: 401 })

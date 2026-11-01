@@ -379,10 +379,8 @@ export default function SiteLighty({ businessName, leadsSite, phone, demo = fals
                     </div>
                   ))}
                   {busy && (
-                    <div className="w-fit rounded-2xl px-3 py-2.5 bg-black/5 dark:bg-white/10 flex gap-1" role="status" aria-label={t('assistant.typing')}>
-                      {[0, 1, 2].map((i) => (
-                        <span key={i} className="block w-1.5 h-1.5 rounded-full bg-current opacity-60 animate-bounce" style={{ animationDelay: `${i * 0.15}s` }} />
-                      ))}
+                    <div className="w-fit rounded-2xl rounded-ss-sm px-3 py-2 bg-black/5 dark:bg-white/10">
+                      <span className="thinking-shimmer font-medium" role="status" data-testid="site-lighty-thinking">{t('assistant.thinking')}</span>
                     </div>
                   )}
                   {(demo ? offered.length > 0 : !turns.length) && !busy && (

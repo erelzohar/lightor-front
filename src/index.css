@@ -464,3 +464,36 @@ html .lt-ui h3 { font-size: 1.0625rem; line-height: 1.4; }
 .text-light-text\/90 { color: rgb(var(--color-light-text) / var(--mt-l-90, 0.9)); }
 .text-dark-text\/90 { color: rgb(var(--color-dark-text) / var(--mt-d-90, 0.9)); }
 .dark .dark\:text-dark-text\/90 { color: rgb(var(--color-dark-text) / var(--mt-d-90, 0.9)); }
+
+/* LT-524: Lighty thinking is a line of words with a light passing over them,
+   not three dots. A mask, so the words keep the colour of wherever they sit;
+   the light runs the way the language reads. Plain words under reduced motion
+   and the accessibility menu's stop switch. */
+.thinking-shimmer {
+  display: inline-block;
+  padding-block: 0.1em;
+}
+@media (prefers-reduced-motion: no-preference) {
+  html:not(.a11y-still) .thinking-shimmer {
+    -webkit-mask-image: linear-gradient(90deg, rgba(0, 0, 0, 0.5) 42%, #000 50%, rgba(0, 0, 0, 0.5) 58%);
+    mask-image: linear-gradient(90deg, rgba(0, 0, 0, 0.5) 42%, #000 50%, rgba(0, 0, 0, 0.5) 58%);
+    -webkit-mask-size: 250% 100%;
+    mask-size: 250% 100%;
+    -webkit-mask-repeat: no-repeat;
+    mask-repeat: no-repeat;
+    animation: thinking-shimmer 1s ease-in-out infinite;
+  }
+  html[dir='rtl']:not(.a11y-still) .thinking-shimmer {
+    animation-direction: reverse;
+  }
+}
+@keyframes thinking-shimmer {
+  from {
+    -webkit-mask-position: 100% 0;
+    mask-position: 100% 0;
+  }
+  to {
+    -webkit-mask-position: 0 0;
+    mask-position: 0 0;
+  }
+}
