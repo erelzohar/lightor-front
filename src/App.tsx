@@ -351,6 +351,24 @@ function MainContent() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // LT-513: framed, a hand scrolling in here ends the signup's scroll hint.
+  // Hands only, so the site's own scrolling to a section does not count.
+  useEffect(() => {
+    if (window.self === window.top) return;
+    const options = { passive: true, once: true } as const;
+    const tell = () => {
+      window.removeEventListener('wheel', tell);
+      window.removeEventListener('touchmove', tell);
+      postToEditor({ type: 'LT_USER_SCROLL' }, null);
+    };
+    window.addEventListener('wheel', tell, options);
+    window.addEventListener('touchmove', tell, options);
+    return () => {
+      window.removeEventListener('wheel', tell);
+      window.removeEventListener('touchmove', tell);
+    };
+  }, []);
+
   useTheme(config, isPreview);
   // LT-346: <html lang> names the owner's language, whatever the visitor's
   // menu language; the menu's choices apply only where the menu is shown.

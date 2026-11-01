@@ -71,6 +71,8 @@ export interface LayoutBlock {
 
 export type SiteToEditor =
   | { type: 'LT_READY' }
+  /** LT-513: the visitor scrolled in the frame, by hand: the signup's scroll hint can go. */
+  | { type: 'LT_USER_SCROLL' }
   | { type: 'LT_LAYOUT'; blocks: LayoutBlock[] }
   | { type: 'LT_SELECT'; kind: EditKind; path: string; section: string | null; sectionType: string | null; count: number }
   | {
