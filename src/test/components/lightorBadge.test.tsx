@@ -24,14 +24,14 @@ describe('LightorBadge', () => {
 
   it("keeps a strip at the page's end for the badge to land on", () => {
     render(<LightorBadge />);
-    expect(badge()!.parentElement!.previousElementSibling).toHaveClass('pb-16');
+    expect(badge()!.parentElement!.previousElementSibling).toHaveClass('pb-24');
   });
 
   it('puts the statement link in the strip, above the badge, on a page without a footer', () => {
     render(<LightorBadge statementLink />);
     const strip = badge()!.parentElement!.previousElementSibling!;
     expect(strip).toHaveTextContent('a11y.menu.statement');
-    expect(strip).toHaveClass('pt-3', 'pb-16');
+    expect(strip).toHaveClass('pt-3', 'pb-24');
   });
 
   it('shows no badge on a paid site: the statement link alone, or nothing', () => {
