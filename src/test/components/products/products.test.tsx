@@ -125,6 +125,22 @@ describe('the section', () => {
     expect(document.querySelector('a[href="/products/p-3"]')).toBeTruthy();
   });
 
+  it('spaces the plates with a delay: Safari draws an iterationStart all on the first plate', () => {
+    const width = vi.spyOn(Element.prototype, 'clientWidth', 'get').mockReturnValue(390);
+    const options: KeyframeAnimationOptions[] = [];
+    const proto = Element.prototype as unknown as { animate?: unknown };
+    const original = proto.animate;
+    proto.animate = (_: unknown, o: KeyframeAnimationOptions) => {
+      options.push(o);
+      return { pause: vi.fn(), play: vi.fn(), cancel: vi.fn(), currentTime: 0 };
+    };
+    draw(<Products summary={{ total: 4, pages: true, items: many(4) }} layout="belt" />);
+    proto.animate = original;
+    width.mockRestore();
+    expect(new Set(options.map((o) => o.delay)).size).toBe(4);
+    expect(options.every((o) => !('iterationStart' in o))).toBe(true);
+  });
+
   it('the belt has a button that stops it (moving content must be stoppable)', () => {
     draw(<Products summary={{ total: 6, pages: true, items: many(6) }} layout="belt" />);
     const button = screen.getByLabelText('products.pause');

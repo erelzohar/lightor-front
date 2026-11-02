@@ -68,7 +68,8 @@ const ProductBelt: React.FC<{ items: ProductCard[]; pages: boolean; currency?: s
       // Where it stands with no animation at all (a test, the "still" setting's first frame).
       el.style.transform = frames[Math.round(start * (frames.length - 1))].transform;
       if (typeof el.animate !== 'function') return;
-      const anim = el.animate(frames, { duration, iterations: Infinity, easing: 'linear', iterationStart: start });
+      // A delay, not `iterationStart`: Safari's compositor ignores that one and draws every plate on the first.
+      const anim = el.animate(frames, { duration, iterations: Infinity, easing: 'linear', delay: -start * duration });
       anim.pause();
       anim.currentTime = duration * START_LAPS;
       list.push(anim);
