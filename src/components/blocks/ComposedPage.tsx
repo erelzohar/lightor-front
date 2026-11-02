@@ -1,7 +1,7 @@
 import { Fragment, cloneElement, isValidElement, type ReactElement, type ReactNode } from 'react';
 import type { WebsiteConfig } from '../../models/WebsiteConfig';
 import { takesBookings } from '../../services/siteMode';
-import { productsHavePage } from '../../models/Product';
+import { productPictures, productsHavePage } from '../../models/Product';
 import type { Block } from '../../models/Block';
 import type { SiteJitter } from '../../services/seed';
 import { SPACING_CLASS } from '../../services/artDirection';
@@ -83,7 +83,9 @@ const ComposedPage: React.FC<ComposedPageProps> = ({ config, jitter, isPreview, 
     const v = b.variant;
     const p = b.props ?? {};
     switch (b.type) {
-      case 'hero':
+      case 'hero': {
+        // LT-554: a products site has no gallery: the heroes with more than one picture take the products'.
+        const gallery = (c?.portfolio?.items ?? []).map((item) => item.url).filter(Boolean);
         return c?.hero ? (
           <Hero
             config={c.hero}
@@ -99,11 +101,13 @@ const ComposedPage: React.FC<ComposedPageProps> = ({ config, jitter, isPreview, 
             palette={config.pallete}
             design={v ? { ...design, heroLayout: v as HeroLayout } : design}
             jitter={{ posterAlt: jitter.posterAlt, flipPosterSplit: jitter.flipPosterSplit, decorStart: jitter.decorStart }}
-            thumbs={(c.portfolio?.items ?? []).map((item) => item.url).filter(Boolean)}
+            thumbs={gallery.length ? gallery : productPictures(config.products)}
+            thumbsOfProducts={!gallery.length}
             stats={(Array.isArray(p.items) ? p.items : statsBlock?.props?.items ?? []) as StatItem[]}
             statsPath={`blocks.${Array.isArray(p.items) ? b.id : statsBlock?.id}.props.items`}
           />
         ) : null;
+      }
       case 'intro':
       case 'features':
       case 'visit': {

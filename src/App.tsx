@@ -30,7 +30,7 @@ import { takesBookings } from './services/siteMode';
 import { sitePageOf } from './services/sitePages';
 import { SiteNavContext } from './services/siteNav';
 import { ProductInquiryContext, type ProductInquiry } from './services/productAction';
-import { productsHavePage } from './models/Product';
+import { draftProducts, productsHavePage } from './models/Product';
 import Products from './components/products/Products';
 import ProductPage from './components/products/ProductPage';
 import ProductsPage from './components/products/ProductsPage';
@@ -128,6 +128,8 @@ function MainContent() {
   // LT-545: the editor's page switcher moves the frame, from a listener registered once.
   const navigateRef = useRef(navigate);
   useEffect(() => { navigateRef.current = navigate; }, [navigate]);
+  const pathRef = useRef(location.pathname);
+  useEffect(() => { pathRef.current = location.pathname; }, [location.pathname]);
   // LT-540: the product the visitor is asking about, for the contact form.
   const [inquiry, setInquiry] = useState<ProductInquiry | null>(null);
   const inquiryState = useMemo(() => ({ inquiry, setInquiry }), [inquiry]);
@@ -246,6 +248,8 @@ function MainContent() {
         setLoading(false);
         setLanguageRef.current(cfg.defaultLanguage as Language);
         if (event.data.generate) {
+          // LT-554: a new build starts at its home page, whichever product of the last was open.
+          if (pathRef.current !== '/') navigateRef.current('/');
           // Start the show from the top — the previous preview may be scrolled.
           window.scrollTo({ top: 0, behavior: 'instant' as ScrollBehavior });
           setGenerateSeq((n) => n + 1);
@@ -641,6 +645,7 @@ function MainContent() {
               cta={config.components?.products?.cta}
               layout={config.design?.productPageLayout}
               card={config.design?.productCard}
+              drafts={isPreview ? draftProducts(config.products) : undefined}
               contact={config.components?.contact ? (
                 <Contact
                   config={config.components.contact}
@@ -666,6 +671,7 @@ function MainContent() {
               card={config.design?.productCard}
               cta={config.components?.products?.cta}
               currency={config.currency}
+              drafts={isPreview ? draftProducts(config.products) : undefined}
             />
           )}
         </main>

@@ -170,9 +170,33 @@ describe('the collage hero', () => {
     expect(srcs[2]).toContain('b.jpg');
   });
 
-  it('stands on the hero picture alone when there is no gallery', () => {
+  it('stands on the hero picture alone when there is no gallery, in a box only as tall as it (LT-554)', () => {
     const { container } = render(hero('collage'));
     expect(container.querySelectorAll('img')).toHaveLength(1);
+    const box = container.querySelector('[data-pictures]');
+    expect(box?.getAttribute('data-pictures')).toBe('1');
+    // Erel's build: one picture atop a box kept for three, the title far below it.
+    expect(box?.className).not.toContain('h-[31rem]');
+    expect(box?.className).toContain('sm:h-80');
+  });
+
+  it('stands two pictures across in a box for two (LT-554)', () => {
+    const { container } = render(hero('collage', { thumbs: ['a.jpg'] }));
+    expect(container.querySelectorAll('img')).toHaveLength(2);
+    const box = container.querySelector('[data-pictures]');
+    expect(box?.getAttribute('data-pictures')).toBe('2');
+    expect(box?.className).toContain('sm:h-[25rem]');
+  });
+
+  it("the products' pictures are no gallery's in the editor (LT-554)", () => {
+    const edited = (props: Partial<React.ComponentProps<typeof Hero>>) => {
+      const { container, unmount } = render(<EditContext.Provider value={{ editing: true }}>{hero('collage', { thumbs: ['a.jpg', 'b.jpg'], ...props })}</EditContext.Provider>);
+      const paths = [...container.querySelectorAll('img')].map((i) => i.getAttribute('data-lt-edit'));
+      unmount();
+      return paths;
+    };
+    expect(edited({})).toEqual(['components.hero.heroImageSrc', 'components.portfolio.items.0.url', 'components.portfolio.items.1.url']);
+    expect(edited({ thumbsOfProducts: true })).toEqual(['components.hero.heroImageSrc', null, null]);
   });
 
   it('holds its shapes still for "stop animations"', () => {

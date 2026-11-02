@@ -109,6 +109,8 @@ interface HeroProps {
   jitter?: { posterAlt: boolean; flipPosterSplit: boolean; decorStart: boolean };
   /** LT-531: the gallery's pictures, for the heroes that show more than one. */
   thumbs?: string[];
+  /** LT-554: the thumbs are the products' pictures (a site with no gallery): the editor has no field for them here. */
+  thumbsOfProducts?: boolean;
   /** LT-531: the owner's own figures (blockCopy), for the heroes with a fact row. */
   stats?: HeroStat[];
   /** LT-531: where those figures live, for the site editor. */
@@ -145,7 +147,7 @@ const radiusClassMap: Record<BorderRadius, string> = {
   full: 'rounded-full',
 };
 
-const Hero: React.FC<HeroProps> = ({ config, social, phone, isContactVisible, appointmentTypes, conversion, products, isPreview, palette, design, jitter, businessName, logo, thumbs = [], stats = [], statsPath, belowTone }) => {
+const Hero: React.FC<HeroProps> = ({ config, social, phone, isContactVisible, appointmentTypes, conversion, products, isPreview, palette, design, jitter, businessName, logo, thumbs = [], thumbsOfProducts = false, stats = [], statsPath, belowTone }) => {
   // LT-496: the heritage mark's logo failed to load: the ornament stands instead.
   const [markFailed, setMarkFailed] = useState(false);
   const ed = useEditAttrs();
@@ -542,7 +544,7 @@ const Hero: React.FC<HeroProps> = ({ config, social, phone, isContactVisible, ap
       return <AeroHero config={config} alt={businessName || ''} cta={cta} contact={renderContactButton(false)} social={renderSocialRow('')} thumbs={thumbs} stat={stats[0]} statPath={statsPath && `${statsPath}.0`} services={tickerItems} rtl={rtl} noTrack={noTrack} />;
     }
     if (heroLayout === 'collage') {
-      return <CollageHero config={config} alt={businessName || ''} actions={buttons} social={renderSocialRow('justify-center lg:justify-start')} thumbs={thumbs} stats={stats} statsPath={statsPath} item={itemVariants} container={containerVariants} />;
+      return <CollageHero config={config} alt={businessName || ''} actions={buttons} social={renderSocialRow('justify-center lg:justify-start')} thumbs={thumbs} thumbsPath={thumbsOfProducts ? undefined : 'components.portfolio.items'} stats={stats} statsPath={statsPath} item={itemVariants} container={containerVariants} />;
     }
 
     // ── Centered: image top-center, text below ────────────────────────────

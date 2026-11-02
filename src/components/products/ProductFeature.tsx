@@ -4,8 +4,7 @@ import { Price, ProductActions, ProductPictures } from './ProductParts';
 
 /**
  * LT-540: a site with one product: the home page is its page (from a 21st.dev
- * reference): the words on one side and the pictures on the other. The free
- * plan's one product lives here too.
+ * reference): the words on one side and the pictures on the other.
  */
 const ProductFeature: React.FC<{ product: Product; currency?: string; phone?: string; cta?: string }> = ({ product, currency, phone, cta }) => (
   <div className={`mx-auto grid max-w-6xl items-center gap-8 md:gap-14 ${product.images.length ? 'md:grid-cols-2' : ''}`} data-testid="products-feature">

@@ -17,6 +17,8 @@ interface Props {
   card?: ProductCardStyle;
   cta?: string;
   currency?: string;
+  /** LT-554: the wizard's sample products, in its preview: the list is them. */
+  drafts?: ProductCard[];
 }
 
 /** The moving layouts suit a handful of products; a whole catalogue sits in calm tiles. */
@@ -26,13 +28,14 @@ const STILL_LAYOUTS: ProductsLayout[] = ['well', 'swap', 'bento', 'list'];
  * LT-540: `/products`: everything the site shows, filtered by category. It is
  * reached past what the home page holds, and in the site's own frame.
  */
-const ProductsPage: React.FC<Props> = ({ businessName, title, description, layout = 'well', card, cta, currency }) => {
+const ProductsPage: React.FC<Props> = ({ businessName, title, description, layout = 'well', card, cta, currency, drafts }) => {
   const { t } = useLanguage();
   const { go } = useSiteNav();
-  const [items, setItems] = useState<ProductCard[] | null>(() => {
+  const [fetched, setItems] = useState<ProductCard[] | null>(() => {
     const inline = readInlinePage('products');
     return Array.isArray(inline) ? inline.map(parseProduct).filter((p): p is NonNullable<typeof p> => !!p) : null;
   });
+  const items = drafts ?? fetched;
   const [failed, setFailed] = useState(false);
   const [category, setCategory] = useState<string | null>(null);
   const heading = title?.trim() || t('products.title');

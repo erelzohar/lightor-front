@@ -29,6 +29,8 @@ interface Props {
   /** LT-545: the page's layout, and the card of the products under it. */
   layout?: ProductPageLayout;
   card?: ProductCardStyle;
+  /** LT-554: the wizard's sample products, in its preview: the page is drawn from them. */
+  drafts?: Product[];
 }
 
 const LAYOUTS: ProductPageLayout[] = ['side', 'hero', 'gallery'];
@@ -85,6 +87,15 @@ const fromInline = (slug: string): Loaded | null => {
   return { product, related: (raw?.related ?? []).map(parseProduct).filter((p): p is Product => !!p) };
 };
 
+/** The server's choice of more products, made from the drafts: the same category first, four at most. */
+const fromDrafts = (slug: string, drafts: Product[]): Loaded | null => {
+  const product = drafts.find((p) => p.slug === slug);
+  if (!product) return null;
+  const others = drafts.filter((p) => p.slug !== slug);
+  const same = others.filter((p) => !product.category || p.category === product.category);
+  return { product, related: (same.length ? same : others).slice(0, 4) };
+};
+
 /**
  * LT-540: `/products/<slug>` (from Erel's product page): the pictures beside the
  * name, price, button and words, then who sells it and a few more of theirs.
@@ -93,27 +104,31 @@ const fromInline = (slug: string): Loaded | null => {
  * heart, the star rating and the shipping line stay out: no fact here is one the
  * owner did not give.
  */
-const ProductPage: React.FC<Props> = ({ slug, businessName, logo, phone, currency, listTitle, cta, contact, layout, card }) => {
+const ProductPage: React.FC<Props> = ({ slug, businessName, logo, phone, currency, listTitle, cta, contact, layout, card, drafts }) => {
   const { t, language } = useLanguage();
   const { go } = useSiteNav();
   const { hash } = useLocation();
   const { setInquiry } = useProductInquiry();
-  const [loaded, setLoaded] = useState<Loaded | null | 'missing'>(() => fromInline(slug));
+  const [loaded, setLoaded] = useState<Loaded | null | 'missing'>(() => fromInline(slug) ?? (drafts ? fromDrafts(slug, drafts) ?? 'missing' : null));
   const [copied, setCopied] = useState(false);
   const Sep = language === 'he' || language === 'ar' ? ChevronLeft : ChevronRight;
   const shape: ProductPageLayout = LAYOUTS.includes(layout as ProductPageLayout) ? (layout as ProductPageLayout) : 'side';
 
+  // Another product: nothing chosen in the form yet. Not when the same page is
+  // drawn again (the wizard's pictures arriving), or the choice would be lost.
+  useEffect(() => { setInquiry(null); }, [slug, setInquiry]);
+
   useEffect(() => {
-    setInquiry(null);
     const inline = fromInline(slug);
     if (inline) { setLoaded(inline); return; }
+    if (drafts) { setLoaded(fromDrafts(slug, drafts) ?? 'missing'); return; }
     setLoaded(null);
     let stale = false;
     WebConfigService.getInstance().getProduct(window.location.hostname.split('.')[0], slug)
       .then((result) => { if (!stale) setLoaded(result ?? 'missing'); })
       .catch(() => { if (!stale) setLoaded('missing'); });
     return () => { stale = true; };
-  }, [slug, setInquiry]);
+  }, [slug, drafts]);
 
   const product = loaded && loaded !== 'missing' ? loaded.product : null;
 

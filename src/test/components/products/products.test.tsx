@@ -3,8 +3,10 @@ import { act, fireEvent, render, screen, within } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import Products, { tilesFor } from '../../../components/products/Products';
 import ProductPage from '../../../components/products/ProductPage';
+import ProductsPage from '../../../components/products/ProductsPage';
 import { SwapTiles, WellTiles } from '../../../components/products/ProductTiles';
-import { parseProducts, productPrice, productsHavePage, categoriesOf, type Product } from '../../../models/Product';
+import { draftProducts, parseProducts, productPictures, productPrice, productsHavePage, categoriesOf, type Product } from '../../../models/Product';
+import WebConfigService from '../../../services/WebConfigService';
 import { ProductInquiryContext } from '../../../services/productAction';
 import { SiteNavContext } from '../../../services/siteNav';
 import { mainCta } from '../../../services/siteMode';
@@ -13,6 +15,8 @@ import { navLinksFromBlocks } from '../../../services/navLinks';
 vi.mock('../../../contexts/LanguageContext', () => ({
   useLanguage: () => ({ t: (k: string, o?: Record<string, unknown>) => (o ? `${k}:${JSON.stringify(o)}` : k), language: 'he' }),
 }));
+// Its entrance animation needs the browser's own animations, which jsdom has not.
+vi.mock('../../../components/NotFound', () => ({ default: () => <p>not found</p> }));
 
 const product = (i: number, extra: Partial<Product> = {}): Product => ({
   id: `id${i}`, slug: `p-${i}`, name: `Product ${i}`, price: 12000 + i * 100, images: [{ url: `a${i}.webp` }, { url: `b${i}.webp` }], details: [], ...extra,
@@ -314,5 +318,61 @@ describe("a product's page (LT-545)", () => {
     } finally {
       vi.useRealTimers();
     }
+  });
+});
+
+describe("the wizard's sample products in its preview (LT-554)", () => {
+  const draft = (i: number, extra: Partial<Product> = {}): Product => product(i, { id: `draft-${i}`, slug: `draft-${i}`, ...extra });
+  const drafts = [draft(0), draft(1, { images: [] }), draft(2)];
+  afterEach(() => { vi.restoreAllMocks(); });
+
+  it('are the products a preview draws its pages from, and only they', () => {
+    expect(draftProducts({ total: 3, pages: true, items: drafts })).toBe(drafts);
+    // A saved site's products live at their own addresses, with more than the config carries.
+    expect(draftProducts({ total: 2, pages: true, items: [draft(0), product(1)] })).toBeUndefined();
+    expect(draftProducts({ total: 0, pages: false, items: [] })).toBeUndefined();
+    expect(draftProducts(undefined)).toBeUndefined();
+  });
+
+  it("lend the hero their first pictures, in the owner's order", () => {
+    expect(productPictures({ total: 3, pages: true, items: drafts })).toEqual(['a0.webp', 'a2.webp']);
+    expect(productPictures(undefined)).toEqual([]);
+  });
+
+  const at = (slug: string) => {
+    const fetch = vi.spyOn(WebConfigService.prototype, 'getProduct');
+    render(
+      <MemoryRouter initialEntries={[`/products/${slug}`]}>
+        <ProductInquiryContext.Provider value={{ inquiry: null, setInquiry: vi.fn() }}>
+          <ProductPage slug={slug} businessName="Shop" drafts={drafts} />
+        </ProductInquiryContext.Provider>
+      </MemoryRouter>
+    );
+    return fetch;
+  };
+
+  it("open a product's page from the preview itself, with the others under it, asking no server", () => {
+    const fetch = at('draft-1');
+    expect(screen.getByRole('heading', { level: 1 }).textContent).toBe('Product 1');
+    expect(screen.getByText('Product 0')).toBeTruthy();
+    expect(screen.getByText('Product 2')).toBeTruthy();
+    expect(fetch).not.toHaveBeenCalled();
+  });
+
+  it('a product the preview does not hold is not found, and nothing is fetched', () => {
+    const fetch = at('draft-9');
+    expect(screen.getByText('not found')).toBeTruthy();
+    expect(fetch).not.toHaveBeenCalled();
+  });
+
+  it('list every one of them on the products page, asking no server', () => {
+    const fetch = vi.spyOn(WebConfigService.prototype, 'getProducts');
+    render(
+      <MemoryRouter initialEntries={['/products']}>
+        <ProductsPage businessName="Shop" drafts={drafts} />
+      </MemoryRouter>
+    );
+    for (const name of ['Product 0', 'Product 1', 'Product 2']) expect(screen.getAllByText(name).length).toBeGreaterThan(0);
+    expect(fetch).not.toHaveBeenCalled();
   });
 });

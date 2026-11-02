@@ -30,7 +30,7 @@ export interface Product extends ProductCard {
 export interface ProductsSummary {
   /** How many the site shows. Past what `items` holds, the rest are on `/products`. */
   total: number;
-  /** Products have addresses of their own (a site with one, or on the free plan, has none). */
+  /** Products have addresses of their own (a site with one has none). */
   pages: boolean;
   items: Product[];
 }
@@ -74,6 +74,18 @@ export const productsHavePage = (summary: ProductsSummary | undefined): boolean 
   !!summary?.pages && summary.total > summary.items.length;
 
 export const productPath = (product: Pick<ProductCard, 'slug'>): string => `${PRODUCTS_PATH}/${product.slug}`;
+
+/**
+ * LT-554: the wizard's sample products (`draft-0`...), before the site exists.
+ * Its preview has no site to fetch their pages from, and the config holds them
+ * whole, so their pages are drawn from it.
+ */
+export const draftProducts = (summary: ProductsSummary | undefined): Product[] | undefined =>
+  summary?.items.length && summary.items.every((p) => p.id.startsWith('draft-')) ? summary.items : undefined;
+
+/** LT-554: each product's first picture, in the owner's order: the hero's frames on a site with no gallery. */
+export const productPictures = (summary: ProductsSummary | undefined): string[] =>
+  (summary?.items ?? []).map((p) => p.images[0]?.url).filter((url): url is string => !!url);
 
 const SYMBOL: Record<Currency, string> = { ILS: '₪', USD: '$', EUR: '€', GBP: '£' };
 

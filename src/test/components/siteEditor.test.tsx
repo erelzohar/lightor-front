@@ -334,6 +334,24 @@ describe('the site editor bridge (LT-243)', () => {
     await waitFor(() => expect(parentPost).toHaveBeenCalledWith({ type: 'LT_PAGE', path: '/products' }, DASHBOARD));
   });
 
+  it("the wizard's preview opens a sample product's page, and a new build starts at home (LT-554)", async () => {
+    const { container } = renderSite();
+    const REGISTER = 'https://register.lightor.app';
+    const drafts = (names: string[]) => ({ total: names.length, pages: true, items: names.map((name, i) => ({ id: `draft-${i}`, slug: `draft-${i}`, name, images: [], details: [] })) });
+    await post({ type: 'PREVIEW_DATA', config: config({ catalog: true, conversion: 'lead', products: drafts(['Ring', 'Chain']) }) }, REGISTER);
+    const tile = await waitFor(() => {
+      const link = container.querySelector<HTMLAnchorElement>('a[href="/products/draft-1"]');
+      expect(link).not.toBeNull();
+      return link!;
+    });
+    await act(async () => { tile.click(); });
+    await waitFor(() => expect(screen.getByRole('heading', { level: 1 }).textContent).toBe('Chain'));
+
+    await post({ type: 'PREVIEW_DATA', config: config({ catalog: true, conversion: 'lead', products: drafts(['Mug']) }), generate: true }, REGISTER);
+    await waitFor(() => expect(screen.queryByRole('heading', { level: 1, name: 'Chain' })).toBeNull());
+    expect(screen.getAllByText('Sharp cuts').length).toBeGreaterThan(0);
+  });
+
   it('ignores editor messages from an untrusted origin', async () => {
     const { container } = renderSite();
     await post({ type: 'PREVIEW_DATA', config: config() });
