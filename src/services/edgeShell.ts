@@ -50,6 +50,21 @@ export const readInlineConfig = (doc: Document, hostname: string): InlineConfig 
   };
 };
 
+/** LT-540: the page's own data, inlined by the edge beside the config. */
+export const INLINE_PAGE_ID = 'lightor-page';
+
+/** The inlined data of this kind of page, once: a later page in the same visit reads the API. */
+export const readInlinePage = (kind: 'products' | 'product'): unknown => {
+  const element = document.getElementById(INLINE_PAGE_ID);
+  if (!element?.textContent) return null;
+  try {
+    const parsed = JSON.parse(element.textContent) as { kind?: string; data?: unknown };
+    return parsed.kind === kind ? parsed.data : null;
+  } catch {
+    return null;
+  }
+};
+
 /** Two parsed configs render the same page when their JSON is the same. */
 export const sameConfig = (a: unknown, b: unknown): boolean => {
   try {

@@ -7,6 +7,7 @@
     "home": "Inicio",
     "about": "Nosotros",
     "portfolio": "Portfolio",
+    "products": "Productos",
     "schedule": "Citas",
     "contact": "Contacto",
     "open_menu": "Abrir menú",
@@ -23,6 +24,7 @@
     "button": "Cerrar"
   },
   "hero": {
+    "products": "Ver los productos",
     "book": "Reservar Cita",
     "contact": "Contáctanos",
     "welcome_label": "Bienvenidos a {{name}}"
@@ -35,6 +37,32 @@
     "email": "Email",
     "hours": "Horario",
     "visit": "Visítanos"
+  },
+  "products": {
+    "title": "Nuestros productos",
+    "cta": "Me interesa",
+    "whatsapp": "Por WhatsApp",
+    "whatsappText": "Hola, me interesa {{name}}",
+    "soldOut": "Agotado",
+    "all": "Todos los productos ({{count}})",
+    "pictures": "Fotos del producto",
+    "picture": "Foto {{index}}",
+    "previous": "Anterior",
+    "next": "Siguiente",
+    "pause": "Detener el movimiento",
+    "play": "Iniciar el movimiento",
+    "pick": "Elegir un producto",
+    "more": "Detalles",
+    "empty_edit": "Aún no hay productos. Agrégalos en la página Productos.",
+    "failed": "No pudimos cargar los productos. Inténtalo de nuevo en un momento.",
+    "breadcrumbs": "Dónde estás en el sitio",
+    "categories": "Categorías",
+    "allCategories": "Todo",
+    "share": "Compartir",
+    "copied": "Enlace copiado",
+    "related": "Más productos",
+    "inquiryAbout": "Sobre: {{name}}",
+    "inquiryClear": "Quitar este producto"
   },
   "portfolio": {
     "title": "Nuestros Últimos Trabajos",

@@ -1,5 +1,6 @@
+import { useProductInquiry } from '../../services/productAction';
 import React, { useCallback, useState } from 'react';
-import { Mail, Phone, MapPin, Send, User, MessageSquare, CheckCircle, XCircle, MessageCircle } from 'lucide-react';
+import { X, Mail, Phone, MapPin, Send, User, MessageSquare, CheckCircle, XCircle, MessageCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { ContactConfig } from '../../models/ContactConfig';
@@ -151,6 +152,7 @@ const Contact: React.FC<ContactProps> = ({ config, address, contact, workingDays
   });
   const { t, language } = useLanguage();
   const { isModalOpen, setIsModalOpen, modalType, handleContactClick } = useContactHandler();
+  const { inquiry, setInquiry } = useProductInquiry();
 
   // The owner's questions (LT-197), answered like the booking form's.
   const [answers, setAnswers] = useState<Record<string, AnswerValue>>({});
@@ -270,6 +272,7 @@ const Contact: React.FC<ContactProps> = ({ config, address, contact, workingDays
           name: formData.name,
           phone: formData.phone,
           ...(message ? { message } : {}),
+          ...(inquiry ? { productId: inquiry.id } : {}),
           answers: answersForRequest(leadFields, answers),
         });
 
@@ -313,6 +316,7 @@ const Contact: React.FC<ContactProps> = ({ config, address, contact, workingDays
         setIsSuccess(false);
         setFormData({ name: '', phone: '', message: '' });
         setAnswers({});
+        setInquiry(null);
       }, 3000);
     } catch (err) {
       setError(t('schedule.genericError')); // LT-169: 'schedule.error' is an object, the key itself was shown
@@ -444,6 +448,15 @@ const Contact: React.FC<ContactProps> = ({ config, address, contact, workingDays
       variants={itemVariants}
       aria-labelledby="contact-form-title"
     >
+      {/* LT-540: the product the visitor came from, which travels with the form. */}
+      {inquiry && (
+        <p className="flex items-center justify-between gap-3 rounded-design-sm bg-primary/10 dark:bg-primary-dark/15 px-4 py-3 text-light-text dark:text-dark-text" data-testid="contact-product">
+          <span className="min-w-0 break-words">{t('products.inquiryAbout', { name: inquiry.name })}</span>
+          <button type="button" onClick={() => setInquiry(null)} aria-label={t('products.inquiryClear')} className="shrink-0 rounded-full p-1 hover:bg-black/10 dark:hover:bg-white/10">
+            <X className="h-4 w-4" aria-hidden="true" />
+          </button>
+        </p>
+      )}
       {/* LT-484: read by screen readers in the site's language, not English. */}
       <h3 id="contact-form-title" className="sr-only">{t('contact.form.title')}</h3>
 

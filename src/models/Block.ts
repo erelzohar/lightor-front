@@ -8,7 +8,7 @@ export const BLOCK_TYPES = [
   'hero', 'ticker', 'announcement',
   'manifesto', 'intro', 'stats', 'pullQuote', 'process',
   'features', 'ledger', 'priceCards', 'hours', 'faq', 'visit',
-  'gallery', 'photoPair', 'interlude', 'beforeAfter', 'mapStrip', 'logoMark',
+  'gallery', 'products', 'photoPair', 'interlude', 'beforeAfter', 'mapStrip', 'logoMark',
   'quote', 'bookingBand', 'schedule', 'contact', 'social', 'footer',
 ] as const;
 export type BlockType = typeof BLOCK_TYPES[number];

@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useMemo, useCallback, Fragment, cloneElement, isValidElement, type ReactNode, type ReactElement } from 'react';
-import { Routes, Route, useLocation } from 'react-router-dom';
+import { Routes, Route, useLocation, useNavigate, useNavigationType } from 'react-router-dom';
 import { MotionConfig } from 'framer-motion';
 
 // Components & Services
@@ -28,13 +28,19 @@ import ServicesLedger from './components/Layout/ServicesLedger';
 import BookingBand from './components/Layout/BookingBand';
 import { takesBookings } from './services/siteMode';
 import { sitePageOf } from './services/sitePages';
+import { SiteNavContext } from './services/siteNav';
+import { ProductInquiryContext, type ProductInquiry } from './services/productAction';
+import { productsHavePage } from './models/Product';
+import Products from './components/products/Products';
+import ProductPage from './components/products/ProductPage';
+import ProductsPage from './components/products/ProductsPage';
 import { pickBandSlot } from './services/bandSlot';
 
 // Contexts & Hooks
 import { useLanguage, Language } from './contexts/LanguageContext';
 import { WebsiteConfig } from './models/WebsiteConfig';
 import { keyPreviewQuestions } from './models/BookingField';
-import { DesignConfig } from './models/DesignConfig';
+import { DesignConfig, type FooterLayout } from './models/DesignConfig';
 import WebConfigService from './services/WebConfigService';
 import { readInlineConfig, sameConfig, languageAfterRefresh } from './services/edgeShell';
 import { getSiteJitter, createRng } from './services/seed';
@@ -113,7 +119,20 @@ const postToEditor = (message: SiteToEditor, origin: string | null) => {
 
 function MainContent() {
   // LT-539: every address of the site runs through here, one shell around its pages.
-  const page = sitePageOf(useLocation().pathname);
+  const location = useLocation();
+  const navigate = useNavigate();
+  const navigationType = useNavigationType();
+  const page = sitePageOf(location.pathname);
+  const atHome = page.kind === 'home';
+  const siteNav = useMemo(() => ({ atHome, go: (href: string) => navigate(href) }), [atHome, navigate]);
+  // LT-540: the product the visitor is asking about, for the contact form.
+  const [inquiry, setInquiry] = useState<ProductInquiry | null>(null);
+  const inquiryState = useMemo(() => ({ inquiry, setInquiry }), [inquiry]);
+  // A new address opens at its top; the back button keeps the browser's place.
+  useEffect(() => {
+    if (navigationType === 'PUSH' && !location.hash) window.scrollTo({ top: 0, behavior: 'instant' as ScrollBehavior });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.pathname]);
   const [config, setConfig] = useState<WebsiteConfig | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [isPreview, setIsPreview] = useState<boolean>(false);
@@ -380,7 +399,7 @@ function MainContent() {
     setA11yMenuEnabled(config ? config.accessibilityMenu !== false : true);
   }, [config, setContentLanguage]);
   // LT-222: a shared `/#schedule` lands on its section once the site is drawn.
-  useSectionDeepLinks(!loading && !!config && page.kind === 'home');
+  useSectionDeepLinks(!loading && !!config && atHome);
 
   const editState = useMemo(() => ({ editing }), [editing]);
   useEffect(() => {
@@ -400,7 +419,7 @@ function MainContent() {
 
   if (loading) return <Loading isLoading={true} />;
   if (!config) return inactive ? <SiteNotActive /> : <NotFound />;
-  if (page.kind === 'missing') return <NotFound />;
+  if (page.kind === 'missing' || (!atHome && !config.products?.pages)) return <NotFound />;
 
   // Build the in-flow content sections with their solid background "tone".
   // The page alternates bg <-> surface; dividers are interleaved between
@@ -475,6 +494,14 @@ function MainContent() {
     flow.push({
       key: 'portfolio', tone: 'bg', hidden: !config.components.portfolio.visible,
       node: <Portfolio config={config.components.portfolio} layout={config.design?.portfolioLayout} masonryPhase={jitter.masonryPhase} />
+    });
+  }
+
+  // LT-540: a page from before blocks shows its products where the gallery stands.
+  if (config.products?.total) {
+    flow.push({
+      key: 'products', tone: 'bg',
+      node: <Products summary={config.products} config={config.components?.products} layout={config.design?.productsLayout} currency={config.currency} phone={config.contact?.phone} />
     });
   }
 
@@ -562,6 +589,8 @@ function MainContent() {
   // never becomes a scroll container — sticky and anchors keep working.
   return (
     <EditContext.Provider value={editState}>
+    <SiteNavContext.Provider value={siteNav}>
+    <ProductInquiryContext.Provider value={inquiryState}>
     <MotionConfig reducedMotion={still ? 'always' : 'user'}>
     <div className="min-h-screen overflow-x-clip bg-light-bg dark:bg-dark-bg transition-colors duration-300">
       {/* LT-346: the first stop for a keyboard: straight past the menu. */}
@@ -588,7 +617,61 @@ function MainContent() {
 
       {/* LT-133: a composed page (blocks present) replaces the section flow
           and the standalone footer; the legacy flow below is untouched. */}
-      {config.blocks?.length ? (
+      {!atHome ? (<>
+        <main id="main-content" tabIndex={-1} className="outline-none">
+          {page.kind === 'product' ? (
+            <ProductPage
+              slug={page.slug}
+              businessName={config.businessName}
+              logo={config.logoImageName}
+              phone={config.contact?.phone}
+              currency={config.currency}
+              listTitle={config.components?.products?.title}
+              cta={config.components?.products?.cta}
+              contact={config.components?.contact ? (
+                <Contact
+                  config={config.components.contact}
+                  address={config.address}
+                  contact={config.contact}
+                  workingDays={config.workingDays}
+                  layout="stacked"
+                  tone="surface"
+                  leadFields={config.leadFields}
+                  leadsOpen={config.leadsOpen}
+                  conversion="lead"
+                  isPreview={isPreview}
+                />
+              ) : null}
+            />
+          ) : (
+            <ProductsPage
+              businessName={config.businessName}
+              title={config.components?.products?.title}
+              description={config.components?.products?.description}
+              layout={config.design?.productsLayout}
+              currency={config.currency}
+            />
+          )}
+        </main>
+        {/* The page's own footer block, in its own look: these pages have no blocks. */}
+        {config.components?.footer && footerShown && (
+          <ErrorBoundary>
+            <Footer
+              config={config.components.footer}
+              appointmentsType={config.appointmentTypes}
+              conversion={config.conversion}
+              social={config.social}
+              businessName={config.businessName}
+              logoImageName={config.logoImageName}
+              websiteConfig={config.components}
+              layout={(config.blocks?.find((b) => b.type === 'footer')?.variant as FooterLayout | undefined) ?? config.design?.footerLayout}
+              city={config.address?.city}
+              blocks={config.blocks}
+              productsPage={productsHavePage(config.products)}
+            />
+          </ErrorBoundary>
+        )}
+      </>) : config.blocks?.length ? (
         <main id="main-content" tabIndex={-1} className="outline-none">
           <ComposedPage config={config} jitter={jitter} isPreview={isPreview} generateSeq={generateSeq} />
         </main>
@@ -824,6 +907,8 @@ function MainContent() {
       {editing && <EditOverlay selected={selection} onPick={onPick} />}
     </div>
     </MotionConfig>
+    </ProductInquiryContext.Provider>
+    </SiteNavContext.Provider>
     </EditContext.Provider>
   );
 }

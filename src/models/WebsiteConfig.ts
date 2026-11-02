@@ -15,6 +15,7 @@ import { BookingField, parseBookingFields } from './BookingField';
 import type { Conversion } from '../services/siteMode';
 import { DEFAULT_TIME_ZONE, resolveTimeZone } from '../utils/businessTime';
 import { Currency, DEFAULT_CURRENCY, currencyOf } from '../utils/currency';
+import { ProductsSummary, parseProducts } from './Product';
 
 /**
  * Every part is optional, and the whole address may be absent — a business can
@@ -141,7 +142,9 @@ export class Components {
     public testimonials: TestimonialsConfig,
     public faq: FaqConfig,
     /** LT-220: the services / price list heading; '' = the default by prices. */
-    public services: { title: string } = { title: '' }
+    public services: { title: string } = { title: '' },
+    /** LT-540: the products section's heading and button; '' = the default. */
+    public products: { title: string; description: string; cta: string } = { title: '', description: '', cta: '' }
   ) {}
 
   static fromJSON(json: any): Components {
@@ -157,7 +160,12 @@ export class Components {
       ContactButtonConfig.fromJSON(json.contactButton),
       TestimonialsConfig.fromJSON(json.testimonials),
       FaqConfig.fromJSON(json.faq),
-      { title: typeof json.services?.title === 'string' ? json.services.title : '' }
+      { title: typeof json.services?.title === 'string' ? json.services.title : '' },
+      {
+        title: typeof json.products?.title === 'string' ? json.products.title : '',
+        description: typeof json.products?.description === 'string' ? json.products.description : '',
+        cta: typeof json.products?.cta === 'string' ? json.products.cta : '',
+      }
     );
   }
 }
@@ -237,7 +245,9 @@ export class WebsiteConfig {
      * server's `bookingClosed`): call / WhatsApp buttons in the form's place.
      * Absent reads as open - older payloads and the register preview.
      */
-    public bookingOpen: boolean = true
+    public bookingOpen: boolean = true,
+    /** LT-540: the products the home page draws; absent on a site without any. */
+    public products?: ProductsSummary
   ) {}
 
   static fromJSON(json: any): WebsiteConfig {
@@ -279,7 +289,8 @@ export class WebsiteConfig {
       resolveTimeZone(json.timeZone),
       json.accessibility?.widgetHidden !== true,
       currencyOf(json.currency),
-      !json.bookingClosed
+      !json.bookingClosed,
+      parseProducts(json.products)
     );
   }
 }

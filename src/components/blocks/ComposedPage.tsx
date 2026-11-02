@@ -1,6 +1,7 @@
 import { Fragment, cloneElement, isValidElement, type ReactElement, type ReactNode } from 'react';
 import type { WebsiteConfig } from '../../models/WebsiteConfig';
 import { takesBookings } from '../../services/siteMode';
+import { productsHavePage } from '../../models/Product';
 import type { Block } from '../../models/Block';
 import type { SiteJitter } from '../../services/seed';
 import { SPACING_CLASS } from '../../services/artDirection';
@@ -13,6 +14,7 @@ import SectionDivider, { type SectionTone } from '../SectionDivider';
 import Hero from '../Layout/Hero';
 import About from '../Layout/About';
 import Portfolio from '../Portfolio';
+import Products from '../products/Products';
 import Testimonials from '../Layout/Testimonials';
 import Faq from '../Layout/Faq';
 import ServicesLedger from '../Layout/ServicesLedger';
@@ -34,7 +36,7 @@ import BeforeAfter from './BeforeAfter';
 import MapStrip from './MapStrip';
 import LogoMark from './LogoMark';
 import SocialTiles from './SocialTiles';
-import type { AboutLayout, PortfolioLayout, TestimonialsLayout, FaqStyle, ContactLayout, FooterLayout, HeroLayout } from '../../models/DesignConfig';
+import type { AboutLayout, PortfolioLayout, ProductsLayout, TestimonialsLayout, FaqStyle, ContactLayout, FooterLayout, HeroLayout } from '../../models/DesignConfig';
 
 interface ComposedPageProps {
   config: WebsiteConfig;
@@ -46,7 +48,7 @@ interface ComposedPageProps {
 
 /** Block types this renderer can draw today; the rest arrive in phase 3. */
 export const SUPPORTED_BLOCKS = new Set<Block['type']>([
-  'hero', 'intro', 'features', 'visit', 'gallery', 'quote', 'faq', 'ledger',
+  'hero', 'intro', 'features', 'visit', 'gallery', 'products', 'quote', 'faq', 'ledger',
   'interlude', 'bookingBand', 'schedule', 'contact', 'footer',
   // LT-136 (phase 3)
   'ticker', 'announcement', 'manifesto', 'stats', 'pullQuote', 'process',
@@ -92,6 +94,7 @@ const ComposedPage: React.FC<ComposedPageProps> = ({ config, jitter, isPreview, 
             logo={config.logoImageName}
             appointmentTypes={config.appointmentTypes}
             conversion={config.conversion}
+            products={config.products?.total}
             isPreview={isPreview}
             palette={config.pallete}
             design={v ? { ...design, heroLayout: v as HeroLayout } : design}
@@ -124,6 +127,8 @@ const ComposedPage: React.FC<ComposedPageProps> = ({ config, jitter, isPreview, 
         // LT-137: layouts only apply in grid mode; the model's carousel flag
         // used to hide every one of them on generated sites.
         return c?.portfolio ? <Portfolio config={c.portfolio} layout={(v as PortfolioLayout) ?? design?.portfolioLayout} masonryPhase={jitter.masonryPhase} /> : null;
+      case 'products':
+        return <Products summary={config.products} config={c?.products} layout={(v as ProductsLayout) ?? design?.productsLayout} currency={config.currency} phone={config.contact?.phone} />;
       case 'quote':
         return c?.testimonials && (c.testimonials.items?.length ?? 0) > 0
           ? <Testimonials config={c.testimonials} tone="bg" layout={(v as TestimonialsLayout) ?? design?.testimonialsLayout} />
@@ -221,7 +226,8 @@ const ComposedPage: React.FC<ComposedPageProps> = ({ config, jitter, isPreview, 
             layout={(v as ContactLayout) ?? design?.contactLayout}
             leadFields={config.leadFields}
             leadsOpen={config.leadsOpen}
-            conversion={config.conversion}
+            // LT-540: a product's button leads here, so the form is here on every layout.
+            conversion={config.products?.total ? 'lead' : config.conversion}
             isPreview={isPreview}
           />
         ) : null;
@@ -238,6 +244,7 @@ const ComposedPage: React.FC<ComposedPageProps> = ({ config, jitter, isPreview, 
             layout={(v as FooterLayout) ?? design?.footerLayout}
             city={config.address?.city}
             blocks={config.blocks}
+            productsPage={productsHavePage(config.products)}
           />
         ) : null;
       default:

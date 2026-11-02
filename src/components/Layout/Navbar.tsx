@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Menu, X, Sun, Moon } from 'lucide-react';
+import { ShoppingBag, Menu, X, Sun, Moon } from 'lucide-react';
 import { useLanguage } from '../../contexts/LanguageContext';
 import LanguageSwitcher from '../LanguageSwitcher';
 import globals from '../../services/globals';
@@ -9,6 +9,8 @@ import { useIsDarkMode } from '../../hooks/useIsDarkMode';
 import { navLinksFromBlocks, sectionTitlesOf } from '../../services/navLinks';
 import { showsPrices } from '../../utils/servicesHeading';
 import { scrollToSection, sectionOf } from '../../utils/sections';
+import { linkFrom, useSiteNav } from '../../services/siteNav';
+import { productsHavePage } from '../../models/Product';
 import { Conversion, mainCta, takesBookings } from '../../services/siteMode';
 import { Calendar, MessageSquare } from 'lucide-react';
 import { useEdit, editAttrs } from '../../services/editMode';
@@ -58,6 +60,7 @@ interface NavbarProps {
 }
 
 const Navbar: React.FC<NavbarProps> = ({ websiteConfig, isPreview }) => {
+  const siteNav = useSiteNav();
   const { editing } = useEdit();
   const [isOpen, setIsOpen] = useState(false);
   // The bar itself, measured so the page can clear it (LT-163).
@@ -120,6 +123,12 @@ const Navbar: React.FC<NavbarProps> = ({ websiteConfig, isPreview }) => {
   const handleLinkClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
     e.preventDefault();
     const href = e.currentTarget.getAttribute('href');
+    // LT-539: another address of the site, or a section seen from one.
+    if (href?.startsWith('/')) {
+      setIsOpen(false);
+      siteNav.go(href);
+      return;
+    }
     const target = sectionOf(href);
     if (href && target) {
       // Under the bar's real bottom edge (LT-163), as a shared link lands.
@@ -131,6 +140,10 @@ const Navbar: React.FC<NavbarProps> = ({ websiteConfig, isPreview }) => {
   };
 
   const handleScrollToTop = () => {
+    if (!siteNav.atHome) {
+      siteNav.go('/');
+      return;
+    }
     window.scrollTo({
       top: 0,
       behavior: 'smooth'
@@ -149,17 +162,17 @@ const Navbar: React.FC<NavbarProps> = ({ websiteConfig, isPreview }) => {
   // LT-168: a link reads as the heading it scrolls to; the generic label only when a section has none.
   const titles = sectionTitlesOf(websiteConfig.components);
   const menuItems = websiteConfig.blocks?.length
-    ? navLinksFromBlocks(websiteConfig.blocks.filter((b) => !b.mod?.hidden && (bookable || b.type !== 'schedule')), titles, { priced: showsPrices(websiteConfig.appointmentTypes) }).map((l) => ({
-      href: l.href,
+    ? navLinksFromBlocks(websiteConfig.blocks.filter((b) => !b.mod?.hidden && (bookable || b.type !== 'schedule')), titles, { priced: showsPrices(websiteConfig.appointmentTypes), productsPage: productsHavePage(websiteConfig.products) }).map((l) => ({
+      href: linkFrom(l.href, siteNav.atHome),
       label: l.title ?? t(l.key, { defaultValue: language === 'he' ? l.fallbackHe : l.fallbackEn }),
       visible: true,
     }))
     : [
-      { href: "#about", label: titles.about ?? t('nav.about'), visible: websiteConfig.components.about.visible },
+      { href: linkFrom('#about', siteNav.atHome), label: titles.about ?? t('nav.about'), visible: websiteConfig.components.about.visible },
       // An empty gallery is not drawn (LT-320), so no link to it.
-      { href: "#portfolio", label: titles.portfolio ?? t('nav.portfolio'), visible: websiteConfig.components.portfolio.visible && websiteConfig.components.portfolio.items?.length !== 0 },
-      { href: "#schedule", label: titles.schedule ?? t('nav.schedule'), visible: bookable },
-      { href: "#contact", label: titles.contact ?? t('nav.contact'), visible: websiteConfig.components.contact.visible }
+      { href: linkFrom('#portfolio', siteNav.atHome), label: titles.portfolio ?? t('nav.portfolio'), visible: websiteConfig.components.portfolio.visible && websiteConfig.components.portfolio.items?.length !== 0 },
+      { href: linkFrom('#schedule', siteNav.atHome), label: titles.schedule ?? t('nav.schedule'), visible: bookable },
+      { href: linkFrom('#contact', siteNav.atHome), label: titles.contact ?? t('nav.contact'), visible: websiteConfig.components.contact.visible }
     ].filter(item => item.visible === undefined || item.visible);
 
   const { visible, darkMode: showDarkMode, languageSwitcher } = websiteConfig.components.navbar;
@@ -224,7 +237,7 @@ const Navbar: React.FC<NavbarProps> = ({ websiteConfig, isPreview }) => {
   // legacy bar. The legacy three below are untouched.
   // The site's main button (LT-199), as the hero draws it.
   const cta = mainCta(
-    { conversion: websiteConfig.conversion, types: websiteConfig.appointmentTypes, own: websiteConfig.components.hero?.cta },
+    { conversion: websiteConfig.conversion, types: websiteConfig.appointmentTypes, own: websiteConfig.components.hero?.cta, products: websiteConfig.products?.total },
     t
   );
   const themeButton = (
@@ -245,8 +258,8 @@ const Navbar: React.FC<NavbarProps> = ({ websiteConfig, isPreview }) => {
     </button>
   );
   const bookButton = cta ? (
-    <a href={cta.href} onClick={handleLinkClick} className="inline-flex items-center gap-2 bg-primary dark:bg-primary-dark text-on-primary dark:text-on-primary-dark font-bold px-5 py-2.5 rounded-design text-sm hover:opacity-90 transition-opacity whitespace-nowrap">
-      {cta.target === 'contact' ? <MessageSquare className="h-4 w-4" aria-hidden="true" /> : <Calendar className="h-4 w-4" aria-hidden="true" />}
+    <a href={linkFrom(cta.href, siteNav.atHome)} onClick={handleLinkClick} className="inline-flex items-center gap-2 bg-primary dark:bg-primary-dark text-on-primary dark:text-on-primary-dark font-bold px-5 py-2.5 rounded-design text-sm hover:opacity-90 transition-opacity whitespace-nowrap">
+      {cta.target === 'contact' ? <MessageSquare className="h-4 w-4" aria-hidden="true" /> : cta.target === 'products' ? <ShoppingBag className="h-4 w-4" aria-hidden="true" /> : <Calendar className="h-4 w-4" aria-hidden="true" />}
       <EditText path="components.hero.cta">{cta.label}</EditText>
     </a>
   ) : null;

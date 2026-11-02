@@ -42,6 +42,7 @@ const TYPES: Record<string, { type: string; source: string }> = {
   hero: { type: 'hero', source: 'hero' },
   services: { type: 'ledger', source: 'appointmentTypes' },
   portfolio: { type: 'gallery', source: 'portfolio' },
+  products: { type: 'products', source: 'products' },
   testimonials: { type: 'quote', source: 'testimonials' },
   schedule: { type: 'schedule', source: 'schedule' },
   faq: { type: 'faq', source: 'faq' },

@@ -99,6 +99,25 @@ describe.each(['he', 'en', 'ar'])('no WCAG A/AA violation axe can see (%s)', (la
     expect(await violationsIn(container)).toEqual([]);
   });
 
+  it('every products layout, and a single product (LT-540)', async () => {
+    const product = (i: number) => ({
+      id: `p${i}`, slug: `p-${i}`, name: `Product ${i}`, summary: 'Made by hand', price: 12000, category: i % 2 ? 'Rings' : 'Chains',
+      images: [{ url: `a${i}.webp` }, { url: `b${i}.webp` }], details: ['925 silver'], description: 'Words', soldOut: i === 2,
+    });
+    const shelf = { total: 6, pages: true, items: Array.from({ length: 6 }, (_, i) => product(i)) };
+    for (const variant of ['well', 'swap', 'bento', 'list', 'belt', 'hanger', 'coverflow']) {
+      const config = fullConfig([{ type: 'products', variant }]);
+      config.products = shelf;
+      const { container, unmount } = render(<ComposedPage config={config} jitter={getSiteJitter('axe')} isPreview />);
+      expect([variant, ...(await violationsIn(container))]).toEqual([variant]);
+      unmount();
+    }
+    const one = fullConfig([{ type: 'products' }]);
+    one.products = { total: 1, pages: false, items: [product(0)] };
+    const { container } = render(<ComposedPage config={one} jitter={getSiteJitter('axe')} isPreview />);
+    expect(await violationsIn(container)).toEqual([]);
+  });
+
   it('every gallery layout', async () => {
     for (const variant of ['grid', 'masonry', 'filmstrip', 'polaroid', 'bento', 'scroller', 'spotlight', 'carousel', 'clothesline', 'curve', 'cascade']) {
       const { container, unmount } = render(<ComposedPage config={fullConfig([{ type: 'gallery', variant }])} jitter={getSiteJitter('axe')} isPreview />);

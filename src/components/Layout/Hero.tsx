@@ -1,5 +1,5 @@
 import React, { lazy, Suspense, useEffect, useRef, useState } from 'react';
-import { Calendar, MessageSquare, Phone, Instagram, Facebook } from 'lucide-react';
+import { Calendar, MessageSquare, Phone, Instagram, Facebook, ShoppingBag } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { ContactModal } from '../ContactModal';
@@ -99,6 +99,8 @@ interface HeroProps {
   appointmentTypes?: AppointmentType[];
   /** LT-199: a leads site's main button goes to the contact form. */
   conversion?: Conversion;
+  /** LT-540: how many products the site shows: a leads site's main button leads to them. */
+  products?: number;
   isPreview?: boolean;
   palette?: Palette;
   design?: DesignConfig;
@@ -143,7 +145,7 @@ const radiusClassMap: Record<BorderRadius, string> = {
   full: 'rounded-full',
 };
 
-const Hero: React.FC<HeroProps> = ({ config, social, phone, isContactVisible, appointmentTypes, conversion, isPreview, palette, design, jitter, businessName, logo, thumbs = [], stats = [], statsPath, belowTone }) => {
+const Hero: React.FC<HeroProps> = ({ config, social, phone, isContactVisible, appointmentTypes, conversion, products, isPreview, palette, design, jitter, businessName, logo, thumbs = [], stats = [], statsPath, belowTone }) => {
   // LT-496: the heritage mark's logo failed to load: the ornament stands instead.
   const [markFailed, setMarkFailed] = useState(false);
   const ed = useEditAttrs();
@@ -361,8 +363,8 @@ const Hero: React.FC<HeroProps> = ({ config, social, phone, isContactVisible, ap
   // The site's main button (LT-199): the calendar on a booking site, the
   // contact form on a leads site, in the owner's words when they wrote some.
   // None on a booking site with nothing to book yet (LT-167).
-  const cta = mainCta({ conversion, types: appointmentTypes, own: config.cta }, t);
-  const CtaIcon = cta?.target === 'contact' ? MessageSquare : Calendar;
+  const cta = mainCta({ conversion, types: appointmentTypes, own: config.cta, products }, t);
+  const CtaIcon = cta?.target === 'contact' ? MessageSquare : cta?.target === 'products' ? ShoppingBag : Calendar;
   // LT-531: on a photo an outline or a bare word cannot be read: those go solid.
   const renderBookButton = (fullWidth = false, onPhoto = false) => {
     if (!cta) return null;

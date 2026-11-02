@@ -4,9 +4,16 @@
  * The edge keeps its own copy of this list for what crawlers are told
  * (lightor-edge src/pages.ts).
  */
-export type SitePage = { kind: 'home' } | { kind: 'missing' };
+export type SitePage =
+  | { kind: 'home' }
+  | { kind: 'products' }
+  | { kind: 'product'; slug: string }
+  | { kind: 'missing' };
 
 export const sitePageOf = (pathname: string): SitePage => {
   const path = pathname.replace(/\/+$/, '') || '/';
-  return path === '/' ? { kind: 'home' } : { kind: 'missing' };
+  if (path === '/') return { kind: 'home' };
+  if (path === '/products') return { kind: 'products' };
+  const product = /^\/products\/([^/]+)$/.exec(path);
+  return product ? { kind: 'product', slug: product[1] } : { kind: 'missing' };
 };

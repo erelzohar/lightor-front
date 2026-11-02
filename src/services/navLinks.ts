@@ -1,3 +1,5 @@
+import { PRODUCTS_PATH } from '../models/Product';
+
 /**
  * LT-137: navbar links for a composed page come from the blocks that exist,
  * in page order — never from section flags a composed page may not honour.
@@ -16,7 +18,7 @@ export interface NavLink {
 interface BlockLike { type: string; id: string }
 
 /** The section headings a menu can borrow (LT-168). */
-export interface SectionTitles { about?: string; portfolio?: string; schedule?: string; faq?: string; contact?: string; services?: string }
+export interface SectionTitles { about?: string; portfolio?: string; schedule?: string; faq?: string; contact?: string; services?: string; products?: string }
 
 /** LT-173: a heading longer than this stays a heading; the menu keeps its generic word.
  *  Sixteen characters is the room a bar with five links, a logo, a name and a
@@ -33,13 +35,15 @@ const clean = (t: unknown, max = NAV_LABEL_MAX): string | undefined => {
 export const sectionTitlesOf = (c?: {
   about?: { title?: string } | null; portfolio?: { title?: string } | null; schedule?: { title?: string } | null;
   faq?: { title?: string } | null; contact?: { title?: string } | null; services?: { title?: string } | null;
+  products?: { title?: string } | null;
 } | null): SectionTitles => ({
   about: clean(c?.about?.title), portfolio: clean(c?.portfolio?.title), schedule: clean(c?.schedule?.title),
   faq: clean(c?.faq?.title), contact: clean(c?.contact?.title), services: clean(c?.services?.title),
+  products: clean(c?.products?.title),
 });
 
 /** `priced` (LT-220): whether a service shows a price — the services link then says "price list". */
-export const navLinksFromBlocks = (blocks: BlockLike[], titles: SectionTitles = {}, { priced = true }: { priced?: boolean } = {}): NavLink[] => {
+export const navLinksFromBlocks = (blocks: BlockLike[], titles: SectionTitles = {}, { priced = true, productsPage = false }: { priced?: boolean; productsPage?: boolean } = {}): NavLink[] => {
   const out: NavLink[] = [];
   const seen = new Set<string>();
   const add = (l: NavLink, title?: string) => {
@@ -52,6 +56,8 @@ export const navLinksFromBlocks = (blocks: BlockLike[], titles: SectionTitles = 
     switch (b.type) {
       case 'intro': add({ href: '#about', key: 'nav.about', fallbackHe: 'אודות', fallbackEn: 'About' }, titles.about); break;
       case 'features': if (!seen.has('#about')) add({ href: '#about-features', key: 'nav.about', fallbackHe: 'אודות', fallbackEn: 'About' }, titles.about); break;
+      // LT-540: past what the home page holds, the menu leads to the products' own page.
+      case 'products': add({ href: productsPage ? PRODUCTS_PATH : '#products', key: 'nav.products', fallbackHe: 'מוצרים', fallbackEn: 'Products' }, titles.products); break;
       case 'gallery': add({ href: '#portfolio', key: 'nav.portfolio', fallbackHe: 'תיק עבודות', fallbackEn: 'Work' }, titles.portfolio); break;
       case 'ledger':
       case 'priceCards': add(priced
@@ -68,7 +74,7 @@ export const navLinksFromBlocks = (blocks: BlockLike[], titles: SectionTitles = 
   if (seen.has('#about') && seen.has('#about-features')) { const i = out.findIndex((l) => l.href === '#about-features'); if (i !== -1) out.splice(i, 1); }
   // Five links at most: schedule and contact always keep their place.
   if (out.length > 5) {
-    const keep = new Set(['#schedule', '#contact', '#about-visit']);
+    const keep = new Set(['#schedule', '#contact', '#about-visit', '#products', PRODUCTS_PATH]);
     let extra = out.length - 5;
     for (let i = out.length - 1; i >= 0 && extra > 0; i--) {
       if (!keep.has(out[i].href)) { out.splice(i, 1); extra--; }

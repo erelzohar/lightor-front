@@ -7,6 +7,7 @@
     "home": "Home",
     "about": "About",
     "portfolio": "Latest",
+    "products": "Products",
     "schedule": "Schedule",
     "contact": "Contact",
     "open_menu": "Open menu",
@@ -23,6 +24,7 @@
     "button": "Close"
   },
   "hero": {
+    "products": "See the products",
     "book": "Book Appointment",
     "contact": "Contact Us",
     "welcome_label": "Welcome to {{name}}"
@@ -35,6 +37,32 @@
     "email": "Email",
     "hours": "Work Hours",
     "visit": "Visit Us"
+  },
+  "products": {
+    "title": "Our products",
+    "cta": "I'm interested",
+    "whatsapp": "On WhatsApp",
+    "whatsappText": "Hi, I'm interested in {{name}}",
+    "soldOut": "Sold out",
+    "all": "All products ({{count}})",
+    "pictures": "Product pictures",
+    "picture": "Picture {{index}}",
+    "previous": "Previous",
+    "next": "Next",
+    "pause": "Stop the motion",
+    "play": "Start the motion",
+    "pick": "Choose a product",
+    "more": "Details",
+    "empty_edit": "No products yet. Add them on the Products page.",
+    "failed": "We could not load the products. Please try again in a moment.",
+    "breadcrumbs": "Where you are on the site",
+    "categories": "Categories",
+    "allCategories": "All",
+    "share": "Share",
+    "copied": "Link copied",
+    "related": "More products",
+    "inquiryAbout": "About: {{name}}",
+    "inquiryClear": "Remove this product"
   },
   "portfolio": {
     "title": "Our Latest",

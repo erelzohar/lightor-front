@@ -12,3 +12,15 @@ describe('sitePageOf (LT-539)', () => {
     expect(sitePageOf('/wp-login.php')).toEqual({ kind: 'missing' });
   });
 });
+
+describe('sitePageOf: products (LT-540)', () => {
+  it('knows the list and a product, with or without a trailing slash', () => {
+    expect(sitePageOf('/products')).toEqual({ kind: 'products' });
+    expect(sitePageOf('/products/')).toEqual({ kind: 'products' });
+    expect(sitePageOf('/products/silver-ring')).toEqual({ kind: 'product', slug: 'silver-ring' });
+  });
+
+  it('calls anything deeper missing', () => {
+    expect(sitePageOf('/products/a/b')).toEqual({ kind: 'missing' });
+  });
+});

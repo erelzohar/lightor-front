@@ -1,3 +1,4 @@
+import { followLink, linkFrom, useSiteNav } from '../../services/siteNav';
 import React, { useState } from 'react';
 import { Instagram, Facebook } from 'lucide-react';
 import { motion } from 'framer-motion';
@@ -49,9 +50,12 @@ interface FooterProps {
    * navbar's do (LT-137); the section flags say nothing about what is drawn.
    */
   blocks?: { type: string; id: string; mod?: { hidden?: boolean } }[];
+  /** LT-540: the menu's products link leads to their own page. */
+  productsPage?: boolean;
 }
 
-const Footer: React.FC<FooterProps> = ({ config, social, businessName, logoImageName, appointmentsType, conversion, websiteConfig, layout = 'columns', city, blocks }) => {
+const Footer: React.FC<FooterProps> = ({ config, social, businessName, logoImageName, appointmentsType, conversion, websiteConfig, layout = 'columns', city, blocks, productsPage = false }) => {
+  const siteNav = useSiteNav();
   const { editing } = useEdit();
   const { t, language } = useLanguage();
   const { isModalOpen, setIsModalOpen, modalType, handleContactClick } = useContactHandler();
@@ -97,17 +101,17 @@ const Footer: React.FC<FooterProps> = ({ config, social, businessName, logoImage
   const titles = sectionTitlesOf(websiteConfig);
   const bookable = takesBookings(conversion, appointmentsType);
   const menuItems = blocks?.length
-    ? navLinksFromBlocks(blocks.filter((b) => !b.mod?.hidden && (bookable || b.type !== 'schedule')), titles, { priced: showsPrices(appointmentsType) }).map((l) => ({
-      href: l.href,
+    ? navLinksFromBlocks(blocks.filter((b) => !b.mod?.hidden && (bookable || b.type !== 'schedule')), titles, { priced: showsPrices(appointmentsType), productsPage }).map((l) => ({
+      href: linkFrom(l.href, siteNav.atHome),
       label: l.title ?? t(l.key, { defaultValue: language === 'he' ? l.fallbackHe : l.fallbackEn }),
       visible: true,
     }))
     : [
-      { href: "#about", label: titles.about ?? t('nav.about'), visible: websiteConfig?.about?.visible },
+      { href: linkFrom('#about', siteNav.atHome), label: titles.about ?? t('nav.about'), visible: websiteConfig?.about?.visible },
       // An empty gallery is not drawn (LT-320), so no link to it.
-      { href: "#portfolio", label: titles.portfolio ?? t('nav.portfolio'), visible: websiteConfig?.portfolio?.items?.length === 0 ? false : websiteConfig?.portfolio?.visible },
-      { href: "#schedule", label: titles.schedule ?? t('nav.schedule'), visible: bookable },
-      { href: "#contact", label: titles.contact ?? t('nav.contact'), visible: websiteConfig?.contact?.visible }
+      { href: linkFrom('#portfolio', siteNav.atHome), label: titles.portfolio ?? t('nav.portfolio'), visible: websiteConfig?.portfolio?.items?.length === 0 ? false : websiteConfig?.portfolio?.visible },
+      { href: linkFrom('#schedule', siteNav.atHome), label: titles.schedule ?? t('nav.schedule'), visible: bookable },
+      { href: linkFrom('#contact', siteNav.atHome), label: titles.contact ?? t('nav.contact'), visible: websiteConfig?.contact?.visible }
     ].filter(item => item.visible === undefined || item.visible);
 
   // Owner links, http(s) only (LT-315): the model drops the rest, and this is
@@ -179,6 +183,10 @@ const Footer: React.FC<FooterProps> = ({ config, social, businessName, logoImage
   };
 
   const handleScrollToTop = () => {
+    if (!siteNav.atHome) {
+      siteNav.go('/');
+      return;
+    }
     window.scrollTo({
       top: 0,
       behavior: 'smooth'
@@ -386,6 +394,7 @@ const Footer: React.FC<FooterProps> = ({ config, social, businessName, logoImage
                         <motion.li key={index} whileHover={{ x: language === 'he' || language === 'ar' ? -5 : 5 }} role="listitem">
                           <a
                             href={item.href}
+                            onClick={item.href.startsWith('/') ? (e) => followLink(e, item.href, siteNav.go) : undefined}
                             className="text-dark-text/80 hover:text-primary-dark transition-colors"
                           >
                             {item.label}

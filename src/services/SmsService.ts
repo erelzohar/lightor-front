@@ -35,7 +35,7 @@ class SMSService {
      */
     public async sendContactMessage(
         subdomain: string,
-        form: { name: string; phone: string; message?: string; answers?: AnswerPayload[] }
+        form: { name: string; phone: string; message?: string; answers?: AnswerPayload[]; productId?: string }
     ): Promise<ContactResult> {
         try {
             const res = await axios.post<any>(globals.messagingUrl + "/contact", { subdomain, ...form });

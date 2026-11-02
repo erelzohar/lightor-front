@@ -48,6 +48,10 @@ export type PortfolioLayout = 'grid' | 'masonry' | 'filmstrip' | 'polaroid' | 'f
 // 'editorial' (plain lines beside the form), 'statement' (inverted block, no
 // form), 'band' (primary-painted with a card form), 'cards' (form + info
 // cards with a map tile). 'split'/'stacked' are the legacy pair.
+// LT-540: how a site lays out its products. 'well' calm tiles, 'swap' a second
+// picture on hover, 'bento' mixed sizes, 'list' names beside prices (a menu),
+// and three that move: 'belt' a conveyor, 'hanger' a clothes rail, 'coverflow'.
+export type ProductsLayout = 'well' | 'swap' | 'bento' | 'list' | 'belt' | 'hanger' | 'coverflow';
 export type ContactLayout = 'split' | 'stacked' | 'poster' | 'editorial' | 'statement' | 'band' | 'cards';
 // LT-124: 'line' (one light ruled row) and 'ticker' (repeating strip) from the canvas.
 export type FooterLayout = 'columns' | 'minimal' | 'line' | 'ticker';
@@ -430,6 +434,8 @@ export class DesignConfig implements DesignTokens {
     public revealStyle: RevealStyle,
     public backdrop: Backdrop,
     public sectionWidth: SectionWidth,
+    /** LT-540: optional on purpose: a preset that predates products has none. */
+    public productsLayout?: ProductsLayout,
   ) {}
 
   // Resolution order for every token: explicit value → preset value → default.
@@ -474,6 +480,7 @@ export class DesignConfig implements DesignTokens {
       json?.revealStyle ?? base.revealStyle,
       json?.backdrop ?? base.backdrop,
       json?.sectionWidth ?? base.sectionWidth,
+      json?.productsLayout,
     );
   }
 }

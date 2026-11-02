@@ -7,6 +7,7 @@
     "home": "Accueil",
     "about": "À propos",
     "portfolio": "Réalisations",
+    "products": "Produits",
     "schedule": "Rendez-vous",
     "contact": "Contact",
     "open_menu": "Ouvrir le menu",
@@ -23,6 +24,7 @@
     "button": "Fermer"
   },
   "hero": {
+    "products": "Voir les produits",
     "book": "Prendre RDV",
     "contact": "Contactez-nous",
     "welcome_label": "Bienvenue chez {{name}}"
@@ -35,6 +37,32 @@
     "email": "Email",
     "hours": "Horaires",
     "visit": "Venez nous voir"
+  },
+  "products": {
+    "title": "Nos produits",
+    "cta": "Ça m'intéresse",
+    "whatsapp": "Sur WhatsApp",
+    "whatsappText": "Bonjour, je suis intéressé(e) par {{name}}",
+    "soldOut": "Épuisé",
+    "all": "Tous les produits ({{count}})",
+    "pictures": "Photos du produit",
+    "picture": "Photo {{index}}",
+    "previous": "Précédent",
+    "next": "Suivant",
+    "pause": "Arrêter le mouvement",
+    "play": "Lancer le mouvement",
+    "pick": "Choisir un produit",
+    "more": "Détails",
+    "empty_edit": "Aucun produit pour le moment. Ajoutez-les sur la page Produits.",
+    "failed": "Impossible de charger les produits. Réessayez dans un instant.",
+    "breadcrumbs": "Où vous êtes sur le site",
+    "categories": "Catégories",
+    "allCategories": "Tout",
+    "share": "Partager",
+    "copied": "Lien copié",
+    "related": "Autres produits",
+    "inquiryAbout": "Au sujet de : {{name}}",
+    "inquiryClear": "Retirer ce produit"
   },
   "portfolio": {
     "title": "Nos Dernières Réalisations",

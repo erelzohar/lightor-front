@@ -15,8 +15,8 @@ export const takesBookings = (conversion: Conversion | undefined, types?: Readon
   conversion !== 'lead' && hasBookableServices(types);
 
 export interface MainCta {
-  target: 'schedule' | 'contact';
-  href: '#schedule' | '#contact';
+  target: 'schedule' | 'contact' | 'products';
+  href: '#schedule' | '#contact' | '#products';
   /** The owner's own words when they wrote some, else the mode's default. */
   label: string;
 }
@@ -28,12 +28,16 @@ export interface MainCta {
  * the plain "Contact us" button it always had.
  */
 export const mainCta = (
-  input: { conversion?: Conversion; types?: ReadonlyArray<Named> | null; own?: string | null },
+  input: { conversion?: Conversion; types?: ReadonlyArray<Named> | null; own?: string | null; products?: number },
   t: (key: string) => string
 ): MainCta | null => {
   const own = input.own?.trim();
   if (takesBookings(input.conversion, input.types)) {
     return { target: 'schedule', href: '#schedule', label: own || t('hero.book') };
+  }
+  // LT-540: a site that shows products leads to them, an inquiry comes from there.
+  if (input.conversion === 'lead' && input.products) {
+    return { target: 'products', href: '#products', label: own || t('hero.products') };
   }
   if (input.conversion === 'lead') {
     return { target: 'contact', href: '#contact', label: own || t('hero.contact') };
