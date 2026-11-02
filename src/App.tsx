@@ -40,7 +40,7 @@ import { pickBandSlot } from './services/bandSlot';
 import { useLanguage, Language } from './contexts/LanguageContext';
 import { WebsiteConfig } from './models/WebsiteConfig';
 import { keyPreviewQuestions } from './models/BookingField';
-import { DesignConfig, type FooterLayout } from './models/DesignConfig';
+import { DesignConfig, type FooterLayout, type ProductsLayout } from './models/DesignConfig';
 import WebConfigService from './services/WebConfigService';
 import { readInlineConfig, sameConfig, languageAfterRefresh } from './services/edgeShell';
 import { getSiteJitter, createRng } from './services/seed';
@@ -125,6 +125,9 @@ function MainContent() {
   const page = sitePageOf(location.pathname);
   const atHome = page.kind === 'home';
   const siteNav = useMemo(() => ({ atHome, go: (href: string) => navigate(href) }), [atHome, navigate]);
+  // LT-545: the editor's page switcher moves the frame, from a listener registered once.
+  const navigateRef = useRef(navigate);
+  useEffect(() => { navigateRef.current = navigate; }, [navigate]);
   // LT-540: the product the visitor is asking about, for the contact form.
   const [inquiry, setInquiry] = useState<ProductInquiry | null>(null);
   const inquiryState = useMemo(() => ({ inquiry, setInquiry }), [inquiry]);
@@ -177,11 +180,15 @@ function MainContent() {
   useEffect(() => {
     const handleMessage = (event: MessageEvent) => {
       const kind = event.data?.type;
-      if (kind === 'LT_EDIT' || kind === 'LT_SELECT_PATH' || kind === 'LT_SCROLL_TO') {
+      if (kind === 'LT_EDIT' || kind === 'LT_SELECT_PATH' || kind === 'LT_SCROLL_TO' || kind === 'LT_GO') {
         if (!isAllowedPreviewOrigin(event.origin)) return;
         editorOriginRef.current = event.origin;
         const msg = event.data as EditorToSite;
-        if (msg.type === 'LT_EDIT') {
+        if (msg.type === 'LT_GO') {
+          // LT-545: only an address of the site's own pages.
+          const kindOf = typeof msg.path === 'string' ? sitePageOf(msg.path).kind : 'missing';
+          if (kindOf === 'home' || kindOf === 'products' || kindOf === 'product') navigateRef.current(msg.path);
+        } else if (msg.type === 'LT_EDIT') {
           setEditing(!!msg.on);
           if (!msg.on) setSelection(null);
           sentLayoutRef.current = '';
@@ -402,6 +409,10 @@ function MainContent() {
   useSectionDeepLinks(!loading && !!config && atHome);
 
   const editState = useMemo(() => ({ editing }), [editing]);
+  // LT-545: the page in the frame, for the editor's page switcher (a tile clicked there moves it too).
+  useEffect(() => {
+    if (editing) postToEditor({ type: 'LT_PAGE', path: location.pathname }, editorOriginRef.current);
+  }, [editing, location.pathname]);
   useEffect(() => {
     if (!editing || !layoutRef.current || layoutRef.current === sentLayoutRef.current) return;
     sentLayoutRef.current = layoutRef.current;
@@ -501,7 +512,7 @@ function MainContent() {
   if (config.products?.total) {
     flow.push({
       key: 'products', tone: 'bg',
-      node: <Products summary={config.products} config={config.components?.products} layout={config.design?.productsLayout} currency={config.currency} phone={config.contact?.phone} />
+      node: <Products summary={config.products} config={config.components?.products} layout={config.design?.productsLayout} card={config.design?.productCard} currency={config.currency} phone={config.contact?.phone} />
     });
   }
 
@@ -628,6 +639,8 @@ function MainContent() {
               currency={config.currency}
               listTitle={config.components?.products?.title}
               cta={config.components?.products?.cta}
+              layout={config.design?.productPageLayout}
+              card={config.design?.productCard}
               contact={config.components?.contact ? (
                 <Contact
                   config={config.components.contact}
@@ -648,7 +661,10 @@ function MainContent() {
               businessName={config.businessName}
               title={config.components?.products?.title}
               description={config.components?.products?.description}
-              layout={config.design?.productsLayout}
+              // LT-545: its own layout, else the home section's (its block's look first).
+              layout={config.design?.productsPageLayout ?? (config.blocks?.find((b) => b.type === 'products')?.variant as ProductsLayout | undefined) ?? config.design?.productsLayout}
+              card={config.design?.productCard}
+              cta={config.components?.products?.cta}
               currency={config.currency}
             />
           )}

@@ -47,7 +47,9 @@ export const servicePath = (id: string | undefined, field: 'name' | 'price' | 'i
 export type EditorToSite =
   | { type: 'LT_EDIT'; on: boolean }
   | { type: 'LT_SELECT_PATH'; path?: string | null; section?: string | null }
-  | { type: 'LT_SCROLL_TO'; path?: string | null; section?: string | null; /** 'start' when the editor's panel covers the lower screen (a phone). */ block?: 'start' | 'center' };
+  | { type: 'LT_SCROLL_TO'; path?: string | null; section?: string | null; /** 'start' when the editor's panel covers the lower screen (a phone). */ block?: 'start' | 'center' }
+  /** LT-545: show another page of the site (the products, a product). */
+  | { type: 'LT_GO'; path: string };
 
 /** Site → editor. */
 /**
@@ -80,7 +82,9 @@ export type SiteToEditor =
       /** LT-249: every field the section shows, once each, so the editor can hand all its texts to the AI. */
       fields: { path: string; kind: EditKind }[];
     }
-  | { type: 'LT_DESELECT' };
+  | { type: 'LT_DESELECT' }
+  /** LT-545: the page the site shows now, so the editor's page switcher follows. */
+  | { type: 'LT_PAGE'; path: string };
 
 const cssEscape = (value: string): string =>
   typeof CSS !== 'undefined' && typeof CSS.escape === 'function' ? CSS.escape(value) : value.replace(/["\\]/g, '\\$&');

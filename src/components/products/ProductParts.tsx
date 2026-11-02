@@ -17,20 +17,24 @@ export const altOfImage = (product: Pick<ProductCard, 'name'>, image?: ProductIm
   image?.alt?.trim() || product.name;
 
 /** To the form itself, not the top of its section: the visitor came to write. */
-const toTheForm = (): void => {
+export const toTheForm = (): void => {
   const target = document.querySelector('#contact form') ?? sectionOf('#contact');
   if (target) scrollToSection(target);
 };
 
+/** LT-545: a product's page opened at its form, the product chosen (a card's own button). */
+export const INQUIRE_HASH = '#inquire';
+
 /**
  * Where a product's tile leads: its own page, or on a site whose products have
- * none, the contact form with the product already chosen.
+ * none, the contact form with the product already chosen. `inquire` opens the
+ * page at its form.
  */
-export const useProductLink = (pages: boolean) => {
+export const useProductLink = (pages: boolean, inquire = false) => {
   const { go } = useSiteNav();
   const { setInquiry } = useProductInquiry();
   return (product: ProductCard) => {
-    const href = pages ? productPath(product) : '#contact';
+    const href = pages ? `${productPath(product)}${inquire ? INQUIRE_HASH : ''}` : '#contact';
     return {
       href,
       onClick: (e: React.MouseEvent) => {
@@ -105,8 +109,11 @@ export const ProductActions: React.FC<{ product: ProductCard; phone?: string; la
   );
 };
 
-/** A product's pictures: one large, the rest to pick from. */
-export const ProductPictures: React.FC<{ product: ProductCard; className?: string; eager?: boolean }> = ({ product, className = '', eager = false }) => {
+/**
+ * A product's pictures: one large, the rest to pick from. LT-545: the large
+ * one's frame and the row under it can be the page's own ('hero').
+ */
+export const ProductPictures: React.FC<{ product: ProductCard; className?: string; eager?: boolean; frameClassName?: string; thumbsClassName?: string }> = ({ product, className = '', eager = false, frameClassName = 'aspect-[4/5] rounded-design-card', thumbsClassName = '' }) => {
   const { t } = useLanguage();
   const [shown, setShown] = useState(0);
   const images = product.images;
@@ -114,7 +121,7 @@ export const ProductPictures: React.FC<{ product: ProductCard; className?: strin
   if (!main) return null;
   return (
     <div className={className}>
-      <div className="relative aspect-[4/5] overflow-hidden rounded-design-card bg-light-surface dark:bg-dark-surface">
+      <div className={`relative overflow-hidden bg-light-surface dark:bg-dark-surface ${frameClassName}`}>
         <img
           src={imageUrl(main)}
           alt={altOfImage(product, main)}
@@ -125,7 +132,7 @@ export const ProductPictures: React.FC<{ product: ProductCard; className?: strin
         {product.soldOut && <SoldOut className="absolute top-3 start-3" />}
       </div>
       {images.length > 1 && (
-        <div className="mt-3 flex flex-wrap gap-2" role="group" aria-label={t('products.pictures')}>
+        <div className={`mt-3 flex flex-wrap gap-2 ${thumbsClassName}`} role="group" aria-label={t('products.pictures')}>
           {images.map((image, i) => (
             <button
               key={image.url}

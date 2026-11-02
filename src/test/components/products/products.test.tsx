@@ -1,6 +1,9 @@
-import { describe, expect, it, vi } from 'vitest';
-import { fireEvent, render, screen, within } from '@testing-library/react';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { act, fireEvent, render, screen, within } from '@testing-library/react';
+import { MemoryRouter } from 'react-router-dom';
 import Products, { tilesFor } from '../../../components/products/Products';
+import ProductPage from '../../../components/products/ProductPage';
+import { SwapTiles, WellTiles } from '../../../components/products/ProductTiles';
 import { parseProducts, productPrice, productsHavePage, categoriesOf, type Product } from '../../../models/Product';
 import { ProductInquiryContext } from '../../../services/productAction';
 import { SiteNavContext } from '../../../services/siteNav';
@@ -190,5 +193,126 @@ describe('the site around them', () => {
     expect(productsHavePage({ total: 9, pages: true, items: many(8) })).toBe(true);
     expect(productsHavePage({ total: 8, pages: true, items: many(8) })).toBe(false);
     expect(productsHavePage({ total: 9, pages: false, items: many(8) })).toBe(false);
+  });
+});
+
+// LT-545 (Erel: design the products' card, their page and a product's page).
+describe('the card the owner chose', () => {
+  it('draws the plain card where none was chosen, or one that is unknown', () => {
+    const { unmount } = render(<WellTiles items={many(4)} pages />);
+    expect(screen.getByTestId('products-well').dataset.card).toBe('plain');
+    unmount();
+    render(<WellTiles items={many(4)} pages card={'shiny' as never} />);
+    expect(screen.getByTestId('products-well').dataset.card).toBe('plain');
+  });
+
+  it("frames the card in the site's own card look", () => {
+    render(<WellTiles items={many(4)} pages card="framed" />);
+    const link = screen.getByText('Product 1').closest('a') as HTMLAnchorElement;
+    expect(link.className).toContain('card-design');
+    expect(link.getAttribute('href')).toBe('/products/p-1');
+  });
+
+  it('puts the words on the picture, in one cell so a long name grows the card', () => {
+    render(<WellTiles items={[product(0, { name: 'A very long name '.repeat(8) }), ...many(4).slice(1)]} pages card="overlay" />);
+    const words = screen.getByText(/A very long name/).parentElement as HTMLElement;
+    expect(words.className).toContain('[grid-area:1/1]');
+    expect(words.className).toContain('self-end');
+    // Positioned like the picture box beside it, or the picture paints over them.
+    expect(words.className).toContain('relative');
+    expect(words.closest('a')?.className).toContain('grid');
+  });
+
+  it("adds a button that opens the product's page at its form", () => {
+    const go = vi.fn();
+    draw(<WellTiles items={many(4)} pages card="button" cta="I want it" />, vi.fn(), go);
+    const buttons = screen.getAllByText('I want it');
+    expect(buttons).toHaveLength(4);
+    const button = buttons[1].closest('a') as HTMLAnchorElement;
+    expect(button.getAttribute('href')).toBe('/products/p-1#inquire');
+    fireEvent.click(button);
+    expect(go).toHaveBeenCalledWith('/products/p-1#inquire');
+    // Not inside the card's own link: one link inside another is no link at all.
+    expect(button.parentElement?.closest('a')).toBeNull();
+  });
+
+  it('a site without product pages: the button chooses the product for the form here', () => {
+    const setInquiry = vi.fn();
+    draw(<WellTiles items={many(4)} pages={false} card="button" />, setInquiry);
+    fireEvent.click(screen.getAllByText('products.cta')[2].closest('a') as HTMLAnchorElement);
+    expect(setInquiry).toHaveBeenCalledWith({ id: 'id2', name: 'Product 2' });
+  });
+
+  it('the swap tiles take the card too, their dots on top when the words are on the picture', () => {
+    const { unmount } = render(<SwapTiles items={many(4)} pages card="framed" />);
+    expect(screen.getByTestId('products-swap').dataset.card).toBe('framed');
+    expect(screen.getByText('Product 1').closest('article')?.className).toContain('card-design');
+    unmount();
+    render(<SwapTiles items={many(4)} pages card="overlay" />);
+    expect(screen.getAllByRole('group')[0].className).toContain('top-1');
+  });
+});
+
+describe('a few tiles (LT-545)', () => {
+  it('stand in the middle of their row, and a full catalogue keeps its grid', () => {
+    const { unmount } = render(<WellTiles items={many(3)} pages />);
+    expect(screen.getByTestId('products-well').className).toContain('justify-center');
+    unmount();
+    render(<WellTiles items={many(5)} pages />);
+    expect(screen.getByTestId('products-well').className).toContain('grid');
+    expect(screen.getByTestId('products-well').className).not.toContain('justify-center');
+  });
+});
+
+describe("a product's page (LT-545)", () => {
+  const page = (layout: string | undefined, path = '/products/p-1', contact: React.ReactNode = null) => {
+    const script = document.createElement('script');
+    script.id = 'lightor-page';
+    script.type = 'application/json';
+    script.textContent = JSON.stringify({ kind: 'product', data: { product: product(1, { details: ['Silver'], images: [{ url: 'a.webp' }, { url: 'b.webp' }, { url: 'c.webp' }] }), related: [product(2)] } });
+    document.body.appendChild(script);
+    const setInquiry = vi.fn();
+    render(
+      <MemoryRouter initialEntries={[path]}>
+        <ProductInquiryContext.Provider value={{ inquiry: null, setInquiry }}>
+          <ProductPage slug="p-1" businessName="Shop" layout={layout as never} contact={contact} />
+        </ProductInquiryContext.Provider>
+      </MemoryRouter>
+    );
+    return { setInquiry };
+  };
+  afterEach(() => { document.getElementById('lightor-page')?.remove(); });
+
+  it('keeps the pictures beside the words where no layout was chosen', () => {
+    page(undefined);
+    expect(screen.getByRole('heading', { level: 1 }).textContent).toBe('Product 1');
+    expect(document.querySelector('.lg\\:grid-cols-2')).not.toBeNull();
+    expect(screen.queryByTestId('product-handy')).toBeNull();
+  });
+
+  it('hero: one large picture across the page, the words centred under it', () => {
+    page('hero');
+    expect(document.querySelector('.sm\\:aspect-\\[16\\/9\\]')).not.toBeNull();
+    expect(screen.getByRole('heading', { level: 1 }).parentElement?.className).toContain('text-center');
+  });
+
+  it('gallery: every picture, swiped on a phone, and the button at hand there', () => {
+    page('gallery');
+    expect(screen.getByRole('group', { name: 'products.pictures' }).querySelectorAll('img')).toHaveLength(3);
+    const handy = screen.getByTestId('product-handy');
+    // Out of the way until the page's own button scrolls out of view.
+    expect(handy.getAttribute('aria-hidden')).toBe('true');
+    expect(handy.querySelector('a')?.getAttribute('tabindex')).toBe('-1');
+  });
+
+  it('opens at its form with the product chosen when a card sent the visitor (#inquire)', async () => {
+    vi.useFakeTimers();
+    try {
+      const { setInquiry } = page(undefined, '/products/p-1#inquire', <section id="contact"><form /></section>);
+      await act(async () => { vi.advanceTimersByTime(100); });
+      expect(setInquiry).toHaveBeenLastCalledWith({ id: 'id1', name: 'Product 1' });
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });

@@ -309,6 +309,31 @@ describe('the site editor bridge (LT-243)', () => {
     expect(container.querySelector('[data-lt-section="b9"]')).not.toBeNull();
   });
 
+  // LT-545: the editor's page switcher moves the preview between the site's pages.
+  it('goes to the page the editor names, only one of the site\'s own, and says where it is', async () => {
+    renderSite();
+    const none: { url: string }[] = [];
+    const products = { total: 2, pages: true, items: [
+      { id: 'a', slug: 'ring', name: 'Ring', images: none },
+      { id: 'b', slug: 'chain', name: 'Chain', images: none },
+    ] };
+    await post({ type: 'PREVIEW_DATA', config: config({ catalog: true, conversion: 'lead', products }) });
+    await post({ type: 'LT_EDIT', on: true });
+    await waitFor(() => expect(parentPost).toHaveBeenCalledWith({ type: 'LT_PAGE', path: '/' }, DASHBOARD));
+
+    await post({ type: 'LT_GO', path: '/products/ring' });
+    await waitFor(() => expect(parentPost).toHaveBeenCalledWith({ type: 'LT_PAGE', path: '/products/ring' }, DASHBOARD));
+
+    parentPost.mockClear();
+    await post({ type: 'LT_GO', path: '//evil.example/x' });
+    await post({ type: 'LT_GO', path: '/manage/123' });
+    await post({ type: 'LT_GO', path: '/products' }, 'https://evil.example');
+    expect(parentPost).not.toHaveBeenCalledWith(expect.objectContaining({ type: 'LT_PAGE' }), expect.anything());
+
+    await post({ type: 'LT_GO', path: '/products' });
+    await waitFor(() => expect(parentPost).toHaveBeenCalledWith({ type: 'LT_PAGE', path: '/products' }, DASHBOARD));
+  });
+
   it('ignores editor messages from an untrusted origin', async () => {
     const { container } = renderSite();
     await post({ type: 'PREVIEW_DATA', config: config() });

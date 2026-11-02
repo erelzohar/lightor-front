@@ -52,6 +52,15 @@ export type PortfolioLayout = 'grid' | 'masonry' | 'filmstrip' | 'polaroid' | 'f
 // picture on hover, 'bento' mixed sizes, 'list' names beside prices (a menu),
 // and three that move: 'belt' a conveyor, 'hanger' a clothes rail, 'coverflow'.
 export type ProductsLayout = 'well' | 'swap' | 'bento' | 'list' | 'belt' | 'hanger' | 'coverflow';
+// LT-545: a product's card where products are tiles: 'plain' the picture with
+// the words under it, 'framed' all of it in the site's card, 'overlay' the words
+// on the picture, 'button' an inquiry button under it. The products page has a
+// still layout of its own, and the product page three: 'side' the pictures
+// beside the words, 'hero' one large picture above them, 'gallery' every
+// picture with the words kept in view.
+export type ProductCardStyle = 'plain' | 'framed' | 'overlay' | 'button';
+export type ProductsPageLayout = 'well' | 'swap' | 'bento' | 'list';
+export type ProductPageLayout = 'side' | 'hero' | 'gallery';
 export type ContactLayout = 'split' | 'stacked' | 'poster' | 'editorial' | 'statement' | 'band' | 'cards';
 // LT-124: 'line' (one light ruled row) and 'ticker' (repeating strip) from the canvas.
 export type FooterLayout = 'columns' | 'minimal' | 'line' | 'ticker';
@@ -436,6 +445,10 @@ export class DesignConfig implements DesignTokens {
     public sectionWidth: SectionWidth,
     /** LT-540: optional on purpose: a preset that predates products has none. */
     public productsLayout?: ProductsLayout,
+    /** LT-545: optional too: without them a site looks as it did. */
+    public productCard?: ProductCardStyle,
+    public productsPageLayout?: ProductsPageLayout,
+    public productPageLayout?: ProductPageLayout,
   ) {}
 
   // Resolution order for every token: explicit value → preset value → default.
@@ -481,6 +494,9 @@ export class DesignConfig implements DesignTokens {
       json?.backdrop ?? base.backdrop,
       json?.sectionWidth ?? base.sectionWidth,
       json?.productsLayout,
+      json?.productCard,
+      json?.productsPageLayout,
+      json?.productPageLayout,
     );
   }
 }

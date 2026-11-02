@@ -4,7 +4,7 @@ import { useLanguage } from '../../contexts/LanguageContext';
 import { useEdit } from '../../services/editMode';
 import { followLink, useSiteNav } from '../../services/siteNav';
 import { PRODUCTS_PATH, type Product, type ProductCard, type ProductsSummary } from '../../models/Product';
-import type { ProductsLayout, SectionHeader } from '../../models/DesignConfig';
+import type { ProductCardStyle, ProductsLayout, SectionHeader } from '../../models/DesignConfig';
 import type { HeadingScale } from '../../services/artDirection';
 import type { SectionTone } from '../SectionDivider';
 import { TONE_BG } from '../blocks/blockUtils';
@@ -19,6 +19,8 @@ interface Props {
   summary?: ProductsSummary;
   config?: { title: string; description: string; cta: string };
   layout?: ProductsLayout;
+  /** LT-545: the owner's card, for the layouts that draw cards. */
+  card?: ProductCardStyle;
   currency?: string;
   phone?: string;
   header?: SectionHeader;
@@ -33,7 +35,7 @@ export const tilesFor = (layout: ProductsLayout, count: number): ProductsLayout 
   count < (MIN_ITEMS[layout] ?? 0) ? 'well' : layout;
 
 /** The arrangements a full list can take: the moving ones suit a handful, not a catalogue. */
-export const ProductList: React.FC<{ items: ProductCard[]; layout: ProductsLayout; pages: boolean; currency?: string; tone?: SectionTone }> = ({ items, layout, ...rest }) => {
+export const ProductList: React.FC<{ items: ProductCard[]; layout: ProductsLayout; pages: boolean; currency?: string; tone?: SectionTone; card?: ProductCardStyle; cta?: string }> = ({ items, layout, ...rest }) => {
   const Tiles = layout === 'swap' ? SwapTiles : layout === 'bento' ? BentoTiles : layout === 'list' ? ListTiles : WellTiles;
   return <Tiles items={items} {...rest} />;
 };
@@ -43,7 +45,7 @@ export const ProductList: React.FC<{ items: ProductCard[]; layout: ProductsLayou
  * not a gallery row (an order will point at it for good), but the place on the
  * page is the same. One product is drawn in full: the home page is its page.
  */
-const Products: React.FC<Props> = ({ summary, config, layout = 'well', currency, phone, header, headerScale, tone = 'bg' }) => {
+const Products: React.FC<Props> = ({ summary, config, layout = 'well', card, currency, phone, header, headerScale, tone = 'bg' }) => {
   const { t, language } = useLanguage();
   const { editing } = useEdit();
   const { go } = useSiteNav();
@@ -81,7 +83,7 @@ const Products: React.FC<Props> = ({ summary, config, layout = 'well', currency,
         ) : shown === 'coverflow' ? (
           <ProductCoverflow items={items} pages={pages} currency={currency} />
         ) : (
-          <ProductList items={items} layout={shown} pages={pages} currency={currency} tone={tone} />
+          <ProductList items={items} layout={shown} pages={pages} currency={currency} tone={tone} card={card} cta={config?.cta} />
         )}
         {/* LT-542 (Erel): the way to the products' page, whenever the site has one. */}
         {pages && (

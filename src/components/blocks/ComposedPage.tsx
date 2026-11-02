@@ -128,7 +128,7 @@ const ComposedPage: React.FC<ComposedPageProps> = ({ config, jitter, isPreview, 
         // used to hide every one of them on generated sites.
         return c?.portfolio ? <Portfolio config={c.portfolio} layout={(v as PortfolioLayout) ?? design?.portfolioLayout} masonryPhase={jitter.masonryPhase} /> : null;
       case 'products':
-        return <Products summary={config.products} config={c?.products} layout={(v as ProductsLayout) ?? design?.productsLayout} currency={config.currency} phone={config.contact?.phone} />;
+        return <Products summary={config.products} config={c?.products} layout={(v as ProductsLayout) ?? design?.productsLayout} card={design?.productCard} currency={config.currency} phone={config.contact?.phone} />;
       case 'quote':
         return c?.testimonials && (c.testimonials.items?.length ?? 0) > 0
           ? <Testimonials config={c.testimonials} tone="bg" layout={(v as TestimonialsLayout) ?? design?.testimonialsLayout} />

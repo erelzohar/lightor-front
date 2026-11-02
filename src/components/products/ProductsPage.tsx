@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { categoriesOf, parseProduct, type ProductCard } from '../../models/Product';
-import type { ProductsLayout } from '../../models/DesignConfig';
+import type { ProductCardStyle, ProductsLayout } from '../../models/DesignConfig';
 import WebConfigService from '../../services/WebConfigService';
 import { readInlinePage } from '../../services/edgeShell';
 import { followLink, useSiteNav } from '../../services/siteNav';
@@ -13,6 +13,9 @@ interface Props {
   title?: string;
   description?: string;
   layout?: ProductsLayout;
+  /** LT-545: the owner's card, and the words on its button. */
+  card?: ProductCardStyle;
+  cta?: string;
   currency?: string;
 }
 
@@ -23,7 +26,7 @@ const STILL_LAYOUTS: ProductsLayout[] = ['well', 'swap', 'bento', 'list'];
  * LT-540: `/products`: everything the site shows, filtered by category. It is
  * reached past what the home page holds, and in the site's own frame.
  */
-const ProductsPage: React.FC<Props> = ({ businessName, title, description, layout = 'well', currency }) => {
+const ProductsPage: React.FC<Props> = ({ businessName, title, description, layout = 'well', card, cta, currency }) => {
   const { t } = useLanguage();
   const { go } = useSiteNav();
   const [items, setItems] = useState<ProductCard[] | null>(() => {
@@ -74,7 +77,7 @@ const ProductsPage: React.FC<Props> = ({ businessName, title, description, layou
           </div>
         )}
         <div className="mt-8">
-          <ProductList items={shown} layout={arrangement} pages currency={currency} />
+          <ProductList items={shown} layout={arrangement} pages currency={currency} card={card} cta={cta} />
         </div>
       </div>
     </section>
