@@ -104,12 +104,31 @@ describe('the section', () => {
     expect(screen.getByText('products.soldOut')).toBeTruthy();
   });
 
-  it('leads to the list only past what it holds', () => {
-    const { unmount } = render(<Products summary={{ total: 2, pages: true, items: many(2) }} />);
+  it('leads to the list whenever the site has one, in every layout (LT-542)', () => {
+    for (const layout of ['well', 'swap', 'bento', 'list', 'belt', 'hanger', 'coverflow'] as const) {
+      const go = vi.fn();
+      const { unmount } = render(
+        <SiteNavContext.Provider value={{ atHome: true, go }}>
+          <Products summary={{ total: 6, pages: true, items: many(6) }} layout={layout} />
+        </SiteNavContext.Provider>
+      );
+      const link = screen.getByText(/products\.all/).closest('a') as HTMLAnchorElement;
+      expect(link.getAttribute('href')).toBe('/products');
+      expect(link.textContent).toContain('"count":6');
+      fireEvent.click(link);
+      expect(go).toHaveBeenCalledWith('/products');
+      unmount();
+    }
+    render(<Products summary={{ total: 24, pages: true, items: many(8) }} />);
+    expect(screen.getByText(/products\.all/).textContent).toContain('"count":24');
+  });
+
+  it('has no such link where products have no page (the free plan, a single product)', () => {
+    const { unmount } = render(<Products summary={{ total: 1, pages: false, items: many(1) }} />);
     expect(screen.queryByText(/products\.all/)).toBeNull();
     unmount();
-    render(<Products summary={{ total: 24, pages: true, items: many(8) }} />);
-    expect(screen.getByText(/products\.all/)).toBeTruthy();
+    render(<Products summary={{ total: 3, pages: false, items: many(3) }} />);
+    expect(screen.queryByText(/products\.all/)).toBeNull();
   });
 
   it('falls back to calm tiles with too few for a moving layout', () => {

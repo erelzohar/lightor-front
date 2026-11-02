@@ -52,7 +52,6 @@ const Products: React.FC<Props> = ({ summary, config, layout = 'well', currency,
 
   const pages = !!summary?.pages;
   const title = config?.title?.trim() || t('products.title');
-  const more = (summary?.total ?? 0) > items.length;
   const Arrow = language === 'he' || language === 'ar' ? ArrowLeft : ArrowRight;
   const shown = tilesFor(layout, items.length);
 
@@ -84,7 +83,8 @@ const Products: React.FC<Props> = ({ summary, config, layout = 'well', currency,
         ) : (
           <ProductList items={items} layout={shown} pages={pages} currency={currency} tone={tone} />
         )}
-        {more && (
+        {/* LT-542 (Erel): the way to the products' page, whenever the site has one. */}
+        {pages && (
           <div className="mt-10 text-center">
             <a
               href={PRODUCTS_PATH}
