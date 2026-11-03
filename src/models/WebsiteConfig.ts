@@ -16,6 +16,7 @@ import type { Conversion } from '../services/siteMode';
 import { DEFAULT_TIME_ZONE, resolveTimeZone } from '../utils/businessTime';
 import { Currency, DEFAULT_CURRENCY, currencyOf } from '../utils/currency';
 import { ProductsSummary, parseProducts } from './Product';
+import { withoutPaidDesigns } from '../services/paidDesigns';
 
 /**
  * Every part is optional, and the whole address may be absent — a business can
@@ -249,14 +250,17 @@ export class WebsiteConfig {
     /** LT-540: the products the home page draws; absent on a site without any. */
     public products?: ProductsSummary,
     /**
-     * LT-570: false on the free plan, which holds the ten moving designs
-     * still (services/planMotion.ts). Set by the server only; absent reads as
-     * moving - older payloads, the register preview and the editor.
+     * LT-570: false on the free plan, whose site shows each paid design as
+     * its section's default (services/paidDesigns.ts), already swapped in by
+     * fromJSON. Set by the server, and by the editor's preview on that plan;
+     * absent reads as every design - older payloads and the register preview.
      */
     public motion: boolean = true
   ) {}
 
-  static fromJSON(json: any): WebsiteConfig {
+  static fromJSON(served: any): WebsiteConfig {
+    // LT-570: a plan without the paid designs shows their sections' defaults.
+    const json = served?.motion === false ? withoutPaidDesigns(served) : served;
     // Defensive on the array fields (LT-104): the register preview posts the
     // RAW AI response, which carries no `vacations` — the old unguarded
     // `.map` threw here, App's silent catch fell back to the unparsed object,

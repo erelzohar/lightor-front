@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useEdit, useEditAttrs } from '../../services/editMode';
-import { useMotionDesignStill } from '../../services/planMotion';
+import { useStill } from '../../hooks/useA11yPrefs';
 import ImagesService from '../../services/ImagesService';
 import { handleSquareImageError } from '../../utils/imageFallback';
 import { altOf, type PortfolioItem } from '../../models/PortfolioItem';
@@ -29,7 +29,7 @@ const TiltCascade: React.FC<{ items: PortfolioItem[] }> = ({ items }) => {
   const { t, language } = useLanguage();
   const { editing } = useEdit();
   const ed = useEditAttrs();
-  const still = useMotionDesignStill();
+  const still = useStill();
   const rtl = language === 'he' || language === 'ar';
   const displayFont = rtl ? 'var(--font-heading-rtl)' : 'var(--font-heading)';
   const dir = rtl ? -1 : 1;

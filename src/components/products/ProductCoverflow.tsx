@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useEdit } from '../../services/editMode';
-import { useMotionDesignStill } from '../../services/planMotion';
+import { useStill } from '../../hooks/useA11yPrefs';
 import type { ProductCard } from '../../models/Product';
 import { handleWideImageError } from '../../utils/imageFallback';
 import { CoverImage, Price, SoldOut, useProductLink } from './ProductParts';
@@ -20,7 +20,7 @@ const EASE = 'cubic-bezier(.22,.85,.3,1)';
 const ProductCoverflow: React.FC<{ items: ProductCard[]; pages: boolean; currency?: string }> = ({ items, pages, currency }) => {
   const { t, language } = useLanguage();
   const { editing } = useEdit();
-  const still = useMotionDesignStill();
+  const still = useStill();
   const rtl = language === 'he' || language === 'ar';
   const dir = rtl ? -1 : 1;
   const linkOf = useProductLink(pages);

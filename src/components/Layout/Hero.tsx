@@ -22,7 +22,6 @@ import { safeHttpUrl, openExternal } from '../../utils/safeUrl';
 import { loadVantaDeps } from './vantaDeps';
 import { CUTOUT_CLASS, useCutout } from '../../utils/cutout';
 import { useStill } from '../../hooks/useA11yPrefs';
-import { useMotionDesignStill } from '../../services/planMotion';
 import { HERO_IMAGE } from './heroes/common';
 import ParallaxHero from './heroes/ParallaxHero';
 import ExpandHero from './heroes/ExpandHero';
@@ -163,8 +162,6 @@ const Hero: React.FC<HeroProps> = ({ config, social, phone, isContactVisible, ap
   // LT-346: the device asks for less motion, or the visitor chose "stop
   // animations": no moving background, no rolling button sheen.
   const still = useStill();
-  // LT-570: the two backdrops only move on a paid plan; the Vanta ones on every plan.
-  const backdropStill = useMotionDesignStill();
 
   // The default background is Vanta fog (LT-071, Erel's decision after the
   // LT-062..069 animated-gradient saga — see the missions log).
@@ -923,11 +920,11 @@ const Hero: React.FC<HeroProps> = ({ config, social, phone, isContactVisible, ap
             the canvas and below the content. */}
         {!full && decor === 'metal' && (
           <Suspense fallback={null}>
-            <MetalRibbons color={accent ?? '#d8dade'} dark={isDarkMode} still={backdropStill || editing} rtl={rtl} />
+            <MetalRibbons color={accent ?? '#d8dade'} dark={isDarkMode} still={still || editing} rtl={rtl} />
           </Suspense>
         )}
         {!full && decor !== 'sonar' && <div className={`absolute inset-0 ${decor === 'metal' ? 'bg-light-bg/20 dark:bg-dark-bg/20' : 'bg-light-bg/50 dark:bg-dark-bg/55'} pointer-events-none`} aria-hidden="true" />}
-        {!full && decor === 'sonar' && <SonarField color={accent ?? '#7a5cff'} still={backdropStill || editing} />}
+        {!full && decor === 'sonar' && <SonarField color={accent ?? '#7a5cff'} still={still || editing} />}
 
         {/* Vibe signature decorations (LT-107, from the LT-092 canvas). All
             static and aria-hidden — identity, not content.

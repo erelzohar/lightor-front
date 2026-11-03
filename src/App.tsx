@@ -62,8 +62,8 @@ import { countsHere, noteVisit } from './services/visits';
 import AccessibilityMenu from './components/a11y/AccessibilityMenu';
 import AccessibilityStatement from './components/a11y/AccessibilityStatement';
 import { setA11yMenuEnabled } from './services/a11yPrefs';
+import { withoutPaidDesigns } from './services/paidDesigns';
 import { useStill } from './hooks/useA11yPrefs';
-import { PlanMotionContext } from './services/planMotion';
 
 // Origins permitted to drive this app through a PREVIEW_DATA postMessage.
 // Only the register and dashboard apps embed the public site in an iframe for
@@ -238,7 +238,8 @@ function MainContent() {
           // above used to strip preset expansion, so every onboarding
           // preview rendered generic while the saved site rendered styled).
           console.warn('[lightor-front] PREVIEW_DATA failed full parsing; rendering leniently:', err);
-          const raw = payload as WebsiteConfig;
+          // LT-570: a plan without the paid designs shows their sections' defaults here too.
+          const raw = ((payload as { motion?: unknown })?.motion === false ? withoutPaidDesigns(payload) : payload) as WebsiteConfig;
           try {
             (raw as { design: unknown }).design = DesignConfig.fromJSON((raw as { design: unknown }).design);
           } catch { /* keep whatever design the payload carried */ }
@@ -613,8 +614,6 @@ function MainContent() {
     <EditContext.Provider value={editState}>
     <SiteNavContext.Provider value={siteNav}>
     <ProductInquiryContext.Provider value={inquiryState}>
-    {/* LT-570: the free plan holds the ten moving designs still. */}
-    <PlanMotionContext.Provider value={config.motion !== false}>
     <MotionConfig reducedMotion={still ? 'always' : 'user'}>
     <div className="min-h-screen overflow-x-clip bg-light-bg dark:bg-dark-bg transition-colors duration-300">
       {/* LT-346: the first stop for a keyboard: straight past the menu. */}
@@ -938,7 +937,6 @@ function MainContent() {
       {editing && <EditOverlay selected={selection} onPick={onPick} />}
     </div>
     </MotionConfig>
-    </PlanMotionContext.Provider>
     </ProductInquiryContext.Provider>
     </SiteNavContext.Provider>
     </EditContext.Provider>
