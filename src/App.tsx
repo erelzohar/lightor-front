@@ -58,6 +58,7 @@ import { EditContext, elementForSection, elementsForPath, type EditTarget, type 
 import { legacyLayout } from './services/legacyLayout';
 import { scrollToSection } from './utils/sections';
 import { awaitsPreviewData } from './services/previewMode';
+import { countsHere, noteVisit } from './services/visits';
 import AccessibilityMenu from './components/a11y/AccessibilityMenu';
 import AccessibilityStatement from './components/a11y/AccessibilityStatement';
 import { setA11yMenuEnabled } from './services/a11yPrefs';
@@ -404,6 +405,11 @@ function MainContent() {
   }, []);
 
   useTheme(config, isPreview);
+  // LT-569: a leads site's visits - one per visitor's half hour, never from a preview or the editor.
+  const visitSite = config && !isPreview && !editing && config.conversion === 'lead' ? config.subDomain : null;
+  useEffect(() => {
+    if (visitSite && countsHere()) noteVisit(visitSite);
+  }, [visitSite, location.pathname]);
   // LT-346: <html lang> names the owner's language, whatever the visitor's
   // menu language; the menu's choices apply only where the menu is shown.
   useEffect(() => {

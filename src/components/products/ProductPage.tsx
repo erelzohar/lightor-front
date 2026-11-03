@@ -5,6 +5,7 @@ import { useLanguage } from '../../contexts/LanguageContext';
 import { PRODUCTS_PATH, parseProduct, type Product } from '../../models/Product';
 import type { ProductCardStyle, ProductPageLayout } from '../../models/DesignConfig';
 import WebConfigService from '../../services/WebConfigService';
+import { countsHere, noteProductView } from '../../services/visits';
 import { readInlinePage } from '../../services/edgeShell';
 import { followLink, useSiteNav } from '../../services/siteNav';
 import { productAction, useProductInquiry } from '../../services/productAction';
@@ -131,6 +132,11 @@ const ProductPage: React.FC<Props> = ({ slug, businessName, logo, phone, currenc
   }, [slug, drafts]);
 
   const product = loaded && loaded !== 'missing' ? loaded.product : null;
+
+  // LT-569: a view for the owner's most viewed - a real product of the live site, never a draft or a preview.
+  useEffect(() => {
+    if (product && !drafts && countsHere()) noteProductView(window.location.hostname.split('.')[0], product.id);
+  }, [product, drafts]);
 
   useEffect(() => {
     if (!product) return;
