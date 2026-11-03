@@ -2,7 +2,7 @@ import React, { useCallback, useRef, type ReactNode } from 'react';
 import EditText from '../../EditText';
 import ImagesService from '../../../services/ImagesService';
 import { useEdit, useEditAttrs } from '../../../services/editMode';
-import { useStill } from '../../../hooks/useA11yPrefs';
+import { useMotionDesignStill } from '../../../services/planMotion';
 import { handleWideImageError } from '../../../utils/imageFallback';
 import type { HeroConfig } from '../../../models/HeroConfig';
 import { clamp, HERO_IMAGE, useScrollFrame } from './common';
@@ -35,7 +35,7 @@ interface ParallaxHeroProps {
 const ParallaxHero: React.FC<ParallaxHeroProps> = ({ config, alt, actions, social, belowTone = 'bg', flip }) => {
   const ed = useEditAttrs();
   const { editing } = useEdit();
-  const still = useStill();
+  const still = useMotionDesignStill();
   const root = useRef<HTMLDivElement>(null);
   const layers = useRef<(HTMLElement | SVGSVGElement | null)[]>([]);
 

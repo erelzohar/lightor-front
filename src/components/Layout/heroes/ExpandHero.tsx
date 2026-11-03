@@ -3,7 +3,7 @@ import { ChevronDown } from 'lucide-react';
 import EditText from '../../EditText';
 import ImagesService from '../../../services/ImagesService';
 import { useEdit, useEditAttrs } from '../../../services/editMode';
-import { useStill } from '../../../hooks/useA11yPrefs';
+import { useMotionDesignStill } from '../../../services/planMotion';
 import { handleWideImageError } from '../../../utils/imageFallback';
 import type { HeroConfig } from '../../../models/HeroConfig';
 import { clamp, HERO_IMAGE, useScrollFrame } from './common';
@@ -31,7 +31,7 @@ interface ExpandHeroProps {
 const ExpandHero: React.FC<ExpandHeroProps> = ({ config, alt, actions, social, rtl }) => {
   const ed = useEditAttrs();
   const { editing } = useEdit();
-  const still = useStill();
+  const still = useMotionDesignStill();
   const moving = !still && !editing;
 
   const root = useRef<HTMLDivElement>(null);

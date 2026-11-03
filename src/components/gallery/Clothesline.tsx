@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useLayoutEffect, useRef, useState } from
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useEdit, useEditAttrs } from '../../services/editMode';
-import { useStill } from '../../hooks/useA11yPrefs';
+import { useMotionDesignStill } from '../../services/planMotion';
 import ImagesService from '../../services/ImagesService';
 import { handleSquareImageError } from '../../utils/imageFallback';
 import { altOf, type PortfolioItem } from '../../models/PortfolioItem';
@@ -27,7 +27,7 @@ const Clothesline: React.FC<{ items: PortfolioItem[] }> = ({ items }) => {
   const { t, language } = useLanguage();
   const { editing } = useEdit();
   const ed = useEditAttrs();
-  const still = useStill();
+  const still = useMotionDesignStill();
   const rtl = language === 'he' || language === 'ar';
   const displayFont = rtl ? 'var(--font-heading-rtl)' : 'var(--font-heading)';
   const dir = rtl ? -1 : 1;

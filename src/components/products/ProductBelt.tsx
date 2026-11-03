@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useSta
 import { ChevronLeft, ChevronRight, Pause, Play } from 'lucide-react';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useEdit } from '../../services/editMode';
-import { useStill } from '../../hooks/useA11yPrefs';
+import { useMotionDesignStill } from '../../services/planMotion';
 import type { ProductCard } from '../../models/Product';
 import { CoverImage, Price, useProductLink } from './ProductParts';
 import { beltFrames, edgePath, fitBelt, frontOf, lapsToFront, plateAtFront } from './motion';
@@ -23,7 +23,7 @@ const START_LAPS = 1000;
 const ProductBelt: React.FC<{ items: ProductCard[]; pages: boolean; currency?: string }> = ({ items, pages, currency }) => {
   const { t, language } = useLanguage();
   const { editing } = useEdit();
-  const still = useStill();
+  const still = useMotionDesignStill();
   const rtl = language === 'he' || language === 'ar';
   const linkOf = useProductLink(pages);
   const n = items.length;

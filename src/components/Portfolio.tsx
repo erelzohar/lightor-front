@@ -15,6 +15,7 @@ import { altOf } from '../models/PortfolioItem';
 import Clothesline from './gallery/Clothesline';
 import CurveReel from './gallery/CurveReel';
 import TiltCascade from './gallery/TiltCascade';
+import { usePlanMotion } from '../services/planMotion';
 
 interface PortfolioProps {
   config: PortfolioConfig;
@@ -32,7 +33,11 @@ interface PortfolioProps {
 // image has the same dimensions.
 const MASONRY_ASPECTS = ['aspect-[4/3]', 'aspect-square', 'aspect-[3/4]'];
 
-const Portfolio: React.FC<PortfolioProps> = ({ config, layout = 'grid', masonryPhase = 0, header, headerScale, tone = 'bg' }) => {
+const Portfolio: React.FC<PortfolioProps> = ({ config, layout: picked = 'grid', masonryPhase = 0, header, headerScale, tone = 'bg' }) => {
+  // LT-570: held still, the curve shows only some of its pictures, so where
+  // the plan has no motion it is drawn as a masonry. The pick stays.
+  const moving = usePlanMotion();
+  const layout: PortfolioLayout = picked === 'curve' && !moving ? 'masonry' : picked;
   const ed = useEditAttrs();
   const { editing } = useEdit();
   const [currentSlide, setCurrentSlide] = useState(0);

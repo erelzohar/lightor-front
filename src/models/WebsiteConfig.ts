@@ -247,7 +247,13 @@ export class WebsiteConfig {
      */
     public bookingOpen: boolean = true,
     /** LT-540: the products the home page draws; absent on a site without any. */
-    public products?: ProductsSummary
+    public products?: ProductsSummary,
+    /**
+     * LT-570: false on the free plan, which holds the ten moving designs
+     * still (services/planMotion.ts). Set by the server only; absent reads as
+     * moving - older payloads, the register preview and the editor.
+     */
+    public motion: boolean = true
   ) {}
 
   static fromJSON(json: any): WebsiteConfig {
@@ -290,7 +296,8 @@ export class WebsiteConfig {
       json.accessibility?.widgetHidden !== true,
       currencyOf(json.currency),
       !json.bookingClosed,
-      parseProducts(json.products)
+      parseProducts(json.products),
+      json.motion !== false
     );
   }
 }
