@@ -252,6 +252,8 @@ const ManageAppointment: React.FC = () => {
         bookingFields={config.bookingFields}
         timeZone={config.timeZone}
         currency={config.currency}
+        whatsapp={config.whatsapp}
+        subdomain={config.subDomain}
         user_id={appointment.user_id}
         isUpdating={true}
         appointmentToUpdate={appointment}

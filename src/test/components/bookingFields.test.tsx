@@ -255,7 +255,7 @@ describe("the owner's questions on the booking form (LT-178)", () => {
     expect(sendCodeButton().hasAttribute('disabled')).toBe(false);
 
     fireEvent.submit(detailsForm());
-    await waitFor(() => expect(mocks.sendOtp).toHaveBeenCalledWith('0501234567', 'sms'));
+    await waitFor(() => expect(mocks.sendOtp).toHaveBeenCalledWith('0501234567', 'sms', undefined, undefined));
     await enterOtp();
 
     await waitFor(() => expect(mocks.createAppointment).toHaveBeenCalledTimes(1));
