@@ -21,6 +21,8 @@ vi.mock('../../components/SiteLighty/SiteLighty3D', () => {
   throw new Error('Failed to fetch dynamically imported module: /assets/SiteLighty3D-old.js');
 });
 vi.mock('@marsidev/react-turnstile', () => ({ Turnstile: (): null => null }));
+// LT-597: his product links move the site's own router.
+vi.mock('react-router-dom', async (actual) => ({ ...(await actual<typeof import('react-router-dom')>()), useNavigate: () => vi.fn() }));
 vi.mock('../../contexts/LanguageContext', () => ({
   useLanguage: () => ({ t: (key: string) => key, language: 'en' }),
 }));

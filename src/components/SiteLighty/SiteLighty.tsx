@@ -1,6 +1,7 @@
 import { Suspense, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import type { FormEvent, KeyboardEvent, PointerEvent as ReactPointerEvent } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
 import { AlertTriangle, ArrowLeft, Phone, Send, X } from 'lucide-react';
 import { Turnstile } from '@marsidev/react-turnstile';
 import { useLanguage } from '../../contexts/LanguageContext';
@@ -62,15 +63,31 @@ const lightMode = (): boolean =>
 
 const subdomainOf = (): string => window.location.hostname.split('.')[0];
 
-function Reply({ text, onSection }: { text: string; onSection: (section: string) => void }) {
+const LINK_CLS = 'underline underline-offset-2 font-semibold text-primary-readable dark:text-primary-dark-readable';
+
+function Reply({ text, onSection, onPage }: { text: string; onSection: (section: string) => void; onPage: (path: string) => void }) {
   return (
     <>
       {replyParts(text).map((part, i) =>
         part.kind === 'bold' ? <strong key={i}>{part.text}</strong>
           : part.kind === 'link' ? (
-            <button key={i} type="button" onClick={() => onSection(part.section)} className="underline underline-offset-2 font-semibold text-primary-readable dark:text-primary-dark-readable">
+            <button key={i} type="button" onClick={() => onSection(part.section)} className={LINK_CLS}>
               {part.text}
             </button>
+          ) : part.kind === 'page' ? (
+            // LT-597: a product (or all of them) opens in the site; a new tab still works as a link does.
+            <a
+              key={i}
+              href={part.path}
+              onClick={(e) => {
+                if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) return;
+                e.preventDefault();
+                onPage(part.path);
+              }}
+              className={LINK_CLS}
+            >
+              {part.text}
+            </a>
           ) : part.kind === 'phone' ? (
             // One piece (LT-432): dials on a tap, reads left to right in a
             // Hebrew line, never breaks at its hyphen.
@@ -228,6 +245,13 @@ export default function SiteLighty({ businessName, leadsSite, phone, demo = fals
     if (window.matchMedia?.('(pointer: fine)').matches) window.setTimeout(() => inputRef.current?.focus(), 150);
   };
 
+  // LT-597: a product's page from his answer. On a phone the chat covers the page, so it steps aside.
+  const navigate = useNavigate();
+  const goToPage = (path: string) => {
+    if (window.innerWidth < 640) setOpen(false);
+    navigate(path);
+  };
+
   const goToSection = (section: string) => {
     const el = sectionOf(`#${section}`);
     if (!el) return;
@@ -375,7 +399,7 @@ export default function SiteLighty({ businessName, leadsSite, phone, demo = fals
                         ? 'ms-auto max-w-[85%] w-fit rounded-2xl rounded-se-sm px-3 py-2 bg-primary dark:bg-primary-dark text-on-primary dark:text-on-primary-dark whitespace-pre-wrap break-words'
                         : 'max-w-[88%] w-fit rounded-2xl rounded-ss-sm px-3 py-2 bg-black/5 dark:bg-white/10 whitespace-pre-wrap break-words'}
                     >
-                      {turn.role === 'assistant' ? <Reply text={turn.text} onSection={goToSection} /> : turn.text}
+                      {turn.role === 'assistant' ? <Reply text={turn.text} onSection={goToSection} onPage={goToPage} /> : turn.text}
                     </div>
                   ))}
                   {busy && (

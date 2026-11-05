@@ -4,6 +4,8 @@ import { displayPhone, telHref } from '../../utils/phone';
  * LT-302: Lighty's reply as the widget draws it — plain text with **bold**
  * and links to a section of this page only (the server already drops every
  * other link; this is the client's half of the same rule). Never HTML.
+ * LT-597: and to the site's products: the page of all of them (`/products`)
+ * and one product's page (`/products/<slug>`), opened in the site itself.
  *
  * LT-432: the model sometimes wraps a link in bold ("**[Leave your
  * details](#contact)**"); it stays a link, which is drawn bold anyway. A
@@ -14,12 +16,15 @@ export type ReplyPart =
   | { kind: 'text'; text: string }
   | { kind: 'bold'; text: string }
   | { kind: 'link'; text: string; section: string }
+  | { kind: 'page'; text: string; path: string }
   | { kind: 'phone'; text: string; href: string };
 
-const SECTIONS = new Set(['schedule', 'contact', 'services', 'about', 'portfolio', 'faq']);
+const SECTIONS = new Set(['schedule', 'contact', 'services', 'about', 'portfolio', 'faq', 'products']);
 
-const MARKUP = /\*\*([^*\n]{1,200})\*\*|\[([^\]\n]{1,80})\]\(#([a-z]+)\)/g;
-const LINK = /\[([^\]\n]{1,80})\]\(#([a-z]+)\)/g;
+// A section of this page, or (LT-597) the products' page or one product's (a slug is latin, digits and hyphens).
+const HREF = String.raw`#[a-z]+|\/products(?:\/[a-z0-9-]{1,60})?`;
+const MARKUP = new RegExp(String.raw`\*\*([^*\n]{1,200})\*\*|\[([^\]\n]{1,80})\]\((${HREF})\)`, 'g');
+const LINK = new RegExp(String.raw`\[([^\]\n]{1,80})\]\((${HREF})\)`, 'g');
 
 // An Israeli number as people write it: 050-8801872, 0508801872, 03-1234567,
 // 077 123 4567, +972 50-880-1872. Seven digits after the area code, a space
@@ -28,6 +33,13 @@ const PHONE = /(?:\+972[\s-]?|0)(?:5\d|7\d|[23489])(?:[\s-]?\d){7}(?!\d)/g;
 
 /** A section link's words, with any bold the model put inside them dropped. */
 const linkText = (text: string): string => text.replace(/\*\*/g, '');
+
+/** A link the widget follows (a known section, a products page), else its words as `kind`. */
+const linkPart = (label: string, href: string, kind: 'text' | 'bold'): ReplyPart => {
+  if (href.startsWith('/')) return { kind: 'page', text: linkText(label), path: href };
+  const section = href.slice(1);
+  return SECTIONS.has(section) ? { kind: 'link', text: linkText(label), section } : { kind, text: linkText(label) };
+};
 
 /** Phone numbers in a run of text or bold become call links; the rest stays as it was. */
 const withPhones = (text: string, kind: 'text' | 'bold'): ReplyPart[] => {
@@ -52,7 +64,7 @@ const boldParts = (inner: string): ReplyPart[] => {
   for (const m of inner.matchAll(LINK)) {
     const at = m.index ?? 0;
     if (at > last) parts.push(...withPhones(inner.slice(last, at), 'bold'));
-    parts.push(SECTIONS.has(m[2]) ? { kind: 'link', text: linkText(m[1]), section: m[2] } : { kind: 'bold', text: linkText(m[1]) });
+    parts.push(linkPart(m[1], m[2], 'bold'));
     last = at + m[0].length;
   }
   if (last < inner.length) parts.push(...withPhones(inner.slice(last), 'bold'));
@@ -66,8 +78,7 @@ export const replyParts = (reply: string): ReplyPart[] => {
     const at = m.index ?? 0;
     if (at > last) parts.push(...withPhones(reply.slice(last, at), 'text'));
     if (m[1] !== undefined) parts.push(...boldParts(m[1]));
-    else if (SECTIONS.has(m[3])) parts.push({ kind: 'link', text: linkText(m[2]), section: m[3] });
-    else parts.push({ kind: 'text', text: linkText(m[2]) });
+    else parts.push(linkPart(m[2], m[3], 'text'));
     last = at + m[0].length;
   }
   if (last < reply.length) parts.push(...withPhones(reply.slice(last), 'text'));

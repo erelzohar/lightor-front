@@ -19,7 +19,11 @@ const mocks = vi.hoisted(() => ({
   report: vi.fn(),
   handshake: vi.fn(),
   scrollToSection: vi.fn(),
+  navigate: vi.fn(),
 }));
+
+// LT-597: a product link in his answer moves the site's own router.
+vi.mock('react-router-dom', async (actual) => ({ ...(await actual<typeof import('react-router-dom')>()), useNavigate: () => mocks.navigate }));
 
 vi.mock('../../services/SiteAssistantService', () => ({ default: { ask: mocks.ask, report: mocks.report } }));
 vi.mock('../../services/AuthService', () => ({ default: { handshake: mocks.handshake } }));
@@ -102,6 +106,29 @@ describe('site assistant (LT-302)', () => {
     ], 'en');
     expect(mocks.handshake).toHaveBeenCalledTimes(1);
     schedule.remove();
+  });
+
+  // LT-597 (Erel: Lighty should answer about the products and send a link to each).
+  it("opens a product's page from his answer in the site itself, and steps aside on a phone", async () => {
+    mocks.ask.mockResolvedValueOnce({ ok: true, reply: 'Try the [iPad Air](/products/ipad-air), or see [all of them](/products).' });
+    render(<SiteLighty businessName="Gadget" leadsSite />);
+    openChat();
+    ask('What do you recommend?');
+    const link = await screen.findByRole('link', { name: 'iPad Air' });
+    expect(link).toHaveAttribute('href', '/products/ipad-air');
+    expect(screen.getByRole('link', { name: 'all of them' })).toHaveAttribute('href', '/products');
+    fireEvent.click(link);
+    expect(mocks.navigate).toHaveBeenCalledWith('/products/ipad-air');
+    expect(screen.getByRole('dialog')).toBeTruthy();
+    // A click that asks for a new tab is the browser's.
+    fireEvent.click(link, { ctrlKey: true });
+    expect(mocks.navigate).toHaveBeenCalledTimes(1);
+    const wide = window.innerWidth;
+    Object.defineProperty(window, 'innerWidth', { configurable: true, value: 390 });
+    fireEvent.click(screen.getByRole('link', { name: 'all of them' }));
+    expect(mocks.navigate).toHaveBeenLastCalledWith('/products');
+    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
+    Object.defineProperty(window, 'innerWidth', { configurable: true, value: wide });
   });
 
   it('shows Lighty thinking in words, not dots, until the answer is back (LT-524)', async () => {
@@ -209,6 +236,22 @@ describe('the reply as drawn (LT-302)', () => {
     ]);
     expect(replyParts('**[x](#evil)**')).toEqual([{ kind: 'bold', text: 'x' }]);
     expect(replyParts('[**Book**](#schedule)')).toEqual([{ kind: 'link', text: 'Book', section: 'schedule' }]);
+  });
+
+  it("keeps links to the products' page and to a product's own, in bold too, and nothing else (LT-597)", () => {
+    expect(replyParts('See [iPad Air](/products/ipad-air) or [all](/products) or [home](#products).')).toEqual([
+      { kind: 'text', text: 'See ' },
+      { kind: 'page', text: 'iPad Air', path: '/products/ipad-air' },
+      { kind: 'text', text: ' or ' },
+      { kind: 'page', text: 'all', path: '/products' },
+      { kind: 'text', text: ' or ' },
+      { kind: 'link', text: 'home', section: 'products' },
+      { kind: 'text', text: '.' },
+    ]);
+    expect(replyParts('**[עמוד המוצרים](/products)**')).toEqual([{ kind: 'page', text: 'עמוד המוצרים', path: '/products' }]);
+    expect(replyParts('[a](/admin) [b](/products/IPAD) [c](//evil.com/products)')).toEqual([
+      { kind: 'text', text: '[a](/admin) [b](/products/IPAD) [c](//evil.com/products)' },
+    ]);
   });
 
   it('makes a phone number one call link, however it is written (LT-432)', () => {
