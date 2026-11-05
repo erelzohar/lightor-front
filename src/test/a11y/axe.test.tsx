@@ -105,7 +105,7 @@ describe.each(['he', 'en', 'ar'])('no WCAG A/AA violation axe can see (%s)', (la
       images: [{ url: `a${i}.webp` }, { url: `b${i}.webp` }], details: ['925 silver'], description: 'Words', soldOut: i === 2,
     });
     const shelf = { total: 6, pages: true, items: Array.from({ length: 6 }, (_, i) => product(i)) };
-    for (const variant of ['well', 'swap', 'bento', 'list', 'belt', 'hanger', 'coverflow']) {
+    for (const variant of ['well', 'swap', 'bento', 'list', 'belt', 'hanger', 'coverflow', 'orbit']) {
       const config = fullConfig([{ type: 'products', variant }]);
       config.products = shelf;
       const { container, unmount } = render(<ComposedPage config={config} jitter={getSiteJitter('axe')} isPreview />);
@@ -115,6 +115,18 @@ describe.each(['he', 'en', 'ar'])('no WCAG A/AA violation axe can see (%s)', (la
     const one = fullConfig([{ type: 'products' }]);
     one.products = { total: 1, pages: false, items: [product(0)] };
     const { container } = render(<ComposedPage config={one} jitter={getSiteJitter('axe')} isPreview />);
+    expect(await violationsIn(container)).toEqual([]);
+  });
+
+  it('the highlights in orbs and the steps as pinned notes (LT-583)', async () => {
+    const config = fullConfig([
+      { type: 'features', variant: 'orbs' },
+      { type: 'process', variant: 'pinned', props: { title: 'How', steps: [{ title: 'Pick', text: 'One' }, { title: 'Come' }, { title: 'Enjoy', text: 'Three' }] } },
+    ]);
+    config.components.about.features = [
+      { icon: 'Star', title: 'Fast', description: 'Quick' }, { icon: 'Heart', title: 'Kind', description: 'Warm' }, { icon: 'Clock', title: 'On time', description: 'Always' },
+    ];
+    const { container } = render(<ComposedPage config={config} jitter={getSiteJitter('axe')} isPreview />);
     expect(await violationsIn(container)).toEqual([]);
   });
 

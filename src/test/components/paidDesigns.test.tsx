@@ -25,6 +25,7 @@ const served = (motion?: boolean) => ({
     { id: 'g3', type: 'gallery', variant: 'polaroid' },
     { id: 'p', type: 'products', variant: 'hanger' },
     { id: 'p2', type: 'products', variant: 'coverflow' },
+    { id: 'p3', type: 'products', variant: 'orbit' },
     { id: 'q', type: 'quote', variant: 'marquee' },
   ],
 });
@@ -39,6 +40,7 @@ describe('a site whose plan has no paid designs', () => {
       ['gallery', 'masonry'],
       ['gallery', 'masonry'],
       ['gallery', 'polaroid'],
+      ['products', 'well'],
       ['products', 'well'],
       ['products', 'well'],
       ['quote', 'marquee'],
@@ -79,6 +81,6 @@ describe('a site with every design', () => {
     const cfg = WebsiteConfig.fromJSON(served(motion));
     expect(cfg.motion).toBe(true);
     expect(cfg.design).toMatchObject({ heroLayout: 'parallax', portfolioLayout: 'curve', productsLayout: 'belt', decor: 'metal' });
-    expect(cfg.blocks.map((b) => b.variant)).toEqual(['expand', 'clothesline', 'cascade', 'polaroid', 'hanger', 'coverflow', 'marquee']);
+    expect(cfg.blocks.map((b) => b.variant)).toEqual(['expand', 'clothesline', 'cascade', 'polaroid', 'hanger', 'coverflow', 'orbit', 'marquee']);
   });
 });

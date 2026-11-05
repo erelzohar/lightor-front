@@ -111,4 +111,16 @@ describe('features beside the steps (LT-530)', () => {
     const { container } = renderBlocks([features('bento')]);
     expect(container.querySelector('#about-features .lg\\:grid-cols-3')).not.toBeNull();
   });
+
+  it('draws the orbs (LT-583): a medallion over every highlight, the first one dashed', () => {
+    const about = { ...RAW_AI_RESPONSE_SHAPE.components.about, features: [{ icon: 'Star', title: 'Fast', description: 'Quick' }, { icon: 'Heart', title: 'Kind', description: 'Warm' }, { icon: 'Clock', title: 'On time', description: 'Always' }] };
+    const config = WebsiteConfig.fromJSON({ ...RAW_AI_RESPONSE_SHAPE, components: { ...RAW_AI_RESPONSE_SHAPE.components, about }, blocks: [features('orbs')] });
+    const { container } = render(<ComposedPage config={config} jitter={getSiteJitter('tone-test')} isPreview={false} />);
+    const orbs = Array.from(container.querySelectorAll('#about-features .rounded-full.h-32'));
+    expect(orbs.length).toBeGreaterThan(0);
+    expect(orbs[0].className).toContain('border-dashed');
+    expect(orbs.slice(1).every((o) => !o.className.includes('border-dashed'))).toBe(true);
+    expect(orbs).toHaveLength(3);
+    expect(container.querySelectorAll('#about-features h3').length).toBe(3);
+  });
 });

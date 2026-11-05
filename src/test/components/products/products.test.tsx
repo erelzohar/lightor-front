@@ -112,7 +112,7 @@ describe('the section', () => {
   });
 
   it('leads to the list whenever the site has one, in every layout (LT-542)', () => {
-    for (const layout of ['well', 'swap', 'bento', 'list', 'belt', 'hanger', 'coverflow'] as const) {
+    for (const layout of ['well', 'swap', 'bento', 'list', 'belt', 'hanger', 'coverflow', 'orbit'] as const) {
       const go = vi.fn();
       const { unmount } = render(
         <SiteNavContext.Provider value={{ atHome: true, go }}>
@@ -143,9 +143,11 @@ describe('the section', () => {
     expect(tilesFor('belt', 4)).toBe('belt');
     expect(tilesFor('hanger', 2)).toBe('well');
     expect(tilesFor('coverflow', 2)).toBe('well');
+    expect(tilesFor('orbit', 2)).toBe('well');
+    expect(tilesFor('orbit', 3)).toBe('orbit');
   });
 
-  it.each(['belt', 'hanger', 'coverflow'] as const)('draws the %s, every product a link', (layout) => {
+  it.each(['belt', 'hanger', 'coverflow', 'orbit'] as const)('draws the %s, every product a link', (layout) => {
     draw(<Products summary={{ total: 6, pages: true, items: many(6) }} layout={layout} />);
     expect(screen.getByTestId(`products-${layout}`)).toBeTruthy();
     expect(document.querySelector('a[href="/products/p-3"]')).toBeTruthy();

@@ -1,6 +1,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import Process from '../../components/blocks/Process';
+import { notesPath } from '../../components/blocks/ProcessNotes';
 import Stats from '../../components/blocks/Stats';
 import { EditContext } from '../../services/editMode';
 
@@ -59,5 +60,29 @@ describe('Process', () => {
     expect(container.firstChild).toBeNull();
     editing(<Process steps={[{ title: '' }]} variant="steps" basePath="blocks.p1.props" />);
     expect(screen.getByText('editor.stepTitle')).toBeInTheDocument();
+  });
+});
+
+describe('Process as pinned notes (LT-583)', () => {
+  const STEPS = [{ title: 'Pick', text: 'Choose one' }, { title: 'Bake' }, { title: 'Collect', text: 'At the door' }];
+
+  it('pins each step on a note, numbered, every one with its editor path', () => {
+    const { container } = editing(<Process steps={STEPS} title="How" variant="pinned" basePath="blocks.p1.props" />);
+    expect(screen.getByText('01')).toBeInTheDocument();
+    expect(screen.getByText('03')).toBeInTheDocument();
+    expect(screen.getAllByRole('listitem')).toHaveLength(3);
+    expect(container.querySelector('[data-lt-edit="blocks.p1.props.steps.2.text"]')?.textContent).toBe('At the door');
+    expect(container.querySelector('[data-lt-edit="blocks.p1.props.title"]')?.textContent).toBe('How');
+  });
+
+  it('tilts the notes left and right in turn', () => {
+    render(<Process steps={STEPS} variant="pinned" />);
+    const tilts = screen.getAllByRole('listitem').map((li) => (li.firstElementChild as HTMLElement).className.includes('md:-rotate-[6deg]') ? 'right' : 'left');
+    expect(tilts).toEqual(['left', 'right', 'left']);
+  });
+
+  it('runs its line from each note to the next, as S-curves', () => {
+    expect(notesPath([{ x: 0, y: 0 }])).toBe('');
+    expect(notesPath([{ x: 100, y: 50 }, { x: 500, y: 150 }])).toBe('M100.0 50.0 C320.0 50.0 280.0 150.0 500.0 150.0');
   });
 });

@@ -13,6 +13,7 @@ import { BentoTiles, ListTiles, SwapTiles, WellTiles } from './ProductTiles';
 import ProductBelt from './ProductBelt';
 import ProductRail from './ProductRail';
 import ProductCoverflow from './ProductCoverflow';
+import ProductOrbit from './ProductOrbit';
 import ProductFeature from './ProductFeature';
 
 interface Props {
@@ -29,7 +30,7 @@ interface Props {
 }
 
 /** The fewest a moving layout needs to read as what it is; under that, calm tiles. */
-const MIN_ITEMS: Partial<Record<ProductsLayout, number>> = { belt: 4, hanger: 3, coverflow: 3 };
+const MIN_ITEMS: Partial<Record<ProductsLayout, number>> = { belt: 4, hanger: 3, coverflow: 3, orbit: 3 };
 
 export const tilesFor = (layout: ProductsLayout, count: number): ProductsLayout =>
   count < (MIN_ITEMS[layout] ?? 0) ? 'well' : layout;
@@ -58,7 +59,7 @@ const Products: React.FC<Props> = ({ summary, config, layout = 'well', card, cur
   const shown = tilesFor(layout, items.length);
 
   return (
-    <section id="products" className={`section-y ${TONE_BG[tone]} transition-colors duration-300`} aria-label={title}>
+    <section id="products" className={`section-y ${TONE_BG[tone]} transition-colors duration-300 ${shown === 'orbit' && items.length > 1 ? 'lt-clip-x' : ''}`} aria-label={title}>
       <div className="container mx-auto px-4">
         <SectionHeading
           title={title}
@@ -82,6 +83,8 @@ const Products: React.FC<Props> = ({ summary, config, layout = 'well', card, cur
           <ProductRail items={items} pages={pages} currency={currency} />
         ) : shown === 'coverflow' ? (
           <ProductCoverflow items={items} pages={pages} currency={currency} />
+        ) : shown === 'orbit' ? (
+          <ProductOrbit items={items} pages={pages} currency={currency} tone={tone} cta={config?.cta} />
         ) : (
           <ProductList items={items} layout={shown} pages={pages} currency={currency} tone={tone} card={card} cta={config?.cta} />
         )}

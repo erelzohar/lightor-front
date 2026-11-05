@@ -1,6 +1,7 @@
 import React from 'react';
 import { useEdit, useEditAttrs } from '../../services/editMode';
 import { motion } from 'framer-motion';
+import ProcessNotes from './ProcessNotes';
 import { useLanguage } from '../../contexts/LanguageContext';
 import type { SectionTone } from '../SectionDivider';
 import { TONE_BG, displayFontFor } from './blockUtils';
@@ -21,6 +22,9 @@ const Process: React.FC<Props> = ({ steps, title, tone = 'surface', variant = 'r
   if (rows.length < (editing ? 1 : 2)) return null;
   const grid = variant === 'grid';
   const stepTitle = (text: string) => text || t('editor.stepTitle');
+
+  // LT-583: pinned notes on ruled paper (earthy's own, Erel's "How it works").
+  if (variant === 'pinned') return <ProcessNotes rows={rows} title={title} tone={tone} basePath={basePath} stepTitle={stepTitle} />;
 
   // LT-530: numbered circles on one line (21st.dev "How It Works Steps").
   if (variant === 'steps') {

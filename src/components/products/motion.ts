@@ -198,3 +198,63 @@ export const ringOffset = (i: number, active: number, n: number): number => {
   if (o < -n / 2) o += n;
   return o;
 };
+
+// ── the orbit ───────────────────────────────────────────────────────────
+
+/**
+ * LT-583: the orbit (Erel's dish carousel). The plate hangs from a pivot far
+ * above it, as `transform-origin` (in the plate's own box, in %); a change
+ * swings the plate out round it while the next swings in from the other side.
+ */
+export const ORBIT_PIVOT = { x: 69, y: -217 };
+/** Distance from the pivot to the middle of the band, and the band's width, in % of the plate. */
+const ORBIT_R = 265;
+const ORBIT_W = 46;
+/**
+ * Where the band runs, in screen degrees round the pivot (0 = towards the end
+ * side, 90 = straight down): from above the title down to the plate, its far
+ * end hidden behind the plate (which hangs at about 94).
+ */
+export const ORBIT_SPAN: [number, number] = [52, 104];
+/** The band turns a little with each product, round the same pivot. */
+export const ORBIT_TURNS = [0, -4, 4, -5, 2];
+export const orbitTurn = (i: number): number => ORBIT_TURNS[((i % ORBIT_TURNS.length) + ORBIT_TURNS.length) % ORBIT_TURNS.length];
+
+/**
+ * The pastel band behind the plate: a thick stroke along the plate's orbit,
+ * tapering to nothing at both ends. Coordinates in % of the plate, the pivot
+ * at 0,0; `flip` mirrors it for right-to-left pages.
+ */
+export const orbitArc = (flip = false, [a0, a1]: [number, number] = ORBIT_SPAN, steps = 48): string => {
+  const outer: string[] = [];
+  const inner: string[] = [];
+  const sx = flip ? -1 : 1;
+  for (let i = 0; i <= steps; i++) {
+    const t = i / steps;
+    const a = ((a0 + (a1 - a0) * t) * Math.PI) / 180;
+    const h = (ORBIT_W / 2) * Math.pow(Math.sin(Math.PI * t), 0.75);
+    const c = Math.cos(a);
+    const s = Math.sin(a);
+    outer.push(`${(sx * c * (ORBIT_R + h)).toFixed(1)} ${(s * (ORBIT_R + h)).toFixed(1)}`);
+    inner.push(`${(sx * c * (ORBIT_R - h)).toFixed(1)} ${(s * (ORBIT_R - h)).toFixed(1)}`);
+  }
+  return `M${outer.join('L')}L${inner.reverse().join('L')}Z`;
+};
+
+/** The thin first line and the heavy second of a product's name, split at the word nearest its middle. */
+export const twoLines = (name: string): [string, string] => {
+  const words = name.trim().split(/\s+/).filter(Boolean);
+  if (words.length < 2) return ['', words[0] ?? ''];
+  let best = 1;
+  let gap = Infinity;
+  for (let i = 1; i < words.length; i++) {
+    const head = words.slice(0, i).join(' ').length;
+    const tail = words.slice(i).join(' ').length;
+    if (Math.abs(head - tail) < gap) { gap = Math.abs(head - tail); best = i; }
+  }
+  return [words.slice(0, best).join(' '), words.slice(best).join(' ')];
+};
+
+/** A title line's size in rem: large for a short word, smaller as it grows, never under `min` (it wraps past that). */
+export const lineSize = (text: string, max: number, min: number, room: number): number =>
+  Math.max(min, Math.min(max, room / Math.max(1, text.length)));

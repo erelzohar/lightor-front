@@ -36,7 +36,8 @@ export type ImageTreatment = 'rounded' | 'circle' | 'arch' | 'blob';
 // 'manifesto' (LT-109): big display pull-quote beside the paragraphs — the
 // artboard's statement composition.
 // LT-126 structural layouts: 'wall' (typographic feature wall), 'timeline' (numbered rail), 'sticky' (pinned intro beside stacked rows).
-export type AboutLayout = 'cards' | 'split' | 'band' | 'manifesto' | 'wall' | 'timeline' | 'sticky' | 'bento';
+// LT-583: 'orbs' (atelier's own highlights): each one under a round medallion with a ring.
+export type AboutLayout = 'cards' | 'split' | 'band' | 'manifesto' | 'wall' | 'timeline' | 'sticky' | 'bento' | 'orbs';
 // LT-126: 'bento' (mosaic of mixed tile sizes), 'scroller' (auto-scrolling cinematic strip), 'spotlight' (one featured tile + thumbs).
 // LT-169: 'carousel' is the one-frame-at-a-time slideshow (arrows, dots,
 // swipe) — once the legacy `isGrid: false` mode, now a layout like the rest.
@@ -51,7 +52,8 @@ export type PortfolioLayout = 'grid' | 'masonry' | 'filmstrip' | 'polaroid' | 'f
 // LT-540: how a site lays out its products. 'well' calm tiles, 'swap' a second
 // picture on hover, 'bento' mixed sizes, 'list' names beside prices (a menu),
 // and three that move: 'belt' a conveyor, 'hanger' a clothes rail, 'coverflow'.
-export type ProductsLayout = 'well' | 'swap' | 'bento' | 'list' | 'belt' | 'hanger' | 'coverflow';
+// LT-583: 'orbit' (serene's own), a round plate that swings round a wide orbit.
+export type ProductsLayout = 'well' | 'swap' | 'bento' | 'list' | 'belt' | 'hanger' | 'coverflow' | 'orbit';
 // LT-545: a product's card where products are tiles: 'plain' the picture with
 // the words under it, 'framed' all of it in the site's card, 'overlay' the words
 // on the picture, 'button' an inquiry button under it. The products page has a

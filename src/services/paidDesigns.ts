@@ -2,8 +2,8 @@
  * LT-570 (Erel 2026-11-03/04): designs only the paid plans show - first the
  * ten that really move. On the free plan the server serves `motion: false`
  * and each of them gives way to its section's default design, with nothing
- * said about it: the products' conveyor, clothes rail and coverflow to the
- * quiet tiles, the clothesline, cascade and curve galleries to the masonry,
+ * said about it: the products' conveyor, clothes rail, coverflow and orbit
+ * (LT-583) to the quiet tiles, the clothesline, cascade and curve galleries to the masonry,
  * the parallax and opening heroes to the full image, the sonar and metal
  * backdrops to the hero's own background. The owner's pick stays stored, so
  * an upgrade brings it straight back. Absent `motion` (the register's preview,
@@ -12,7 +12,7 @@
 const PAID: Record<string, { paid: readonly string[]; instead: string }> = {
   heroLayout: { paid: ['parallax', 'expand'], instead: 'fullbleed' },
   portfolioLayout: { paid: ['clothesline', 'cascade', 'curve'], instead: 'masonry' },
-  productsLayout: { paid: ['belt', 'hanger', 'coverflow'], instead: 'well' },
+  productsLayout: { paid: ['belt', 'hanger', 'coverflow', 'orbit'], instead: 'well' },
   decor: { paid: ['sonar', 'metal'], instead: 'none' },
 };
 

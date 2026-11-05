@@ -21,7 +21,7 @@ import {
   Instagram,
   Facebook
 } from "lucide-react";
-import { motion } from 'framer-motion';
+import { motion, type Variants } from 'framer-motion';
 import { revealVariants } from '../../services/reveal';
 import { useEditAttrs } from '../../services/editMode';
 import EditText from '../EditText';
@@ -92,6 +92,17 @@ interface AboutProps {
 }
 
 const ROMAN_NUMERALS = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII'];
+/** LT-583: the orbs in as many columns as fill their rows. */
+const ORB_COLUMNS: Record<number, string> = { 1: '', 2: 'md:grid-cols-2', 4: 'md:grid-cols-2 lg:grid-cols-4' };
+/**
+ * The medallion on the section's own colour, its ring a step out (a shadow, so
+ * it stays round on browsers whose outlines are square) and a soft shade of the
+ * text colour inside, as the reference's.
+ */
+const ORB_TONE: Record<'bg' | 'surface', string> = {
+  bg: 'bg-light-bg dark:bg-dark-bg [--orb-gap:rgb(var(--color-light-bg))] dark:[--orb-gap:rgb(var(--color-dark-bg))] [--orb-ring:rgb(var(--color-light-text)_/_.18)] dark:[--orb-ring:rgb(var(--color-dark-text)_/_.22)] [--orb-glow:var(--color-light-text)] dark:[--orb-glow:var(--color-dark-text)]',
+  surface: 'bg-light-surface dark:bg-dark-surface [--orb-gap:rgb(var(--color-light-surface))] dark:[--orb-gap:rgb(var(--color-dark-surface))] [--orb-ring:rgb(var(--color-light-text)_/_.18)] dark:[--orb-ring:rgb(var(--color-dark-text)_/_.22)] [--orb-glow:var(--color-light-text)] dark:[--orb-glow:var(--color-dark-text)]',
+};
 
 const About: React.FC<AboutProps> = ({ config, websiteConfig, layout = 'cards', flipSplit = false, featureStyle = 'icons', header, headerScale, showVisit = true, tone = 'surface', reveal, parts, sectionId = 'about' }) => {
   const ed = useEditAttrs();
@@ -456,6 +467,40 @@ const About: React.FC<AboutProps> = ({ config, websiteConfig, layout = 'cards', 
     </motion.div>
   );
 
+  // LT-583 'orbs' (atelier's own, from Erel's 21st.dev "Feature 7"): each
+  // highlight under a round medallion, a ring around it a step out and a soft
+  // glow inside; the first one's rim is dashed. Still, apart from the
+  // section's one entrance.
+  const featureOrbs = !showPart('features') ? null : (
+    <motion.div className={`grid grid-cols-1 gap-3 mb-20 mx-auto max-w-6xl ${ORB_COLUMNS[config.features.length] ?? 'md:grid-cols-3'}`} variants={containerVariants as Variants}>
+      {config.features.map((feature, index) => {
+        const Icon = FEATURE_ICONS[feature.icon] ?? Star;
+        return (
+          <motion.div
+            key={index}
+            className="relative flex flex-col items-center gap-6 overflow-hidden rounded-design border border-light-text/15 dark:border-dark-text/15 px-8 pb-8 pt-10 text-center"
+            variants={itemVariants as Variants}
+          >
+            <div
+              className={`relative mx-auto flex h-32 w-32 items-center justify-center rounded-full border-light-text/20 dark:border-dark-text/20 ${index === 0 ? 'border-4 border-dashed' : 'border'} ${ORB_TONE[tone]}`}
+              style={{ boxShadow: '0 0 0 4px var(--orb-gap), 0 0 0 5px var(--orb-ring), 0 1px 2px rgba(0,0,0,.06)' }}
+              aria-hidden="true"
+            >
+              <span className="absolute inset-0 rounded-full" style={{ background: 'radial-gradient(circle, rgb(var(--orb-glow) / .16) 0%, rgb(var(--orb-glow) / .04) 45%, transparent 72%)', transform: 'scale(1.2)' }} />
+              {featureStyle === 'icons'
+                ? <Icon className="relative h-12 w-12 text-primary dark:text-primary-dark" />
+                : <span className="relative">{featureMark(index, 'text-3xl')}</span>}
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <h3 {...ed(`components.about.features.${index}.title`)} className="text-lg font-medium text-light-text dark:text-dark-text">{feature.title}</h3>
+              <p {...ed(`components.about.features.${index}.description`)} className="text-sm leading-relaxed text-light-text/75 dark:text-dark-text/75">{feature.description}</p>
+            </div>
+          </motion.div>
+        );
+      })}
+    </motion.div>
+  );
+
   // The visit/contact card. `compact` narrows the info grid for half-width
   // placement in the split layout.
   const renderVisitCard = (compact = false) => (
@@ -591,6 +636,12 @@ const About: React.FC<AboutProps> = ({ config, websiteConfig, layout = 'cards', 
             <>
               {paragraphs()}
               {featureBento}
+              {visitOn && renderVisitCard()}
+            </>
+          ) : layout === 'orbs' ? (
+            <>
+              {paragraphs()}
+              {featureOrbs}
               {visitOn && renderVisitCard()}
             </>
           ) : layout === 'timeline' ? (
