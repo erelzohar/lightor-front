@@ -170,6 +170,12 @@ describe.each(['he', 'en', 'ar'])('no WCAG A/AA violation axe can see (%s)', (la
     expect(['detail', ...(await violationsIn(container))]).toEqual(['detail']);
   });
 
+  it("LT-591's slant hero and the bubbles contact section", async () => {
+    const config = fullConfig([{ type: 'hero', variant: 'slant' }, { type: 'contact', variant: 'bubbles' }]);
+    const { container } = render(<ComposedPage config={config} jitter={getSiteJitter('axe')} isPreview />);
+    expect(await violationsIn(container)).toEqual([]);
+  });
+
   it('every gallery layout', async () => {
     for (const variant of ['grid', 'masonry', 'filmstrip', 'polaroid', 'bento', 'scroller', 'spotlight', 'carousel', 'clothesline', 'curve', 'cascade']) {
       const { container, unmount } = render(<ComposedPage config={fullConfig([{ type: 'gallery', variant }])} jitter={getSiteJitter('axe')} isPreview />);
@@ -185,8 +191,8 @@ describe.each(['he', 'en', 'ar'])('no WCAG A/AA violation axe can see (%s)', (la
       ['ledger', ['ledger', 'roman', 'menu', 'board', 'table', 'tags', 'soft', 'arch', 'index']],
       ['bookingBand', ['poster', 'slant', 'quiet', 'card', 'ticket', 'split']],
       ['manifesto', ['display', 'ruled', 'outline', 'marker', 'soft']],
-      ['contact', ['split', 'stacked', 'poster', 'editorial', 'statement', 'band', 'cards']],
-      ['hero', ['centered', 'split', 'image-right', 'poster-split', 'poster-statement', 'parallax', 'expand', 'aero', 'collage']],
+      ['contact', ['split', 'stacked', 'poster', 'editorial', 'statement', 'band', 'cards', 'bubbles']],
+      ['hero', ['centered', 'split', 'image-right', 'poster-split', 'poster-statement', 'parallax', 'expand', 'aero', 'collage', 'slant']],
     ];
     for (const [type, variants] of layouts) {
       for (const variant of variants) {

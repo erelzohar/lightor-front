@@ -105,6 +105,8 @@ const ComposedPage: React.FC<ComposedPageProps> = ({ config, jitter, isPreview, 
             thumbsOfProducts={!gallery.length}
             stats={(Array.isArray(p.items) ? p.items : statsBlock?.props?.items ?? []) as StatItem[]}
             statsPath={`blocks.${Array.isArray(p.items) ? b.id : statsBlock?.id}.props.items`}
+            email={config.contact?.mail || undefined}
+            address={[config.address?.street, config.address?.city].filter(Boolean).join(', ') || undefined}
           />
         ) : null;
       }
@@ -234,6 +236,7 @@ const ComposedPage: React.FC<ComposedPageProps> = ({ config, jitter, isPreview, 
             // LT-540: a product's button leads here, so the form is here on every layout.
             conversion={config.products?.total ? 'lead' : config.conversion}
             isPreview={isPreview}
+            picture={c?.portfolio?.items?.[0]?.url || c?.hero?.heroImageSrc || undefined}
           />
         ) : null;
       case 'footer':

@@ -20,7 +20,8 @@ export type NavbarStyle = 'floating' | 'solid' | 'transparent' | 'minimal' | 'ce
 // LT-531, each one style's own: 'parallax' (earthy, a layered scroll over the photo),
 // 'expand' (atelier, the photo opens to the whole screen as the page scrolls),
 // 'aero' (crisp, half photo, half tight type), 'collage' (serene, three framed pictures).
-export type HeroLayout = 'image-right' | 'centered' | 'split' | 'text-first' | 'poster-split' | 'poster-statement' | 'fullbleed' | 'parallax' | 'expand' | 'aero' | 'collage';
+// LT-591: 'slant' (electric's own): the words beside a photo that opens on a slant.
+export type HeroLayout = 'image-right' | 'centered' | 'split' | 'text-first' | 'poster-split' | 'poster-statement' | 'fullbleed' | 'parallax' | 'expand' | 'aero' | 'collage' | 'slant';
 export type SectionDivider = 'none' | 'wave' | 'diagonal' | 'curve' | 'scallop' | 'zigzag';
 export type Density = 'compact' | 'comfortable' | 'spacious';
 // 'poster' (LT-108): the vibe-canvas hero manner — enormous condensed
@@ -68,7 +69,8 @@ export type ProductsLayout = 'well' | 'swap' | 'bento' | 'list' | 'belt' | 'hang
 export type ProductCardStyle = 'plain' | 'framed' | 'overlay' | 'button' | 'reveal' | 'options';
 export type ProductsPageLayout = 'well' | 'swap' | 'bento' | 'list' | 'rows' | 'shelves' | 'shop';
 export type ProductPageLayout = 'side' | 'hero' | 'gallery' | 'detail';
-export type ContactLayout = 'split' | 'stacked' | 'poster' | 'editorial' | 'statement' | 'band' | 'cards';
+// LT-591: 'bubbles' (festive's own, paid): the form in a card over a picture with floating bubbles.
+export type ContactLayout = 'split' | 'stacked' | 'poster' | 'editorial' | 'statement' | 'band' | 'cards' | 'bubbles';
 // LT-124: 'line' (one light ruled row) and 'ticker' (repeating strip) from the canvas.
 export type FooterLayout = 'columns' | 'minimal' | 'line' | 'ticker';
 // LT-093 axes. First value = the pre-LT-093 rendering, picked by

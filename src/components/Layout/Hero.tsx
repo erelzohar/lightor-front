@@ -26,6 +26,7 @@ import { HERO_IMAGE } from './heroes/common';
 import ParallaxHero from './heroes/ParallaxHero';
 import ExpandHero from './heroes/ExpandHero';
 import AeroHero, { type HeroStat } from './heroes/AeroHero';
+import SlantHero from './heroes/SlantHero';
 import CollageHero from './heroes/CollageHero';
 import SonarField from './heroes/SonarField';
 
@@ -38,7 +39,7 @@ function hexToInt(hex: string): number {
 
 const SOFT_VANTA = new Set(['clouds', 'clouds2', 'fog']);
 // LT-531: the heroes that run edge to edge and draw their own backdrop.
-const FULL_HEROES = new Set(['parallax', 'expand', 'aero']);
+const FULL_HEROES = new Set(['parallax', 'expand', 'aero', 'slant']);
 
 function buildVantaOptions(type: string, isDark: boolean, palette: Palette | undefined): Record<string, any> {
   const primary = palette?.colorPrimary ?? '#2563eb';
@@ -117,6 +118,9 @@ interface HeroProps {
   statsPath?: string;
   /** LT-531: the tone of the section below, which the parallax hero melts into. */
   belowTone?: 'bg' | 'surface';
+  /** LT-591: the business's email and address, for the slant hero's contact line. */
+  email?: string;
+  address?: string;
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -147,7 +151,7 @@ const radiusClassMap: Record<BorderRadius, string> = {
   full: 'rounded-full',
 };
 
-const Hero: React.FC<HeroProps> = ({ config, social, phone, isContactVisible, appointmentTypes, conversion, products, isPreview, palette, design, jitter, businessName, logo, thumbs = [], thumbsOfProducts = false, stats = [], statsPath, belowTone }) => {
+const Hero: React.FC<HeroProps> = ({ config, social, phone, isContactVisible, appointmentTypes, conversion, products, isPreview, palette, design, jitter, businessName, logo, thumbs = [], thumbsOfProducts = false, stats = [], statsPath, belowTone, email, address }) => {
   // LT-496: the heritage mark's logo failed to load: the ornament stands instead.
   const [markFailed, setMarkFailed] = useState(false);
   const ed = useEditAttrs();
@@ -190,7 +194,7 @@ const Hero: React.FC<HeroProps> = ({ config, social, phone, isContactVisible, ap
   const heroSrc = config.heroImageSrc ? ImagesService.getInstance().getImage(config.heroImageSrc) : '';
   const cutout = useCutout(heroSrc);
   // LT-531: a hero that is one big photo cannot stand on a round logo, nor on no picture.
-  const bigPhoto = posterLayout === 'parallax' || posterLayout === 'expand' || posterLayout === 'aero';
+  const bigPhoto = posterLayout === 'parallax' || posterLayout === 'expand' || posterLayout === 'aero' || posterLayout === 'slant';
   const heroLayout = bigPhoto && !heroSrc ? 'poster-statement' : bigPhoto && cutout ? 'split' : posterLayout;
   const full = FULL_HEROES.has(heroLayout);
   const rtl = language === 'he' || language === 'ar';
@@ -539,6 +543,9 @@ const Hero: React.FC<HeroProps> = ({ config, social, phone, isContactVisible, ap
     }
     if (heroLayout === 'expand') {
       return <ExpandHero config={config} alt={businessName || ''} actions={photoButtons} social={renderSocialRow('justify-center')} rtl={rtl} />;
+    }
+    if (heroLayout === 'slant') {
+      return <SlantHero config={config} alt={businessName || ''} businessName={businessName} logo={logo} actions={buttons} phone={phone} email={email} address={address} rtl={rtl} noTrack={noTrack} />;
     }
     if (heroLayout === 'aero') {
       return <AeroHero config={config} alt={businessName || ''} cta={cta} contact={renderContactButton(false)} social={renderSocialRow('')} thumbs={thumbs} stat={stats[0]} statPath={statsPath && `${statsPath}.0`} services={tickerItems} rtl={rtl} noTrack={noTrack} />;

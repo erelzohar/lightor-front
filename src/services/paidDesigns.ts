@@ -14,10 +14,12 @@ const PAID: Record<string, { paid: readonly string[]; instead: string }> = {
   portfolioLayout: { paid: ['clothesline', 'cascade', 'curve'], instead: 'masonry' },
   productsLayout: { paid: ['belt', 'hanger', 'coverflow', 'orbit'], instead: 'well' },
   decor: { paid: ['sonar', 'metal'], instead: 'none' },
+  // LT-591: the contact section whose bubbles float by themselves.
+  contactLayout: { paid: ['bubbles'], instead: 'split' },
 };
 
 /** The design token a block's own variant stands in for (ComposedPage). */
-const BLOCK_TOKEN: Record<string, string> = { hero: 'heroLayout', gallery: 'portfolioLayout', products: 'productsLayout' };
+const BLOCK_TOKEN: Record<string, string> = { hero: 'heroLayout', gallery: 'portfolioLayout', products: 'productsLayout', contact: 'contactLayout' };
 
 /**
  * LT-588: paid looks of blocks without a design token (the highlights that

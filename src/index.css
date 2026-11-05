@@ -348,6 +348,27 @@ html[data-heading-accent="none"] .heading-accent {
 @keyframes lt-rise { from { opacity: 0; transform: translateY(8px); } }
 .lt-rise { animation: lt-rise 0.35s cubic-bezier(0.22, 1, 0.36, 1) backwards; }
 @media (prefers-reduced-motion: reduce) { .lt-rise { animation: none; } }
+/* LT-591: the contact section's bubbles rise on the compositor (transform and opacity), and sleep off screen. */
+@keyframes lt-bubble {
+  0% { transform: translate3d(0, 0, 0) scale(0.5); opacity: 0; }
+  50% { opacity: 1; }
+  100% { transform: translate3d(calc(var(--drift, 1) * 8vw), -110vh, 0) scale(1.2); opacity: 0; }
+}
+.lt-bubble { opacity: 0; animation: lt-bubble 15s ease-in-out infinite; }
+[data-asleep] .lt-bubble { animation-play-state: paused; }
+@media (prefers-reduced-motion: reduce) { .lt-bubble { animation: none; display: none; } }
+/* LT-591: the slant hero's photo. Its slant is the style (the end state); the opening is a one-time animation
+   that starts from nothing. A phone slants the photo's foot, a wider screen its edge towards the words. */
+.lt-slant { -webkit-clip-path: polygon(0 0, 100% 0, 100% 86%, 0 100%); clip-path: polygon(0 0, 100% 0, 100% 86%, 0 100%); animation: lt-slant-foot 1.2s cubic-bezier(0, 0.55, 0.45, 1) backwards; }
+@keyframes lt-slant-foot { from { -webkit-clip-path: polygon(0 0, 100% 0, 100% 0, 0 0); clip-path: polygon(0 0, 100% 0, 100% 0, 0 0); } }
+@media (min-width: 768px) {
+  .lt-slant { -webkit-clip-path: polygon(25% 0, 100% 0, 100% 100%, 0 100%); clip-path: polygon(25% 0, 100% 0, 100% 100%, 0 100%); animation-name: lt-slant-side; }
+  [dir="rtl"] .lt-slant { -webkit-clip-path: polygon(0 0, 75% 0, 100% 100%, 0 100%); clip-path: polygon(0 0, 75% 0, 100% 100%, 0 100%); animation-name: lt-slant-side-rtl; }
+}
+@keyframes lt-slant-side { from { -webkit-clip-path: polygon(100% 0, 100% 0, 100% 100%, 100% 100%); clip-path: polygon(100% 0, 100% 0, 100% 100%, 100% 100%); } }
+@keyframes lt-slant-side-rtl { from { -webkit-clip-path: polygon(0 0, 0 0, 0 100%, 0 100%); clip-path: polygon(0 0, 0 0, 0 100%, 0 100%); } }
+.lt-slant-still { animation: none; }
+@media (prefers-reduced-motion: reduce) { .lt-slant { animation: none; } }
 [data-asleep] .lt-sway { animation-play-state: paused; }
 .lt-peg { position: absolute; left: 50%; top: 0; width: 10px; height: 26px; margin-left: -5px; border-radius: 2px; background: linear-gradient(90deg, #c9a67a, #e3c9a1 45%, #b8915f); box-shadow: 0 2px 3px rgba(0, 0, 0, 0.25); }
 .lt-peg::after { content: ''; position: absolute; left: 4px; top: 8px; width: 2px; height: 7px; border-radius: 1px; background: rgba(80, 60, 30, 0.45); }

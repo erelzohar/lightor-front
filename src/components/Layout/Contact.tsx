@@ -1,5 +1,7 @@
 import { useProductInquiry, choiceText } from '../../services/productAction';
 import React, { useCallback, useState } from 'react';
+import ImagesService from '../../services/ImagesService';
+import { useStill } from '../../hooks/useA11yPrefs';
 import { X, Mail, Phone, MapPin, Send, User, MessageSquare, CheckCircle, XCircle, MessageCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLanguage } from '../../contexts/LanguageContext';
@@ -63,9 +65,45 @@ interface ContactProps {
   leadsOpen?: boolean;
   /** LT-199: on a leads site every layout carries the form — it is the conversion. */
   conversion?: Conversion;
+  /** LT-591: the picture behind the 'bubbles' layout (the gallery's first, else the hero's). */
+  picture?: string;
 }
 
 const NO_LEAD_FIELDS: BookingField[] = [];
+
+/** LT-591: where each bubble starts, how big, how slow, when: fixed, so the page draws the same each time. */
+export const BUBBLES = Array.from({ length: 15 }, (_, i) => ({
+  size: 10 + ((i * 7) % 20),
+  left: (i * 37 + 11) % 100,
+  top: 40 + ((i * 23) % 60),
+  delay: (i * 1.7) % 10,
+  duration: 12 + ((i * 5) % 16),
+  drift: i % 2 ? 1 : -1,
+}));
+
+/** Bubbles rising over the contact picture; their animation sleeps while the section is off screen. */
+const Bubbles: React.FC = () => {
+  const ref = React.useRef<HTMLDivElement>(null);
+  const [awake, setAwake] = React.useState(false);
+  React.useEffect(() => {
+    const el = ref.current;
+    if (!el || typeof IntersectionObserver === 'undefined') return;
+    const io = new IntersectionObserver(([e]) => setAwake(e.isIntersecting));
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
+  return (
+    <div ref={ref} aria-hidden="true" className="pointer-events-none absolute inset-0 overflow-hidden" data-asleep={awake ? undefined : ''} data-testid="contact-bubbles-layer">
+      {BUBBLES.map((b, i) => (
+        <span
+          key={i}
+          className="lt-bubble absolute rounded-full bg-white/20"
+          style={{ width: b.size, height: b.size, left: `${b.left}%`, top: `${b.top}%`, animationDelay: `${b.delay}s`, animationDuration: `${b.duration}s`, ['--drift' as string]: b.drift }}
+        />
+      ))}
+    </div>
+  );
+};
 /** How long a send waits for the visitor check to finish. */
 const PASS_WAIT_MS = 20_000;
 
@@ -130,8 +168,9 @@ const MaterialInput = ({
   </div>
 );
 
-const Contact: React.FC<ContactProps> = ({ config, address, contact, workingDays, isPreview, layout = 'split', header, headerScale, reveal, tone, leadFields = NO_LEAD_FIELDS, leadsOpen = true, conversion = 'book' }) => {
+const Contact: React.FC<ContactProps> = ({ config, address, contact, workingDays, isPreview, layout = 'split', header, headerScale, reveal, tone, leadFields = NO_LEAD_FIELDS, leadsOpen = true, conversion = 'book', picture}) => {
   const { editing } = useEdit();
+  const still = useStill();
   // 'split' = info column beside the form; 'stacked' = one narrow centered
   // column with the info as a chip row above the form.
   const isStacked = layout === 'stacked';
@@ -694,6 +733,35 @@ const Contact: React.FC<ContactProps> = ({ config, address, contact, workingDays
                 {formOrButtons}
               </div>
             )}
+          </div>
+        </section>
+        {modal}
+      </>
+    );
+  }
+
+  // LT-591 'bubbles' (festive's own, from Erel's contact section; a paid design: the bubbles
+  // float by themselves): the section's picture behind it, darkened for the words, bubbles
+  // rising over it; the title at the foot of one side, the form in a card on the other.
+  // The bubbles are CSS on the compositor, asleep while off screen, none when still or editing.
+  if (layout === 'bubbles') {
+    const backdrop = picture ? ImagesService.getInstance().getImage(picture) : '';
+    return (
+      <>
+        <section id="contact" aria-labelledby="contact-title" className="relative overflow-hidden bg-light-text text-white transition-colors duration-300 dark:bg-dark-bg" data-testid="contact-bubbles">
+          {backdrop && <img src={backdrop} alt="" aria-hidden="true" loading="lazy" className="absolute inset-0 h-full w-full object-cover" />}
+          <div aria-hidden="true" className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/45 to-black/25" />
+          {!still && !editing && <Bubbles />}
+          <div className="container relative mx-auto grid min-h-[80vh] items-end gap-10 px-4 py-16 md:py-24 lg:grid-cols-2">
+            <div className="lg:pb-6">
+              <h2 {...editAttrs(editing, 'components.contact.title')} id="contact-title" className="max-w-lg font-extrabold leading-tight drop-shadow-lg" style={{ fontFamily: displayFont, fontSize: 'clamp(2.25rem, 1.5rem + 3vw, 4rem)' }}>{config.title}</h2>
+              {config.description && <p {...editAttrs(editing, 'components.contact.description')} className="mt-4 max-w-md text-lg opacity-90">{config.description}</p>}
+            </div>
+            <div className="rounded-design-card border border-white/20 bg-light-bg/[0.96] p-6 text-light-text shadow-xl dark:bg-dark-surface/[0.96] dark:text-dark-text md:p-8">
+              {plainLines('text-base leading-relaxed text-light-text/80 dark:text-dark-text/80')}
+              <hr className="my-6 border-light-text/15 dark:border-dark-text/15" />
+              {formOrButtons}
+            </div>
           </div>
         </section>
         {modal}
