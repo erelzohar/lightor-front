@@ -56,7 +56,7 @@ export const SUPPORTED_BLOCKS = new Set<Block['type']>([
 ]);
 
 const INTRO_LAYOUT: Record<string, AboutLayout> = { plain: 'cards', manifesto: 'manifesto', columns: 'wall' };
-const FEATURES_LAYOUT: Record<string, AboutLayout> = { tiles: 'cards', band: 'band', wall: 'wall', timeline: 'timeline', sticky: 'sticky', bento: 'bento', orbs: 'orbs' };
+const FEATURES_LAYOUT: Record<string, AboutLayout> = { tiles: 'cards', band: 'band', wall: 'wall', timeline: 'timeline', sticky: 'sticky', bento: 'bento', orbs: 'orbs', stack: 'stack' };
 
 /**
  * LT-133 (Composer phase 1): renders a stored `blocks` array through the
@@ -124,6 +124,7 @@ const ComposedPage: React.FC<ComposedPageProps> = ({ config, jitter, isPreview, 
             flipSplit={jitter.flipAboutSplit}
             parts={[b.type]}
             sectionId={b.type === 'intro' ? 'about' : `about-${b.type}`}
+            pictures={layout === 'stack' ? [...(c?.portfolio?.items ?? []).map((item) => item.url).filter(Boolean), ...(c?.hero?.heroImageSrc ? [c.hero.heroImageSrc] : [])] : undefined}
           />
         );
       }

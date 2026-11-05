@@ -11,6 +11,12 @@ export interface ProductImage {
   alt?: string;
 }
 
+/** LT-588: a colour a product comes in: what the visitor reads, and its swatch. */
+export interface ProductColor {
+  name: string;
+  hex: string;
+}
+
 export interface ProductCard {
   id: string;
   slug: string;
@@ -19,6 +25,9 @@ export interface ProductCard {
   price?: number;
   images: ProductImage[];
   category?: string;
+  /** LT-588: what a visitor may pick; the inquiry carries the pick. */
+  colors?: ProductColor[];
+  sizes?: string[];
   soldOut?: boolean;
 }
 
@@ -39,6 +48,14 @@ export const PRODUCTS_PATH = '/products';
 
 const text = (v: unknown): string | undefined => (typeof v === 'string' && v.trim() ? v.trim() : undefined);
 
+const HEX = /^#[0-9a-fA-F]{6}$/;
+const parseColors = (json: unknown): ProductColor[] =>
+  (Array.isArray(json) ? json : [])
+    .filter((c) => c && text(c.name) && typeof c.hex === 'string' && HEX.test(c.hex))
+    .map((c) => ({ name: text(c.name)!, hex: c.hex as string }));
+const parseSizes = (json: unknown): string[] =>
+  (Array.isArray(json) ? json : []).flatMap((s) => (text(s) ? [text(s)!] : []));
+
 const parseImages = (json: unknown): ProductImage[] =>
   (Array.isArray(json) ? json : [])
     .filter((i) => i && typeof i.url === 'string' && i.url)
@@ -56,6 +73,8 @@ export const parseProduct = (json: unknown): Product | null => {
     price: typeof r.price === 'number' ? r.price : undefined,
     images: parseImages(r.images),
     category: text(r.category),
+    ...(parseColors(r.colors).length ? { colors: parseColors(r.colors) } : {}),
+    ...(parseSizes(r.sizes).length ? { sizes: parseSizes(r.sizes) } : {}),
     soldOut: r.soldOut === true,
     description: text(r.description),
     details: Array.isArray(r.details) ? r.details.filter((d): d is string => typeof d === 'string' && !!d.trim()) : [],
@@ -102,3 +121,16 @@ export const productPrice = (price: number | undefined, currency?: unknown): str
 /** The categories in the order the products first use them. */
 export const categoriesOf = (products: Pick<ProductCard, 'category'>[]): string[] =>
   [...new Set(products.map((p) => p.category).filter((c): c is string => !!c))];
+
+/**
+ * LT-587 (Erel: the products page by category, not one heap): each category
+ * with its products, in the order they first appear, and the products with
+ * none last (`name` empty). One group when there are fewer than two categories.
+ */
+export const groupsOf = <T extends Pick<ProductCard, 'category'>>(products: T[]): { name: string; items: T[] }[] => {
+  const categories = categoriesOf(products);
+  if (categories.length < 2) return [{ name: '', items: products }];
+  const groups = categories.map((name) => ({ name, items: products.filter((p) => p.category === name) }));
+  const rest = products.filter((p) => !p.category);
+  return rest.length ? [...groups, { name: '', items: rest }] : groups;
+};

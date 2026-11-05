@@ -38,6 +38,7 @@ import { displayPhone, telHref, whatsAppHref } from '../../utils/phone';
 import { safeHttpUrl, openExternal } from '../../utils/safeUrl';
 import { googleMapsHref } from '../../utils/navigation';
 import WazeLink from '../WazeLink';
+import FeatureStack from './FeatureStack';
 
 // Feature icons are stored in the config by name.
 const FEATURE_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
@@ -89,6 +90,8 @@ interface AboutProps {
   /** LT-115: painted background tone — the seeded order shuffle keeps tones
    *  position-stable, so a reordered About may paint 'bg'. Default = legacy. */
   tone?: 'bg' | 'surface';
+  /** LT-588: the site's pictures, for highlights that show one each and have none of their own. */
+  pictures?: string[];
 }
 
 const ROMAN_NUMERALS = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII'];
@@ -104,7 +107,7 @@ const ORB_TONE: Record<'bg' | 'surface', string> = {
   surface: 'bg-light-surface dark:bg-dark-surface [--orb-gap:rgb(var(--color-light-surface))] dark:[--orb-gap:rgb(var(--color-dark-surface))] [--orb-ring:rgb(var(--color-light-text)_/_.18)] dark:[--orb-ring:rgb(var(--color-dark-text)_/_.22)] [--orb-glow:var(--color-light-text)] dark:[--orb-glow:var(--color-dark-text)]',
 };
 
-const About: React.FC<AboutProps> = ({ config, websiteConfig, layout = 'cards', flipSplit = false, featureStyle = 'icons', header, headerScale, showVisit = true, tone = 'surface', reveal, parts, sectionId = 'about' }) => {
+const About: React.FC<AboutProps> = ({ config, websiteConfig, layout = 'cards', flipSplit = false, featureStyle = 'icons', header, headerScale, showVisit = true, tone = 'surface', reveal, parts, sectionId = 'about', pictures = [] }) => {
   const ed = useEditAttrs();
   const showPart = (p: AboutPart) => !parts || parts.includes(p);
   const visitOn = showVisit && showPart('visit');
@@ -642,6 +645,12 @@ const About: React.FC<AboutProps> = ({ config, websiteConfig, layout = 'cards', 
             <>
               {paragraphs()}
               {featureOrbs}
+              {visitOn && renderVisitCard()}
+            </>
+          ) : layout === 'stack' ? (
+            <>
+              {paragraphs()}
+              {showPart('features') && <FeatureStack features={config.features} pictures={pictures} tone={tone} />}
               {visitOn && renderVisitCard()}
             </>
           ) : layout === 'timeline' ? (

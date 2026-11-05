@@ -1,6 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useLocation } from 'react-router-dom';
-import { ChevronLeft, ChevronRight, Check, Share2, ShoppingBag } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { ArrowLeft, ArrowRight, ChevronLeft, ChevronRight, Check, LayoutGrid, Share2, ShoppingBag, Tag } from 'lucide-react';
+import { useStill } from '../../hooks/useA11yPrefs';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { PRODUCTS_PATH, parseProduct, type Product } from '../../models/Product';
 import type { ProductCardStyle, ProductPageLayout } from '../../models/DesignConfig';
@@ -8,12 +10,12 @@ import WebConfigService from '../../services/WebConfigService';
 import { countsHere, noteProductView } from '../../services/visits';
 import { readInlinePage } from '../../services/edgeShell';
 import { followLink, useSiteNav } from '../../services/siteNav';
-import { productAction, useProductInquiry } from '../../services/productAction';
+import { productAction, takeChoice, useProductInquiry, type ProductChoice } from '../../services/productAction';
 import ImagesService from '../../services/ImagesService';
 import { handleSquareImageError } from '../../utils/imageFallback';
 import NotFound from '../NotFound';
 import Loading from '../Loading';
-import { INQUIRE_HASH, Price, ProductActions, ProductPictures, SoldOut, altOfImage, imageUrl, toTheForm } from './ProductParts';
+import { INQUIRE_HASH, Price, ProductActions, ProductOptions, ProductPictures, SoldOut, altOfImage, imageUrl, toTheForm } from './ProductParts';
 import { WellTiles } from './ProductTiles';
 
 interface Props {
@@ -34,7 +36,56 @@ interface Props {
   drafts?: Product[];
 }
 
-const LAYOUTS: ProductPageLayout[] = ['side', 'hero', 'gallery'];
+const LAYOUTS: ProductPageLayout[] = ['side', 'hero', 'gallery', 'detail'];
+
+/** LT-588: the products page at one category (its section, or its filter in the shop). */
+export const categoryPath = (category: string): string => `${PRODUCTS_PATH}?category=${encodeURIComponent(category)}`;
+
+/**
+ * LT-588 'detail' (Erel's product detail page): one picture at a time, rising
+ * in as it changes, dots under it to move between them and, beside the dots,
+ * the way to more of its category.
+ */
+const DetailPictures: React.FC<{ product: Product }> = ({ product }) => {
+  const { t } = useLanguage();
+  const { go } = useSiteNav();
+  const still = useStill();
+  const [at, setAt] = useState(0);
+  const images = product.images;
+  const image = images[Math.min(at, images.length - 1)];
+  if (!image) return null;
+  return (
+    <div className="flex flex-col gap-4">
+      <motion.div
+        key={image.url}
+        initial={still ? false : { opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3 }}
+        className="relative aspect-[4/5] w-full overflow-hidden rounded-xl border border-light-text/10 bg-light-surface dark:border-dark-text/10 dark:bg-dark-surface"
+      >
+        <img src={imageUrl(image)} alt={altOfImage(product, image)} loading="eager" onError={handleSquareImageError} className="h-full w-full object-cover" />
+        {product.soldOut && <SoldOut className="absolute top-3 start-3" />}
+      </motion.div>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        {images.length > 1 ? (
+          <div className="flex gap-1" role="group" aria-label={t('products.pictures')}>
+            {images.map((img, i) => (
+              <button key={img.url} type="button" onClick={() => setAt(i)} aria-label={t('products.picture', { index: i + 1 })} aria-current={i === at || undefined} className="flex h-6 w-6 items-center justify-center">
+                <span className={`block h-2 w-2 rounded-full transition-colors ${i === at ? 'bg-primary dark:bg-primary-dark' : 'bg-light-text/30 hover:bg-light-text/50 dark:bg-dark-text/30'}`} />
+              </button>
+            ))}
+          </div>
+        ) : <span />}
+        {product.category && (
+          <a href={categoryPath(product.category)} onClick={(e) => followLink(e, categoryPath(product.category!), go)} className="inline-flex items-center gap-2 rounded-design border border-light-text/20 px-3 py-1.5 text-sm font-medium text-light-text hover:border-primary dark:border-dark-text/20 dark:text-dark-text dark:hover:border-primary-dark transition-colors">
+            <LayoutGrid className="h-4 w-4" aria-hidden="true" />
+            <span className="break-words">{t('products.moreOf', { category: product.category })}</span>
+          </a>
+        )}
+      </div>
+    </div>
+  );
+};
 
 /**
  * LT-545 'gallery': every picture at full width, one under the other beside the
@@ -112,12 +163,15 @@ const ProductPage: React.FC<Props> = ({ slug, businessName, logo, phone, currenc
   const { setInquiry } = useProductInquiry();
   const [loaded, setLoaded] = useState<Loaded | null | 'missing'>(() => fromInline(slug) ?? (drafts ? fromDrafts(slug, drafts) ?? 'missing' : null));
   const [copied, setCopied] = useState(false);
-  const Sep = language === 'he' || language === 'ar' ? ChevronLeft : ChevronRight;
+  // LT-588: the colour and size the visitor picks here (or brought from the card).
+  const [choice, setChoice] = useState<ProductChoice>({});
+  const rtl = language === 'he' || language === 'ar';
+  const Sep = rtl ? ChevronLeft : ChevronRight;
   const shape: ProductPageLayout = LAYOUTS.includes(layout as ProductPageLayout) ? (layout as ProductPageLayout) : 'side';
 
   // Another product: nothing chosen in the form yet. Not when the same page is
   // drawn again (the wizard's pictures arriving), or the choice would be lost.
-  useEffect(() => { setInquiry(null); }, [slug, setInquiry]);
+  useEffect(() => { setInquiry(null); setChoice({}); }, [slug, setInquiry]);
 
   useEffect(() => {
     const inline = fromInline(slug);
@@ -148,7 +202,10 @@ const ProductPage: React.FC<Props> = ({ slug, businessName, logo, phone, currenc
   // LT-545: a card's own button opens the page at its form, the product chosen.
   useEffect(() => {
     if (!product || hash !== INQUIRE_HASH) return;
-    setInquiry({ id: product.id, name: product.name });
+    // LT-588: the pick made on the card that led here.
+    const picked = takeChoice(product.id);
+    if (picked) setChoice(picked);
+    setInquiry({ id: product.id, name: product.name, ...(picked ? { choice: picked } : {}) });
     let tries = 0;
     const id = window.setInterval(() => {
       const form = document.querySelector('#contact form');
@@ -215,8 +272,9 @@ const ProductPage: React.FC<Props> = ({ slug, businessName, logo, phone, currenc
         {product.category && <p className="mb-1 text-sm font-medium text-light-text/70 dark:text-dark-text/70 break-words">{product.category}</p>}
         <h1 className={`font-bold tracking-tight break-words ${hero ? 'text-4xl md:text-5xl' : 'text-3xl md:text-4xl'}`}>{product.name}</h1>
         <Price product={product} currency={currency} className="mt-2 text-3xl font-bold" />
+        <ProductOptions product={product} choice={choice} onChange={setChoice} className={`mt-6 ${hero ? 'flex flex-col items-center' : ''}`} />
         <div ref={actionsRef}>
-          <ProductActions product={product} phone={phone} label={cta} className={`my-6 ${hero ? 'justify-center' : ''}`} />
+          <ProductActions product={product} phone={phone} label={cta} choice={choice} className={`my-6 ${hero ? 'justify-center' : ''}`} />
         </div>
         {product.details.length > 0 && (
           <ul className={`mb-6 flex flex-wrap gap-2 ${hero ? 'justify-center' : ''}`}>
@@ -250,9 +308,53 @@ const ProductPage: React.FC<Props> = ({ slug, businessName, logo, phone, currenc
   return (<>
     <article className="bg-light-bg dark:bg-dark-bg pb-16" style={{ paddingTop: 'calc(var(--nav-offset, 0px) + 1.5rem)' }}>
       <div className="container mx-auto max-w-6xl px-4">
-        {crumbs}
+        {shape === 'detail' ? (
+          <div className="flex items-start justify-between gap-3">
+            {crumbs}
+            <button type="button" onClick={share} aria-label={copied ? t('products.copied') : t('products.share')} className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-light-text hover:bg-light-text/10 dark:text-dark-text dark:hover:bg-dark-text/10 transition-colors">
+              {copied ? <Check className="h-5 w-5" aria-hidden="true" /> : <Share2 className="h-5 w-5" aria-hidden="true" />}
+            </button>
+          </div>
+        ) : crumbs}
 
-        {shape === 'gallery' ? (
+        {shape === 'detail' ? (
+          <div className="grid grid-cols-1 gap-8 md:gap-12 lg:grid-cols-2">
+            <DetailPictures product={product} />
+            <div className="flex flex-col text-light-text dark:text-dark-text">
+              <h1 className="text-3xl font-bold tracking-tight break-words md:text-4xl">{product.name}</h1>
+              <Price product={product} currency={currency} className="mt-2 text-4xl font-bold" />
+              <ProductOptions product={product} choice={choice} onChange={setChoice} className="mt-6" />
+              <div ref={actionsRef}>
+                <ProductActions product={product} phone={phone} label={cta} choice={choice} className="my-6 [&>a]:flex-1" />
+              </div>
+              {(product.category || product.details.length > 0) && (
+                <ul className="mb-6 flex flex-wrap gap-2">
+                  {[...(product.category ? [product.category] : []), ...product.details].map((tag) => (
+                    <li key={tag} className="inline-flex items-center gap-2 rounded-full bg-light-text/[0.07] px-3 py-1 text-sm dark:bg-dark-text/10 break-words">
+                      <Tag className="h-4 w-4 shrink-0" aria-hidden="true" />
+                      {tag}
+                    </li>
+                  ))}
+                </ul>
+              )}
+              {(product.description || product.summary) && (
+                <p className="whitespace-pre-line leading-relaxed text-light-text/75 dark:text-dark-text/75 break-words">{product.description || product.summary}</p>
+              )}
+              <div className="mt-8 flex flex-wrap items-center justify-between gap-4 border-t border-light-text/15 pt-6 dark:border-dark-text/15">
+                <a href="/" onClick={(e) => followLink(e, '/', go)} className="flex min-w-0 items-center gap-4">
+                  {logo
+                    ? <img src={ImagesService.getInstance().getImage(logo)} alt="" onError={handleSquareImageError} className="h-12 w-12 shrink-0 rounded-full object-cover" />
+                    : <span aria-hidden="true" className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-light-text/10 font-semibold dark:bg-dark-text/15">{businessName.charAt(0)}</span>}
+                  <span className="min-w-0 font-semibold break-words">{businessName}</span>
+                </a>
+                <a href={PRODUCTS_PATH} onClick={(e) => followLink(e, PRODUCTS_PATH, go)} className="inline-flex items-center gap-1.5 font-medium text-primary-readable hover:underline dark:text-primary-dark-readable">
+                  {t('products.allListings')}
+                  {rtl ? <ArrowLeft className="h-4 w-4" aria-hidden="true" /> : <ArrowRight className="h-4 w-4" aria-hidden="true" />}
+                </a>
+              </div>
+            </div>
+          </div>
+        ) : shape === 'gallery' ? (
           <div className={`grid gap-8 lg:gap-12 ${product.images.length ? 'lg:grid-cols-[minmax(0,7fr)_minmax(0,5fr)]' : ''}`}>
             <GalleryPictures product={product} />
             {/* The words stay in view while the pictures go by (a computer). */}

@@ -2,6 +2,9 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, act } from '@testing-library/react';
 import axe from 'axe-core';
 import ComposedPage from '../../components/blocks/ComposedPage';
+import { MemoryRouter } from 'react-router-dom';
+import ProductsPage from '../../components/products/ProductsPage';
+import ProductPage from '../../components/products/ProductPage';
 import Navbar from '../../components/Layout/Navbar';
 import Schedule from '../../components/Layout/Schedule/Schedule';
 import AccessibilityMenu from '../../components/a11y/AccessibilityMenu';
@@ -128,6 +131,43 @@ describe.each(['he', 'en', 'ar'])('no WCAG A/AA violation axe can see (%s)', (la
     ];
     const { container } = render(<ComposedPage config={config} jitter={getSiteJitter('axe')} isPreview />);
     expect(await violationsIn(container)).toEqual([]);
+  });
+
+  it("LT-588's highlights with pictures, the drops card and the two new cards", async () => {
+    const product = (i: number) => ({
+      id: `p${i}`, slug: `p-${i}`, name: `Product ${i}`, summary: 'Made by hand', price: 12000, category: i % 2 ? 'Rings' : 'Chains',
+      images: [{ url: `a${i}.webp` }, { url: `b${i}.webp` }], details: ['925 silver'], soldOut: i === 2,
+      colors: [{ name: 'Red', hex: '#cc2233' }, { name: 'Black', hex: '#111111' }], sizes: ['S', 'M'],
+    });
+    const shelf = { total: 6, pages: true, items: Array.from({ length: 6 }, (_, i) => product(i)) };
+    const stack = fullConfig([{ type: 'features', variant: 'stack' }, { type: 'products', variant: 'drops' }]);
+    stack.components.about.features = [{ icon: 'Star', title: 'Fast', description: 'Quick' }, { icon: 'Heart', title: 'Kind', description: 'Warm' }];
+    stack.products = shelf;
+    const first = render(<ComposedPage config={stack} jitter={getSiteJitter('axe')} isPreview />);
+    expect(['stack + drops', ...(await violationsIn(first.container))]).toEqual(['stack + drops']);
+    first.unmount();
+    for (const card of ['reveal', 'options']) {
+      const config = fullConfig([{ type: 'products', variant: 'well' }]);
+      config.products = shelf;
+      config.design.productCard = card;
+      const { container, unmount } = render(<ComposedPage config={config} jitter={getSiteJitter('axe')} isPreview />);
+      expect([card, ...(await violationsIn(container))]).toEqual([card]);
+      unmount();
+    }
+  });
+
+  it("LT-587/588's products pages: by category, rows, shelves, the shop, and a product's detail page", async () => {
+    const drafts = Array.from({ length: 6 }, (_, i) => ({
+      id: `draft-${i}`, slug: `draft-${i}`, name: `Product ${i}`, price: 1000 + i * 500, category: i % 3 ? 'Rings' : undefined,
+      images: [{ url: `a${i}.webp` }], details: ['Silver'], colors: [{ name: 'Red', hex: '#cc2233' }], sizes: ['M'],
+    }));
+    for (const layout of ['well', 'rows', 'shelves', 'shop']) {
+      const { container, unmount } = render(<MemoryRouter initialEntries={['/products']}><ProductsPage businessName="Shop" drafts={drafts} layout={layout as never} /></MemoryRouter>);
+      expect([layout, ...(await violationsIn(container))]).toEqual([layout]);
+      unmount();
+    }
+    const { container } = render(<MemoryRouter initialEntries={['/products/draft-1']}><ProductPage slug="draft-1" businessName="Shop" drafts={drafts} layout="detail" /></MemoryRouter>);
+    expect(['detail', ...(await violationsIn(container))]).toEqual(['detail']);
   });
 
   it('every gallery layout', async () => {

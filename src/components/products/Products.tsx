@@ -14,6 +14,7 @@ import ProductBelt from './ProductBelt';
 import ProductRail from './ProductRail';
 import ProductCoverflow from './ProductCoverflow';
 import ProductOrbit from './ProductOrbit';
+import { ProductShelf } from './ProductShelves';
 import ProductFeature from './ProductFeature';
 
 interface Props {
@@ -30,7 +31,7 @@ interface Props {
 }
 
 /** The fewest a moving layout needs to read as what it is; under that, calm tiles. */
-const MIN_ITEMS: Partial<Record<ProductsLayout, number>> = { belt: 4, hanger: 3, coverflow: 3, orbit: 3 };
+const MIN_ITEMS: Partial<Record<ProductsLayout, number>> = { belt: 4, hanger: 3, coverflow: 3, orbit: 3, drops: 3 };
 
 export const tilesFor = (layout: ProductsLayout, count: number): ProductsLayout =>
   count < (MIN_ITEMS[layout] ?? 0) ? 'well' : layout;
@@ -85,6 +86,8 @@ const Products: React.FC<Props> = ({ summary, config, layout = 'well', card, cur
           <ProductCoverflow items={items} pages={pages} currency={currency} />
         ) : shown === 'orbit' ? (
           <ProductOrbit items={items} pages={pages} currency={currency} tone={tone} cta={config?.cta} />
+        ) : shown === 'drops' ? (
+          <ProductShelf items={items} pages={pages} currency={currency} subtitle={t('products.count', { count: summary?.total ?? items.length })} testId="products-drops" />
         ) : (
           <ProductList items={items} layout={shown} pages={pages} currency={currency} tone={tone} card={card} cta={config?.cta} />
         )}

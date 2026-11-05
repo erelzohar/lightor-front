@@ -1,4 +1,4 @@
-import { useProductInquiry } from '../../services/productAction';
+import { useProductInquiry, choiceText } from '../../services/productAction';
 import React, { useCallback, useState } from 'react';
 import { X, Mail, Phone, MapPin, Send, User, MessageSquare, CheckCircle, XCircle, MessageCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -272,7 +272,7 @@ const Contact: React.FC<ContactProps> = ({ config, address, contact, workingDays
           name: formData.name,
           phone: formData.phone,
           ...(message ? { message } : {}),
-          ...(inquiry ? { productId: inquiry.id } : {}),
+          ...(inquiry ? { productId: inquiry.id, ...(inquiry.choice ? { productOptions: inquiry.choice } : {}) } : {}),
           answers: answersForRequest(leadFields, answers),
         });
 
@@ -451,7 +451,7 @@ const Contact: React.FC<ContactProps> = ({ config, address, contact, workingDays
       {/* LT-540: the product the visitor came from, which travels with the form. */}
       {inquiry && (
         <p className="flex items-center justify-between gap-3 rounded-design-sm bg-primary/10 dark:bg-primary-dark/15 px-4 py-3 text-light-text dark:text-dark-text" data-testid="contact-product">
-          <span className="min-w-0 break-words">{t('products.inquiryAbout', { name: inquiry.name })}</span>
+          <span className="min-w-0 break-words">{t('products.inquiryAbout', { name: choiceText(inquiry.choice) ? `${inquiry.name} (${choiceText(inquiry.choice)})` : inquiry.name })}</span>
           <button type="button" onClick={() => setInquiry(null)} aria-label={t('products.inquiryClear')} className="shrink-0 rounded-full p-1 hover:bg-black/10 dark:hover:bg-white/10">
             <X className="h-4 w-4" aria-hidden="true" />
           </button>

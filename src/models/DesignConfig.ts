@@ -37,7 +37,8 @@ export type ImageTreatment = 'rounded' | 'circle' | 'arch' | 'blob';
 // artboard's statement composition.
 // LT-126 structural layouts: 'wall' (typographic feature wall), 'timeline' (numbered rail), 'sticky' (pinned intro beside stacked rows).
 // LT-583: 'orbs' (atelier's own highlights): each one under a round medallion with a ring.
-export type AboutLayout = 'cards' | 'split' | 'band' | 'manifesto' | 'wall' | 'timeline' | 'sticky' | 'bento' | 'orbs';
+// LT-588: 'stack' (electric's own, paid): a list of the highlights, each showing its picture through a shaped mask.
+export type AboutLayout = 'cards' | 'split' | 'band' | 'manifesto' | 'wall' | 'timeline' | 'sticky' | 'bento' | 'orbs' | 'stack';
 // LT-126: 'bento' (mosaic of mixed tile sizes), 'scroller' (auto-scrolling cinematic strip), 'spotlight' (one featured tile + thumbs).
 // LT-169: 'carousel' is the one-frame-at-a-time slideshow (arrows, dots,
 // swipe) — once the legacy `isGrid: false` mode, now a layout like the rest.
@@ -53,16 +54,20 @@ export type PortfolioLayout = 'grid' | 'masonry' | 'filmstrip' | 'polaroid' | 'f
 // picture on hover, 'bento' mixed sizes, 'list' names beside prices (a menu),
 // and three that move: 'belt' a conveyor, 'hanger' a clothes rail, 'coverflow'.
 // LT-583: 'orbit' (serene's own), a round plate that swings round a wide orbit.
-export type ProductsLayout = 'well' | 'swap' | 'bento' | 'list' | 'belt' | 'hanger' | 'coverflow' | 'orbit';
+// LT-588: 'drops' (industrial's own), a card of products side by side, moved with arrows.
+export type ProductsLayout = 'well' | 'swap' | 'bento' | 'list' | 'belt' | 'hanger' | 'coverflow' | 'orbit' | 'drops';
 // LT-545: a product's card where products are tiles: 'plain' the picture with
 // the words under it, 'framed' all of it in the site's card, 'overlay' the words
 // on the picture, 'button' an inquiry button under it. The products page has a
 // still layout of its own, and the product page three: 'side' the pictures
 // beside the words, 'hero' one large picture above them, 'gallery' every
 // picture with the words kept in view.
-export type ProductCardStyle = 'plain' | 'framed' | 'overlay' | 'button';
-export type ProductsPageLayout = 'well' | 'swap' | 'bento' | 'list';
-export type ProductPageLayout = 'side' | 'hero' | 'gallery';
+// LT-588: 'reveal' (the details slide up over the card) and 'options' (its pictures, colours and sizes);
+// the products page by category in 'rows' (a sideways row each), 'shelves' (a card each) or 'shop'
+// (filters beside the grid); a product's 'detail' page (a shop's).
+export type ProductCardStyle = 'plain' | 'framed' | 'overlay' | 'button' | 'reveal' | 'options';
+export type ProductsPageLayout = 'well' | 'swap' | 'bento' | 'list' | 'rows' | 'shelves' | 'shop';
+export type ProductPageLayout = 'side' | 'hero' | 'gallery' | 'detail';
 export type ContactLayout = 'split' | 'stacked' | 'poster' | 'editorial' | 'statement' | 'band' | 'cards';
 // LT-124: 'line' (one light ruled row) and 'ticker' (repeating strip) from the canvas.
 export type FooterLayout = 'columns' | 'minimal' | 'line' | 'ticker';

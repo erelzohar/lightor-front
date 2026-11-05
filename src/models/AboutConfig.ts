@@ -2,14 +2,17 @@ export class AboutFeature {
   constructor(
     public icon: string,
     public title: string,
-    public description: string
+    public description: string,
+    /** LT-588: a picture of its own, for the highlights that show one each (the 'stack'). */
+    public image?: string,
   ) {}
 
   static fromJSON(json: any): AboutFeature {
     return new AboutFeature(
       json.icon,
       json.title,
-      json.description
+      json.description,
+      typeof json.image === 'string' && json.image.trim() ? json.image.trim() : undefined,
     );
   }
 }

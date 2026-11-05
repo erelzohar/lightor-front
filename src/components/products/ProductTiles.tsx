@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
-import { ShoppingBag } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ShoppingBag } from 'lucide-react';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { categoriesOf, type ProductCard } from '../../models/Product';
 import type { ProductCardStyle } from '../../models/DesignConfig';
 import type { SectionTone } from '../SectionDivider';
 import { handleSquareImageError, handleWideImageError } from '../../utils/imageFallback';
-import { CoverImage, Price, SoldOut, imageUrl, useProductLink } from './ProductParts';
+import { CoverImage, Price, ProductOptions, SoldOut, imageUrl, useProductLink } from './ProductParts';
+import { rememberChoice, type ProductChoice } from '../../services/productAction';
 
 interface TilesProps {
   items: ProductCard[];
@@ -18,7 +19,7 @@ interface TilesProps {
   cta?: string;
 }
 
-const CARDS: ProductCardStyle[] = ['plain', 'framed', 'overlay', 'button'];
+const CARDS: ProductCardStyle[] = ['plain', 'framed', 'overlay', 'button', 'reveal', 'options'];
 /** An unknown card is the plain one, as on a site that never chose. */
 export const cardOf = (card: string | undefined): ProductCardStyle =>
   CARDS.includes(card as ProductCardStyle) ? (card as ProductCardStyle) : 'plain';
@@ -33,13 +34,18 @@ const FEW_ITEM = 'shrink-0 basis-[calc(50%_-_0.5rem)] md:basis-[calc(50%_-_0.75r
 /** The swap tiles' full row holds four from `lg` up. */
 const FEW_SWAP_ITEM = 'shrink-0 basis-[calc(50%_-_0.5rem)] md:basis-[calc(50%_-_0.75rem)] lg:basis-[calc(25%_-_1.125rem)]';
 
-/** A card's own button: the product's page at its form, or here, the form with it chosen. */
-const CardButton: React.FC<{ product: ProductCard; pages: boolean; cta?: string }> = ({ product, pages, cta }) => {
+/**
+ * A card's own button: the product's page at its form, or here, the form with
+ * it chosen. LT-588: with the colour and size picked on the card.
+ */
+const CardButton: React.FC<{ product: ProductCard; pages: boolean; cta?: string; choice?: ProductChoice }> = ({ product, pages, cta, choice }) => {
   const { t } = useLanguage();
-  const inquireOf = useProductLink(pages, true);
+  const inquireOf = useProductLink(pages, true, choice);
+  const link = inquireOf(product);
   return (
     <a
-      {...inquireOf(product)}
+      href={link.href}
+      onClick={(e) => { rememberChoice(product.id, choice); link.onClick(e); }}
       className="inline-flex w-full items-center justify-center gap-2 rounded-design bg-primary dark:bg-primary-dark px-4 py-2.5 text-sm font-bold text-on-primary dark:text-on-primary-dark hover:opacity-90 transition-opacity"
     >
       <ShoppingBag className="h-4 w-4 shrink-0" aria-hidden="true" />
@@ -61,10 +67,103 @@ const NameAndPrice: React.FC<{ product: ProductCard; currency?: string; classNam
   </div>
 );
 
+/**
+ * LT-588 'reveal' (Erel's reveal card): the picture, the name and the price; on
+ * a pointer (or the keyboard's focus) the details and the buttons slide up over
+ * it. A phone has no hover: a tap opens the product, as on every card. Solid
+ * behind the words, no blur: nothing here stalls an old phone.
+ */
+const RevealCard: React.FC<{ product: ProductCard; pages: boolean; currency?: string; well: string; cta?: string }> = ({ product, pages, currency, well, cta }) => {
+  const { t } = useLanguage();
+  const linkOf = useProductLink(pages);
+  const link = linkOf(product);
+  const shown = '[@media(hover:hover)]:group-hover:pointer-events-auto [@media(hover:hover)]:group-hover:translate-y-0 [@media(hover:hover)]:group-hover:opacity-100 group-focus-within:pointer-events-auto group-focus-within:translate-y-0 group-focus-within:opacity-100';
+  return (
+    <article className="group relative h-full overflow-hidden rounded-design-card card-design" data-card-look="reveal">
+      <a {...link} className="flex h-full flex-col">
+        <div className={`relative aspect-[4/3] overflow-hidden ${well}`}>
+          <CoverImage product={product} className="transition-transform duration-500 [@media(hover:hover)]:group-hover:scale-110" />
+          <span aria-hidden="true" className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent" />
+          {product.soldOut && <SoldOut className="absolute top-3 start-3" />}
+        </div>
+        <div className="flex-1 space-y-1 p-4 text-light-text dark:text-dark-text md:p-5">
+          {product.category && <p className="text-sm text-light-text/60 dark:text-dark-text/60 break-words">{product.category}</p>}
+          <h3 className="text-lg font-bold leading-tight tracking-tight break-words">{product.name}</h3>
+          <Price product={product} currency={currency} className="text-xl font-bold text-primary-readable dark:text-primary-dark-readable" />
+        </div>
+      </a>
+      <div className={`pointer-events-none absolute inset-0 flex translate-y-full flex-col justify-end overflow-y-auto bg-light-surface/[0.97] p-4 opacity-0 transition-[transform,opacity] duration-300 ease-out dark:bg-dark-surface/[0.97] md:p-5 ${shown}`}>
+        <div className="space-y-3 text-light-text dark:text-dark-text">
+          <h4 className="font-semibold break-words">{product.name}</h4>
+          {product.summary && <p className="text-sm leading-relaxed text-light-text/75 dark:text-dark-text/75 break-words">{product.summary}</p>}
+          <CardButton product={product} pages={pages} cta={cta} />
+          <a {...link} className="inline-flex w-full items-center justify-center rounded-design border-2 border-light-text/20 px-4 py-2 text-sm font-semibold hover:border-primary dark:border-dark-text/20 dark:hover:border-primary-dark transition-colors">
+            {t('products.more')}
+          </a>
+        </div>
+      </div>
+    </article>
+  );
+};
+
+/**
+ * LT-588 'options' (Erel's card with colours and sizes): the pictures with
+ * arrows and dots, the name and price, the colours and sizes to pick, and the
+ * main button, which takes the pick to the inquiry.
+ */
+const OptionsCard: React.FC<{ product: ProductCard; pages: boolean; currency?: string; well: string; cta?: string }> = ({ product, pages, currency, well, cta }) => {
+  const { t, language } = useLanguage();
+  const linkOf = useProductLink(pages);
+  const [shown, setShown] = useState(0);
+  const [choice, setChoice] = useState<ProductChoice>({});
+  const images = product.images;
+  const rtl = language === 'he' || language === 'ar';
+  const Prev = rtl ? ChevronRight : ChevronLeft;
+  const Next = rtl ? ChevronLeft : ChevronRight;
+  const step = (by: number) => setShown((i) => (i + by + images.length) % images.length);
+  const round = 'inline-flex h-8 w-8 items-center justify-center rounded-full bg-light-bg/90 text-light-text shadow-sm transition-opacity dark:bg-dark-bg/90 dark:text-dark-text [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover:opacity-100 focus-visible:opacity-100';
+  return (
+    <article className="group flex h-full flex-col overflow-hidden rounded-design-card card-design" data-card-look="options">
+      <div className={`relative aspect-[3/4] overflow-hidden ${well}`}>
+        <a {...linkOf(product)} tabIndex={-1} aria-hidden="true" className="absolute inset-0 block">
+          {!images.length && <CoverImage product={product} />}
+          {images.map((image, i) => (
+            <img key={image.url} src={imageUrl(image)} alt="" loading="lazy" onError={handleWideImageError} className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-300 ${i === shown ? 'opacity-100' : 'opacity-0'}`} />
+          ))}
+        </a>
+        {images.length > 1 && (<>
+          <div className="pointer-events-none absolute inset-x-0 top-1/2 flex -translate-y-1/2 justify-between p-2">
+            <button type="button" className={`${round} pointer-events-auto`} aria-label={t('products.previous')} onClick={() => step(-1)}><Prev className="h-4 w-4" aria-hidden="true" /></button>
+            <button type="button" className={`${round} pointer-events-auto`} aria-label={t('products.next')} onClick={() => step(1)}><Next className="h-4 w-4" aria-hidden="true" /></button>
+          </div>
+          <div className="absolute inset-x-0 bottom-2 flex justify-center gap-1" role="group" aria-label={t('products.pictures')}>
+            {images.map((image, i) => (
+              <button key={image.url} type="button" onClick={() => setShown(i)} aria-label={t('products.picture', { index: i + 1 })} aria-current={i === shown || undefined} className="flex h-6 items-center justify-center px-0.5">
+                <span className={`block h-1.5 rounded-full shadow transition-[width] ${i === shown ? 'w-4 bg-white' : 'w-1.5 bg-white/60'}`} />
+              </button>
+            ))}
+          </div>
+        </>)}
+        {product.soldOut && <SoldOut className="absolute top-3 start-3" />}
+      </div>
+      <div className="flex flex-1 flex-col gap-3 p-4 text-light-text dark:text-dark-text">
+        <a {...linkOf(product)} className="block">
+          <h3 className="font-medium leading-snug break-words">{product.name}</h3>
+          <Price product={product} currency={currency} className="mt-1 text-lg font-semibold" />
+        </a>
+        <ProductOptions product={product} choice={choice} onChange={setChoice} compact />
+        <div className="mt-auto pt-1"><CardButton product={product} pages={pages} cta={cta} choice={choice} /></div>
+      </div>
+    </article>
+  );
+};
+
 /** One 'well' tile in the owner's card. */
 const WellCard: React.FC<{ product: ProductCard; pages: boolean; currency?: string; well: string; card: ProductCardStyle; cta?: string }> = ({ product, pages, currency, well, card, cta }) => {
   const linkOf = useProductLink(pages);
   const zoom = 'transition-transform duration-500 group-hover:scale-105';
+  if (card === 'reveal') return <RevealCard product={product} pages={pages} currency={currency} well={well} cta={cta} />;
+  if (card === 'options') return <OptionsCard product={product} pages={pages} currency={currency} well={well} cta={cta} />;
   if (card === 'framed') {
     return (
       <a {...linkOf(product)} className="group card-design flex h-full flex-col overflow-hidden">
@@ -109,6 +208,11 @@ const WellCard: React.FC<{ product: ProductCard; pages: boolean; currency?: stri
     </div>
   );
 };
+
+/** LT-588: one product in the owner's card, for the grids that lay their own rows (the shop). */
+export const ProductTile: React.FC<{ product: ProductCard; pages: boolean; currency?: string; tone?: SectionTone; card?: ProductCardStyle; cta?: string }> = ({ product, pages, currency, tone = 'bg', card, cta }) => (
+  <WellCard product={product} pages={pages} currency={currency} well={tone === 'surface' ? 'bg-light-bg dark:bg-dark-bg' : 'bg-light-surface dark:bg-dark-surface'} card={cardOf(card)} cta={cta} />
+);
 
 /**
  * 'well' (the quiet one, from a 21st.dev reference): the picture in a tinted
@@ -210,9 +314,11 @@ const SwapTile: React.FC<{ product: ProductCard; pages: boolean; currency?: stri
   );
 };
 
-export const SwapTiles: React.FC<TilesProps> = ({ items, pages, currency, card, cta }) => {
+export const SwapTiles: React.FC<TilesProps> = ({ items, pages, currency, card, cta, tone }) => {
   const few = items.length < FEW;
   const style = cardOf(card);
+  // LT-588: the two cards that bring their own pictures and buttons draw as they are.
+  if (style === 'reveal' || style === 'options') return <WellTiles items={items} pages={pages} currency={currency} card={style} cta={cta} tone={tone} />;
   return (
     <div className={few ? FEW_ROW : 'grid grid-cols-2 gap-x-4 gap-y-8 md:gap-x-6 lg:grid-cols-4'} data-testid="products-swap" data-card={style}>
       {items.map((product) => (
