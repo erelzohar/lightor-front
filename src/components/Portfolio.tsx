@@ -182,8 +182,8 @@ const Portfolio: React.FC<PortfolioProps> = ({ config, layout = 'grid', masonryP
                   aria-hidden={index >= config.items.length || undefined}
                 >
                   {/* LT-346: the caption shows on hover and is hidden from
-                      screen readers; they get the picture's description here. */}
-                  {item.description && <span className="sr-only">{item.description}</span>}
+                      screen readers; the picture's alt says what it shows.
+                      LT-582 (Erel): a gallery picture has a title only. */}
                   <img loading="lazy" {...ed(`components.portfolio.items.${index}.url`, 'image')}
                     src={ImagesService.getInstance().getImage(item.url)}
                     alt={altOf(item)}
@@ -195,8 +195,7 @@ const Portfolio: React.FC<PortfolioProps> = ({ config, layout = 'grid', masonryP
                     aria-hidden="true"
                   >
                     <div className="absolute bottom-0 inset-x-0 p-4 md:p-6 max-h-full overflow-y-auto">
-                      <h3 {...ed(`components.portfolio.items.${index}.title`)} className="text-lg md:text-xl font-bold text-white mb-1 md:mb-2">{item.title}</h3>
-                      <p {...ed(`components.portfolio.items.${index}.description`)} className="text-sm md:text-base text-white/80">{item.description}</p>
+                      <h3 {...ed(`components.portfolio.items.${index}.title`)} className="text-lg md:text-xl font-bold text-white">{item.title}</h3>
                     </div>
                   </div>
                 </motion.div>
@@ -256,7 +255,6 @@ const Portfolio: React.FC<PortfolioProps> = ({ config, layout = 'grid', masonryP
                         />
                         <div className="absolute inset-x-0 bottom-0 p-6 md:p-10 max-h-full overflow-y-auto bg-gradient-to-t from-black/70 to-transparent">
                           <h3 {...ed(`components.portfolio.items.${active}.title`)} className="text-2xl md:text-4xl font-bold text-white">{main.title}</h3>
-                          {main.description && <p {...ed(`components.portfolio.items.${active}.description`)} className="text-white/80 mt-2 max-w-2xl">{main.description}</p>}
                         </div>
                       </motion.div>
                     </AnimatePresence>
@@ -402,8 +400,7 @@ const Portfolio: React.FC<PortfolioProps> = ({ config, layout = 'grid', masonryP
                         aria-hidden="true"
                       >
                         <div className="absolute bottom-0 inset-x-0 p-4 md:p-6 max-h-full overflow-y-auto">
-                          <h3 {...ed(`components.portfolio.items.${index}.title`)} className="text-lg md:text-xl font-bold text-white mb-1 md:mb-2">{item.title}</h3>
-                          <p {...ed(`components.portfolio.items.${index}.description`)} className="text-sm md:text-base text-white/80">{item.description}</p>
+                          <h3 {...ed(`components.portfolio.items.${index}.title`)} className="text-lg md:text-xl font-bold text-white">{item.title}</h3>
                         </div>
                       </div>
                     </motion.div>
@@ -441,7 +438,7 @@ const Portfolio: React.FC<PortfolioProps> = ({ config, layout = 'grid', masonryP
                   className="absolute inset-0"
                   role="group"
                   aria-roledescription="slide"
-                  aria-label={[config.items[currentSlide].title, config.items[currentSlide].description].filter(Boolean).join(': ') || t('portfolio.slideshow_dot', { index: currentSlide + 1 })}
+                  aria-label={config.items[currentSlide].title || t('portfolio.slideshow_dot', { index: currentSlide + 1 })}
                 >
                   <div className="relative h-full">
                     <img loading="lazy" {...ed(`components.portfolio.items.${currentSlide}.url`, 'image')}
@@ -456,12 +453,9 @@ const Portfolio: React.FC<PortfolioProps> = ({ config, layout = 'grid', masonryP
                       aria-hidden="true"
                     >
                       <div className="absolute bottom-0 inset-x-0 p-4 md:p-8 max-h-full overflow-y-auto">
-                        <h3 className="text-xl md:text-3xl font-bold mb-1 md:mb-2 text-white">
+                        <h3 className="text-xl md:text-3xl font-bold text-white">
                           <EditText path={`components.portfolio.items.${currentSlide}.title`}>{config.items[currentSlide].title}</EditText>
                         </h3>
-                        <p className="text-sm md:text-lg text-white/80">
-                          <EditText path={`components.portfolio.items.${currentSlide}.description`}>{config.items[currentSlide].description}</EditText>
-                        </p>
                       </div>
                     </div>
                   </div>

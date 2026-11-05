@@ -169,7 +169,7 @@ const CurveReel: React.FC<{ items: PortfolioItem[] }> = ({ items }) => {
       )}
       <ul className="sr-only" aria-label={t('portfolio.grid_label')}>
         {items.map((item, i) => (
-          <li key={i}>{[altOf(item), item.description].filter(Boolean).join(': ')}</li>
+          <li key={i}>{altOf(item)}</li>
         ))}
       </ul>
     </div>

@@ -52,8 +52,8 @@ describe('the gallery carousel layout', () => {
     const region = container.querySelector('[aria-roledescription="carousel"]');
     expect(region).not.toBeNull();
     expect(container.querySelector('[role="list"]')).toBeNull();
-    // One frame at a time: the first item is the live slide.
-    expect(region?.querySelector('[aria-roledescription="slide"]')?.getAttribute('aria-label')).toBe('One: first');
+    // One frame at a time: the first item is the live slide, named by its title (LT-582: no description).
+    expect(region?.querySelector('[aria-roledescription="slide"]')?.getAttribute('aria-label')).toBe('One');
   });
 
   it('renders cards, not the slideshow, for every other layout', () => {
@@ -88,6 +88,43 @@ describe('the gallery carousel layout', () => {
     const { container } = renderGallery('carousel', { items: [] });
     expect(container.querySelector('[aria-roledescription="carousel"]')).toBeNull();
     expect(container.querySelector('#portfolio')).toBeNull();
+  });
+});
+
+/**
+ * LT-582 (Erel 2026-11-05): a gallery picture has a title only. Older sites
+ * (and AI builds) still store a description per picture; no layout shows it,
+ * says it to screen readers or offers it to edit, since the owner has no field
+ * for it any more.
+ */
+describe('a gallery picture has a title only', () => {
+  const LAYOUTS = ['grid', 'masonry', 'filmstrip', 'polaroid', 'flash', 'bento', 'scroller', 'spotlight', 'carousel', 'clothesline', 'curve', 'cascade'];
+  const renderEditing = (variant: string) => {
+    const raw = RAW_AI_RESPONSE_SHAPE as unknown as { components: { portfolio: Record<string, unknown> } };
+    const config = WebsiteConfig.fromJSON({
+      ...RAW_AI_RESPONSE_SHAPE,
+      components: { ...raw.components, portfolio: { ...raw.components.portfolio, items: ITEMS } },
+      blocks: [{ type: 'gallery', variant }],
+    });
+    return render(
+      <EditContext.Provider value={{ editing: true }}>
+        <ComposedPage config={config} jitter={getSiteJitter(`titles-${variant}`)} isPreview={false} />
+      </EditContext.Provider>
+    );
+  };
+
+  it.each(LAYOUTS)('the %s layout shows the titles and no description', (variant) => {
+    const { container } = renderEditing(variant);
+    const gallery = container.querySelector('#portfolio') as HTMLElement;
+    expect(gallery).not.toBeNull();
+    // The titles show (a stage shows the picture it is on, a grid all of them).
+    expect(['One', 'Two', 'Three'].some((title) => gallery.textContent?.includes(title))).toBe(true);
+    for (const words of ['first', 'second', 'third']) expect(gallery.textContent).not.toContain(words);
+    const paths = [...gallery.querySelectorAll('[data-lt-edit]')].map((el) => el.getAttribute('data-lt-edit') ?? '');
+    expect(paths.filter((path) => /items\.\d+\.description/.test(path))).toEqual([]);
+    for (const label of [...gallery.querySelectorAll('[aria-label]')].map((el) => el.getAttribute('aria-label') ?? '')) {
+      for (const words of ['first', 'second', 'third']) expect(label).not.toContain(words);
+    }
   });
 });
 

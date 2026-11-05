@@ -17,6 +17,6 @@ export class PortfolioItem {
   }
 }
 
-/** The picture's text alternative: the owner's description, else its title, else none. */
+/** The picture's text alternative: an older stored alt (LT-346), else its title (LT-582: a gallery picture has a title only), else none. */
 export const altOf = (item: { alt?: string; title?: string } | undefined): string =>
   item?.alt?.trim() || item?.title?.trim() || '';

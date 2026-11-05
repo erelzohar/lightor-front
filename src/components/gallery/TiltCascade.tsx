@@ -251,7 +251,6 @@ const TiltCascade: React.FC<{ items: PortfolioItem[] }> = ({ items }) => {
 
       <div key={active} className="relative z-[200] lt-cap-in mx-auto mt-6 w-[var(--lt-s)] min-h-[3.5rem] text-center text-light-text dark:text-dark-text" aria-hidden="true">
         {current?.title && <h3 {...ed(`components.portfolio.items.${active}.title`)} className="text-xl md:text-2xl font-bold leading-snug" style={{ fontFamily: displayFont }}>{current.title}</h3>}
-        {current?.description && <p {...ed(`components.portfolio.items.${active}.description`)} className="mt-1 text-sm text-light-text/70 dark:text-dark-text/70">{current.description}</p>}
       </div>
 
       {n > 1 && (
@@ -282,7 +281,7 @@ const TiltCascade: React.FC<{ items: PortfolioItem[] }> = ({ items }) => {
       )}
 
       <p className="sr-only" aria-live={playing ? 'off' : 'polite'}>
-        {`${active + 1} / ${n}: ${[current?.title, current?.description].filter(Boolean).join(': ')}`}
+        {`${active + 1} / ${n}${current?.title ? `: ${current.title}` : ''}`}
       </p>
     </div>
   );

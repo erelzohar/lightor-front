@@ -17,8 +17,9 @@ vi.mock('../../../contexts/LanguageContext', () => ({
 vi.mock('../../../hooks/useA11yPrefs', () => ({ useStill: () => still }));
 
 const LONG = 'עוגת שכבות חגיגית עם קרם גבינה ופירות יער טריים מהשוק, כל שכבה נאפית בנפרד ומורכבת ביד בבוקר האירוע';
+// LT-582: a gallery picture has a title only, so the long text is a title; the stored descriptions never show.
 const items = (n: number) => Array.from({ length: n }, (_, i) =>
-  new PortfolioItem(`https://example.com/${i + 1}.jpg`, `עבודה ${i + 1}`, i === 0 ? LONG : `תיאור ${i + 1}`, `תמונה ${i + 1}`));
+  new PortfolioItem(`https://example.com/${i + 1}.jpg`, i === 0 ? LONG : `עבודה ${i + 1}`, `תיאור ${i + 1}`, `תמונה ${i + 1}`));
 const gallery = (layout: PortfolioLayout, n = 4) => <Portfolio config={new PortfolioConfig(true, 'גלריה', 'העבודות שלנו', items(n))} layout={layout} />;
 
 let intersect: (visible: boolean) => void;
@@ -56,6 +57,7 @@ describe.each(['clothesline', 'cascade'] as const)('the %s gallery', (layout) =>
     fireEvent.keyDown(screen.getByRole('region', { name: 'portfolio.slideshow_label' }), { key: 'ArrowRight' });
     expect(live(container)).toContain(LONG);
     expect(container.innerHTML).not.toMatch(/truncate|line-clamp|text-ellipsis/);
+    expect(container.textContent).not.toContain('תיאור');
   });
 
   it('goes the way a right-to-left reader goes with the arrow keys', () => {
@@ -114,7 +116,7 @@ describe('the curve', () => {
     expect(container.querySelector('.lt-curve')).not.toBeNull();
     const list = screen.getByRole('list', { name: 'portfolio.grid_label' });
     expect(list.textContent).toContain('תמונה 2');
-    expect(list.textContent).toContain(LONG);
+    expect(container.textContent).not.toContain('תיאור');
   });
 
   it('holds still in the editor', () => {

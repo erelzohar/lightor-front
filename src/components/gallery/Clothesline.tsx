@@ -278,13 +278,8 @@ const Clothesline: React.FC<{ items: PortfolioItem[] }> = ({ items }) => {
         ))}
       </div>
 
-      {/* The print carries the title; under the line, only what it does not say. */}
+      {/* The print carries the title (LT-582: a gallery picture has no more); under the line, where it is. */}
       <div className="max-w-2xl mx-auto px-4 mt-3 flex flex-wrap md:flex-nowrap items-center justify-center gap-3 md:gap-5">
-        {current?.description && (
-          <p key={active} {...ed(`components.portfolio.items.${active}.description`)} className="basis-full md:basis-auto md:flex-1 min-w-0 lt-cap-in text-center md:text-start text-sm md:text-base text-light-text/80 dark:text-dark-text/80" aria-hidden="true">
-            {current.description}
-          </p>
-        )}
         {n > 1 && (
           <>
             <span dir="ltr" className="flex-none font-mono text-xs tracking-widest text-light-text/70 dark:text-dark-text/70" aria-hidden="true">
@@ -301,7 +296,7 @@ const Clothesline: React.FC<{ items: PortfolioItem[] }> = ({ items }) => {
       </div>
 
       <p className="sr-only" aria-live={playing ? 'off' : 'polite'}>
-        {`${active + 1} / ${n}: ${[current?.title, current?.description].filter(Boolean).join(': ')}`}
+        {`${active + 1} / ${n}${current?.title ? `: ${current.title}` : ''}`}
       </p>
     </div>
   );
