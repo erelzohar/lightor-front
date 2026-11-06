@@ -255,13 +255,7 @@ export class WebsiteConfig {
      * fromJSON. Set by the server, and by the editor's preview on that plan;
      * absent reads as every design - older payloads and the register preview.
      */
-    public motion: boolean = true,
-    /**
-     * LT-600: false while the business is in its free days: the booking form
-     * offers no WhatsApp, the code and the updates go by SMS. Set by the
-     * server; absent reads as offered - older payloads and the previews.
-     */
-    public whatsapp: boolean = true
+    public motion: boolean = true
   ) {}
 
   static fromJSON(served: any): WebsiteConfig {
@@ -307,8 +301,7 @@ export class WebsiteConfig {
       currencyOf(json.currency),
       !json.bookingClosed,
       parseProducts(json.products),
-      json.motion !== false,
-      json.whatsapp !== false
+      json.motion !== false
     );
   }
 }

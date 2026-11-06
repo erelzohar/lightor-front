@@ -53,11 +53,10 @@ class SMSService {
         }
     }
 
-    public async sendOtp(phoneNumber: string, channelType: string = 'sms', languageCode?: string, subdomain?: string): Promise<OtpSendResult> {
+    public async sendOtp(phoneNumber: string, channelType: string = 'sms', languageCode?: string): Promise<OtpSendResult> {
         try {
             const lang = languageCode ?? i18n.language ?? 'he';
-            // LT-600: the site's address, so a business in its free days gets the code sent by SMS.
-            const res = await axios.post<any>(globals.messagingUrl + "/otp/send", { phoneNumber, channelType, languageCode: lang, ...(subdomain ? { subdomain } : {}) });
+            const res = await axios.post<any>(globals.messagingUrl + "/otp/send", { phoneNumber, channelType, languageCode: lang });
             return { ok: !!res.data?.success };
         } catch (err: any) {
             console.error(err);

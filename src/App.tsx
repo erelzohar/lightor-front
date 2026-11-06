@@ -557,8 +557,6 @@ function MainContent() {
             timeZone={config.timeZone}
             currency={config.currency}
             bookingOpen={config.bookingOpen}
-            whatsapp={config.whatsapp}
-            subdomain={config.subDomain}
             vacations={config.vacations}
             dateOverrides={config.dateOverrides}
             appointmentTypes={config.appointmentTypes}
