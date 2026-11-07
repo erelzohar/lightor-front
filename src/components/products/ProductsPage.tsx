@@ -11,6 +11,11 @@ import { ProductList, tilesFor } from './Products';
 import { ProductRow, ProductShelf } from './ProductShelves';
 import ProductShop from './ProductShop';
 import Loading from '../Loading';
+import { part } from '../../designs/parts';
+import { lastList, rememberList } from '../../services/productCards';
+
+// LT-605: the wall of shelves, gallery's own.
+const ProductWall = part('productWall', (m) => m.default);
 
 interface Props {
   businessName: string;
@@ -28,7 +33,7 @@ interface Props {
 /** The moving layouts suit a handful of products; a whole catalogue sits in calm tiles. */
 const STILL_LAYOUTS: ProductsLayout[] = ['well', 'swap', 'bento', 'list'];
 /** LT-588: the page's own arrangements, by category. */
-const PAGE_LAYOUTS: ProductsPageLayout[] = ['rows', 'shelves', 'shop'];
+const PAGE_LAYOUTS: ProductsPageLayout[] = ['rows', 'shelves', 'shop', 'wall'];
 
 /** A category's place on the page, for the links that jump to it. */
 const sectionId = (i: number): string => `products-cat-${i}`;
@@ -45,7 +50,8 @@ const ProductsPage: React.FC<Props> = ({ businessName, title, description, layou
   const { search } = useLocation();
   const [fetched, setItems] = useState<ProductCard[] | null>(() => {
     const inline = readInlinePage('products');
-    return Array.isArray(inline) ? inline.map(parseProduct).filter((p): p is NonNullable<typeof p> => !!p) : null;
+    // LT-605: back from a product on this visit, the list is already in hand.
+    return Array.isArray(inline) ? inline.map(parseProduct).filter((p): p is NonNullable<typeof p> => !!p) : lastList();
   });
   const items = drafts ?? fetched;
   const [failed, setFailed] = useState(false);
@@ -55,7 +61,7 @@ const ProductsPage: React.FC<Props> = ({ businessName, title, description, layou
   useEffect(() => {
     if (items) return;
     WebConfigService.getInstance().getProducts(window.location.hostname.split('.')[0])
-      .then(setItems)
+      .then((list) => { if (list) rememberList(list); setItems(list); })
       .catch(() => setFailed(true));
   }, [items]);
 
@@ -98,6 +104,18 @@ const ProductsPage: React.FC<Props> = ({ businessName, title, description, layou
 
   const body = (() => {
     if (shape === 'shop') return <ProductShop items={items} currency={currency} card={card} cta={cta} initialCategory={wanted} />;
+    if (shape === 'wall') {
+      return (
+        <div className="space-y-16">
+          {groups.map((g, i) => (
+            <section key={g.name || '-'} id={sectionId(i)} aria-labelledby={grouped ? `${sectionId(i)}-title` : undefined} className="scroll-mt-28" data-testid="products-category">
+              {grouped && <h2 id={`${sectionId(i)}-title`} className="mb-8 text-2xl font-bold text-light-text break-words dark:text-dark-text md:text-3xl">{titleOf(g.name)}</h2>}
+              <ProductWall items={g.items} pages currency={currency} />
+            </section>
+          ))}
+        </div>
+      );
+    }
     if (shape === 'rows' || shape === 'shelves') {
       // One category or none: the shelf is the whole catalogue.
       return (

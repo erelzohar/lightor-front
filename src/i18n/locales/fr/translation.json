@@ -82,7 +82,12 @@
     "priceFrom": "À partir de",
     "priceTo": "Jusqu'à",
     "inStockOnly": "En stock uniquement",
-    "noMatch": "Aucun produit ne correspond à ces filtres"
+    "noMatch": "Aucun produit ne correspond à ces filtres",
+    "detailsTitle": "Détails",
+    "close": "Fermer",
+    "price": "Prix",
+    "holdToZoom": "Maintenez pour zoomer",
+    "tapToView": "Touchez pour voir les photos"
   },
   "portfolio": {
     "title": "Nos Dernières Réalisations",

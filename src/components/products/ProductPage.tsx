@@ -17,6 +17,12 @@ import NotFound from '../NotFound';
 import Loading from '../Loading';
 import { INQUIRE_HASH, Price, ProductActions, ProductOptions, ProductPictures, SoldOut, altOfImage, imageUrl, toTheForm } from './ProductParts';
 import { WellTiles } from './ProductTiles';
+import { part } from '../../designs/parts';
+import { cardOf } from '../../services/productCards';
+
+// LT-605: gallery's product on its ledge, electric's floating stage.
+const ProductStand = part('productStand', (m) => m.default);
+const ProductStage = part('productStage', (m) => m.default);
 
 interface Props {
   slug: string;
@@ -36,7 +42,7 @@ interface Props {
   drafts?: Product[];
 }
 
-const LAYOUTS: ProductPageLayout[] = ['side', 'hero', 'gallery', 'detail'];
+const LAYOUTS: ProductPageLayout[] = ['side', 'hero', 'gallery', 'detail', 'stand', 'stage'];
 
 /** LT-588: the products page at one category (its section, or its filter in the shop). */
 export const categoryPath = (category: string): string => `${PRODUCTS_PATH}?category=${encodeURIComponent(category)}`;
@@ -130,13 +136,20 @@ const GalleryPictures: React.FC<{ product: Product }> = ({ product }) => {
   );
 };
 
-interface Loaded { product: Product; related: Product[] }
+/** `partial`: drawn from the product's card while the rest is on its way (LT-605). */
+interface Loaded { product: Product; related: Product[]; partial?: boolean }
 
 const fromInline = (slug: string): Loaded | null => {
   const raw = readInlinePage('product') as { product?: unknown; related?: unknown[] } | null;
   const product = parseProduct(raw?.product);
   if (!product || product.slug !== slug) return null;
   return { product, related: (raw?.related ?? []).map(parseProduct).filter((p): p is Product => !!p) };
+};
+
+/** LT-605: the card the visitor just tapped (the wall's move needs the page at once); the rest follows. */
+const fromCard = (slug: string): Loaded | null => {
+  const card = cardOf(slug);
+  return card ? { product: { ...card, details: [] }, related: [], partial: true } : null;
 };
 
 /** The server's choice of more products, made from the drafts: the same category first, four at most. */
@@ -161,7 +174,7 @@ const ProductPage: React.FC<Props> = ({ slug, businessName, logo, phone, currenc
   const { go } = useSiteNav();
   const { hash } = useLocation();
   const { setInquiry } = useProductInquiry();
-  const [loaded, setLoaded] = useState<Loaded | null | 'missing'>(() => fromInline(slug) ?? (drafts ? fromDrafts(slug, drafts) ?? 'missing' : null));
+  const [loaded, setLoaded] = useState<Loaded | null | 'missing'>(() => fromInline(slug) ?? (drafts ? fromDrafts(slug, drafts) ?? 'missing' : fromCard(slug)));
   const [copied, setCopied] = useState(false);
   // LT-588: the colour and size the visitor picks here (or brought from the card).
   const [choice, setChoice] = useState<ProductChoice>({});
@@ -177,20 +190,22 @@ const ProductPage: React.FC<Props> = ({ slug, businessName, logo, phone, currenc
     const inline = fromInline(slug);
     if (inline) { setLoaded(inline); return; }
     if (drafts) { setLoaded(fromDrafts(slug, drafts) ?? 'missing'); return; }
-    setLoaded(null);
+    const card = fromCard(slug);
+    setLoaded(card);
     let stale = false;
     WebConfigService.getInstance().getProduct(window.location.hostname.split('.')[0], slug)
-      .then((result) => { if (!stale) setLoaded(result ?? 'missing'); })
-      .catch(() => { if (!stale) setLoaded('missing'); });
+      .then((result) => { if (!stale) setLoaded(result ?? (card ?? 'missing')); })
+      .catch(() => { if (!stale) setLoaded(card ?? 'missing'); });
     return () => { stale = true; };
   }, [slug, drafts]);
 
   const product = loaded && loaded !== 'missing' ? loaded.product : null;
+  const partial = !!(loaded && loaded !== 'missing' && loaded.partial);
 
   // LT-569: a view for the owner's most viewed - a real product of the live site, never a draft or a preview.
   useEffect(() => {
-    if (product && !drafts && countsHere()) noteProductView(window.location.hostname.split('.')[0], product.id);
-  }, [product, drafts]);
+    if (product && !partial && !drafts && countsHere()) noteProductView(window.location.hostname.split('.')[0], product.id);
+  }, [product, partial, drafts]);
 
   useEffect(() => {
     if (!product) return;
@@ -308,7 +323,7 @@ const ProductPage: React.FC<Props> = ({ slug, businessName, logo, phone, currenc
   return (<>
     <article className="bg-light-bg dark:bg-dark-bg pb-16" style={{ paddingTop: 'calc(var(--nav-offset, 0px) + 1.5rem)' }}>
       <div className="container mx-auto max-w-6xl px-4">
-        {shape === 'detail' ? (
+        {shape === 'stand' ? null : shape === 'detail' ? (
           <div className="flex items-start justify-between gap-3">
             {crumbs}
             <button type="button" onClick={share} aria-label={copied ? t('products.copied') : t('products.share')} className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-light-text hover:bg-light-text/10 dark:text-dark-text dark:hover:bg-dark-text/10 transition-colors">
@@ -317,7 +332,12 @@ const ProductPage: React.FC<Props> = ({ slug, businessName, logo, phone, currenc
           </div>
         ) : crumbs}
 
-        {shape === 'detail' ? (
+        {shape === 'stand' || shape === 'stage' ? (
+          (() => {
+            const look = { product, currency, phone, cta, choice, onChoice: setChoice, businessName, logo, listTitle, share, copied, actionsRef };
+            return shape === 'stand' ? <ProductStand {...look} /> : <ProductStage {...look} />;
+          })()
+        ) : shape === 'detail' ? (
           <div className="grid grid-cols-1 gap-8 md:gap-12 lg:grid-cols-2">
             <DetailPictures product={product} />
             <div className="flex flex-col text-light-text dark:text-dark-text">

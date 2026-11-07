@@ -1,0 +1,30 @@
+/* LT-605: the ledge a product stands on (Standing.tsx), on the wall and on its page. */
+
+.lt-stand-contact {
+  position: absolute;
+  bottom: -4px;
+  left: 14%;
+  right: 14%;
+  height: 12px;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, rgb(0 0 0 / 0.3), transparent);
+}
+
+.lt-stand-frame {
+  background: #fff;
+  padding: 6%;
+  border-radius: 2px;
+  box-shadow: 0 0 0 1px rgb(0 0 0 / 0.05), 0 16px 24px -14px rgb(0 0 0 / 0.5);
+}
+.dark .lt-stand-frame {
+  background: rgb(var(--color-dark-surface));
+  box-shadow: 0 0 0 1px rgb(255 255 255 / 0.08), 0 16px 24px -14px rgb(0 0 0 / 0.8);
+}
+
+.lt-shelf > span { position: absolute; left: 0; right: 0; }
+.lt-shelf-top { top: 0; height: 8px; background: linear-gradient(to bottom, #e3e3e8, #fbfbfd); }
+.lt-shelf-edge { top: 8px; height: 8px; background: linear-gradient(to bottom, #fff, #e9e9ee); box-shadow: 0 1px 0 rgb(0 0 0 / 0.05); }
+.lt-shelf-shadow { top: 16px; height: 34px; left: 2% !important; right: 2% !important; background: radial-gradient(50% 100% at 50% 0%, rgb(0 0 0 / 0.14), transparent); }
+.dark .lt-shelf-top { background: linear-gradient(to bottom, #2b2b30, #3b3b42); }
+.dark .lt-shelf-edge { background: linear-gradient(to bottom, #4a4a52, #2e2e34); box-shadow: 0 1px 0 rgb(0 0 0 / 0.4); }
+.dark .lt-shelf-shadow { background: radial-gradient(50% 100% at 50% 0%, rgb(0 0 0 / 0.55), transparent); }

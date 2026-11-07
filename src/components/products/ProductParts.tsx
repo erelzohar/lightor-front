@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { MessageCircle, ShoppingBag } from 'lucide-react';
 import { useLanguage } from '../../contexts/LanguageContext';
-import { productPath, productPrice, type ProductCard, type ProductImage } from '../../models/Product';
+import { productPath, productPrice, type Product, type ProductCard, type ProductImage } from '../../models/Product';
 import { choiceText, productAction, useProductInquiry, type ProductChoice } from '../../services/productAction';
 import { followLink, useSiteNav } from '../../services/siteNav';
 import { scrollToSection, sectionOf } from '../../utils/sections';
@@ -215,3 +215,22 @@ export const ProductOptions: React.FC<{ product: Pick<ProductCard, 'colors' | 's
   );
 };
 
+/**
+ * LT-605: what a product page's look draws from (the looks in their own files,
+ * 'stand' and 'stage'); the page itself loads the product and keeps the pick.
+ */
+export interface ProductLookProps {
+  product: Product;
+  currency?: string;
+  phone?: string;
+  cta?: string;
+  choice: ProductChoice;
+  onChoice: (choice: ProductChoice) => void;
+  businessName: string;
+  logo?: string;
+  listTitle?: string;
+  share: () => void;
+  copied: boolean;
+  /** The main button's row: the page watches it (the phone's handy button). */
+  actionsRef: React.RefObject<HTMLDivElement>;
+}

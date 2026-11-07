@@ -32,6 +32,10 @@ const ExpandHero = part('heroExpand', (m) => m.default);
 const AeroHero = part('heroAero', (m) => m.default);
 const SlantHero = part('heroSlant', (m) => m.default);
 const CollageHero = part('heroCollage', (m) => m.default);
+// LT-605: festive's live field of colours.
+const MeshHero = part('heroMesh', (m) => m.default);
+// LT-605: festive's raised button with the splash.
+const SplashButton = part('splashButton', (m) => m.default);
 const SonarField = part('heroSonar', (m) => m.default);
 
 // Its own chunk: a per-pixel shader that only one style shows.
@@ -43,7 +47,7 @@ function hexToInt(hex: string): number {
 
 const SOFT_VANTA = new Set(['clouds', 'clouds2', 'fog']);
 // LT-531: the heroes that run edge to edge and draw their own backdrop.
-const FULL_HEROES = new Set(['parallax', 'expand', 'aero', 'slant']);
+const FULL_HEROES = new Set(['parallax', 'expand', 'aero', 'slant', 'mesh']);
 
 function buildVantaOptions(type: string, isDark: boolean, palette: Palette | undefined): Record<string, any> {
   const primary = palette?.colorPrimary ?? '#2563eb';
@@ -380,6 +384,20 @@ const Hero: React.FC<HeroProps> = ({ config, social, phone, isContactVisible, ap
     if (!cta) return null;
     const w = fullWidth ? 'w-full' : '';
 
+    if (buttonStyle === 'splash') {
+      return (
+        <SplashButton
+          href={cta.href}
+          label={cta.label}
+          icon={<CtaIcon className="h-5 w-5" aria-hidden="true" />}
+          className={`${btnRadius} ${w}`}
+          labelAttrs={ed('components.hero.cta')}
+          still={still || editing}
+          joined={language === 'ar'}
+        />
+      );
+    }
+
     if (buttonStyle === 'solid' || (onPhoto && (buttonStyle === 'outline' || buttonStyle === 'ghost'))) {
       return (
         <motion.a
@@ -476,7 +494,8 @@ const Hero: React.FC<HeroProps> = ({ config, social, phone, isContactVisible, ap
     return (
       <motion.a
         href="#contact"
-        className={`inline-flex text-center items-center justify-center px-8 py-4 bg-light-surface dark:bg-dark-surface border-2 border-primary-readable dark:border-primary-dark-readable text-primary-readable dark:text-primary-dark-readable ${btnRadius} ${w} hover:bg-primary/5 dark:hover:bg-primary-dark/5 transition-colors shadow-lg hover:shadow-xl`}
+        // relative z-[1]: above the splash button's lines when they burst out beside it (LT-605).
+        className={`relative z-[1] inline-flex text-center items-center justify-center px-8 py-4 bg-light-surface dark:bg-dark-surface border-2 border-primary-readable dark:border-primary-dark-readable text-primary-readable dark:text-primary-dark-readable ${btnRadius} ${w} hover:bg-primary/5 dark:hover:bg-primary-dark/5 transition-colors shadow-lg hover:shadow-xl`}
         whileHover={{ scale: 1.05 }}
         whileTap={{ scale: 0.95 }}
         aria-label={t('hero.contact')}
@@ -550,6 +569,9 @@ const Hero: React.FC<HeroProps> = ({ config, social, phone, isContactVisible, ap
     }
     if (heroLayout === 'slant') {
       return <SlantHero config={config} alt={businessName || ''} businessName={businessName} logo={logo} actions={buttons} phone={phone} email={email} address={address} rtl={rtl} noTrack={noTrack} />;
+    }
+    if (heroLayout === 'mesh') {
+      return <MeshHero config={config} businessName={businessName} logo={logo} palette={palette} dark={isDarkMode} still={still || editing} actions={buttons} social={renderSocialRow('')} noTrack={noTrack} />;
     }
     if (heroLayout === 'aero') {
       return <AeroHero config={config} alt={businessName || ''} cta={cta} contact={renderContactButton(false)} social={renderSocialRow('')} thumbs={thumbs} stat={stats[0]} statPath={statsPath && `${statsPath}.0`} services={tickerItems} rtl={rtl} noTrack={noTrack} />;

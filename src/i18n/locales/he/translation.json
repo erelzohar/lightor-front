@@ -82,7 +82,12 @@
     "priceFrom": "החל מ",
     "priceTo": "עד",
     "inStockOnly": "רק מה שבמלאי",
-    "noMatch": "אין מוצרים שמתאימים לסינון"
+    "noMatch": "אין מוצרים שמתאימים לסינון",
+    "detailsTitle": "פרטים",
+    "close": "סגירה",
+    "price": "מחיר",
+    "holdToZoom": "לחיצה ארוכה להגדלה",
+    "tapToView": "הקשה לכל התמונות"
   },
   "portfolio": {
     "title": "העבודות האחרונות שלנו",

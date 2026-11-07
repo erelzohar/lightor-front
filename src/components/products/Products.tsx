@@ -19,6 +19,8 @@ const ProductCoverflow = part('productCoverflow', (m) => m.default);
 const ProductOrbit = part('productOrbit', (m) => m.default);
 const ProductShelf = part('productShelves', (m) => m.ProductShelf);
 const ProductFeature = part('productFeature', (m) => m.default);
+// LT-605: gallery's wall of shelves.
+const ProductWall = part('productWall', (m) => m.default);
 
 interface Props {
   summary?: ProductsSummary;
@@ -34,7 +36,7 @@ interface Props {
 }
 
 /** The fewest a moving layout needs to read as what it is; under that, calm tiles. */
-const MIN_ITEMS: Partial<Record<ProductsLayout, number>> = { belt: 4, hanger: 3, coverflow: 3, orbit: 3, drops: 3 };
+const MIN_ITEMS: Partial<Record<ProductsLayout, number>> = { belt: 4, hanger: 3, coverflow: 3, orbit: 3, drops: 3, wall: 2 };
 
 export const tilesFor = (layout: ProductsLayout, count: number): ProductsLayout =>
   count < (MIN_ITEMS[layout] ?? 0) ? 'well' : layout;
@@ -89,6 +91,8 @@ const Products: React.FC<Props> = ({ summary, config, layout = 'well', card, cur
           <ProductCoverflow items={items} pages={pages} currency={currency} />
         ) : shown === 'orbit' ? (
           <ProductOrbit items={items} pages={pages} currency={currency} tone={tone} cta={config?.cta} />
+        ) : shown === 'wall' ? (
+          <ProductWall items={items} pages={pages} currency={currency} />
         ) : shown === 'drops' ? (
           <ProductShelf items={items} pages={pages} currency={currency} subtitle={t('products.count', { count: summary?.total ?? items.length })} testId="products-drops" />
         ) : (

@@ -1,0 +1,38 @@
+/* LT-605 'mesh' hero (MeshHero.tsx). Everything that moves here is a transform
+   or an opacity: it stays on the compositor, and it pauses with the field. */
+
+.lt-mesh-line {
+  background-image: linear-gradient(135deg, rgb(var(--color-light-text)) 0%, rgb(var(--color-primary-readable)) 50%, rgb(var(--color-light-text)) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.dark .lt-mesh-line {
+  background-image: linear-gradient(135deg, rgb(var(--color-dark-text)) 0%, rgb(var(--color-primary-dark-readable)) 50%, rgb(var(--color-dark-text)) 100%);
+}
+
+@keyframes lt-mesh-spin { to { transform: rotate(360deg); } }
+@keyframes lt-mesh-pulse { from { opacity: 0.3; transform: scale(0.96); } to { opacity: 0.6; transform: scale(1.04); } }
+
+.lt-mesh-spin { animation: lt-mesh-spin 24s linear infinite; }
+[dir="rtl"] .lt-mesh-spin { animation-direction: reverse; }
+
+.lt-mesh-ring {
+  background: conic-gradient(from 0deg, var(--mesh-a), var(--mesh-b), var(--mesh-c), var(--mesh-b), var(--mesh-a));
+  -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 3px), #000 calc(100% - 2.5px));
+  mask: radial-gradient(farthest-side, transparent calc(100% - 3px), #000 calc(100% - 2.5px));
+  animation: lt-mesh-spin 7s linear infinite reverse;
+}
+
+.lt-mesh-glow {
+  box-shadow: 0 0 16px 3px var(--mesh-a), 0 0 30px 6px var(--mesh-b);
+  animation: lt-mesh-pulse 2.6s ease-in-out infinite alternate;
+}
+
+.lt-mesh[data-asleep] .lt-mesh-spin,
+.lt-mesh[data-asleep] .lt-mesh-ring,
+.lt-mesh[data-asleep] .lt-mesh-glow { animation-play-state: paused; }
+
+@media (prefers-reduced-motion: reduce) {
+  .lt-mesh-spin, .lt-mesh-ring, .lt-mesh-glow { animation: none; }
+}

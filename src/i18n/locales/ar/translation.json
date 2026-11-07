@@ -82,7 +82,12 @@
     "priceFrom": "من",
     "priceTo": "حتى",
     "inStockOnly": "المتوفر فقط",
-    "noMatch": "لا توجد منتجات تطابق التصفية"
+    "noMatch": "لا توجد منتجات تطابق التصفية",
+    "detailsTitle": "التفاصيل",
+    "close": "إغلاق",
+    "price": "السعر",
+    "holdToZoom": "اضغط مطولاً للتكبير",
+    "tapToView": "انقر لعرض الصور"
   },
   "portfolio": {
     "title": "أحدث أعمالنا",

@@ -176,6 +176,29 @@ describe.each(['he', 'en', 'ar'])('no WCAG A/AA violation axe can see (%s)', (la
     expect(await violationsIn(container)).toEqual([]);
   });
 
+  it("LT-605's mesh hero with the splash button, the wall of shelves and the two product pages", async () => {
+    const product = (i: number) => ({
+      id: `draft-${i}`, slug: `draft-${i}`, name: `Product ${i}`, summary: 'Made by hand', price: 1000 + i * 500, category: i % 2 ? 'Rings' : 'Chains',
+      images: [{ url: `a${i}.webp` }, { url: `b${i}.webp` }, { url: `c${i}.webp` }, { url: `d${i}.webp` }], details: ['Silver'],
+      colors: [{ name: 'Red', hex: '#cc2233' }, { name: 'Black', hex: '#111111' }], sizes: ['S', 'M'], soldOut: i === 2,
+    });
+    const drafts = Array.from({ length: 6 }, (_, i) => product(i));
+    const home = fullConfig([{ type: 'hero', variant: 'mesh' }, { type: 'products', variant: 'wall' }]);
+    home.design.buttonStyle = 'splash';
+    home.products = { total: 6, pages: true, items: drafts };
+    const first = render(<ComposedPage config={home} jitter={getSiteJitter('axe')} isPreview />);
+    expect(['mesh + wall', ...(await violationsIn(first.container))]).toEqual(['mesh + wall']);
+    first.unmount();
+    const list = render(<MemoryRouter initialEntries={['/products']}><ProductsPage businessName="Shop" drafts={drafts} layout="wall" /></MemoryRouter>);
+    expect(['products wall', ...(await violationsIn(list.container))]).toEqual(['products wall']);
+    list.unmount();
+    for (const layout of ['stand', 'stage']) {
+      const { container, unmount } = render(<MemoryRouter initialEntries={['/products/draft-1']}><ProductPage slug="draft-1" businessName="Shop" drafts={drafts} layout={layout as never} /></MemoryRouter>);
+      expect([layout, ...(await violationsIn(container))]).toEqual([layout]);
+      unmount();
+    }
+  });
+
   it('every gallery layout', async () => {
     for (const variant of ['grid', 'masonry', 'filmstrip', 'polaroid', 'bento', 'scroller', 'spotlight', 'carousel', 'clothesline', 'curve', 'cascade']) {
       const { container, unmount } = render(<ComposedPage config={fullConfig([{ type: 'gallery', variant }])} jitter={getSiteJitter('axe')} isPreview />);
@@ -192,7 +215,7 @@ describe.each(['he', 'en', 'ar'])('no WCAG A/AA violation axe can see (%s)', (la
       ['bookingBand', ['poster', 'slant', 'quiet', 'card', 'ticket', 'split']],
       ['manifesto', ['display', 'ruled', 'outline', 'marker', 'soft']],
       ['contact', ['split', 'stacked', 'poster', 'editorial', 'statement', 'band', 'cards', 'bubbles']],
-      ['hero', ['centered', 'split', 'image-right', 'poster-split', 'poster-statement', 'parallax', 'expand', 'aero', 'collage', 'slant']],
+      ['hero', ['centered', 'split', 'image-right', 'poster-split', 'poster-statement', 'parallax', 'expand', 'aero', 'collage', 'slant', 'mesh']],
     ];
     for (const [type, variants] of layouts) {
       for (const variant of variants) {

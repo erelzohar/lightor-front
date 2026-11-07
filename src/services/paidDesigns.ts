@@ -10,12 +10,15 @@
  * older payloads) keeps every design: the wizard builds with all of them.
  */
 const PAID: Record<string, { paid: readonly string[]; instead: string }> = {
-  heroLayout: { paid: ['parallax', 'expand'], instead: 'fullbleed' },
+  // LT-605: the hero over a live field of the site's colours.
+  heroLayout: { paid: ['parallax', 'expand', 'mesh'], instead: 'fullbleed' },
   portfolioLayout: { paid: ['clothesline', 'cascade', 'curve'], instead: 'masonry' },
   productsLayout: { paid: ['belt', 'hanger', 'coverflow', 'orbit'], instead: 'well' },
   decor: { paid: ['sonar', 'metal'], instead: 'none' },
   // LT-591: the contact section whose bubbles float by themselves.
   contactLayout: { paid: ['bubbles'], instead: 'split' },
+  // LT-605: the product page whose product floats by itself.
+  productPageLayout: { paid: ['stage'], instead: 'side' },
 };
 
 /** The design token a block's own variant stands in for (ComposedPage). */

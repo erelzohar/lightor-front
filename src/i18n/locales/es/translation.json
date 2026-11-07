@@ -82,7 +82,12 @@
     "priceFrom": "Desde",
     "priceTo": "Hasta",
     "inStockOnly": "Solo disponibles",
-    "noMatch": "Nada coincide con estos filtros"
+    "noMatch": "Nada coincide con estos filtros",
+    "detailsTitle": "Detalles",
+    "close": "Cerrar",
+    "price": "Precio",
+    "holdToZoom": "Mantén pulsado para ampliar",
+    "tapToView": "Toca para ver las fotos"
   },
   "portfolio": {
     "title": "Nuestros Últimos Trabajos",

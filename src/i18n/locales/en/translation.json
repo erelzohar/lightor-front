@@ -82,7 +82,12 @@
     "priceFrom": "From",
     "priceTo": "Up to",
     "inStockOnly": "In stock only",
-    "noMatch": "Nothing matches these filters"
+    "noMatch": "Nothing matches these filters",
+    "detailsTitle": "Details",
+    "close": "Close",
+    "price": "Price",
+    "holdToZoom": "Hold to zoom",
+    "tapToView": "Tap to see the pictures"
   },
   "portfolio": {
     "title": "Our Latest",

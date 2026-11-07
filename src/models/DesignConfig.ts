@@ -1,6 +1,8 @@
 export type BorderRadius = 'none' | 'sm' | 'md' | 'lg' | 'xl' | 'full';
 export type CardStyle = 'flat' | 'elevated' | 'glass' | 'bordered';
-export type ButtonStyle = 'solid' | 'gradient' | 'outline' | 'ghost';
+// LT-605: 'splash' (festive's own, Erel's 3D button): a raised button whose letters roll
+// over and whose lines splash out when it is pointed at.
+export type ButtonStyle = 'solid' | 'gradient' | 'outline' | 'ghost' | 'splash';
 export type FontFamily =
   | 'inter' | 'raleway' | 'playfair' | 'montserrat' | 'poppins'
   // LT-093 vibe families. Each has a Hebrew-capable RTL counterpart in
@@ -21,7 +23,8 @@ export type NavbarStyle = 'floating' | 'solid' | 'transparent' | 'minimal' | 'ce
 // 'expand' (atelier, the photo opens to the whole screen as the page scrolls),
 // 'aero' (crisp, half photo, half tight type), 'collage' (serene, three framed pictures).
 // LT-591: 'slant' (electric's own): the words beside a photo that opens on a slant.
-export type HeroLayout = 'image-right' | 'centered' | 'split' | 'text-first' | 'poster-split' | 'poster-statement' | 'fullbleed' | 'parallax' | 'expand' | 'aero' | 'collage' | 'slant';
+// LT-605: 'mesh' (festive's own, paid): the words over a live field of the site's colours.
+export type HeroLayout = 'image-right' | 'centered' | 'split' | 'text-first' | 'poster-split' | 'poster-statement' | 'fullbleed' | 'parallax' | 'expand' | 'aero' | 'collage' | 'slant' | 'mesh';
 export type SectionDivider = 'none' | 'wave' | 'diagonal' | 'curve' | 'scallop' | 'zigzag';
 export type Density = 'compact' | 'comfortable' | 'spacious';
 // 'poster' (LT-108): the vibe-canvas hero manner — enormous condensed
@@ -56,7 +59,8 @@ export type PortfolioLayout = 'grid' | 'masonry' | 'filmstrip' | 'polaroid' | 'f
 // and three that move: 'belt' a conveyor, 'hanger' a clothes rail, 'coverflow'.
 // LT-583: 'orbit' (serene's own), a round plate that swings round a wide orbit.
 // LT-588: 'drops' (industrial's own), a card of products side by side, moved with arrows.
-export type ProductsLayout = 'well' | 'swap' | 'bento' | 'list' | 'belt' | 'hanger' | 'coverflow' | 'orbit' | 'drops';
+// LT-605: 'wall' (gallery's own, Erel's product shelf): the products standing on floating shelves.
+export type ProductsLayout = 'well' | 'swap' | 'bento' | 'list' | 'belt' | 'hanger' | 'coverflow' | 'orbit' | 'drops' | 'wall';
 // LT-545: a product's card where products are tiles: 'plain' the picture with
 // the words under it, 'framed' all of it in the site's card, 'overlay' the words
 // on the picture, 'button' an inquiry button under it. The products page has a
@@ -67,8 +71,11 @@ export type ProductsLayout = 'well' | 'swap' | 'bento' | 'list' | 'belt' | 'hang
 // the products page by category in 'rows' (a sideways row each), 'shelves' (a card each) or 'shop'
 // (filters beside the grid); a product's 'detail' page (a shop's).
 export type ProductCardStyle = 'plain' | 'framed' | 'overlay' | 'button' | 'reveal' | 'options';
-export type ProductsPageLayout = 'well' | 'swap' | 'bento' | 'list' | 'rows' | 'shelves' | 'shop';
-export type ProductPageLayout = 'side' | 'hero' | 'gallery' | 'detail';
+// LT-605: the products page as a 'wall' of shelves; a product's page 'stand' (gallery's own: the
+// product standing on a white ledge beside its words) and 'stage' (electric's own, paid: the product
+// floating between its words and its options, its colour washing the stage).
+export type ProductsPageLayout = 'well' | 'swap' | 'bento' | 'list' | 'rows' | 'shelves' | 'shop' | 'wall';
+export type ProductPageLayout = 'side' | 'hero' | 'gallery' | 'detail' | 'stand' | 'stage';
 // LT-591: 'bubbles' (festive's own, paid): the form in a card over a picture with floating bubbles.
 export type ContactLayout = 'split' | 'stacked' | 'poster' | 'editorial' | 'statement' | 'band' | 'cards' | 'bubbles';
 // LT-124: 'line' (one light ruled row) and 'ticker' (repeating strip) from the canvas.

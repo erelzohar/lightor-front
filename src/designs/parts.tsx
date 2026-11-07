@@ -26,6 +26,10 @@ export const PARTS = {
   productOrbit: () => import('../components/products/ProductOrbit'),
   productShelves: () => import('../components/products/ProductShelves'),
   productFeature: () => import('../components/products/ProductFeature'),
+  // LT-605: the wall of shelves, and the product pages it and electric lead to.
+  productWall: () => import('../components/products/ProductWall'),
+  productStand: () => import('../components/products/ProductStand'),
+  productStage: () => import('../components/products/ProductStage'),
   productsPage: () => import('../components/products/ProductsPage'),
   productPage: () => import('../components/products/ProductPage'),
   // The gallery and its moving layouts (LT-525).
@@ -39,7 +43,10 @@ export const PARTS = {
   heroAero: () => import('../components/Layout/heroes/AeroHero'),
   heroSlant: () => import('../components/Layout/heroes/SlantHero'),
   heroCollage: () => import('../components/Layout/heroes/CollageHero'),
+  heroMesh: () => import('../components/Layout/heroes/MeshHero'),
   heroSonar: () => import('../components/Layout/heroes/SonarField'),
+  // LT-605: festive's raised button with the splash (the hero's main button).
+  splashButton: () => import('../components/ui/SplashButton'),
   // Sections only some sites have.
   schedule: () => import('../components/Layout/Schedule/Schedule'),
   ledger: () => import('../components/Layout/ServicesLedger'),
@@ -185,10 +192,11 @@ export function optionalPart<K extends PartKey, P extends object>(
 
 // The values a design names, and the part that draws each (the rest are drawn
 // by their section's own file).
-const HERO_PARTS: Record<string, PartKey> = { parallax: 'heroParallax', expand: 'heroExpand', aero: 'heroAero', slant: 'heroSlant', collage: 'heroCollage' };
+const HERO_PARTS: Record<string, PartKey> = { parallax: 'heroParallax', expand: 'heroExpand', aero: 'heroAero', slant: 'heroSlant', collage: 'heroCollage', mesh: 'heroMesh' };
 const GALLERY_PARTS: Record<string, PartKey> = { clothesline: 'galleryClothesline', curve: 'galleryCurve', cascade: 'galleryCascade' };
-const PRODUCT_PARTS: Record<string, PartKey> = { belt: 'productBelt', hanger: 'productRail', coverflow: 'productCoverflow', orbit: 'productOrbit', drops: 'productShelves' };
-const PAGE_PARTS: Record<string, PartKey> = { rows: 'productShelves', shelves: 'productShelves' };
+const PRODUCT_PARTS: Record<string, PartKey> = { belt: 'productBelt', hanger: 'productRail', coverflow: 'productCoverflow', orbit: 'productOrbit', drops: 'productShelves', wall: 'productWall' };
+const PAGE_PARTS: Record<string, PartKey> = { rows: 'productShelves', shelves: 'productShelves', wall: 'productWall' };
+const PRODUCT_PAGE_PARTS: Record<string, PartKey> = { stand: 'productStand', stage: 'productStage' };
 const BLOCK_PARTS: Record<string, PartKey> = {
   ticker: 'ticker', announcement: 'announcement', manifesto: 'manifesto', stats: 'stats', pullQuote: 'pullQuote',
   process: 'process', priceCards: 'priceCards', hours: 'hours', photoPair: 'photoPair', beforeAfter: 'beforeAfter',
@@ -231,6 +239,7 @@ export const partsFor = (config: WebsiteConfig | null | undefined, pathname = '/
   // Heroes, and the sonar field one can carry.
   for (const v of variantsOf('hero', design.heroLayout)) if (HERO_PARTS[v]) now.add(HERO_PARTS[v]);
   if (design.decor === 'sonar') now.add('heroSonar');
+  if (design.buttonStyle === 'splash') now.add('splashButton');
 
   // The gallery (a products site has none unless it holds pictures).
   const pictures = (config.components?.portfolio?.items?.length ?? 0) > 0;
@@ -252,8 +261,12 @@ export const partsFor = (config: WebsiteConfig | null | undefined, pathname = '/
     const page = sitePageOf(path).kind;
     // The shop (LT-588) comes with the products' page itself.
     const pages: PartKey[] = ['productsPage', 'productPage', 'products'];
-    const pageLayout = design.productsPageLayout;
+    // Absent, the products page follows the home section's look (LT-545), as App draws it.
+    const homeLook = blocks?.find((b) => b.type === 'products')?.variant;
+    const pageLayout = design.productsPageLayout ?? (homeLook ? String(homeLook) : undefined) ?? design.productsLayout;
     if (pageLayout && PAGE_PARTS[pageLayout]) pages.push(PAGE_PARTS[pageLayout]);
+    const productPage = design.productPageLayout;
+    if (productPage && PRODUCT_PAGE_PARTS[productPage]) pages.push(PRODUCT_PAGE_PARTS[productPage]);
     for (const k of pages) (page === 'products' || page === 'product' ? now : soon).add(k);
   }
 

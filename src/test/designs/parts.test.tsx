@@ -99,7 +99,7 @@ describe('the design parts (LT-603)', () => {
     expect(await drawsAtOnce(configOf(EVERY_BLOCK))).toBe(0);
   });
 
-  it.each(['belt', 'hanger', 'coverflow', 'drops', 'well', 'bento'])('products drawn as %s wait for nothing', async (variant) => {
+  it.each(['belt', 'hanger', 'coverflow', 'drops', 'well', 'bento', 'wall'])('products drawn as %s wait for nothing', async (variant) => {
     expect(await drawsAtOnce(configOf([{ type: 'products', variant }, { type: 'footer' }]))).toBe(0);
   });
 
@@ -107,8 +107,28 @@ describe('the design parts (LT-603)', () => {
     expect(await drawsAtOnce(configOf([{ type: 'gallery', variant }]))).toBe(0);
   });
 
-  it.each(['parallax', 'expand', 'aero', 'slant', 'split'])('a hero drawn as %s waits for nothing', async (variant) => {
+  it.each(['parallax', 'expand', 'aero', 'slant', 'mesh', 'split'])('a hero drawn as %s waits for nothing', async (variant) => {
     expect(await drawsAtOnce(configOf([{ type: 'hero', variant }]))).toBe(0);
+  });
+
+  it("LT-605: the hero's splash button waits for nothing, and comes only with its style", async () => {
+    const config = configOf([{ type: 'hero', variant: 'split' }]);
+    config.design.buttonStyle = 'splash';
+    expect(partsFor(config, '/').now).toContain('splashButton');
+    expect(await drawsAtOnce(config)).toBe(0);
+    expect(partsFor(configOf([{ type: 'hero', variant: 'split' }]), '/').now).not.toContain('splashButton');
+  });
+
+  it("LT-605: the wall's products page and the two product pages come with the products' pages", () => {
+    const wall = configOf([{ type: 'products', variant: 'wall' }]);
+    expect(partsFor(wall, '/').now).toContain('productWall');
+    expect(partsFor(wall, '/products').now).toContain('productWall');
+    for (const [look, key] of [['stand', 'productStand'], ['stage', 'productStage']] as const) {
+      const config = configOf([{ type: 'products' }]);
+      config.design.productPageLayout = look;
+      expect(partsFor(config, '/').soon).toContain(key);
+      expect(partsFor(config, '/products/p1').now).toContain(key);
+    }
   });
 
   it('a single product, drawn in full, waits for nothing', async () => {
