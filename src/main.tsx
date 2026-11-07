@@ -8,6 +8,7 @@ import './i18n/config';
 import RootErrorBoundary from './components/RootErrorBoundary';
 import { installGlobalErrorHandlers } from './services/ErrorReportingService';
 import { applyA11yPrefs } from './services/a11yPrefs';
+import { startPartsForThisPage } from './designs/startParts';
 
 // Uncaught exceptions and unhandled rejections outside React's render path
 // (event handlers, timers, fetches nobody awaited) — see ErrorReportingService.
@@ -15,6 +16,9 @@ installGlobalErrorHandlers();
 
 // LT-346: the visitor's accessibility-menu choices, before the first paint.
 applyA11yPrefs();
+
+// LT-603: the designs this page draws, downloading while React starts.
+startPartsForThisPage();
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

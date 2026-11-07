@@ -37,9 +37,14 @@ ssh -i "$KEY" "$HOST" bash -s <<EOF
     echo "✗ staging incomplete on the server — live site left untouched"
     exit 1
   fi
-  sudo mkdir -p "$TARGET"
-  sudo rm -rf "$TARGET"/*
-  sudo cp -r "$STAGING"/* "$TARGET"/
+  sudo mkdir -p "$TARGET/assets"
+  # LT-603: a page opened before this deploy still asks for its old file
+  # names (each design and language is a file of its own, loaded as needed):
+  # the new build's assets join the old ones, and files over 14 days old go.
+  sudo cp -r "$STAGING"/assets/. "$TARGET"/assets/
+  sudo find "$TARGET" -mindepth 1 -maxdepth 1 ! -name assets -exec rm -rf {} +
+  ( cd "$STAGING" && find . -mindepth 1 -maxdepth 1 ! -name assets -exec sudo cp -r {} "$TARGET"/ \; )
+  sudo find "$TARGET/assets" -type f -mtime +14 -delete
   sudo chown -R www-data:www-data "$TARGET"
   rm -rf "$STAGING"
 EOF

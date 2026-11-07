@@ -7,7 +7,10 @@ import EditText from '../EditText';
 import { TestimonialsConfig } from '../../models/TestimonialsConfig';
 import type { TestimonialsLayout, SectionHeader, RevealStyle } from '../../models/DesignConfig';
 import SectionHeading from './SectionHeading';
-import EditorialQuotes from './EditorialQuotes';
+import { part } from '../../designs/parts';
+
+// LT-603: the editorial spread comes in its own part.
+const EditorialQuotes = part('editorialQuotes', (m) => m.default);
 import type { HeadingScale } from '../../services/artDirection';
 import type { SectionTone } from '../SectionDivider';
 import { useStill } from '../../hooks/useA11yPrefs';

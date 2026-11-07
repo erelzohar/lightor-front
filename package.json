@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "vite build && node scripts/check-main-script.mjs",
     "lint": "eslint .",
     "lint:hooks": "eslint --config eslint.hooks.config.js src",
     "preview": "vite preview",

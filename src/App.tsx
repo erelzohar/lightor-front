@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useMemo, useCallback, Fragment, cloneElement, isValidElement, type ReactNode, type ReactElement } from 'react';
+import { useState, useEffect, useRef, useMemo, useCallback, Fragment, Suspense, cloneElement, isValidElement, type ReactNode, type ReactElement } from 'react';
 import { Routes, Route, useLocation, useNavigate, useNavigationType } from 'react-router-dom';
 import { MotionConfig } from 'framer-motion';
 
@@ -6,8 +6,6 @@ import { MotionConfig } from 'framer-motion';
 import Navbar from './components/Layout/Navbar';
 import Hero from './components/Layout/Hero';
 import About from './components/Layout/About';
-import Portfolio from './components/Portfolio';
-import Schedule from './components/Layout/Schedule/Schedule';
 import Testimonials from './components/Layout/Testimonials';
 import Faq from './components/Layout/Faq';
 import Contact from './components/Layout/Contact';
@@ -20,20 +18,14 @@ import ErrorBoundary from './components/ErrorBoundary';
 import NotFound from './components/NotFound';
 import SiteNotActive from './components/SiteNotActive';
 import { classifyConfigFailure } from './services/configFailure';
-import ManageAppointment from './components/ManageAppointment';
 import ShortManageLink from './components/ShortManageLink';
 import Loading from './components/Loading';
 import SectionDivider, { type SectionTone } from './components/SectionDivider';
-import ServicesLedger from './components/Layout/ServicesLedger';
-import BookingBand from './components/Layout/BookingBand';
 import { takesBookings } from './services/siteMode';
 import { sitePageOf } from './services/sitePages';
 import { SiteNavContext } from './services/siteNav';
 import { ProductInquiryContext, type ProductInquiry } from './services/productAction';
 import { draftProducts, productsHavePage } from './models/Product';
-import Products from './components/products/Products';
-import ProductPage from './components/products/ProductPage';
-import ProductsPage from './components/products/ProductsPage';
 import { pickBandSlot } from './services/bandSlot';
 
 // Contexts & Hooks
@@ -45,7 +37,6 @@ import WebConfigService from './services/WebConfigService';
 import { readInlineConfig, sameConfig, languageAfterRefresh } from './services/edgeShell';
 import { getSiteJitter, createRng } from './services/seed';
 import { scaleOf, spacingOf, SPACING_CLASS, pickInvert, pickInterludeSlot } from './services/artDirection';
-import Interlude from './components/Layout/Interlude';
 import GenerateReveal from './components/GenerateReveal';
 import ComposedPage from './components/blocks/ComposedPage';
 import ImagesService from './services/ImagesService';
@@ -64,6 +55,26 @@ import AccessibilityStatement from './components/a11y/AccessibilityStatement';
 import { setA11yMenuEnabled } from './services/a11yPrefs';
 import { withoutPaidDesigns } from './services/paidDesigns';
 import { useStill } from './hooks/useA11yPrefs';
+import { part, partLoaded, partsFor, preloadParts } from './designs/parts';
+
+// LT-603: the sections and pages only some sites draw come in their own
+// files, loaded by what the config names (designs/parts.tsx).
+const Portfolio = part('gallery', (m) => m.default);
+const Schedule = part('schedule', (m) => m.default);
+const ManageAppointment = part('manage', (m) => m.default);
+const ServicesLedger = part('ledger', (m) => m.default);
+const BookingBand = part('bookingBand', (m) => m.default);
+const Products = part('products', (m) => m.default);
+const ProductPage = part('productPage', (m) => m.default);
+const ProductsPage = part('productsPage', (m) => m.default);
+const Interlude = part('interlude', (m) => m.default);
+
+/** The parts a config draws here, then the config (LT-603): nothing pops in late. */
+const withParts = (config: WebsiteConfig, apply: () => void): void => {
+  const need = partsFor(config, window.location.pathname).now;
+  if (need.every(partLoaded)) apply();
+  else void preloadParts(need).then(apply);
+};
 
 // Origins permitted to drive this app through a PREVIEW_DATA postMessage.
 // Only the register and dashboard apps embed the public site in an iframe for
@@ -152,6 +163,8 @@ function MainContent() {
   // each one replays the section-by-section cascade (0 = never, no cascade).
   const [generateSeq, setGenerateSeq] = useState(0);
   const isPreviewRef = useRef(false);
+  // LT-603: the newest preview config; an older one whose parts arrive later is dropped.
+  const previewSeqRef = useRef(0);
   const { language, setLanguage, setContentLanguage, t } = useLanguage();
   // LT-346: framer-motion holds still too when motion is reduced.
   const still = useStill();
@@ -245,18 +258,26 @@ function MainContent() {
           } catch { /* keep whatever design the payload carried */ }
           cfg = raw;
         }
-        setConfig(cfg);
-        setIsPreview(true);
-        setAssistantDemo(event.data.assistantDemo === true);
-        setLoading(false);
-        setLanguageRef.current(cfg.defaultLanguage as Language);
-        if (event.data.generate) {
-          // LT-554: a new build starts at its home page, whichever product of the last was open.
-          if (pathRef.current !== '/') navigateRef.current('/');
-          // Start the show from the top — the previous preview may be scrolled.
-          window.scrollTo({ top: 0, behavior: 'instant' as ScrollBehavior });
-          setGenerateSeq((n) => n + 1);
-        }
+        // LT-603: the page on screen stays until the parts this config draws
+        // have arrived (a design just picked in the editor or the wizard).
+        const seq = ++previewSeqRef.current;
+        const demo = event.data.assistantDemo === true;
+        const generate = !!event.data.generate;
+        withParts(cfg, () => {
+          if (seq !== previewSeqRef.current) return;
+          setConfig(cfg);
+          setIsPreview(true);
+          setAssistantDemo(demo);
+          setLoading(false);
+          setLanguageRef.current(cfg.defaultLanguage as Language);
+          if (generate) {
+            // LT-554: a new build starts at its home page, whichever product of the last was open.
+            if (pathRef.current !== '/') navigateRef.current('/');
+            // Start the show from the top — the previous preview may be scrolled.
+            window.scrollTo({ top: 0, behavior: 'instant' as ScrollBehavior });
+            setGenerateSeq((n) => n + 1);
+          }
+        });
       }
     };
     window.addEventListener('message', handleMessage);
@@ -318,13 +339,16 @@ function MainContent() {
           }
           if (shellConfig) {
             const shellLanguage = shellConfig.defaultLanguage;
+            // LT-603: main.tsx started these before React; usually here already.
+            await preloadParts(partsFor(shellConfig, window.location.pathname).now);
+            if (isPreviewRef.current) return;
             setConfig(shellConfig);
             setLanguage(shellLanguage as Language);
             void WebConfigService.getInstance()
               .getWebConfig(subdomain)
               .then((fresh) => {
                 if (isPreviewRef.current) return;
-                if (!sameConfig(fresh, shellConfig)) setConfig(fresh);
+                if (!sameConfig(fresh, shellConfig)) withParts(fresh, () => { if (!isPreviewRef.current) setConfig(fresh); });
                 // The swap carries the owner's default language too (LT-209):
                 // it used to be set from the shell's copy only, so a changed
                 // default waited for the edge cache to expire.
@@ -344,6 +368,8 @@ function MainContent() {
         if (isPreviewRef.current) return;
 
         if (result) {
+          await preloadParts(partsFor(result, window.location.pathname).now);
+          if (isPreviewRef.current) return;
           setConfig(result);
           setLanguage(result.defaultLanguage as Language);
           document.title = result.businessName;
@@ -406,6 +432,15 @@ function MainContent() {
   }, []);
 
   useTheme(config, isPreview);
+  // LT-603: once the page shows, the parts a visitor is likely to reach next
+  // (the products' pages, the contact window) load in the quiet after.
+  useEffect(() => {
+    if (!config) return;
+    const { soon } = partsFor(config, location.pathname);
+    if (!soon.length) return;
+    const timer = window.setTimeout(() => { void preloadParts(soon); }, 1500);
+    return () => window.clearTimeout(timer);
+  }, [config, location.pathname]);
   // LT-569: a leads site's visits - one per visitor's half hour, never from a preview or the editor.
   const visitSite = config && !isPreview && !editing && config.conversion === 'lead' ? config.subDomain : null;
   useEffect(() => {
@@ -642,6 +677,7 @@ function MainContent() {
           and the standalone footer; the legacy flow below is untouched. */}
       {!atHome ? (<>
         <main id="main-content" tabIndex={-1} className="outline-none">
+          <Suspense fallback={null}>
           {page.kind === 'product' ? (
             <ProductPage
               slug={page.slug}
@@ -682,6 +718,7 @@ function MainContent() {
               drafts={isPreview ? draftProducts(config.products) : undefined}
             />
           )}
+          </Suspense>
         </main>
         {/* The page's own footer block, in its own look: these pages have no blocks. */}
         {config.components?.footer && footerShown && (
@@ -842,9 +879,11 @@ function MainContent() {
                 const inner = (
                   <GenerateReveal seq={generateSeq} index={i}>
                     <ErrorBoundary>
+                      <Suspense fallback={null}>
                       {isValidElement(s.node) && typeof (s.node as ReactElement).type !== 'string'
                         ? cloneElement(s.node as ReactElement, { header: config.design?.sectionHeader, tone: s.tone, reveal: config.design?.revealStyle, headerScale: isVibeSite ? scaleOf(s.key, jitter) : undefined } as Record<string, unknown>)
                         : s.node}
+                      </Suspense>
                     </ErrorBoundary>
                   </GenerateReveal>
                 );
@@ -961,7 +1000,7 @@ function App() {
 
   return (
     <Routes>
-      <Route path="/manage/:appointment-id" element={<ManageAppointment />} />
+      <Route path="/manage/:appointment-id" element={<Suspense fallback={<Loading isLoading={true} />}><ManageAppointment /></Suspense>} />
       {/* The short manage link (LT-336). */}
       <Route path="/m/:code" element={<ShortManageLink />} />
       <Route path="*" element={<MainContent />} />

@@ -12,9 +12,12 @@ import { useEdit, useEditAttrs } from '../services/editMode';
 import EditText from './EditText';
 import { handleWideImageError } from '../utils/imageFallback';
 import { altOf } from '../models/PortfolioItem';
-import Clothesline from './gallery/Clothesline';
-import CurveReel from './gallery/CurveReel';
-import TiltCascade from './gallery/TiltCascade';
+import { part } from '../designs/parts';
+
+// LT-603: the moving galleries come in their own parts.
+const Clothesline = part('galleryClothesline', (m) => m.default);
+const CurveReel = part('galleryCurve', (m) => m.default);
+const TiltCascade = part('galleryCascade', (m) => m.default);
 
 interface PortfolioProps {
   config: PortfolioConfig;

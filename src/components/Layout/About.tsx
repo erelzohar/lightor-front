@@ -38,7 +38,10 @@ import { displayPhone, telHref, whatsAppHref } from '../../utils/phone';
 import { safeHttpUrl, openExternal } from '../../utils/safeUrl';
 import { googleMapsHref } from '../../utils/navigation';
 import WazeLink from '../WazeLink';
-import FeatureStack from './FeatureStack';
+import { part } from '../../designs/parts';
+
+// LT-603: the stack of pictures (LT-588) comes in its own part.
+const FeatureStack = part('featureStack', (m) => m.default);
 
 // Feature icons are stored in the config by name.
 const FEATURE_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {

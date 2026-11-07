@@ -10,12 +10,15 @@ import type { SectionTone } from '../SectionDivider';
 import { TONE_BG } from '../blocks/blockUtils';
 import SectionHeading from '../Layout/SectionHeading';
 import { BentoTiles, ListTiles, SwapTiles, WellTiles } from './ProductTiles';
-import ProductBelt from './ProductBelt';
-import ProductRail from './ProductRail';
-import ProductCoverflow from './ProductCoverflow';
-import ProductOrbit from './ProductOrbit';
-import { ProductShelf } from './ProductShelves';
-import ProductFeature from './ProductFeature';
+import { part } from '../../designs/parts';
+
+// LT-603: the moving layouts and the single product come in their own parts.
+const ProductBelt = part('productBelt', (m) => m.default);
+const ProductRail = part('productRail', (m) => m.default);
+const ProductCoverflow = part('productCoverflow', (m) => m.default);
+const ProductOrbit = part('productOrbit', (m) => m.default);
+const ProductShelf = part('productShelves', (m) => m.ProductShelf);
+const ProductFeature = part('productFeature', (m) => m.default);
 
 interface Props {
   summary?: ProductsSummary;

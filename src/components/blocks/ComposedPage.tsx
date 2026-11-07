@@ -1,4 +1,4 @@
-import { Fragment, cloneElement, isValidElement, type ReactElement, type ReactNode } from 'react';
+import { Fragment, Suspense, cloneElement, isValidElement, type ReactElement, type ReactNode } from 'react';
 import type { WebsiteConfig } from '../../models/WebsiteConfig';
 import { takesBookings } from '../../services/siteMode';
 import { productPictures, productsHavePage } from '../../models/Product';
@@ -13,29 +13,13 @@ import { useEdit } from '../../services/editMode';
 import SectionDivider, { type SectionTone } from '../SectionDivider';
 import Hero from '../Layout/Hero';
 import About from '../Layout/About';
-import Portfolio from '../Portfolio';
-import Products from '../products/Products';
 import Testimonials from '../Layout/Testimonials';
 import Faq from '../Layout/Faq';
-import ServicesLedger from '../Layout/ServicesLedger';
-import Interlude from '../Layout/Interlude';
-import BookingBand from '../Layout/BookingBand';
-import Schedule from '../Layout/Schedule/Schedule';
 import Contact from '../Layout/Contact';
 import Footer from '../Layout/Footer';
-import TickerBlock from './TickerBlock';
-import Announcement from './Announcement';
-import Manifesto from './Manifesto';
-import Stats, { type StatItem } from './Stats';
-import PullQuote from './PullQuote';
-import Process, { type ProcessStep } from './Process';
-import PriceCards from './PriceCards';
-import Hours from './Hours';
-import PhotoPair from './PhotoPair';
-import BeforeAfter from './BeforeAfter';
-import MapStrip from './MapStrip';
-import LogoMark from './LogoMark';
-import SocialTiles from './SocialTiles';
+import type { StatItem } from './Stats';
+import type { ProcessStep } from './Process';
+import { part } from '../../designs/parts';
 import type { AboutLayout, PortfolioLayout, ProductsLayout, TestimonialsLayout, FaqStyle, ContactLayout, FooterLayout, HeroLayout } from '../../models/DesignConfig';
 
 interface ComposedPageProps {
@@ -54,6 +38,27 @@ export const SUPPORTED_BLOCKS = new Set<Block['type']>([
   'ticker', 'announcement', 'manifesto', 'stats', 'pullQuote', 'process',
   'priceCards', 'hours', 'photoPair', 'beforeAfter', 'mapStrip', 'logoMark', 'social',
 ]);
+
+// LT-603: the blocks and sections only some pages draw, each in its own part.
+const Portfolio = part('gallery', (m) => m.default);
+const Products = part('products', (m) => m.default);
+const ServicesLedger = part('ledger', (m) => m.default);
+const Interlude = part('interlude', (m) => m.default);
+const BookingBand = part('bookingBand', (m) => m.default);
+const Schedule = part('schedule', (m) => m.default);
+const TickerBlock = part('ticker', (m) => m.default);
+const Announcement = part('announcement', (m) => m.default);
+const Manifesto = part('manifesto', (m) => m.default);
+const Stats = part('stats', (m) => m.default);
+const PullQuote = part('pullQuote', (m) => m.default);
+const Process = part('process', (m) => m.default);
+const PriceCards = part('priceCards', (m) => m.default);
+const Hours = part('hours', (m) => m.default);
+const PhotoPair = part('photoPair', (m) => m.default);
+const BeforeAfter = part('beforeAfter', (m) => m.default);
+const MapStrip = part('mapStrip', (m) => m.default);
+const LogoMark = part('logoMark', (m) => m.default);
+const SocialTiles = part('social', (m) => m.default);
 
 const INTRO_LAYOUT: Record<string, AboutLayout> = { plain: 'cards', manifesto: 'manifesto', columns: 'wall' };
 const FEATURES_LAYOUT: Record<string, AboutLayout> = { tiles: 'cards', band: 'band', wall: 'wall', timeline: 'timeline', sticky: 'sticky', bento: 'bento', orbs: 'orbs', stack: 'stack' };
@@ -287,9 +292,11 @@ const ComposedPage: React.FC<ComposedPageProps> = ({ config, jitter, isPreview, 
         const inner = (
           <GenerateReveal seq={generateSeq} index={i}>
             <ErrorBoundary>
+              <Suspense fallback={null}>
               {isValidElement(node) && typeof (node as ReactElement).type !== 'string'
                 ? cloneElement(node as ReactElement, { header: design?.sectionHeader, tone, reveal: design?.revealStyle, headerScale: b.mod?.scale, ...(b.type === 'hero' ? { belowTone: items[i + 1]?.tone } : {}) } as Record<string, unknown>)
                 : node}
+              </Suspense>
             </ErrorBoundary>
           </GenerateReveal>
         );

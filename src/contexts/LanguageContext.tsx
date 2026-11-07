@@ -24,7 +24,8 @@ interface LanguageProviderProps {
 }
 
 export const LanguageProvider: React.FC<LanguageProviderProps> = ({ children, defaultLanguage = 'he' }) => {
-  const { t, i18n } = useTranslation();
+  // LT-603: a page's language is downloaded (i18n/config): `ready` once it is here.
+  const { t, i18n, ready } = useTranslation();
 
   // Normalize the language code (e.g., "he-IL" -> "he")
   const currentLang = (i18n.language?.split('-')[0] || defaultLanguage) as Language;
@@ -48,6 +49,10 @@ export const LanguageProvider: React.FC<LanguageProviderProps> = ({ children, de
     document.documentElement.lang = contentLanguage ?? currentLang;
     document.documentElement.dir = isRTL ? 'rtl' : 'ltr';
   }, [currentLang, isRTL, contentLanguage]);
+
+  // Nothing is drawn before the page's language arrives (a few dozen
+  // milliseconds, beside the site's designs), so no text shows as its key.
+  if (!ready) return null;
 
   return (
     <LanguageContext.Provider value={{ language: currentLang, setLanguage, t, setContentLanguage }}>

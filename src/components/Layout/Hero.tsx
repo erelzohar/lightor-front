@@ -23,12 +23,16 @@ import { loadVantaDeps } from './vantaDeps';
 import { CUTOUT_CLASS, useCutout } from '../../utils/cutout';
 import { useStill } from '../../hooks/useA11yPrefs';
 import { HERO_IMAGE } from './heroes/common';
-import ParallaxHero from './heroes/ParallaxHero';
-import ExpandHero from './heroes/ExpandHero';
-import AeroHero, { type HeroStat } from './heroes/AeroHero';
-import SlantHero from './heroes/SlantHero';
-import CollageHero from './heroes/CollageHero';
-import SonarField from './heroes/SonarField';
+import type { HeroStat } from './heroes/AeroHero';
+import { part } from '../../designs/parts';
+
+// LT-603: the heroes in their own files (LT-531) come in their own parts.
+const ParallaxHero = part('heroParallax', (m) => m.default);
+const ExpandHero = part('heroExpand', (m) => m.default);
+const AeroHero = part('heroAero', (m) => m.default);
+const SlantHero = part('heroSlant', (m) => m.default);
+const CollageHero = part('heroCollage', (m) => m.default);
+const SonarField = part('heroSonar', (m) => m.default);
 
 // Its own chunk: a per-pixel shader that only one style shows.
 const MetalRibbons = lazy(() => import('./heroes/MetalRibbons'));
