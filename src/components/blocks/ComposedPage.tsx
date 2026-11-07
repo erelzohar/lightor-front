@@ -20,6 +20,7 @@ import Footer from '../Layout/Footer';
 import type { StatItem } from './Stats';
 import type { ProcessStep } from './Process';
 import { part } from '../../designs/parts';
+import { blogSectionLayoutOf, withBlogBlock } from '../../services/blogLooks';
 import type { AboutLayout, PortfolioLayout, ProductsLayout, TestimonialsLayout, FaqStyle, ContactLayout, FooterLayout, HeroLayout } from '../../models/DesignConfig';
 
 interface ComposedPageProps {
@@ -32,7 +33,7 @@ interface ComposedPageProps {
 
 /** Block types this renderer can draw today; the rest arrive in phase 3. */
 export const SUPPORTED_BLOCKS = new Set<Block['type']>([
-  'hero', 'intro', 'features', 'visit', 'gallery', 'products', 'quote', 'faq', 'ledger',
+  'hero', 'intro', 'features', 'visit', 'gallery', 'products', 'blog', 'quote', 'faq', 'ledger',
   'interlude', 'bookingBand', 'schedule', 'contact', 'footer',
   // LT-136 (phase 3)
   'ticker', 'announcement', 'manifesto', 'stats', 'pullQuote', 'process',
@@ -42,6 +43,8 @@ export const SUPPORTED_BLOCKS = new Set<Block['type']>([
 // LT-603: the blocks and sections only some pages draw, each in its own part.
 const Portfolio = part('gallery', (m) => m.default);
 const Products = part('products', (m) => m.default);
+// LT-610: the blog's newest, in the section's look.
+const BlogSection = part('blogSection', (m) => m.default);
 const ServicesLedger = part('ledger', (m) => m.default);
 const Interlude = part('interlude', (m) => m.default);
 const BookingBand = part('bookingBand', (m) => m.default);
@@ -73,6 +76,8 @@ const ComposedPage: React.FC<ComposedPageProps> = ({ config, jitter, isPreview, 
   const { editing } = useEdit();
   const c = config.components;
   const design = config.design;
+  // LT-610: a page made before the blog gets its section before the contact one.
+  const blocks = withBlogBlock(config.blocks, !!config.blog);
   const hasBand = config.blocks.some((b) => b.type === 'bookingBand');
   const hasProcess = config.blocks.some((b) => b.type === 'process' && !b.mod?.hidden);
   // LT-167: nothing to book → no schedule and no band pointing at it.
@@ -139,6 +144,10 @@ const ComposedPage: React.FC<ComposedPageProps> = ({ config, jitter, isPreview, 
         // LT-137: layouts only apply in grid mode; the model's carousel flag
         // used to hide every one of them on generated sites.
         return c?.portfolio ? <Portfolio config={c.portfolio} layout={(v as PortfolioLayout) ?? design?.portfolioLayout} masonryPhase={jitter.masonryPhase} /> : null;
+      case 'blog':
+        return config.blog
+          ? <BlogSection blog={config.blog} config={c?.blog} layout={blogSectionLayoutOf(v, design)} businessName={config.businessName} logo={config.logoImageName} timeZone={config.timeZone} />
+          : null;
       case 'products':
         return <Products summary={config.products} config={c?.products} layout={(v as ProductsLayout) ?? design?.productsLayout} card={design?.productCard} currency={config.currency} phone={config.contact?.phone} />;
       case 'quote':
@@ -256,7 +265,7 @@ const ComposedPage: React.FC<ComposedPageProps> = ({ config, jitter, isPreview, 
             websiteConfig={c}
             layout={(v as FooterLayout) ?? design?.footerLayout}
             city={config.address?.city}
-            blocks={config.blocks}
+            blocks={blocks}
             productsPage={productsHavePage(config.products)}
           />
         ) : null;
@@ -268,7 +277,7 @@ const ComposedPage: React.FC<ComposedPageProps> = ({ config, jitter, isPreview, 
   // Tones alternate bg/surface unless the block pins one.
   const items: { block: Block; tone: SectionTone; node: ReactNode }[] = [];
   let last: SectionTone = 'surface';
-  for (const block of config.blocks) {
+  for (const block of blocks) {
     // LT-249: a hidden block is skipped — except in the site editor, where it
     // shows faded and does not move the alternation (the page around it
     // keeps the tones it has live).

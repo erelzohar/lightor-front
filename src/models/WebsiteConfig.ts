@@ -16,6 +16,7 @@ import type { Conversion } from '../services/siteMode';
 import { DEFAULT_TIME_ZONE, resolveTimeZone } from '../utils/businessTime';
 import { Currency, DEFAULT_CURRENCY, currencyOf } from '../utils/currency';
 import { ProductsSummary, parseProducts } from './Product';
+import { parseBlog, type BlogSummary } from './Post';
 import { withoutPaidDesigns } from '../services/paidDesigns';
 
 /**
@@ -145,7 +146,9 @@ export class Components {
     /** LT-220: the services / price list heading; '' = the default by prices. */
     public services: { title: string } = { title: '' },
     /** LT-540: the products section's heading and button; '' = the default. */
-    public products: { title: string; description: string; cta: string } = { title: '', description: '', cta: '' }
+    public products: { title: string; description: string; cta: string } = { title: '', description: '', cta: '' },
+    /** LT-610: the blog's name (menu, its page, the home section) and its page's line; '' = the default. */
+    public blog: { title: string; description: string } = { title: '', description: '' }
   ) {}
 
   static fromJSON(json: any): Components {
@@ -166,6 +169,10 @@ export class Components {
         title: typeof json.products?.title === 'string' ? json.products.title : '',
         description: typeof json.products?.description === 'string' ? json.products.description : '',
         cta: typeof json.products?.cta === 'string' ? json.products.cta : '',
+      },
+      {
+        title: typeof json.blog?.title === 'string' ? json.blog.title : '',
+        description: typeof json.blog?.description === 'string' ? json.blog.description : '',
       }
     );
   }
@@ -255,7 +262,9 @@ export class WebsiteConfig {
      * fromJSON. Set by the server, and by the editor's preview on that plan;
      * absent reads as every design - older payloads and the register preview.
      */
-    public motion: boolean = true
+    public motion: boolean = true,
+    /** LT-610: the blog's newest few; absent unless the plan shows a blog (Pro) and a post is out. */
+    public blog?: BlogSummary
   ) {}
 
   static fromJSON(served: any): WebsiteConfig {
@@ -301,7 +310,8 @@ export class WebsiteConfig {
       currencyOf(json.currency),
       !json.bookingClosed,
       parseProducts(json.products),
-      json.motion !== false
+      json.motion !== false,
+      parseBlog(json.blog)
     );
   }
 }

@@ -7,6 +7,8 @@ import ImagesService from '../../services/ImagesService';
 import { handleSquareImageError } from '../../utils/imageFallback';
 import { useIsDarkMode } from '../../hooks/useIsDarkMode';
 import { navLinksFromBlocks, sectionTitlesOf } from '../../services/navLinks';
+import { withBlogBlock } from '../../services/blogLooks';
+import { BLOG_PATH } from '../../models/Post';
 import { showsPrices } from '../../utils/servicesHeading';
 import { scrollToSection, sectionOf } from '../../utils/sections';
 import { linkFrom, useSiteNav } from '../../services/siteNav';
@@ -162,7 +164,7 @@ const Navbar: React.FC<NavbarProps> = ({ websiteConfig, isPreview }) => {
   // LT-168: a link reads as the heading it scrolls to; the generic label only when a section has none.
   const titles = sectionTitlesOf(websiteConfig.components);
   const menuItems = websiteConfig.blocks?.length
-    ? navLinksFromBlocks(websiteConfig.blocks.filter((b) => !b.mod?.hidden && (bookable || b.type !== 'schedule')), titles, { priced: showsPrices(websiteConfig.appointmentTypes), productsPage: productsHavePage(websiteConfig.products) }).map((l) => ({
+    ? navLinksFromBlocks(withBlogBlock(websiteConfig.blocks, !!(websiteConfig as { blog?: unknown }).blog).filter((b) => !b.mod?.hidden && (bookable || b.type !== 'schedule')), titles, { priced: showsPrices(websiteConfig.appointmentTypes), productsPage: productsHavePage(websiteConfig.products) }).map((l) => ({
       href: linkFrom(l.href, siteNav.atHome),
       label: l.title ?? t(l.key, { defaultValue: language === 'he' ? l.fallbackHe : l.fallbackEn }),
       visible: true,
@@ -172,6 +174,8 @@ const Navbar: React.FC<NavbarProps> = ({ websiteConfig, isPreview }) => {
       // An empty gallery is not drawn (LT-320), so no link to it.
       { href: linkFrom('#portfolio', siteNav.atHome), label: titles.portfolio ?? t('nav.portfolio'), visible: websiteConfig.components.portfolio.visible && websiteConfig.components.portfolio.items?.length !== 0 },
       { href: linkFrom('#schedule', siteNav.atHome), label: titles.schedule ?? t('nav.schedule'), visible: bookable },
+      // LT-610: the blog's own page, on a site that has one.
+      { href: BLOG_PATH, label: titles.blog ?? t('nav.blog'), visible: !!(websiteConfig as { blog?: unknown }).blog },
       { href: linkFrom('#contact', siteNav.atHome), label: titles.contact ?? t('nav.contact'), visible: websiteConfig.components.contact.visible }
     ].filter(item => item.visible === undefined || item.visible);
 

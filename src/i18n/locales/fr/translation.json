@@ -13,7 +13,8 @@
     "open_menu": "Ouvrir le menu",
     "close_menu": "Fermer le menu",
     "prices": "Tarifs",
-    "services": "Services"
+    "services": "Services",
+    "blog": "Blog"
   },
   "services": {
     "ledger_title": "Tarifs",
@@ -88,6 +89,24 @@
     "price": "Prix",
     "holdToZoom": "Maintenez pour zoomer",
     "tapToView": "Touchez pour voir les photos"
+  },
+  "blog": {
+    "title": "Blog",
+    "all": "Tous les articles ({{count}})",
+    "minutes": "{{count}} min de lecture",
+    "readMore": "Lire la suite",
+    "readPost": "Lire l’article",
+    "updated": "Mis à jour le {{date}}",
+    "more": "Plus d’articles",
+    "failed": "Impossible de charger le blog. Réessayez dans un instant.",
+    "loadMore": "Plus d’articles",
+    "prev": "Article précédent",
+    "next": "Article suivant",
+    "pause": "Mettre en pause",
+    "play": "Relancer le défilement",
+    "latest": "Derniers articles",
+    "shareWhatsapp": "Partager sur WhatsApp",
+    "by": "Par {{name}}"
   },
   "portfolio": {
     "title": "Nos Dernières Réalisations",

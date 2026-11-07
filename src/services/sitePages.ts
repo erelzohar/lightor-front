@@ -8,6 +8,8 @@ export type SitePage =
   | { kind: 'home' }
   | { kind: 'products' }
   | { kind: 'product'; slug: string }
+  | { kind: 'blog' }
+  | { kind: 'post'; slug: string }
   | { kind: 'missing' };
 
 export const sitePageOf = (pathname: string): SitePage => {
@@ -15,5 +17,9 @@ export const sitePageOf = (pathname: string): SitePage => {
   if (path === '/') return { kind: 'home' };
   if (path === '/products') return { kind: 'products' };
   const product = /^\/products\/([^/]+)$/.exec(path);
-  return product ? { kind: 'product', slug: product[1] } : { kind: 'missing' };
+  if (product) return { kind: 'product', slug: product[1] };
+  // LT-610: the blog and each post.
+  if (path === '/blog') return { kind: 'blog' };
+  const post = /^\/blog\/([^/]+)$/.exec(path);
+  return post ? { kind: 'post', slug: post[1] } : { kind: 'missing' };
 };

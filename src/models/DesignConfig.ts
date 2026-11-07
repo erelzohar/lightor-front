@@ -76,6 +76,13 @@ export type ProductCardStyle = 'plain' | 'framed' | 'overlay' | 'button' | 'reve
 // floating between its words and its options, its colour washing the stage).
 export type ProductsPageLayout = 'well' | 'swap' | 'bento' | 'list' | 'rows' | 'shelves' | 'shop' | 'wall';
 export type ProductPageLayout = 'side' | 'hero' | 'gallery' | 'detail' | 'stand' | 'stage';
+// LT-610 (Erel's blog pastes): the blog's page as a 'grid' of cards in a soft light, cards 'tagged'
+// with the post's topic in the corner, or 'glass' cards; a post's page 'classic' (its picture above a
+// column of text) or 'wide' (the picture wide behind the title); the home page's section (a block's
+// variant) as the 'latest' few, wide 'article' cards, or a 'carousel'.
+export type BlogLayout = 'grid' | 'tagged' | 'glass';
+export type PostLayout = 'classic' | 'wide';
+export type BlogSectionLayout = 'latest' | 'article' | 'carousel';
 // LT-591: 'bubbles' (festive's own, paid): the form in a card over a picture with floating bubbles.
 export type ContactLayout = 'split' | 'stacked' | 'poster' | 'editorial' | 'statement' | 'band' | 'cards' | 'bubbles';
 // LT-124: 'line' (one light ruled row) and 'ticker' (repeating strip) from the canvas.
@@ -465,6 +472,9 @@ export class DesignConfig implements DesignTokens {
     public productCard?: ProductCardStyle,
     public productsPageLayout?: ProductsPageLayout,
     public productPageLayout?: ProductPageLayout,
+    /** LT-610: absent = the style's own (services/blogLooks.ts). */
+    public blogLayout?: BlogLayout,
+    public postLayout?: PostLayout,
   ) {}
 
   // Resolution order for every token: explicit value → preset value → default.
@@ -513,6 +523,8 @@ export class DesignConfig implements DesignTokens {
       json?.productCard,
       json?.productsPageLayout,
       json?.productPageLayout,
+      json?.blogLayout,
+      json?.postLayout,
     );
   }
 }

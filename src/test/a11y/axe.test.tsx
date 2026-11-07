@@ -5,6 +5,9 @@ import ComposedPage from '../../components/blocks/ComposedPage';
 import { MemoryRouter } from 'react-router-dom';
 import ProductsPage from '../../components/products/ProductsPage';
 import ProductPage from '../../components/products/ProductPage';
+import BlogPage from '../../components/blog/BlogPage';
+import PostPage from '../../components/blog/PostPage';
+import WebConfigService from '../../services/WebConfigService';
 import Navbar from '../../components/Layout/Navbar';
 import Schedule from '../../components/Layout/Schedule/Schedule';
 import AccessibilityMenu from '../../components/a11y/AccessibilityMenu';
@@ -197,6 +200,41 @@ describe.each(['he', 'en', 'ar'])('no WCAG A/AA violation axe can see (%s)', (la
       expect([layout, ...(await violationsIn(container))]).toEqual([layout]);
       unmount();
     }
+  });
+
+  it("LT-610's blog: the home section's three looks, the blog's three and a post's two", async () => {
+    const card = (i: number) => ({
+      id: `p${i}`, slug: `post-${i}`, title: `Post ${i}`, summary: 'A useful line', category: i % 2 ? 'Tips' : '',
+      cover: i === 2 ? undefined : `c${i}.webp`, publishedAt: '2026-11-01T09:00:00.000Z', updatedAt: '2026-11-05T09:00:00.000Z', minutes: 4,
+    });
+    const posts = Array.from({ length: 5 }, (_, i) => card(i));
+    for (const variant of ['latest', 'article', 'carousel']) {
+      const home = fullConfig([{ type: 'hero' }, { type: 'blog', variant }, { type: 'contact' }, { type: 'footer' }]);
+      home.blog = { total: 5, latest: posts };
+      const { container, unmount } = render(<ComposedPage config={home} jitter={getSiteJitter('axe')} isPreview />);
+      expect(container.querySelector('[data-testid="blog-section"]')).not.toBeNull();
+      expect([variant, ...(await violationsIn(container))]).toEqual([variant]);
+      unmount();
+    }
+    vi.spyOn(WebConfigService.getInstance(), 'getPosts').mockResolvedValue(posts);
+    for (const layout of ['grid', 'tagged', 'glass']) {
+      const { container, unmount } = render(<MemoryRouter initialEntries={['/blog']}><BlogPage businessName="Shop" layout={layout as never} /></MemoryRouter>);
+      await screen.findByTestId('blog-page');
+      expect([layout, ...(await violationsIn(container))]).toEqual([layout]);
+      unmount();
+    }
+    const body = [
+      { kind: 'p', text: 'One.' }, { kind: 'h2', text: 'A heading' }, { kind: 'ul', items: ['a', 'b'] }, { kind: 'ol', items: ['c'] },
+      { kind: 'h3', text: 'Smaller' }, { kind: 'quote', text: 'Mine' }, { kind: 'image', url: 'in.webp', caption: 'A caption' },
+    ];
+    vi.spyOn(WebConfigService.getInstance(), 'getPost').mockResolvedValue({ post: { ...card(1), body } as never, more: posts.slice(2, 4) });
+    for (const layout of ['classic', 'wide']) {
+      const { container, unmount } = render(<MemoryRouter initialEntries={['/blog/post-1']}><PostPage slug="post-1" businessName="Shop" layout={layout as never} cta={{ href: '/#schedule', label: 'Book' }} /></MemoryRouter>);
+      await screen.findByTestId('post-body');
+      expect([layout, ...(await violationsIn(container))]).toEqual([layout]);
+      unmount();
+    }
+    vi.restoreAllMocks();
   });
 
   it('every gallery layout', async () => {

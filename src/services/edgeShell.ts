@@ -54,7 +54,7 @@ export const readInlineConfig = (doc: Document, hostname: string): InlineConfig 
 export const INLINE_PAGE_ID = 'lightor-page';
 
 /** The inlined data of this kind of page, once: a later page in the same visit reads the API. */
-export const readInlinePage = (kind: 'products' | 'product'): unknown => {
+export const readInlinePage = (kind: 'products' | 'product' | 'blog' | 'post'): unknown => {
   const element = document.getElementById(INLINE_PAGE_ID);
   if (!element?.textContent) return null;
   try {

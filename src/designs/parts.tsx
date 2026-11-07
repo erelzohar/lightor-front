@@ -2,6 +2,7 @@ import { createElement, useSyncExternalStore, type ComponentType } from 'react';
 import type { WebsiteConfig } from '../models/WebsiteConfig';
 import { sitePageOf } from '../services/sitePages';
 import { takesBookings } from '../services/siteMode';
+import { blogLooksOf, blogSectionLayoutOf, withBlogBlock } from '../services/blogLooks';
 
 /**
  * LT-603: the designs a site can draw, each in its own file ("part"), so a
@@ -32,6 +33,16 @@ export const PARTS = {
   productStage: () => import('../components/products/ProductStage'),
   productsPage: () => import('../components/products/ProductsPage'),
   productPage: () => import('../components/products/ProductPage'),
+  // LT-610: the blog - its page and each look of its list, a post's page, and
+  // the home page's section with its two moving looks (Erel's pastes).
+  blogPage: () => import('../components/blog/BlogPage'),
+  blogGrid: () => import('../components/blog/BlogGrid'),
+  blogTagged: () => import('../components/blog/BlogTagged'),
+  blogGlass: () => import('../components/blog/BlogGlass'),
+  postPage: () => import('../components/blog/PostPage'),
+  blogSection: () => import('../components/blog/BlogSection'),
+  blogArticles: () => import('../components/blog/BlogArticles'),
+  blogCarousel: () => import('../components/blog/BlogCarousel'),
   // The gallery and its moving layouts (LT-525).
   gallery: () => import('../components/Portfolio'),
   galleryClothesline: () => import('../components/gallery/Clothesline'),
@@ -197,6 +208,8 @@ const GALLERY_PARTS: Record<string, PartKey> = { clothesline: 'galleryClotheslin
 const PRODUCT_PARTS: Record<string, PartKey> = { belt: 'productBelt', hanger: 'productRail', coverflow: 'productCoverflow', orbit: 'productOrbit', drops: 'productShelves', wall: 'productWall' };
 const PAGE_PARTS: Record<string, PartKey> = { rows: 'productShelves', shelves: 'productShelves', wall: 'productWall' };
 const PRODUCT_PAGE_PARTS: Record<string, PartKey> = { stand: 'productStand', stage: 'productStage' };
+const BLOG_PAGE_PARTS: Record<string, PartKey> = { grid: 'blogGrid', tagged: 'blogTagged', glass: 'blogGlass' };
+const BLOG_SECTION_PARTS: Record<string, PartKey> = { article: 'blogArticles', carousel: 'blogCarousel' };
 const BLOCK_PARTS: Record<string, PartKey> = {
   ticker: 'ticker', announcement: 'announcement', manifesto: 'manifesto', stats: 'stats', pullQuote: 'pullQuote',
   process: 'process', priceCards: 'priceCards', hours: 'hours', photoPair: 'photoPair', beforeAfter: 'beforeAfter',
@@ -226,7 +239,8 @@ export const partsFor = (config: WebsiteConfig | null | undefined, pathname = '/
   if (!config) return { now: [...now], soon: [...soon] };
 
   const design = (config.design ?? {}) as unknown as Record<string, string | undefined>;
-  const blocks = Array.isArray(config.blocks) && config.blocks.length ? config.blocks : null;
+  // LT-610: a page with a blog draws its section even when its blocks predate it.
+  const blocks = Array.isArray(config.blocks) && config.blocks.length ? withBlogBlock(config.blocks, !!config.blog) : null;
   const shown = (blocks ?? []).filter((b) => !b.mod?.hidden);
   const variantsOf = (type: string, token?: string): Set<string> => {
     const out = new Set<string>();
@@ -268,6 +282,24 @@ export const partsFor = (config: WebsiteConfig | null | undefined, pathname = '/
     const productPage = design.productPageLayout;
     if (productPage && PRODUCT_PAGE_PARTS[productPage]) pages.push(PRODUCT_PAGE_PARTS[productPage]);
     for (const k of pages) (page === 'products' || page === 'product' ? now : soon).add(k);
+  }
+
+  // LT-610: the blog's section on the home page, its page and a post's; a carousel
+  // of fewer than three posts is drawn as articles, so both are named.
+  if (config.blog) {
+    const looks = blogLooksOf(config.design);
+    if (blocks ? has('blog') : true) {
+      now.add('blogSection');
+      const variants: (string | undefined)[] = blocks ? shown.filter((x) => x.type === 'blog').map((x) => x.variant) : [undefined];
+      for (const variant of variants) {
+        const look = blogSectionLayoutOf(variant, config.design);
+        if (BLOG_SECTION_PARTS[look]) now.add(BLOG_SECTION_PARTS[look]);
+        if (look === 'carousel') now.add('blogArticles');
+      }
+    }
+    const page = sitePageOf(path).kind;
+    const pages: PartKey[] = ['blogPage', BLOG_PAGE_PARTS[looks.page], 'postPage'];
+    for (const k of pages) (page === 'blog' || page === 'post' ? now : soon).add(k);
   }
 
   // Features as a stack of pictures (LT-588), quotes as an editorial spread.

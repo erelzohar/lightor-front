@@ -21,7 +21,10 @@ import { classifyConfigFailure } from './services/configFailure';
 import ShortManageLink from './components/ShortManageLink';
 import Loading from './components/Loading';
 import SectionDivider, { type SectionTone } from './components/SectionDivider';
-import { takesBookings } from './services/siteMode';
+import { mainCta, takesBookings } from './services/siteMode';
+import { linkFrom } from './services/siteNav';
+import { blogLooksOf, blogSectionLayoutOf, withBlogBlock } from './services/blogLooks';
+import { parsePost, type Post } from './models/Post';
 import { sitePageOf } from './services/sitePages';
 import { SiteNavContext } from './services/siteNav';
 import { ProductInquiryContext, type ProductInquiry } from './services/productAction';
@@ -68,6 +71,10 @@ const Products = part('products', (m) => m.default);
 const ProductPage = part('productPage', (m) => m.default);
 const ProductsPage = part('productsPage', (m) => m.default);
 const Interlude = part('interlude', (m) => m.default);
+// LT-610: the blog's section, its page and a post's.
+const BlogSection = part('blogSection', (m) => m.default);
+const BlogPage = part('blogPage', (m) => m.default);
+const PostPage = part('postPage', (m) => m.default);
 
 /** The parts a config draws here, then the config (LT-603): nothing pops in late. */
 const withParts = (config: WebsiteConfig, apply: () => void): void => {
@@ -154,6 +161,8 @@ function MainContent() {
   const [config, setConfig] = useState<WebsiteConfig | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [isPreview, setIsPreview] = useState<boolean>(false);
+  // LT-610: the dashboard's post before it is published, drawn at its address in the preview only.
+  const [previewPost, setPreviewPost] = useState<Post | null>(null);
   // LT-387: the register wizard's preview shows Lighty as a demo - every new
   // account's site has him (Plus is free at first), though its config does not say so yet.
   const [assistantDemo, setAssistantDemo] = useState(false);
@@ -204,7 +213,7 @@ function MainContent() {
         if (msg.type === 'LT_GO') {
           // LT-545: only an address of the site's own pages.
           const kindOf = typeof msg.path === 'string' ? sitePageOf(msg.path).kind : 'missing';
-          if (kindOf === 'home' || kindOf === 'products' || kindOf === 'product') navigateRef.current(msg.path);
+          if (kindOf === 'home' || kindOf === 'products' || kindOf === 'product' || kindOf === 'blog' || kindOf === 'post') navigateRef.current(msg.path);
         } else if (msg.type === 'LT_EDIT') {
           setEditing(!!msg.on);
           if (!msg.on) setSelection(null);
@@ -242,6 +251,7 @@ function MainContent() {
         // previews rendered with default tokens instead of the preset (LT-039).
         // LT-202: the AI's proposed questions have no server key yet.
         const payload = keyPreviewQuestions(event.data.config);
+        const draftPost = parsePost((event.data.config as { previewPost?: unknown } | null)?.previewPost);
         let cfg: WebsiteConfig;
         try {
           cfg = WebsiteConfig.fromJSON(payload);
@@ -267,6 +277,7 @@ function MainContent() {
           if (seq !== previewSeqRef.current) return;
           setConfig(cfg);
           setIsPreview(true);
+          setPreviewPost(draftPost);
           setAssistantDemo(demo);
           setLoading(false);
           setLanguageRef.current(cfg.defaultLanguage as Language);
@@ -477,7 +488,10 @@ function MainContent() {
 
   if (loading) return <Loading isLoading={true} />;
   if (!config) return inactive ? <SiteNotActive /> : <NotFound />;
-  if (page.kind === 'missing' || (!atHome && !config.products?.pages)) return <NotFound />;
+  // LT-610: the blog's pages exist while the config carries a blog (Pro, a post out).
+  const blogPage = page.kind === 'blog' || page.kind === 'post';
+  const draftShown = isPreview && page.kind === 'post' && previewPost?.slug === page.slug ? previewPost : undefined;
+  if (page.kind === 'missing' || (blogPage ? !config.blog && !draftShown : !atHome && !config.products?.pages)) return <NotFound />;
 
   // Build the in-flow content sections with their solid background "tone".
   // The page alternates bg <-> surface; dividers are interleaved between
@@ -560,6 +574,14 @@ function MainContent() {
     flow.push({
       key: 'products', tone: 'bg',
       node: <Products summary={config.products} config={config.components?.products} layout={config.design?.productsLayout} card={config.design?.productCard} currency={config.currency} phone={config.contact?.phone} />
+    });
+  }
+
+  // LT-610: a page from before blocks shows the blog's newest after its products.
+  if (config.blog) {
+    flow.push({
+      key: 'blog', tone: 'surface',
+      node: <BlogSection blog={config.blog} config={config.components?.blog} layout={blogSectionLayoutOf(undefined, config.design)} businessName={config.businessName} logo={config.logoImageName} timeZone={config.timeZone} />
     });
   }
 
@@ -678,7 +700,33 @@ function MainContent() {
       {!atHome ? (<>
         <main id="main-content" tabIndex={-1} className="outline-none">
           <Suspense fallback={null}>
-          {page.kind === 'product' ? (
+          {page.kind === 'blog' ? (
+            <BlogPage
+              businessName={config.businessName}
+              logo={config.logoImageName}
+              title={config.components?.blog?.title}
+              description={config.components?.blog?.description}
+              layout={blogLooksOf(config.design).page}
+              timeZone={config.timeZone}
+              drafts={isPreview ? config.blog?.latest : undefined}
+            />
+          ) : page.kind === 'post' ? (
+            <PostPage
+              key={page.slug}
+              slug={page.slug}
+              draft={draftShown}
+              businessName={config.businessName}
+              logo={config.logoImageName}
+              timeZone={config.timeZone}
+              layout={blogLooksOf(config.design).post}
+              blogTitle={config.components?.blog?.title}
+              cta={(() => {
+                const main = mainCta({ conversion: config.conversion, types: config.appointmentTypes, own: config.components?.hero?.cta, products: config.products?.total }, t);
+                // A booking site with nothing to book yet keeps the way to get in touch (as its hero does).
+                return main ? { href: linkFrom(main.href, false), label: main.label } : { href: '/#contact', label: t('hero.contact') };
+              })()}
+            />
+          ) : page.kind === 'product' ? (
             <ProductPage
               slug={page.slug}
               businessName={config.businessName}
@@ -733,7 +781,7 @@ function MainContent() {
               websiteConfig={config.components}
               layout={(config.blocks?.find((b) => b.type === 'footer')?.variant as FooterLayout | undefined) ?? config.design?.footerLayout}
               city={config.address?.city}
-              blocks={config.blocks}
+              blocks={withBlogBlock(config.blocks ?? [], !!config.blog)}
               productsPage={productsHavePage(config.products)}
             />
           </ErrorBoundary>
