@@ -4,6 +4,7 @@ import { useLanguage } from '../../contexts/LanguageContext';
 import { followLink, useSiteNav } from '../../services/siteNav';
 import { readInlinePage } from '../../services/edgeShell';
 import WebConfigService from '../../services/WebConfigService';
+import { withSiteName } from '../../services/site';
 import { postCardOf, rememberPosts } from '../../services/postCards';
 import ImagesService from '../../services/ImagesService';
 import { useCoverOf } from '../../services/sitePictures';
@@ -82,7 +83,7 @@ const PostPage: React.FC<Props> = ({ slug, businessName, logo, timeZone, layout 
   useEffect(() => {
     if (draft || (data && !data.partial)) return;
     let live = true;
-    WebConfigService.getInstance().getPost(window.location.hostname.split('.')[0], slug)
+    withSiteName((name) => WebConfigService.getInstance().getPost(name, slug))
       .then((found) => {
         if (!live) return;
         if (found) rememberPosts(found.more);

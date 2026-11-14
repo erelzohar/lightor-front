@@ -1,7 +1,7 @@
 import React, { useState, useCallback, useEffect, useMemo, useRef } from 'react';
 import { Calendar as CalendarIcon, Clock, CheckCircle, ChevronLeft, ChevronRight, Phone, User, Shield, Tag, XCircle, MessageSquareX, MessageSquareCode, MessagesSquare } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Turnstile } from '@marsidev/react-turnstile';
+import SiteTurnstile from '../../SiteTurnstile';
 import { useLanguage } from '../../../contexts/LanguageContext';
 import { AppointmentType, isBookableService } from '../../../models/AppointmentType';
 import { Appointment } from '../../../models/Appointment';
@@ -1394,8 +1394,7 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
             <span className="sr-only">{t('a11y.booking.loading')}</span>
           </div>
           <div className="mt-8">
-            <Turnstile
-              siteKey={import.meta.env.VITE_TURNSTILE_SITE_KEY}
+            <SiteTurnstile
               onSuccess={handleHandshake}
               options={{
                 theme: 'auto',

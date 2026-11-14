@@ -4,6 +4,7 @@ import { useLanguage } from '../../contexts/LanguageContext';
 import { groupsOf, parseProduct, type ProductCard } from '../../models/Product';
 import type { ProductCardStyle, ProductsLayout, ProductsPageLayout } from '../../models/DesignConfig';
 import WebConfigService from '../../services/WebConfigService';
+import { withSiteName } from '../../services/site';
 import { readInlinePage } from '../../services/edgeShell';
 import { followLink, useSiteNav } from '../../services/siteNav';
 import { scrollToSection } from '../../utils/sections';
@@ -60,7 +61,7 @@ const ProductsPage: React.FC<Props> = ({ businessName, title, description, layou
 
   useEffect(() => {
     if (items) return;
-    WebConfigService.getInstance().getProducts(window.location.hostname.split('.')[0])
+    withSiteName((name) => WebConfigService.getInstance().getProducts(name))
       .then((list) => { if (list) rememberList(list); setItems(list); })
       .catch(() => setFailed(true));
   }, [items]);

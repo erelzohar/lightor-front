@@ -22,8 +22,9 @@ import { QuestionField } from '../common/QuestionField';
 import { googleMapsHref } from '../../utils/navigation';
 import WazeLink from '../WazeLink';
 import type { Conversion } from '../../services/siteMode';
-import { Turnstile } from '@marsidev/react-turnstile';
+import SiteTurnstile from '../SiteTurnstile';
 import { visitorPass, useVisitorPass } from '../../services/visitorPass';
+import { siteName, siteNameNow } from '../../services/site';
 
 // Optional throughout: a business may have no premises, and the API stores an
 // address only when it carries real values.
@@ -305,7 +306,7 @@ const Contact: React.FC<ContactProps> = ({ config, address, contact, workingDays
         // The server finds the owner by subdomain, stores the lead and tells
         // them; nothing about the recipient travels from the browser.
         // (LT-035, LT-197)
-        const subdomain = window.location.hostname.split('.')[0];
+        const subdomain = siteNameNow() ?? await siteName();
         const message = formData.message.trim();
         const send = () => smsService.sendContactMessage(subdomain, {
           name: formData.name,
@@ -549,8 +550,7 @@ const Contact: React.FC<ContactProps> = ({ config, address, contact, workingDays
           a booking page already ran one in its calendar. Usually invisible. */}
       {!isPreview && wantsPass && !hasPass && (
         <div className="flex justify-center" data-testid="contact-turnstile">
-          <Turnstile
-            siteKey={import.meta.env.VITE_TURNSTILE_SITE_KEY}
+          <SiteTurnstile
             onSuccess={(token) => void visitorPass.handshake(token)}
             options={{ theme: 'auto', size: 'flexible', appearance: 'interaction-only' }}
           />

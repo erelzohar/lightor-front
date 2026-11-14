@@ -1,55 +1,33 @@
-abstract class Globals {
-    public appointmentsUrl:string;
-    public webConfigsUrl :string;
-    public imagesUrl:string;
-    public messagingUrl:string;
+import { apiRoot } from "./site";
+
+/**
+ * The API's addresses. LT-661: all under one root, which is the API's own
+ * address on a Lightor host (as always) and the page's own origin on a
+ * business's own domain, where the edge forwards `/api/*` to the API: the
+ * visitor-pass cookie stays a first-party one. See services/site.ts.
+ */
+class Globals {
+    public appointmentsUrl: string;
+    public webConfigsUrl: string;
+    public imagesUrl: string;
+    public messagingUrl: string;
     /** LT-302: Lighty on the site — questions and problem reports. */
-    public siteAssistantUrl:string;
+    public siteAssistantUrl: string;
     /** LT-569: a visit to the site, a view of a product. */
-    public visitsUrl:string;
-    // public typesUrl:string;
+    public visitsUrl: string;
+    public authUrl: string;
+
+    constructor(root: string) {
+        this.appointmentsUrl = `${root}/appointments`;
+        this.webConfigsUrl = `${root}/web-configs`;
+        this.messagingUrl = `${root}/messaging`;
+        this.siteAssistantUrl = `${root}/site-assistant`;
+        this.visitsUrl = `${root}/visits`;
+        this.imagesUrl = `${root}/images/`;
+        this.authUrl = `${root}/auth/`;
+    }
 }
 
-class DevelopmentGlobals extends Globals {
-    public appointmentsUrl = "http://localhost:3000/api/appointments";
-    public webConfigsUrl = "http://localhost:3000/api/web-configs";
-    public messagingUrl = "http://localhost:3000/api/messaging";
-    public siteAssistantUrl = "http://localhost:3000/api/site-assistant";
-    public visitsUrl = "http://localhost:3000/api/visits";
-    // public typesUrl = "http://localhost:3000/api/appointment-types/";
-    public imagesUrl = "http://localhost:3000/api/images/";
-    public authUrl = "http://localhost:3000/api/auth/";
-}
-
-// class ProductionGlobals extends Globals {
-//     public appointmentsUrl = "https://ez-lines-server-84870f3974b9.herokuapp.com/api/appointments/";
-//     public webConfigsUrl = "https://ez-lines-server-84870f3974b9.herokuapp.com/api/web-configs/";
-//     public messagingUrl = "https://ez-lines-server-84870f3974b9.herokuapp.com/api/messaging/";
-//     public imagesUrl = "https://ez-lines-server-84870f3974b9.herokuapp.com/api/images/";
-//     public typesUrl = "https://ez-lines-server-84870f3974b9.herokuapp.com/api/appointment-types/";
-
-// }
-class ProductionGlobals extends Globals {
-    public appointmentsUrl = "https://api.lightor.app/api/appointments";
-    public webConfigsUrl = "https://api.lightor.app/api/web-configs";
-    public messagingUrl = "https://api.lightor.app/api/messaging";
-    public siteAssistantUrl = "https://api.lightor.app/api/site-assistant";
-    public visitsUrl = "https://api.lightor.app/api/visits";
-    public imagesUrl = "https://api.lightor.app/api/images/";
-    public authUrl = "https://api.lightor.app/api/auth/";
-    // public typesUrl = "https://api.ez-lines.com/api/appointment-types/";
-
-}
-
-// class ProductionGlobals extends Globals {
-//     public appointmentsUrl = "https://api.ez-lines.com/api/appointments";
-//     public webConfigsUrl = "https://api.ez-lines.com/api/web-configs";
-//     public messagingUrl = "https://api.ez-lines.com/api/messaging";
-//     public imagesUrl = "https://api.ez-lines.com/api/images/";
-//     // public typesUrl = "https://api.ez-lines.com/api/appointment-types/";
-
-// }
-
-const globals = process.env.NODE_ENV === "production" ? new ProductionGlobals() : new DevelopmentGlobals();
+const globals = new Globals(apiRoot());
 
 export default globals;

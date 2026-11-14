@@ -7,6 +7,7 @@ import { useLanguage } from '../../contexts/LanguageContext';
 import { PRODUCTS_PATH, parseProduct, type Product } from '../../models/Product';
 import type { ProductCardStyle, ProductPageLayout } from '../../models/DesignConfig';
 import WebConfigService from '../../services/WebConfigService';
+import { withSiteName } from '../../services/site';
 import { countsHere, noteProductView } from '../../services/visits';
 import { readInlinePage } from '../../services/edgeShell';
 import { followLink, useSiteNav } from '../../services/siteNav';
@@ -193,7 +194,7 @@ const ProductPage: React.FC<Props> = ({ slug, businessName, logo, phone, currenc
     const card = fromCard(slug);
     setLoaded(card);
     let stale = false;
-    WebConfigService.getInstance().getProduct(window.location.hostname.split('.')[0], slug)
+    withSiteName((name) => WebConfigService.getInstance().getProduct(name, slug))
       .then((result) => { if (!stale) setLoaded(result ?? (card ?? 'missing')); })
       .catch(() => { if (!stale) setLoaded(card ?? 'missing'); });
     return () => { stale = true; };
@@ -204,7 +205,9 @@ const ProductPage: React.FC<Props> = ({ slug, businessName, logo, phone, currenc
 
   // LT-569: a view for the owner's most viewed - a real product of the live site, never a draft or a preview.
   useEffect(() => {
-    if (product && !partial && !drafts && countsHere()) noteProductView(window.location.hostname.split('.')[0], product.id);
+    if (!product || partial || drafts || !countsHere()) return;
+    const { id } = product;
+    void withSiteName(async (name) => { noteProductView(name, id); }).catch(() => undefined);
   }, [product, partial, drafts]);
 
   useEffect(() => {

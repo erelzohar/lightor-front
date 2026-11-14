@@ -1,5 +1,6 @@
 import axios from 'axios';
 import globals from './globals';
+import { siteName, siteNameNow } from './site';
 import { Appointment } from '../models/Appointment';
 import { BusySlot } from '../models/BusySlot';
 import { ClassOccurrence } from '../models/ClassOccurrence';
@@ -88,7 +89,7 @@ class AppointmentService {
    * exactly as it did.
    */
   public async getCalendar(startDate?: number): Promise<{ busy: BusySlot[]; classes: ClassOccurrence[] }> {
-    const subdomain = window.location.hostname.split('.')[0];
+    const subdomain = siteNameNow() ?? await siteName();
 
     const response = await axios.get<any>(`${this.baseUrl}/availability`, {
       params: {
@@ -120,7 +121,7 @@ class AppointmentService {
    */
   public async resolveManageCode(code: string): Promise<{ appointmentId: string; manageToken: string } | null> {
     try {
-      const subdomain = window.location.hostname.split('.')[0];
+      const subdomain = siteNameNow() ?? await siteName();
       const response = await axios.get<any>(`${this.baseUrl}/manage-code/${encodeURIComponent(code)}`, {
         params: { subdomain },
       });

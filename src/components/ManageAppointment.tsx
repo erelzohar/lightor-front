@@ -9,6 +9,7 @@ import AppointmentService from '../services/AppointmentService';
 import NotFound from './NotFound';
 import { useTheme } from '../hooks/useTheme';
 import WebConfigService from '../services/WebConfigService';
+import { withSiteName } from '../services/site';
 import { WebsiteConfig } from '../models/WebsiteConfig';
 import Loading from './Loading';
 import ImagesService from '../services/ImagesService';
@@ -69,7 +70,7 @@ const ManageAppointment: React.FC = () => {
         // user_id. The by-user_id endpoint is owner-scoped and needs an
         // account; a customer following an SMS manage link has only a manage
         // token, so that call rejected and the page fell through to its 404.
-        const config = await configService.getWebConfig(window.location.hostname.split('.')[0]);
+        const config = await withSiteName((name) => configService.getWebConfig(name));
         if (!config) throw new Error('Error loading config');
         setConfig(config);
         setMinCancelTime(config.minCancelTimeMS);

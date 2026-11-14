@@ -46,6 +46,37 @@ describe('readInlineConfig', () => {
     inline(JSON.stringify({ subDomain: 'erelos', config: [1] }));
     expect(readInlineConfig(document, 'erelos.lightor.app')).toBeNull();
   });
+
+  // LT-661: on a business's own domain the first label says nothing; the edge
+  // writes the host it served the page on, and that must be this host.
+  it("reads the config on a business's own domain when it was served for that host", () => {
+    inline(JSON.stringify({ subDomain: 'dana', host: 'www.dana-studio.co.il', fetchedAt: '2026-11-15T10:00:00.000Z', config: { businessName: 'Dana' } }));
+    expect(readInlineConfig(document, 'www.dana-studio.co.il')).toEqual({
+      subDomain: 'dana',
+      host: 'www.dana-studio.co.il',
+      fetchedAt: '2026-11-15T10:00:00.000Z',
+      config: { businessName: 'Dana' },
+    });
+    expect(readInlineConfig(document, 'WWW.Dana-Studio.co.il')).not.toBeNull();
+    // Another outside host, the bare domain included: not this page's config.
+    expect(readInlineConfig(document, 'dana-studio.co.il')).toBeNull();
+    expect(readInlineConfig(document, 'www.another-business.com')).toBeNull();
+    // On a Lightor host the rule is the first label, as before, whatever `host` says.
+    expect(readInlineConfig(document, 'dana.lightor.app')).not.toBeNull();
+    expect(readInlineConfig(document, 'zoharsweets.lightor.app')).toBeNull();
+  });
+
+  it("refuses a config without a host on a business's own domain, even when the first label matches", () => {
+    inline(JSON.stringify({ subDomain: 'www', config: { businessName: 'Someone' } }));
+    expect(readInlineConfig(document, 'www.dana-studio.co.il')).toBeNull();
+    document.getElementById(INLINE_CONFIG_ID)?.remove();
+    inline(JSON.stringify({ subDomain: 'dana', host: 42, config: { businessName: 'Dana' } }));
+    expect(readInlineConfig(document, 'www.dana-studio.co.il')).toBeNull();
+    document.getElementById(INLINE_CONFIG_ID)?.remove();
+    // A look-alike of the zone is an outside host.
+    inline(JSON.stringify({ subDomain: 'dana', host: 'dana.lightor.app', config: { businessName: 'Dana' } }));
+    expect(readInlineConfig(document, 'dana.lightor.app.attacker.com')).toBeNull();
+  });
 });
 
 describe('sameConfig', () => {

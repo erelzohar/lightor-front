@@ -54,6 +54,7 @@ import { legacyLayout } from './services/legacyLayout';
 import { scrollToSection } from './utils/sections';
 import { awaitsPreviewData } from './services/previewMode';
 import { countsHere, noteVisit } from './services/visits';
+import { outsideHostConfig, siteNameNow } from './services/site';
 import AccessibilityMenu from './components/a11y/AccessibilityMenu';
 import AccessibilityStatement from './components/a11y/AccessibilityStatement';
 import { setA11yMenuEnabled } from './services/a11yPrefs';
@@ -338,7 +339,10 @@ function MainContent() {
       }
 
       try {
-        const subdomain = window.location.hostname.split('.')[0];
+        // LT-661: the first label on a Lightor host, as always. On a
+        // business's own domain the inlined config names the site; without
+        // one the name is not known yet, and the API is asked by host below.
+        const subdomain = siteNameNow();
 
         // The edge shell (LT-194) inlined this host's config: paint from it
         // now — no first round trip — and let the API correct it in the
@@ -346,7 +350,7 @@ function MainContent() {
         // shell also wrote the title and meta tags, so none of the client
         // side head work below runs on this path.
         const inline = readInlineConfig(document, window.location.hostname);
-        if (inline) {
+        if (inline && subdomain !== null) {
           let shellConfig: WebsiteConfig | null = null;
           try {
             shellConfig = WebsiteConfig.fromJSON(inline.config);
@@ -379,7 +383,11 @@ function MainContent() {
           }
         }
 
-        const result = await WebConfigService.getInstance().getWebConfig(subdomain);
+        // An outside host the edge passed through bare (LT-661): the API
+        // answers this host's config in the one call that also names the site.
+        const result = subdomain !== null
+          ? await WebConfigService.getInstance().getWebConfig(subdomain)
+          : WebsiteConfig.fromJSON(await outsideHostConfig());
 
         if (isPreviewRef.current) return;
 

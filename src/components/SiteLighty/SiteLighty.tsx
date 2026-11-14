@@ -3,9 +3,10 @@ import type { FormEvent, KeyboardEvent, PointerEvent as ReactPointerEvent } from
 import { AnimatePresence, motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { AlertTriangle, ArrowLeft, Phone, Send, X } from 'lucide-react';
-import { Turnstile } from '@marsidev/react-turnstile';
+import SiteTurnstile from '../SiteTurnstile';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { visitorPass, useVisitorPass } from '../../services/visitorPass';
+import { withSiteName } from '../../services/site';
 import siteAssistantService, { type AssistantTurn } from '../../services/SiteAssistantService';
 import { reducedMotion } from '../../services/generateReveal';
 import { scrollToSection, sectionOf } from '../../utils/sections';
@@ -59,9 +60,6 @@ interface SiteLightyProps {
 /** Load the 3D button only when it costs the visitor nothing they asked for. */
 const lightMode = (): boolean =>
   reducedMotion() || (navigator as Navigator & { connection?: { saveData?: boolean } }).connection?.saveData === true;
-
-
-const subdomainOf = (): string => window.location.hostname.split('.')[0];
 
 const LINK_CLS = 'underline underline-offset-2 font-semibold text-primary-readable dark:text-primary-dark-readable';
 
@@ -286,7 +284,7 @@ export default function SiteLighty({ businessName, leadsSite, phone, demo = fals
     setNotice(null);
     setBusy(true);
     try {
-      const res = await withPass(() => siteAssistantService.ask(subdomainOf(), message, history, language));
+      const res = await withPass(() => withSiteName((site) => siteAssistantService.ask(site, message, history, language)));
       if (!res) setNotice(t('assistant.error.verify'));
       else if (res.ok && res.reply) setTurns((now) => [...now, { role: 'assistant', text: res.reply as string }]);
       else if (res.status === 429 || res.status === 503) setNotice(t('assistant.error.resting'));
@@ -303,12 +301,12 @@ export default function SiteLighty({ businessName, leadsSite, phone, demo = fals
     setBusy(true);
     setNotice(null);
     try {
-      const res = await withPass(() => siteAssistantService.report(subdomainOf(), {
+      const res = await withPass(() => withSiteName((site) => siteAssistantService.report(site, {
         message,
         ...(report.contact.trim() ? { contact: report.contact.trim() } : {}),
         pageUrl: window.location.href.slice(0, 300),
         language,
-      }));
+      })));
       if (res?.ok) {
         setMode('reported');
         setReport({ message: '', contact: '' });
@@ -454,8 +452,7 @@ export default function SiteLighty({ businessName, leadsSite, phone, demo = fals
               {/* The visitor check: once, only when there is no pass yet. Usually invisible. */}
               {wantsPass && !hasPass && (
                 <div className="flex justify-center" data-testid="lighty-turnstile">
-                  <Turnstile
-                    siteKey={import.meta.env.VITE_TURNSTILE_SITE_KEY}
+                  <SiteTurnstile
                     onSuccess={(token) => void visitorPass.handshake(token)}
                     options={{ theme: 'auto', size: 'flexible', appearance: 'interaction-only' }}
                   />

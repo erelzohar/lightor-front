@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { useLanguage } from '../../contexts/LanguageContext';
 import ImagesService from '../../services/ImagesService';
 import WebConfigService from '../../services/WebConfigService';
+import { withSiteName } from '../../services/site';
 import { readInlinePage } from '../../services/edgeShell';
 import { followLink, useSiteNav } from '../../services/siteNav';
 import { lastPostList, rememberPostList } from '../../services/postCards';
@@ -130,7 +131,7 @@ export const usePostList = (drafts?: PostCard[]): { posts: PostCard[] | null; fa
     if (drafts) return;
     if (posts) { rememberPostList(posts); return; }
     let live = true;
-    WebConfigService.getInstance().getPosts(window.location.hostname.split('.')[0])
+    withSiteName((name) => WebConfigService.getInstance().getPosts(name))
       .then((list) => { if (!live) return; rememberPostList(list); setPosts(list); })
       .catch(() => { if (live) setFailed(true); });
     return () => { live = false; };

@@ -9,10 +9,14 @@
  *
  * Absent or unusable, nothing changes: the app fetches as it always did.
  */
+import { isLightorHost, plainHost } from './siteHost';
+
 export const INLINE_CONFIG_ID = 'lightor-config';
 
 export interface InlineConfig {
   subDomain: string;
+  /** LT-661: the host the edge served this page on; what names the site on a business's own domain. */
+  host?: string;
   /** When the edge fetched it (ISO); informational. */
   fetchedAt: string;
   /** The API's `data` object, verbatim. */
@@ -23,6 +27,11 @@ export interface InlineConfig {
  * The inlined config, but only when it is for this very host: a shell copied
  * onto another hostname (a mirror, a proxy, a cached page served for the
  * wrong tenant) must never paint someone else's business.
+ *
+ * On `<name>.lightor.app` the host's first label is the site's name. On a
+ * business's own domain (LT-661) the name says nothing, so the edge writes
+ * the host it served the page on beside the config, and that must be this
+ * host.
  */
 export const readInlineConfig = (doc: Document, hostname: string): InlineConfig | null => {
   const element = doc.getElementById(INLINE_CONFIG_ID);
@@ -38,13 +47,18 @@ export const readInlineConfig = (doc: Document, hostname: string): InlineConfig 
   }
   if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return null;
 
-  const { subDomain, fetchedAt, config } = parsed as Record<string, unknown>;
+  const { subDomain, host, fetchedAt, config } = parsed as Record<string, unknown>;
   if (typeof subDomain !== 'string' || !subDomain) return null;
   if (!config || typeof config !== 'object' || Array.isArray(config)) return null;
-  if (hostname.split('.')[0] !== subDomain) return null;
+  if (isLightorHost(hostname)) {
+    if (hostname.split('.')[0] !== subDomain) return null;
+  } else if (typeof host !== 'string' || !host || plainHost(host) !== plainHost(hostname)) {
+    return null;
+  }
 
   return {
     subDomain,
+    ...(typeof host === 'string' && host ? { host } : {}),
     fetchedAt: typeof fetchedAt === 'string' ? fetchedAt : '',
     config: config as Record<string, unknown>,
   };
