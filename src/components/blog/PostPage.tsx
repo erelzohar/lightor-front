@@ -6,6 +6,7 @@ import { readInlinePage } from '../../services/edgeShell';
 import WebConfigService from '../../services/WebConfigService';
 import { postCardOf, rememberPosts } from '../../services/postCards';
 import ImagesService from '../../services/ImagesService';
+import { useCoverOf } from '../../services/sitePictures';
 import { BLOG_PATH, parsePost, parsePostCard, type Post, type PostBlock, type PostCard } from '../../models/Post';
 import type { PostLayout } from '../../models/DesignConfig';
 import Loading from '../Loading';
@@ -55,8 +56,8 @@ export const PostBody: React.FC<{ blocks: PostBlock[] }> = ({ blocks }) => (
 
 /**
  * LT-610: a post at its own address. 'classic': the picture above a column of
- * text; 'wide': the picture wide behind the title (classic when there is no
- * picture). From a card seen on this visit the title and picture draw at once.
+ * text; 'wide': the picture wide behind the title (classic when neither the
+ * post nor the site has a picture). From a card seen on this visit the title and picture draw at once.
  */
 const PostPage: React.FC<Props> = ({ slug, businessName, logo, timeZone, layout = 'classic', blogTitle, cta, draft }) => {
   const { t } = useLanguage();
@@ -92,6 +93,8 @@ const PostPage: React.FC<Props> = ({ slug, businessName, logo, timeZone, layout 
   }, [slug, data, draft]);
 
   const post = data?.post;
+  // LT-658: with no picture of its own, one of the site's.
+  const cover = useCoverOf(post);
   useEffect(() => {
     if (!post) return;
     const before = document.title;
@@ -115,7 +118,7 @@ const PostPage: React.FC<Props> = ({ slug, businessName, logo, timeZone, layout 
     }
   };
   const updated = new Date(post.updatedAt).getTime() - new Date(post.publishedAt).getTime() > DAY_MS ? f.date(post.updatedAt) : '';
-  const wide = layout === 'wide' && !!post.cover;
+  const wide = layout === 'wide' && !!cover;
   const blogName = blogTitle?.trim() || t('blog.title');
 
   const crumbs = (light: boolean) => (
@@ -160,7 +163,7 @@ const PostPage: React.FC<Props> = ({ slug, businessName, logo, timeZone, layout 
           {chip(false)}
           <h1 className="lt-blog-title font-bold text-light-text break-words [--lt-lh:1.15] [--lt-size:clamp(2rem,1.5rem+2vw,3.25rem)] dark:text-dark-text">{post.title}</h1>
           {byline(false)}
-          {post.cover && <PostCover post={post} eager className="mt-8 aspect-video rounded-design-card" />}
+          {cover && <PostCover post={post} eager className="mt-8 aspect-video rounded-design-card" />}
         </header>
       )}
 

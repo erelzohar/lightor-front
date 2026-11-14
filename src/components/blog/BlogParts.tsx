@@ -5,6 +5,7 @@ import WebConfigService from '../../services/WebConfigService';
 import { readInlinePage } from '../../services/edgeShell';
 import { followLink, useSiteNav } from '../../services/siteNav';
 import { lastPostList, rememberPostList } from '../../services/postCards';
+import { useCoverOf } from '../../services/sitePictures';
 import { parsePostCard, postPath, type PostCard } from '../../models/Post';
 import './blog.css';
 
@@ -51,14 +52,19 @@ export const PostMeta: React.FC<{ post: PostCard; timeZone?: string; className?:
   );
 };
 
-/** The post's picture, or its first letter on the site's colour. Always decorative: the title says it. */
-export const PostCover: React.FC<{ post: Pick<PostCard, 'cover' | 'title'>; className?: string; eager?: boolean; imgClassName?: string }> = ({ post, className = '', eager = false, imgClassName = '' }) => {
+/**
+ * The post's picture; with none of its own, one of the site's (LT-658), and on
+ * a site with no picture at all its first letter on the site's colour. Always
+ * decorative: the title says it.
+ */
+export const PostCover: React.FC<{ post: Pick<PostCard, 'cover' | 'title'> & { slug?: string }; className?: string; eager?: boolean; imgClassName?: string }> = ({ post, className = '', eager = false, imgClassName = '' }) => {
   const [broken, setBroken] = useState(false);
-  if (post.cover && !broken) {
+  const cover = useCoverOf(post);
+  if (cover && !broken) {
     return (
       <div className={`overflow-hidden ${className}`}>
         <img
-          src={ImagesService.getInstance().getImage(post.cover)}
+          src={ImagesService.getInstance().getImage(cover)}
           alt=""
           loading={eager ? 'eager' : 'lazy'}
           decoding="async"

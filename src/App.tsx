@@ -27,6 +27,7 @@ import { blogLooksOf, blogSectionLayoutOf, withBlogBlock } from './services/blog
 import { parsePost, previewPostsOf, type Post } from './models/Post';
 import { sitePageOf } from './services/sitePages';
 import { SiteNavContext } from './services/siteNav';
+import { SitePicturesContext, sitePicturesOf } from './services/sitePictures';
 import { ProductInquiryContext, type ProductInquiry } from './services/productAction';
 import { draftProducts, productsHavePage } from './models/Product';
 import { pickBandSlot } from './services/bandSlot';
@@ -471,6 +472,8 @@ function MainContent() {
   useSectionDeepLinks(!loading && !!config && atHome);
 
   const editState = useMemo(() => ({ editing }), [editing]);
+  // LT-658: a post with no picture of its own shows one of the site's.
+  const sitePictures = useMemo(() => sitePicturesOf(config), [config]);
   // LT-545: the page in the frame, for the editor's page switcher (a tile clicked there moves it too).
   useEffect(() => {
     if (editing) postToEditor({ type: 'LT_PAGE', path: location.pathname }, editorOriginRef.current);
@@ -676,6 +679,7 @@ function MainContent() {
   return (
     <EditContext.Provider value={editState}>
     <SiteNavContext.Provider value={siteNav}>
+    <SitePicturesContext.Provider value={sitePictures}>
     <ProductInquiryContext.Provider value={inquiryState}>
     <MotionConfig reducedMotion={still ? 'always' : 'user'}>
     <div className="min-h-screen overflow-x-clip bg-light-bg dark:bg-dark-bg transition-colors duration-300">
@@ -1031,6 +1035,7 @@ function MainContent() {
     </div>
     </MotionConfig>
     </ProductInquiryContext.Provider>
+    </SitePicturesContext.Provider>
     </SiteNavContext.Provider>
     </EditContext.Provider>
   );
