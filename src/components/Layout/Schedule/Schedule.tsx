@@ -1493,7 +1493,11 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
                 // The whole flow collapses into a green dot: shrink + round +
                 // fill emerald, then the check circle springs in its place.
                 style={{ transformOrigin: 'center', backgroundColor: 'rgba(16,185,129,0)' }}
-                className="overflow-hidden"
+                // LT-660: the clip (for the exit) sat flush on the flow's
+                // edges, so a full-width button growing 2% on hover lost its
+                // rounded ends. -m-3 p-3 moves the clip 12px out into the
+                // card's own padding and leaves the layout where it was.
+                className="overflow-hidden -m-3 p-3"
                 exit={{
                   scale: 0.06,
                   borderRadius: '50%',
