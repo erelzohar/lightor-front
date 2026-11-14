@@ -40,6 +40,31 @@ describe("a site's pictures", () => {
     expect(found.order).toEqual(['a', 'b']);
   });
 
+  it("put the site's own first (the build's AI pictures, the owner's), then stock of its trade", () => {
+    const found = sitePicturesOf({
+      components: {
+        hero: { heroImageSrc: 'https://api.lightor.app/packs/therapy/6.jpg' },
+        portfolio: { items: [{ url: 'https://api.lightor.app/packs/therapy/1.jpg' }, { url: 'own-upload.webp' }] },
+      },
+      appointmentTypes: [{ image: 'https://api.lightor.app/api/images/tmp-ai-1.webp' }],
+    });
+    expect(found.pictures).toEqual([
+      'own-upload.webp',
+      'https://api.lightor.app/api/images/tmp-ai-1.webp',
+      'https://api.lightor.app/packs/therapy/1.jpg',
+      'https://api.lightor.app/packs/therapy/6.jpg',
+    ]);
+  });
+
+  it('leave a general stock photo out once the site has a picture that fits, and keep it when it has nothing else', () => {
+    const general = 'https://api.lightor.app/packs/general/4.jpg';
+    // before the build's pictures land: the stand-in hero is all there is
+    expect(sitePicturesOf({ components: { hero: { heroImageSrc: general } }, products: { items: [{ images: [] }] } }).pictures).toEqual([general]);
+    // a product's picture has landed: the posts take it, never the stand-in
+    expect(sitePicturesOf({ components: { hero: { heroImageSrc: general } }, products: { items: [{ images: [{ url: 'https://api.lightor.app/api/images/tmp-ai-2.webp' }] }] } }).pictures)
+      .toEqual(['https://api.lightor.app/api/images/tmp-ai-2.webp']);
+  });
+
   it('are none for a config with no picture, and for no config', () => {
     expect(sitePicturesOf({}).pictures).toEqual([]);
     expect(sitePicturesOf(null)).toEqual({ pictures: [], order: [] });
