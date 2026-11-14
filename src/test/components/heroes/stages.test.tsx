@@ -122,6 +122,22 @@ describe('the scroll heroes', () => {
     expect(held.container.querySelector('[style*="200vh"]')).toBeNull();
   });
 
+  // LT-657 (Erel's phone, 2026-11-14): the buttons were pinned to the bottom over a
+  // fixed gap; two of them wrapped to two rows and covered the social links.
+  it('expand stands its buttons under the social links, in one column with the words', () => {
+    const { container } = render(hero('expand', { social: Social.fromJSON({ instagram: 'https://instagram.com/noa', facebook: 'https://facebook.com/noa' }) }));
+    const foot = container.querySelector('[data-testid="expand-foot"]')!;
+    const book = screen.getByRole('link', { name: 'קביעת תור' });
+    const instagram = screen.getByRole('button', { name: 'footer.social.follow.instagram' });
+    expect(foot.contains(book)).toBe(true);
+    expect(foot.contains(instagram)).toBe(true);
+    // the links come first, the buttons after them, and the buttons' row is in the flow
+    expect(instagram.compareDocumentPosition(book) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    const row = book.parentElement!;
+    expect(row.className).not.toMatch(/\babsolute\b/);
+    expect(row.className).toContain('relative');
+  });
+
   it('expand is sticky in a box that does not clip it', () => {
     const { container } = render(hero('expand'));
     expect(container.querySelector('[style*="200vh"]')).not.toBeNull();

@@ -83,3 +83,13 @@ export const parseBlog = (json: unknown): BlogSummary | undefined => {
   if (!latest.length) return undefined;
   return { total: typeof r.total === 'number' ? r.total : latest.length, latest };
 };
+
+/**
+ * LT-657: a wizard's build carries its sample posts whole (`posts.items`), as
+ * it carries its products: the preview opens each on its own page from them,
+ * with nothing to fetch. A real site's config never has them.
+ */
+export const previewPostsOf = (config: unknown): Post[] => {
+  const items = (config as { posts?: { items?: unknown } } | null)?.posts?.items;
+  return (Array.isArray(items) ? items : []).map(parsePost).filter((post): post is Post => !!post && post.body.length > 0);
+};

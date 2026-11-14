@@ -24,7 +24,7 @@ import SectionDivider, { type SectionTone } from './components/SectionDivider';
 import { mainCta, takesBookings } from './services/siteMode';
 import { linkFrom } from './services/siteNav';
 import { blogLooksOf, blogSectionLayoutOf, withBlogBlock } from './services/blogLooks';
-import { parsePost, type Post } from './models/Post';
+import { parsePost, previewPostsOf, type Post } from './models/Post';
 import { sitePageOf } from './services/sitePages';
 import { SiteNavContext } from './services/siteNav';
 import { ProductInquiryContext, type ProductInquiry } from './services/productAction';
@@ -163,6 +163,8 @@ function MainContent() {
   const [isPreview, setIsPreview] = useState<boolean>(false);
   // LT-610: the dashboard's post before it is published, drawn at its address in the preview only.
   const [previewPost, setPreviewPost] = useState<Post | null>(null);
+  // LT-657: the sample posts of a wizard's build, whole, so each opens its own page in the preview.
+  const [previewPosts, setPreviewPosts] = useState<Post[]>([]);
   // LT-387: the register wizard's preview shows Lighty as a demo - every new
   // account's site has him (Plus is free at first), though its config does not say so yet.
   const [assistantDemo, setAssistantDemo] = useState(false);
@@ -252,6 +254,7 @@ function MainContent() {
         // LT-202: the AI's proposed questions have no server key yet.
         const payload = keyPreviewQuestions(event.data.config);
         const draftPost = parsePost((event.data.config as { previewPost?: unknown } | null)?.previewPost);
+        const samplePosts = previewPostsOf(event.data.config);
         let cfg: WebsiteConfig;
         try {
           cfg = WebsiteConfig.fromJSON(payload);
@@ -278,6 +281,7 @@ function MainContent() {
           setConfig(cfg);
           setIsPreview(true);
           setPreviewPost(draftPost);
+          setPreviewPosts(samplePosts);
           setAssistantDemo(demo);
           setLoading(false);
           setLanguageRef.current(cfg.defaultLanguage as Language);
@@ -490,7 +494,9 @@ function MainContent() {
   if (!config) return inactive ? <SiteNotActive /> : <NotFound />;
   // LT-610: the blog's pages exist while the config carries a blog (Pro, a post out).
   const blogPage = page.kind === 'blog' || page.kind === 'post';
-  const draftShown = isPreview && page.kind === 'post' && previewPost?.slug === page.slug ? previewPost : undefined;
+  const draftShown = isPreview && page.kind === 'post'
+    ? (previewPost?.slug === page.slug ? previewPost : previewPosts.find((post) => post.slug === page.slug))
+    : undefined;
   if (page.kind === 'missing' || (blogPage ? !config.blog && !draftShown : !atHome && !config.products?.pages)) return <NotFound />;
 
   // Build the in-flow content sections with their solid background "tone".

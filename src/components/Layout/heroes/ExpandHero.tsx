@@ -39,6 +39,7 @@ const ExpandHero: React.FC<ExpandHeroProps> = ({ config, alt, actions, social, r
   const first = useRef<HTMLDivElement>(null);
   const second = useRef<HTMLDivElement>(null);
   const words = useRef<HTMLDivElement>(null);
+  const shade = useRef<HTMLDivElement>(null);
   const hint = useRef<HTMLDivElement>(null);
 
   const draw = useCallback(() => {
@@ -66,6 +67,7 @@ const ExpandHero: React.FC<ExpandHeroProps> = ({ config, alt, actions, social, r
       const shown = clamp((p - WORDS_FROM) / (1 - WORDS_FROM), 0, 1);
       words.current.style.opacity = String(shown);
       words.current.style.transform = `translate3d(0, ${((1 - shown) * 24).toFixed(1)}px, 0)`;
+      if (shade.current) shade.current.style.opacity = String(shown);
     }
     if (hint.current) hint.current.style.opacity = String(1 - clamp(p * 5, 0, 1));
   }, [rtl]);
@@ -95,15 +97,21 @@ const ExpandHero: React.FC<ExpandHeroProps> = ({ config, alt, actions, social, r
             )}
           </>
         )}
-        <div ref={words} className="absolute inset-x-0 bottom-0 pb-[calc(4rem_+_10vh)] pt-24 px-4 text-center text-white bg-gradient-to-t from-black/70 via-black/40 to-transparent" style={moving ? { opacity: 0 } : undefined}>
-          <h1 className="font-bold leading-tight max-w-4xl mx-auto">
-            <EditText path="components.hero.title">{config.title}</EditText>
-            {config.subtitle && <span className="block"><EditText path="components.hero.subtitle">{config.subtitle}</EditText></span>}
-          </h1>
-          {config.description && <p className="mt-4 text-lg md:text-xl text-white/90 max-w-2xl mx-auto"><EditText path="components.hero.description">{config.description}</EditText></p>}
-          <div className="mt-4 flex justify-center [&_button]:bg-white/90">{social}</div>
+        {/* LT-657: the buttons stand under the words, in the same column. They used to
+            be pinned to the bottom over a fixed gap in the words' box; on a phone two
+            buttons wrap to two rows, taller than the gap, and covered the social links. */}
+        <div className="absolute inset-x-0 bottom-0 text-center text-white" data-testid="expand-foot">
+          <div ref={shade} className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/40 to-transparent" style={moving ? { opacity: 0 } : undefined} aria-hidden="true" />
+          <div ref={words} className="relative pt-24 px-4" style={moving ? { opacity: 0 } : undefined}>
+            <h1 className="font-bold leading-tight max-w-4xl mx-auto">
+              <EditText path="components.hero.title">{config.title}</EditText>
+              {config.subtitle && <span className="block"><EditText path="components.hero.subtitle">{config.subtitle}</EditText></span>}
+            </h1>
+            {config.description && <p className="mt-4 text-lg md:text-xl text-white/90 max-w-2xl mx-auto"><EditText path="components.hero.description">{config.description}</EditText></p>}
+            <div className="mt-4 flex justify-center [&_button]:bg-white/90">{social}</div>
+          </div>
+          <div className="relative mt-5 pb-[6vh] px-4 flex flex-wrap items-center justify-center gap-3">{actions}</div>
         </div>
-        <div className="absolute inset-x-0 bottom-[6vh] px-4 flex flex-wrap items-center justify-center gap-3">{actions}</div>
         {moving && (
           <div ref={hint} className="absolute inset-x-0 bottom-1 flex justify-center text-light-text/60 dark:text-dark-text/60 pointer-events-none" aria-hidden="true">
             <ChevronDown className="w-5 h-5 animate-bounce" />
