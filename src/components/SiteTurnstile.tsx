@@ -27,11 +27,16 @@ export interface SiteTurnstileHandle {
   reset: () => void;
 }
 
-/** The widget's own sizes (Cloudflare's): the frame takes the same room. */
+/**
+ * The widget's own sizes (Cloudflare's): the frame takes the same room. A
+ * flexible widget is as wide as its container and 300px at least; with no
+ * width of its own the box behaves as the widget's does, filling a block and
+ * standing 300px wide inside a flex row.
+ */
 const FRAME_SIZE: Record<NonNullable<SiteTurnstileOptions['size']>, CSSProperties> = {
   normal: { width: 300, height: 65 },
   compact: { width: 150, height: 140 },
-  flexible: { width: '100%', minWidth: 300, height: 65 },
+  flexible: { minWidth: 300, height: 65 },
 };
 
 /** What the real widget's own frame is called. */

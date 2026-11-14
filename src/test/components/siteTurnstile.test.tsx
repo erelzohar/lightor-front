@@ -226,8 +226,11 @@ describe('the visitor check (LT-661)', () => {
       expect(frame().style.height).toBe('140px');
       unmount();
       render(<SiteTurnstile onSuccess={vi.fn()} options={{ size: 'flexible' }} />);
-      expect(screen.getByTestId('pass-frame').style.width).toBe('100%');
+      // As wide as its container, 300px at least: no width of its own.
+      expect(screen.getByTestId('pass-frame').style.width).toBe('');
       expect(screen.getByTestId('pass-frame').style.minWidth).toBe('300px');
+      expect(frame().style.width).toBe('100%');
+      expect(frame().style.height).toBe('65px');
     });
 
     it('loads the frame again on reset, out of sight again, and listens to the new one only', async () => {
