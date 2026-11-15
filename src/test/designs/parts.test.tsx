@@ -107,7 +107,7 @@ describe('the design parts (LT-603)', () => {
     expect(await drawsAtOnce(configOf([{ type: 'gallery', variant }]))).toBe(0);
   });
 
-  it.each(['parallax', 'expand', 'aero', 'slant', 'mesh', 'split'])('a hero drawn as %s waits for nothing', async (variant) => {
+  it.each(['parallax', 'expand', 'aero', 'slant', 'mesh', 'fan', 'split'])('a hero drawn as %s waits for nothing', async (variant) => {
     expect(await drawsAtOnce(configOf([{ type: 'hero', variant }]))).toBe(0);
   });
 

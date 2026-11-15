@@ -24,6 +24,7 @@ import { CUTOUT_CLASS, useCutout } from '../../utils/cutout';
 import { useStill } from '../../hooks/useA11yPrefs';
 import { HERO_IMAGE } from './heroes/common';
 import type { HeroStat } from './heroes/AeroHero';
+import { fanPictures } from './heroes/fan';
 import { part } from '../../designs/parts';
 
 // LT-603: the heroes in their own files (LT-531) come in their own parts.
@@ -32,6 +33,7 @@ const ExpandHero = part('heroExpand', (m) => m.default);
 const AeroHero = part('heroAero', (m) => m.default);
 const SlantHero = part('heroSlant', (m) => m.default);
 const CollageHero = part('heroCollage', (m) => m.default);
+const FanHero = part('heroFan', (m) => m.default);
 // LT-605: festive's live field of colours.
 const MeshHero = part('heroMesh', (m) => m.default);
 // LT-605: festive's raised button with the splash.
@@ -209,7 +211,7 @@ const Hero: React.FC<HeroProps> = ({ config, social, phone, isContactVisible, ap
   const decor = design?.decor ?? 'none';
   const accent = isDarkMode ? palette?.colorPrimaryDark : palette?.colorPrimary;
   // Its own backdrop: no Vanta under it, and no three.js to fetch for it.
-  const ownBackdrop = full || heroLayout === 'collage' || decor === 'sonar' || decor === 'metal';
+  const ownBackdrop = full || heroLayout === 'collage' || heroLayout === 'fan' || decor === 'sonar' || decor === 'metal';
   const stampText = stampTextFor(config, businessName);
   const animD = (base: number) => animLevel === 'none' ? 0 : animLevel === 'minimal' ? base * 0.25 : base;
 
@@ -575,6 +577,12 @@ const Hero: React.FC<HeroProps> = ({ config, social, phone, isContactVisible, ap
     }
     if (heroLayout === 'aero') {
       return <AeroHero config={config} alt={businessName || ''} cta={cta} contact={renderContactButton(false)} social={renderSocialRow('')} thumbs={thumbs} stat={stats[0]} statPath={statsPath && `${statsPath}.0`} services={tickerItems} rtl={rtl} noTrack={noTrack} />;
+    }
+    if (heroLayout === 'fan') {
+      // LT-667: the site's own pictures, the hero's in the middle; the gallery's (else the products'), then the services'.
+      // Its main button is always solid, as in Erel's reference (a bare word beside the outlined contact button read as the lesser one).
+      const pictures = fanPictures(config.heroImageSrc, thumbs, thumbsOfProducts ? undefined : 'components.portfolio.items', (appointmentTypes ?? []).map((type) => type.image));
+      return <FanHero config={config} alt={businessName || ''} actions={photoButtons} social={renderSocialRow('justify-center')} pictures={pictures} stats={stats} statsPath={statsPath} stamp={decor === 'stamp' ? stampText : undefined} compact={(design?.sectionWidth ?? 'contained') !== 'wide'} cutout={cutout} rtl={rtl} noTrack={noTrack} still={still || editing || animLevel === 'none'} pace={animLevel === 'minimal' ? 0.25 : 1} />;
     }
     if (heroLayout === 'collage') {
       return <CollageHero config={config} alt={businessName || ''} actions={buttons} social={renderSocialRow('justify-center lg:justify-start')} thumbs={thumbs} thumbsPath={thumbsOfProducts ? undefined : 'components.portfolio.items'} stats={stats} statsPath={statsPath} item={itemVariants} container={containerVariants} />;
@@ -965,7 +973,8 @@ const Hero: React.FC<HeroProps> = ({ config, social, phone, isContactVisible, ap
             siblings that precede the content container, so without it the
             hero image simply painted over them — a stamp or sun sliced in
             half by the photo's edge. */}
-        {!full && decor === 'stamp' && stampText && (
+        {/* LT-667: the fan's title is centred and wide: its stamp is a pill above it, not this seal in the corner. */}
+        {!full && decor === 'stamp' && stampText && heroLayout !== 'fan' && (
           <div
             className={`hidden md:flex absolute z-10 top-24 ${decorStart ? 'start-10 lg:start-20' : 'end-10 lg:end-20'} w-28 h-28 rounded-full border-2 border-primary-readable dark:border-primary-dark-readable items-center justify-center -rotate-12 pointer-events-none`}
             aria-hidden="true"

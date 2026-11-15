@@ -253,7 +253,7 @@ describe.each(['he', 'en', 'ar'])('no WCAG A/AA violation axe can see (%s)', (la
       ['bookingBand', ['poster', 'slant', 'quiet', 'card', 'ticket', 'split']],
       ['manifesto', ['display', 'ruled', 'outline', 'marker', 'soft']],
       ['contact', ['split', 'stacked', 'poster', 'editorial', 'statement', 'band', 'cards', 'bubbles']],
-      ['hero', ['centered', 'split', 'image-right', 'poster-split', 'poster-statement', 'parallax', 'expand', 'aero', 'collage', 'slant', 'mesh']],
+      ['hero', ['centered', 'split', 'image-right', 'poster-split', 'poster-statement', 'parallax', 'expand', 'aero', 'collage', 'slant', 'mesh', 'fan']],
     ];
     for (const [type, variants] of layouts) {
       for (const variant of variants) {

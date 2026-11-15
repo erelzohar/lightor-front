@@ -24,7 +24,8 @@ export type NavbarStyle = 'floating' | 'solid' | 'transparent' | 'minimal' | 'ce
 // 'aero' (crisp, half photo, half tight type), 'collage' (serene, three framed pictures).
 // LT-591: 'slant' (electric's own): the words beside a photo that opens on a slant.
 // LT-605: 'mesh' (festive's own, paid): the words over a live field of the site's colours.
-export type HeroLayout = 'image-right' | 'centered' | 'split' | 'text-first' | 'poster-split' | 'poster-statement' | 'fullbleed' | 'parallax' | 'expand' | 'aero' | 'collage' | 'slant' | 'mesh';
+// LT-667: 'fan' (gallery's own): centred words over three of the site's pictures fanned like cards.
+export type HeroLayout = 'image-right' | 'centered' | 'split' | 'text-first' | 'poster-split' | 'poster-statement' | 'fullbleed' | 'parallax' | 'expand' | 'aero' | 'collage' | 'slant' | 'mesh' | 'fan';
 export type SectionDivider = 'none' | 'wave' | 'diagonal' | 'curve' | 'scallop' | 'zigzag';
 export type Density = 'compact' | 'comfortable' | 'spacious';
 // 'poster' (LT-108): the vibe-canvas hero manner — enormous condensed

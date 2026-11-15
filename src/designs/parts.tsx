@@ -54,6 +54,8 @@ export const PARTS = {
   heroAero: () => import('../components/Layout/heroes/AeroHero'),
   heroSlant: () => import('../components/Layout/heroes/SlantHero'),
   heroCollage: () => import('../components/Layout/heroes/CollageHero'),
+  // LT-667: gallery's three fanned pictures under centred words (Erel's Hero10).
+  heroFan: () => import('../components/Layout/heroes/FanHero'),
   heroMesh: () => import('../components/Layout/heroes/MeshHero'),
   heroSonar: () => import('../components/Layout/heroes/SonarField'),
   // LT-605: festive's raised button with the splash (the hero's main button).
@@ -203,7 +205,7 @@ export function optionalPart<K extends PartKey, P extends object>(
 
 // The values a design names, and the part that draws each (the rest are drawn
 // by their section's own file).
-const HERO_PARTS: Record<string, PartKey> = { parallax: 'heroParallax', expand: 'heroExpand', aero: 'heroAero', slant: 'heroSlant', collage: 'heroCollage', mesh: 'heroMesh' };
+const HERO_PARTS: Record<string, PartKey> = { parallax: 'heroParallax', expand: 'heroExpand', aero: 'heroAero', slant: 'heroSlant', collage: 'heroCollage', mesh: 'heroMesh', fan: 'heroFan' };
 const GALLERY_PARTS: Record<string, PartKey> = { clothesline: 'galleryClothesline', curve: 'galleryCurve', cascade: 'galleryCascade' };
 const PRODUCT_PARTS: Record<string, PartKey> = { belt: 'productBelt', hanger: 'productRail', coverflow: 'productCoverflow', orbit: 'productOrbit', drops: 'productShelves', wall: 'productWall' };
 const PAGE_PARTS: Record<string, PartKey> = { rows: 'productShelves', shelves: 'productShelves', wall: 'productWall' };
