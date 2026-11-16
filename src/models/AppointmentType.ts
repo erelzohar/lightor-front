@@ -30,7 +30,9 @@ export class AppointmentType {
     return new AppointmentType(
       json._id,
       json.name,
-      json.price,
+      // LT-670: text, whatever arrived. An AI build sometimes writes a price as a
+      // number, and the price list and the booking widget crashed on its `.trim()`.
+      json.price == null ? undefined : String(json.price),
       json.user_id,
       json.durationMS == null ? '' : String(json.durationMS),
       json.kind,

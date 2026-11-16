@@ -43,10 +43,12 @@ import { part } from '../../designs/parts';
 // LT-603: the stack of pictures (LT-588) comes in its own part.
 const FeatureStack = part('featureStack', (m) => m.default);
 
-// Feature icons are stored in the config by name.
-const FEATURE_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
+// Feature icons are stored in the config by name. LT-670: MapPin, Phone and Mail
+// too - the AI's lists have always offered them, and a highlight about the
+// place or about getting in touch drew the fallback star.
+export const FEATURE_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
   Star, Award, Users, Shield, CheckCircle, Smile, Rocket, Globe,
-  Calendar, Settings, Bell, Heart, Sparkles, Hand, Clock,
+  Calendar, Settings, Bell, Heart, Sparkles, Hand, Clock, MapPin, Phone, Mail,
 };
 
 interface WebsiteConfig {
