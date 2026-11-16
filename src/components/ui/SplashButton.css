@@ -80,6 +80,10 @@
   vector-effect: non-scaling-stroke;
   stroke-dasharray: 60 60;
   stroke-dashoffset: 60;
+  /* LT-669: unseen unless splashing. The dash alone is not "nothing": on a
+     stretched frame with a non-scaling stroke Chrome measures it a little off,
+     and a round cap of a line's tip showed beside the button at rest. */
+  opacity: 0;
 }
 
 /* The light that runs once round the edge: a turning sweep seen through a thin ring. */
@@ -131,8 +135,10 @@
   0%, 85% { opacity: 1; }
   100% { opacity: 0; }
 }
+/* Shown while the lines run out, faded as they end (their last dots stayed while pointed at). */
 @keyframes lt-splash-out {
-  to { stroke-dasharray: 2 60; stroke-dashoffset: -60; }
+  0%, 60% { opacity: 1; }
+  to { stroke-dasharray: 2 60; stroke-dashoffset: -60; opacity: 0; }
 }
 
 /* Only where a pointer can rest on it; a finger gets the press. */
@@ -151,8 +157,9 @@
   .lt-splash:not([data-still]):hover .lt-splash-glow { opacity: 1; }
   .lt-splash:not([data-still]):hover .lt-splash-trace { animation: lt-splash-trace 1.1s linear both; }
   .lt-splash:not([data-still]):hover .lt-splash-trace::before { animation: lt-splash-sweep 1.1s linear both; }
+  /* forwards, not both: while each line waits its turn it stays unseen. */
   .lt-splash:not([data-still]):hover .lt-splash-burst path {
-    animation: lt-splash-out 0.85s cubic-bezier(0.25, 0.7, 0.3, 1) both;
+    animation: lt-splash-out 0.85s cubic-bezier(0.25, 0.7, 0.3, 1) forwards;
     animation-delay: calc(80ms + var(--i) * 12ms);
   }
 }
