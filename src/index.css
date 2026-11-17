@@ -494,6 +494,13 @@ html .lt-ui h2 { font-size: 1.25rem; line-height: 1.35; }
 html[data-type-scale] .lt-ui h3,
 html .lt-ui h3 { font-size: 1.0625rem; line-height: 1.4; }
 
+/* A small page of Lightor's own inside a site (managing a booking, LT-684;
+   back from paying, LT-681) keeps the site's faces but not its display
+   sizes: on a poster site its card title came out as 114px letters, wider
+   than the card. */
+html[data-type-scale] .lt-page h1,
+html .lt-page h1 { font-size: 1.5rem; line-height: 1.3; }
+
 /* LT-356: muted text never fades below 4.5:1. useTheme sets --mt-l-<step> /
    --mt-d-<step> to max(the step's alpha, the lowest alpha this palette's text
    still reads at), so a step that already passes keeps its look. Disabled

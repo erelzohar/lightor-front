@@ -51,6 +51,21 @@ describe('the manage-booking page (LT-356)', () => {
     expect(screen.getByRole('link', { name: 'a11y.menu.statement' })).toHaveAttribute('href', '#accessibility');
   });
 
+  it("keeps its card title out of the site's heading scale (LT-684: 114px on a poster site)", async () => {
+    const { unmount } = render(<ManageAppointment />);
+    await screen.findByRole('heading', { level: 1, name: 'manage.manage_title' });
+    expect(screen.getByRole('main')).toHaveClass('lt-page');
+    unmount();
+
+    mocks.getAppointmentById.mockResolvedValue(Appointment.fromJSON({
+      _id: 'a2', user_id: 'u1', type: { _id: 's1', name: 'Haircut', durationMS: '2400000' },
+      name: 'Dana', status: 'cancelled', phone: '0501234567', timestamp: String(Date.now() + 5 * 86_400_000), channelType: 'sms',
+    }));
+    render(<ManageAppointment />);
+    await screen.findByRole('heading', { level: 1 });
+    expect(screen.getByRole('main')).toHaveClass('lt-page');
+  });
+
   it('keeps the statement link when the owner hid the menu', async () => {
     mocks.getWebConfig.mockResolvedValue(site({ accessibility: { widgetHidden: true } }));
     render(<ManageAppointment />);

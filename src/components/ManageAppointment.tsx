@@ -198,7 +198,7 @@ const ManageAppointment: React.FC = () => {
   if (appointment.status !== 'scheduled') {
     const cancelled = appointment.status === 'cancelled';
     return (<>
-      <main className="min-h-screen bg-light-bg dark:bg-dark-bg flex items-center justify-center p-4 transition-colors duration-300">
+      <main className="lt-page min-h-screen bg-light-bg dark:bg-dark-bg flex items-center justify-center p-4 transition-colors duration-300">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -289,7 +289,7 @@ const ManageAppointment: React.FC = () => {
   const businessPhone = config.contact?.phone?.trim() ?? '';
 
   return (<>
-    <main className="min-h-screen bg-light-bg dark:bg-dark-bg flex items-center justify-center p-4 transition-colors duration-300">
+    <main className="lt-page min-h-screen bg-light-bg dark:bg-dark-bg flex items-center justify-center p-4 transition-colors duration-300">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
