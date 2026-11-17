@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { cleanup, render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import Hero from '../../../components/Layout/Hero';
 import Navbar from '../../../components/Layout/Navbar';
@@ -173,6 +173,43 @@ describe('the aero hero', () => {
   it("rolls the business's services along the foot", () => {
     const { container } = render(hero('aero'));
     expect(container.textContent).toContain('מניקור');
+  });
+
+  // LT-680 (Erel 2026-11-17): after a restyle to crisp the button choice changed nothing.
+  const aero = (buttonStyle: string) => hero('aero', { design: DesignConfig.fromJSON({ stylePreset: 'crisp', heroLayout: 'aero', buttonStyle }) });
+  const arrowCircle = (link: HTMLElement) => link.querySelector('.lucide-arrow-up-left, .lucide-arrow-up-right');
+
+  it('keeps its two-part button (a pill and an arrow circle) as its solid one, and as crisp opens', () => {
+    render(aero('solid'));
+    expect(arrowCircle(screen.getByRole('link', { name: 'קביעת תור' }))).not.toBeNull();
+    cleanup();
+    render(hero('aero', { design: DesignConfig.fromJSON({ stylePreset: 'crisp', heroLayout: 'aero' }) }));
+    expect(arrowCircle(screen.getByRole('link', { name: 'קביעת תור' }))).not.toBeNull();
+  });
+
+  it.each([
+    ['outline', 'border-primary-readable'],
+    ['ghost', 'text-primary-readable'],
+    ['gradient', 'overflow-hidden'],
+  ])("draws a %s main button when that is the site's choice of buttons", (style, mark) => {
+    render(aero(style));
+    const main = screen.getByRole('link', { name: 'קביעת תור' });
+    expect(main.className).toContain(mark);
+    expect(arrowCircle(main)).toBeNull();
+    if (style !== 'gradient') expect(main.className).not.toContain('bg-primary ');
+  });
+
+  it("draws the 3D splash button when that is the site's choice", () => {
+    const { container } = render(aero('splash'));
+    expect(container.querySelector('.lt-splash-word')).not.toBeNull();
+  });
+
+  it("leaves the button's words to the editor whatever the choice", () => {
+    for (const style of ['solid', 'outline', 'splash']) {
+      const { container, unmount } = render(<EditContext.Provider value={{ editing: true }}>{aero(style)}</EditContext.Provider>);
+      expect(container.querySelector('[data-lt-edit="components.hero.cta"]')?.textContent).toContain('קביעת תור');
+      unmount();
+    }
   });
 });
 

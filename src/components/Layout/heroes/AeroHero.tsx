@@ -15,6 +15,12 @@ interface AeroHeroProps {
   config: HeroConfig;
   alt: string;
   cta: MainCta | null;
+  /**
+   * LT-680: the main button in the site's choice of buttons (Hero's own),
+   * for any choice but solid; without it the hero draws its two-part button
+   * (a pill and an arrow circle), which is its solid one.
+   */
+  button?: ReactNode;
   /** Shown when there is no main button, and beside it otherwise. */
   contact: ReactNode;
   social: ReactNode;
@@ -35,7 +41,7 @@ interface AeroHeroProps {
  * reference had client logos, and the fact comes from the owner's own words
  * (a stat that survived blockCopy, else the stamp line): never an invented number.
  */
-const AeroHero: React.FC<AeroHeroProps> = ({ config, alt, cta, contact, social, thumbs, stat, statPath, services, rtl, noTrack }) => {
+const AeroHero: React.FC<AeroHeroProps> = ({ config, alt, cta, button, contact, social, thumbs, stat, statPath, services, rtl, noTrack }) => {
   const ed = useEditAttrs();
   const Arrow = rtl ? ArrowUpLeft : ArrowUpRight;
   const circles = thumbs.slice(0, 4);
@@ -82,14 +88,14 @@ const AeroHero: React.FC<AeroHeroProps> = ({ config, alt, cta, contact, social, 
             </div>
           )}
           <div className="flex flex-wrap items-center gap-3">
-            {cta && (
+            {button ?? (cta && (
               <a href={cta.href} className="group inline-flex items-center gap-1" aria-label={cta.label}>
                 <span {...ed('components.hero.cta')} className="rounded-full bg-primary dark:bg-primary-dark text-on-primary dark:text-on-primary-dark px-7 py-3.5 md:py-4 font-medium text-center transition-opacity group-hover:opacity-90">{cta.label}</span>
                 <span className="flex-none w-12 h-12 md:w-14 md:h-14 grid place-items-center rounded-full bg-primary dark:bg-primary-dark text-on-primary dark:text-on-primary-dark transition-transform group-hover:scale-105">
                   <Arrow className="w-5 h-5" aria-hidden="true" />
                 </span>
               </a>
-            )}
+            ))}
             {contact}
           </div>
           {social}

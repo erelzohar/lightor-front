@@ -576,7 +576,9 @@ const Hero: React.FC<HeroProps> = ({ config, social, phone, isContactVisible, ap
       return <MeshHero config={config} businessName={businessName} logo={logo} palette={palette} dark={isDarkMode} still={still || editing} actions={buttons} social={renderSocialRow('')} noTrack={noTrack} />;
     }
     if (heroLayout === 'aero') {
-      return <AeroHero config={config} alt={businessName || ''} cta={cta} contact={renderContactButton(false)} social={renderSocialRow('')} thumbs={thumbs} stat={stats[0]} statPath={statsPath && `${statsPath}.0`} services={tickerItems} rtl={rtl} noTrack={noTrack} />;
+      // LT-680: the owner's choice of buttons; aero's own two-part button is its solid one.
+      const button = buttonStyle === 'solid' ? undefined : renderBookButton(false);
+      return <AeroHero config={config} alt={businessName || ''} cta={cta} button={button} contact={renderContactButton(false)} social={renderSocialRow('')} thumbs={thumbs} stat={stats[0]} statPath={statsPath && `${statsPath}.0`} services={tickerItems} rtl={rtl} noTrack={noTrack} />;
     }
     if (heroLayout === 'fan') {
       // LT-667: the site's own pictures, the hero's in the middle; the gallery's (else the products'), then the services'.
