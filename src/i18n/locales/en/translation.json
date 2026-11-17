@@ -159,6 +159,10 @@
       "phone": "Phone Number",
       "verify": "Verify and Book",
       "helper": "By clicking 'Send Verification Code', a code will be sent to the phone number provided.",
+      "consentSms": "By tapping the button you agree to get appointment texts from Lightor. Msg & data rates may apply. Reply STOP to opt out.",
+      "consentWhatsapp": "By tapping the button you agree to get a code by text and appointment messages on WhatsApp from Lightor. Msg & data rates may apply.",
+      "consentTerms": "Terms",
+      "consentPrivacy": "Privacy",
       "send": {
         "code": "Send Verification Code"
       },

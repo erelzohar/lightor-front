@@ -43,6 +43,7 @@ import { formatPrice } from '../../../utils/currency';
 import { displayPhone, telHref, phoneEntryOf, phoneExampleInText, HOME_COUNTRY } from '../../../utils/phone';
 import { usePhoneInput } from '../../../hooks/usePhoneInput';
 import CodeFrame from '../../common/CodeFrame';
+import TextConsent from './TextConsent';
 import { CodeFrameError, type CodeFrameHandle } from '../../../services/codeFrame';
 
 /** The booking steps in order (the progress dots, and LT-356's step names). */
@@ -2017,9 +2018,14 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
 
                       <span className="relative text-center">{isSubmitting ? <><Loader2 className="animate-spin m-auto" aria-hidden="true" /><span className="sr-only">{t('schedule.form.send.code')}</span></> : t('schedule.form.send.code')}</span>
                     </motion.button>
-                    <p className="mt-4 text-xs text-light-text/60 dark:text-dark-text/50 text-center">
-                      {t('schedule.form.helper')}
-                    </p>
+                    {/* LT-687: a United States number agrees to texts here, in the words the carriers ask for. */}
+                    {phoneInput.country === 'US' ? (
+                      <TextConsent channel={channelType} />
+                    ) : (
+                      <p className="mt-4 text-xs text-light-text/60 dark:text-dark-text/50 text-center">
+                        {t('schedule.form.helper')}
+                      </p>
+                    )}
                   </form>
                 </motion.div>
               )}

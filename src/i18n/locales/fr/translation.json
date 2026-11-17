@@ -159,6 +159,10 @@
       "phone": "Numéro de téléphone",
       "verify": "Confirmer et réserver",
       "helper": "En cliquant sur 'Envoyer le code', un code de vérification sera envoyé au numéro fourni.",
+      "consentSms": "En appuyant sur le bouton, vous acceptez de recevoir de Lightor des SMS concernant votre rendez-vous. Des frais de messages et de données peuvent s'appliquer. Répondez STOP pour vous désinscrire.",
+      "consentWhatsapp": "En appuyant sur le bouton, vous acceptez de recevoir de Lightor un code par SMS et des messages sur votre rendez-vous via WhatsApp. Des frais de messages et de données peuvent s'appliquer.",
+      "consentTerms": "Conditions",
+      "consentPrivacy": "Confidentialité",
       "send": {
         "code": "Envoyer le code"
       },
