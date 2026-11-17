@@ -22,6 +22,21 @@ export interface OtpSendResult {
     status?: number;
 }
 
+/**
+ * The outcome of exchanging the code frame's proof for a phone token
+ * (LT-677). A refusal carries the HTTP status and the server's code:
+ * 400 `PHONE_PROOF_INVALID` when the proof or its number is not taken,
+ * 404 when the API has no such route (numbers abroad are off).
+ */
+export interface PhoneProofResult {
+    ok: boolean;
+    phoneToken?: string;
+    /** The number the proof was for, in E.164, as the server read it. */
+    phone?: string;
+    status?: number;
+    code?: string;
+}
+
 class SMSService {
     /**
      * Contact-form submission — a lead (LT-035, LT-197). The server resolves
@@ -77,6 +92,28 @@ class SMSService {
         } catch (err) {
             console.error(err);
             return null;
+        }
+    }
+
+    /**
+     * A number abroad proves itself in the code frame (LT-677), which hands
+     * the page a proof; this exchanges it for the same short-lived phone
+     * token a verified Israeli code earns. Never throws: no token means the
+     * number is not proven.
+     */
+    public async exchangePhoneProof(idToken: string): Promise<PhoneProofResult> {
+        try {
+            const res = await axios.post<{ success?: boolean; phone?: unknown; phoneToken?: unknown }>(
+                globals.messagingUrl + "/otp/firebase",
+                { idToken }
+            );
+            const phoneToken = res.data?.success ? res.data.phoneToken : null;
+            if (typeof phoneToken !== 'string' || !phoneToken) return { ok: false };
+            return { ok: true, phoneToken, ...(typeof res.data.phone === 'string' ? { phone: res.data.phone } : {}) };
+        } catch (err) {
+            const response = (err as { response?: { status?: number; data?: { code?: unknown } } } | null)?.response;
+            const code = response?.data?.code;
+            return { ok: false, ...(response?.status ? { status: response.status } : {}), ...(typeof code === 'string' ? { code } : {}) };
         }
     }
 }
