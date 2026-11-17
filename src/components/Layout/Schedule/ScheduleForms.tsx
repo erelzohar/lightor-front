@@ -52,7 +52,22 @@ export interface MaterialInputProps {
      */
     inputProps?: React.InputHTMLAttributes<HTMLInputElement>;
     inputRef?: React.Ref<HTMLInputElement>;
+    /**
+     * Drawn at the field's left edge in place of the icon: the phone field's
+     * country chip (LT-677). The input then makes room for it itself
+     * (`inputProps.style`); without it the field is exactly as it was.
+     */
+    leading?: React.ReactNode;
 }
+
+/**
+ * Where a field's `leading` control sits: in the input's own grid cell,
+ * centred on it and at its left edge whatever the page's direction (a
+ * number reads left to right), above the input so it takes the tap.
+ */
+export const LEADING_FIELD_CLASS = ' grid grid-cols-1';
+export const LEADING_CELL_CLASS = ' col-start-1 row-start-1';
+export const LEADING_SLOT_CLASS = 'relative z-10 col-start-1 row-start-1 self-center [justify-self:left] pl-1.5';
 
 export const MaterialInput = memo(({
     icon: Icon,
@@ -73,13 +88,18 @@ export const MaterialInput = memo(({
     autoComplete,
     hint,
     inputProps,
-    inputRef
+    inputRef,
+    leading
 }: MaterialInputProps) => (
-    <div className="relative pt-2">
+    <div className={`relative pt-2${leading ? LEADING_FIELD_CLASS : ''}`}>
         <FieldLabel htmlFor={id} label={label} hint={hint} />
-        <div className="absolute inset-y-0 start-0 ps-3 flex items-center pointer-events-none">
-            <Icon className="h-5 w-5 text-primary dark:text-primary-dark" aria-hidden="true" />
-        </div>
+        {leading ? (
+            <div className={LEADING_SLOT_CLASS} dir="ltr">{leading}</div>
+        ) : (
+            <div className="absolute inset-y-0 start-0 ps-3 flex items-center pointer-events-none">
+                <Icon className="h-5 w-5 text-primary dark:text-primary-dark" aria-hidden="true" />
+            </div>
+        )}
         <input
             {...inputProps}
             ref={inputRef}
@@ -96,7 +116,7 @@ export const MaterialInput = memo(({
             onInvalid={onInvalid}
             title={title}
             autoComplete={autoComplete}
-            className={fieldClass(error)}
+            className={`${fieldClass(error)}${leading ? LEADING_CELL_CLASS : ''}`}
             aria-required={required}
             aria-invalid={!!error}
             aria-describedby={[inputProps?.['aria-describedby'], error ? errorId(id) : ''].filter(Boolean).join(' ') || undefined}

@@ -16,7 +16,9 @@ import { TONE_BG } from '../blocks/blockUtils';
 import { ContactModal } from '../../components/ContactModal';
 import { useContactHandler } from '../../hooks/useContactHandler';
 import smsService from '../../services/SmsService';
-import { displayPhone, telHref, whatsAppHref } from '../../utils/phone';
+import { displayPhone, telHref, whatsAppHref, phoneExampleInText } from '../../utils/phone';
+import { usePhoneInput } from '../../hooks/usePhoneInput';
+import { LEADING_FIELD_CLASS, LEADING_CELL_CLASS, LEADING_SLOT_CLASS } from './Schedule/ScheduleForms';
 import { BookingField, AnswerValue, answerProblem, answersForRequest } from '../../models/BookingField';
 import { QuestionField } from '../common/QuestionField';
 import { googleMapsHref } from '../../utils/navigation';
@@ -118,18 +120,26 @@ const MaterialInput = ({
   required = true,
   multiline = false,
   name,
-  id
+  id,
+  // LT-677: the phone field's country chip, in place of the icon, and what
+  // its input needs beside it. Without them the field is exactly as it was.
+  leading = undefined as React.ReactNode,
+  inputProps = undefined as React.InputHTMLAttributes<HTMLInputElement> | undefined
 }) => (
-  <div className="relative pt-2">
+  <div className={`relative pt-2${leading ? LEADING_FIELD_CLASS : ''}`}>
     <label
       htmlFor={id}
       className="absolute start-10 -top-0 px-2 text-sm font-medium text-primary dark:text-primary-dark bg-light-surface dark:bg-dark-surface"
     >
       {label}
     </label>
-    <div className="absolute inset-y-0 start-0 ps-3 flex items-center pointer-events-none">
-      <Icon className="h-5 w-5 text-primary dark:text-primary-dark" aria-hidden="true" />
-    </div>
+    {leading ? (
+      <div className={LEADING_SLOT_CLASS} dir="ltr">{leading}</div>
+    ) : (
+      <div className="absolute inset-y-0 start-0 ps-3 flex items-center pointer-events-none">
+        <Icon className="h-5 w-5 text-primary dark:text-primary-dark" aria-hidden="true" />
+      </div>
+    )}
     {multiline ? (
       <textarea
         id={id}
@@ -148,6 +158,7 @@ const MaterialInput = ({
       />
     ) : (
       <input
+        {...inputProps}
         id={id}
         type={type}
         value={value}
@@ -157,7 +168,7 @@ const MaterialInput = ({
         className={`w-full ps-10 pe-4 py-3 bg-transparent border-2 ${error
           ? 'border-red-500 dark:border-red-500'
           : 'border-primary/30 dark:border-primary-dark/30 focus:border-primary dark:focus:border-primary-dark'
-          } rounded-design-sm transition-all outline-none text-light-text dark:text-dark-text`}
+          } rounded-design-sm transition-all outline-none text-light-text dark:text-dark-text${leading ? `${LEADING_CELL_CLASS} placeholder-light-text/50 dark:placeholder-dark-text/50` : ''}`}
         aria-required={required}
         aria-invalid={!!error}
         aria-describedby={error ? `${id}-error` : undefined}
@@ -207,6 +218,39 @@ const Contact: React.FC<ContactProps> = ({ config, address, contact, workingDays
   const hasPass = useVisitorPass();
   const [wantsPass, setWantsPass] = useState(false);
   const formOpen = leadsOpen && !capReached;
+
+  // LT-677: the phone field's country (a chip, once the site takes numbers
+  // from abroad) and the reading of what was typed. With Israel alone the
+  // field and what it sends are what they always were. The API is asked
+  // which countries are open when the form comes near the screen, or is
+  // touched: not on every page view.
+  const formRef = React.useRef<HTMLFormElement>(null);
+  const [formNear, setFormNear] = useState(false);
+  React.useEffect(() => {
+    const el = formRef.current;
+    if (!el || formNear) return;
+    if (typeof IntersectionObserver === 'undefined') {
+      setFormNear(true);
+      return;
+    }
+    const io = new IntersectionObserver((entries) => {
+      if (entries.some((entry) => entry.isIntersecting)) setFormNear(true);
+    }, { rootMargin: '600px 0px' });
+    io.observe(el);
+    return () => io.disconnect();
+  }, [formNear, formOpen]);
+  const setPhoneText = useCallback((text: string) => {
+    setFormData(prev => ({ ...prev, phone: text }));
+    setFormErrors(prev => ({ ...prev, phone: '' }));
+    setError(null);
+  }, []);
+  const phoneInput = usePhoneInput({
+    text: formData.phone,
+    onText: setPhoneText,
+    sitePhone: contact.phone,
+    active: formNear || wantsPass,
+    anyPlus: true,
+  });
 
   const handleAnswerChange = useCallback((key: string, value: AnswerValue) => {
     setAnswers(prev => ({ ...prev, [key]: value }));
@@ -269,12 +313,15 @@ const Contact: React.FC<ContactProps> = ({ config, address, contact, workingDays
       errors.name = t('contact.validation.name');
     }
 
-    if (!formData.phone.startsWith('05')) {
-      errors.phone = t('contact.validation.phone.start');
-    } else if (formData.phone.length !== 10) {
-      errors.phone = t('contact.validation.phone.length');
-    } else if (!/^\d+$/.test(formData.phone)) {
-      errors.phone = t('contact.validation.phone.digits');
+    // An Israeli number by the three checks the form always made; a number
+    // abroad (LT-677) by its own country's shape, or any number written
+    // with "+" and a country code.
+    const number = phoneInput.reading;
+    if ('problem' in number) {
+      if (number.problem === 'start') errors.phone = t('contact.validation.phone.start');
+      else if (number.problem === 'length') errors.phone = t('contact.validation.phone.length');
+      else if (number.problem === 'digits') errors.phone = t('contact.validation.phone.digits');
+      else errors.phone = t('phone.validation.invalid', { example: phoneExampleInText(phoneInput.country) });
     }
 
     // The message is optional since LT-197: the owner's questions, or a
@@ -300,6 +347,11 @@ const Contact: React.FC<ContactProps> = ({ config, address, contact, workingDays
       return;
     }
 
+    // What the lead carries: an Israeli number as typed, as always; a number
+    // abroad in E.164 (LT-677).
+    const number = phoneInput.reading;
+    if ('problem' in number) return;
+
     setIsSubmitting(true);
     try {
       if (!isPreview) {
@@ -310,7 +362,7 @@ const Contact: React.FC<ContactProps> = ({ config, address, contact, workingDays
         const message = formData.message.trim();
         const send = () => smsService.sendContactMessage(subdomain, {
           name: formData.name,
-          phone: formData.phone,
+          phone: number.value,
           ...(message ? { message } : {}),
           ...(inquiry ? { productId: inquiry.id, ...(inquiry.choice ? { productOptions: inquiry.choice } : {}) } : {}),
           answers: answersForRequest(leadFields, answers),
@@ -347,6 +399,12 @@ const Contact: React.FC<ContactProps> = ({ config, address, contact, workingDays
             }
             return;
           }
+          // The server knows a number abroad better than this form (LT-677):
+          // its refusal is said on the field.
+          if (number.abroad && res.code === 'PHONE_INVALID') {
+            setFormErrors(prev => ({ ...prev, phone: t('phone.validation.invalid', { example: phoneExampleInText(phoneInput.country) }) }));
+            return;
+          }
           throw new Error(res.code ?? 'CONTACT_FAILED');
         }
       }
@@ -355,6 +413,7 @@ const Contact: React.FC<ContactProps> = ({ config, address, contact, workingDays
       setTimeout(() => {
         setIsSuccess(false);
         setFormData({ name: '', phone: '', message: '' });
+        phoneInput.setCountry(null);
         setAnswers({});
         setInquiry(null);
       }, 3000);
@@ -482,6 +541,7 @@ const Contact: React.FC<ContactProps> = ({ config, address, contact, workingDays
   );
   const formNode = (
     <motion.form
+      ref={formRef}
       onSubmit={handleSubmit}
       onFocus={() => setWantsPass(true)}
       className="card-design space-y-6 p-8"
@@ -514,11 +574,13 @@ const Contact: React.FC<ContactProps> = ({ config, address, contact, workingDays
         icon={Phone}
         label={t('contact.form.phone')}
         value={formData.phone}
-        onChange={(e) => handleInputChange('phone', e.target.value)}
+        onChange={phoneInput.onChange}
         type="tel"
         name="phone"
         id="contact-phone"
         error={formErrors.phone}
+        leading={phoneInput.leading}
+        inputProps={phoneInput.inputProps}
       />
 
       {/* The owner's questions (LT-197), under name and phone. */}

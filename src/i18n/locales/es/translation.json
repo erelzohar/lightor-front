@@ -143,7 +143,11 @@
       "invalidOtp": "Código de verificación inválido",
       "too_soon": "Este horario está demasiado próximo para mover la cita - elige uno que empiece dentro de {{duration}} como mínimo.",
       "passExpired": "Tu sesión ha caducado. Actualiza la página e inténtalo de nuevo.",
-      "changesLimit": "Esta cita ya se cambió el máximo de veces permitido en línea. Para cambiarla otra vez, por favor, llama al negocio."
+      "changesLimit": "Esta cita ya se cambió el máximo de veces permitido en línea. Para cambiarla otra vez, por favor, llama al negocio.",
+      "codeNotSent": "No pudimos enviar el código. Inténtalo de nuevo en un momento.",
+      "tooManyCodes": "Demasiados intentos. Inténtalo de nuevo en un momento.",
+      "codeExpired": "Este código ya no es válido. Pide uno nuevo.",
+      "phoneRefused": "No pudimos verificar este número de teléfono. Revisa el número e inténtalo de nuevo."
     },
     "conflictError": "Este horario ya está ocupado, por favor elige otro",
     "alreadyBookedError": "Este número ya está inscrito en esta clase.",
@@ -203,7 +207,9 @@
     "channel": {
       "sms": "Enviar código y actualizaciones por SMS",
       "whatsapp": "Enviar código y actualizaciones por WhatsApp",
-      "switch": "Recibir el código y las novedades por WhatsApp"
+      "switch": "Recibir el código y las novedades por WhatsApp",
+      "whatsappAbroad": "Código por SMS, actualizaciones por WhatsApp",
+      "switchAbroad": "Recibir las novedades por WhatsApp"
     },
     "class": {
       "label": "Clase grupal",
@@ -222,6 +228,21 @@
       "another": "Reservar otra",
       "updated": "¡Tu cita se actualizó!",
       "tooLate": "La cita que tienes ya no se puede cambiar en línea - se puede hasta {{duration}} antes. Aún puedes reservar otra."
+    }
+  },
+  "phone": {
+    "country": {
+      "IL": "Israel",
+      "US": "Estados Unidos"
+    },
+    "chip": "País del número de teléfono: {{country}} (+{{dial}})",
+    "validation": {
+      "invalid": "Introduce un número de teléfono completo, por ejemplo {{example}}",
+      "country": "Aquí no se pueden usar números de este país. Elige un país de la lista."
+    },
+    "check": {
+      "title": "Comprobación de seguridad",
+      "close": "Cerrar"
     }
   },
   "common": {

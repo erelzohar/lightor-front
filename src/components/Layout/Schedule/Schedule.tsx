@@ -40,7 +40,10 @@ import ImagesService from '../../../services/ImagesService';
 import { useEdit, editAttrs, servicePath } from '../../../services/editMode';
 import { handleSquareImageError } from '../../../utils/imageFallback';
 import { formatPrice } from '../../../utils/currency';
-import { displayPhone, telHref } from '../../../utils/phone';
+import { displayPhone, telHref, phoneEntryOf, phoneExampleInText, HOME_COUNTRY } from '../../../utils/phone';
+import { usePhoneInput } from '../../../hooks/usePhoneInput';
+import CodeFrame from '../../common/CodeFrame';
+import { CodeFrameError, type CodeFrameHandle } from '../../../services/codeFrame';
 
 /** The booking steps in order (the progress dots, and LT-356's step names). */
 const BOOKING_STEPS = ['type', 'date', 'time', 'details', 'verification'] as const;
@@ -164,6 +167,16 @@ const withFreshPass = async <T,>(call: () => Promise<T>): Promise<T> => {
 /** The visitor's 6-digit code, as typed, pasted or autofilled (LT-315). */
 const OTP_LENGTH = 6;
 
+/**
+ * Asking for a code, either way (LT-677): an Israeli number through the API
+ * as always, a number abroad through the code frame, whose refusal carries
+ * the frame's own code.
+ */
+type CodeSendResult = OtpSendResult & { code?: string };
+
+/** A number abroad whose code was not accepted (LT-677): the message is what the form says. */
+class CodeRefused extends Error {}
+
 /** The booking being made, as the form sends it once the number is proven. */
 type NewBooking = { name: string; phone: string; type_id: string; timestamp: string; user_id: string; status: string; channelType: 'sms' | 'whatsapp' };
 
@@ -218,6 +231,25 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
   });
   const [channelType, setChannelType] = useState<'sms' | 'whatsapp'>('sms');
   const [formErrors, setFormErrors] = useState<FormErrors>({});
+  // LT-677: the phone field's country (a chip, once the site takes numbers
+  // from abroad) and the reading of what was typed. With Israel alone the
+  // field and what it sends are what they always were.
+  const setPhoneText = useCallback((text: string) => {
+    setFormData(prev => ({ ...prev, phone: text }));
+    setFormErrors(prev => ({ ...prev, phone: undefined }));
+  }, []);
+  const phoneInput = usePhoneInput({
+    text: formData.phone,
+    onText: setPhoneText,
+    sitePhone: phone,
+    // Asked once the visitor has chosen a day: on the way to the field.
+    active: bookingStep === 'time' || bookingStep === 'details' || bookingStep === 'verification',
+  });
+  const { setCountry: setPhoneCountry } = phoneInput;
+  // A number abroad gets its code by SMS through the code frame, whatever
+  // the channel chosen for the messages that follow.
+  const phoneAbroad = phoneInput.country !== HOME_COUNTRY;
+  const codeFrame = useRef<CodeFrameHandle>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
@@ -230,19 +262,23 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
 
   useEffect(() => {
     if (isUpdating && appointmentToUpdate) {
+      // LT-677: a number stored in E.164 shows as its own country writes it,
+      // under that country's chip.
+      const stored = phoneEntryOf(appointmentToUpdate.phone);
       setFormData({
         name: appointmentToUpdate.name,
-        phone: appointmentToUpdate.phone,
+        phone: stored ? stored.text : appointmentToUpdate.phone,
         verificationCode: '',
         answers: {}
       });
+      setPhoneCountry(stored ? stored.country : null);
       setSelectedAppointmentType(appointmentToUpdate.type);
       const timestamp = parseInt(appointmentToUpdate.timestamp);
       setSelectedDate(zonedDateOf(timestamp, tz));
       setSelectedTime(zonedTimeLabel(timestamp, tz));
       setChannelType(appointmentToUpdate.channelType || 'sms');
     }
-  }, [isUpdating, appointmentToUpdate, tz]);
+  }, [isUpdating, appointmentToUpdate, tz, setPhoneCountry]);
   const [error, setError] = useState<string | null>(null);
   const [bookedAppointments, setBookedAppointments] = useState<BusySlot[]>([]);
   const [classOccurrences, setClassOccurrences] = useState<ClassOccurrence[]>([]);
@@ -369,12 +405,15 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
       errors.name = t('schedule.validation.name');
     }
 
-    if (!formData.phone.startsWith('05')) {
-      errors.phone = t('schedule.validation.phone.start');
-    } else if (formData.phone.length !== 10) {
-      errors.phone = t('schedule.validation.phone.length');
-    } else if (!/^\d+$/.test(formData.phone)) {
-      errors.phone = t('schedule.validation.phone.digits');
+    // An Israeli number by the three checks the form always made; a number
+    // abroad (LT-677) by its own country's shape.
+    const number = phoneInput.reading;
+    if ('problem' in number) {
+      if (number.problem === 'start') errors.phone = t('schedule.validation.phone.start');
+      else if (number.problem === 'length') errors.phone = t('schedule.validation.phone.length');
+      else if (number.problem === 'digits') errors.phone = t('schedule.validation.phone.digits');
+      else if (number.problem === 'country') errors.phone = t('phone.validation.country');
+      else errors.phone = t('phone.validation.invalid', { example: phoneExampleInText(phoneInput.country) });
     }
 
     if (bookingStep === 'verification') {
@@ -399,7 +438,7 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
 
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
-  }, [formData, bookingStep, language, askedFields, liveAddressFields]);
+  }, [formData, bookingStep, language, askedFields, liveAddressFields, phoneInput.reading, phoneInput.country]);
 
   const resetCalendar = useCallback(() => {
     setError(null);
@@ -411,21 +450,66 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
     setSelectedTime(null);
     setSelectedSession(null);
     setFormData({ name: '', phone: '', verificationCode: '', answers: {} });
+    setPhoneCountry(null);
     setUseRemembered(false);
     setBookingStep(isUpdating ? 'date' : 'type');
-  }, [isUpdating]);
+  }, [isUpdating, setPhoneCountry]);
 
   /**
    * Ask for the code. The server asks for the visitor pass before it spends
    * an SMS (LT-315), so a 401 means nothing was sent: renew the pass and ask
    * once more.
+   *
+   * A number abroad (LT-677) never goes to that route: the code frame sends
+   * its code, always as an SMS, once per tap on the form's own button.
    */
-  const sendCode = useCallback(async (): Promise<OtpSendResult> => {
+  const sendCode = useCallback(async (): Promise<CodeSendResult> => {
+    const number = phoneInput.reading;
+    if (!('problem' in number) && number.abroad) {
+      try {
+        await codeFrame.current.send(number.value);
+        return { ok: true };
+      } catch (err) {
+        return { ok: false, code: err instanceof CodeFrameError ? err.code : '' };
+      }
+    }
     const first = await smsService.sendOtp(formData.phone, channelType);
     if (first.ok || first.status !== 401) return first;
     if (!(await visitorPass.renew(PASS_WAIT_MS))) return first;
     return smsService.sendOtp(formData.phone, channelType);
-  }, [formData.phone, channelType]);
+  }, [formData.phone, channelType, phoneInput.reading]);
+
+  /** What the form says when the code frame could not send a code (LT-677). */
+  const codeNotSentText = useCallback((code: string): string => (
+    code === 'auth/too-many-requests' ? t('schedule.error.tooManyCodes') : t('schedule.error.codeNotSent')
+  ), [t]);
+
+  /**
+   * The code of a number abroad (LT-677): the code frame checks it and hands
+   * back a proof, which the API exchanges for the phone token a verified
+   * Israeli code earns. Throws what the form should say when either refuses.
+   */
+  const proveAbroad = useCallback(async (code: string): Promise<string> => {
+    let idToken: string;
+    try {
+      idToken = await codeFrame.current.confirm(code);
+    } catch (err) {
+      const reason = err instanceof CodeFrameError ? err.code : '';
+      if (reason === 'auth/invalid-verification-code') throw new CodeRefused(t('schedule.error.invalidOtp'));
+      if (reason === 'auth/code-expired' || reason === 'lt/no-code-sent') throw new CodeRefused(t('schedule.error.codeExpired'));
+      if (reason === 'auth/too-many-requests') throw new CodeRefused(t('schedule.error.tooManyCodes'));
+      throw new CodeRefused(t('schedule.genericError'));
+    }
+    let proof = await smsService.exchangePhoneProof(idToken);
+    // The visitor pass ran out meanwhile: a fresh one, and the same proof once more.
+    if (!proof.ok && proof.status === 401 && (await visitorPass.renew(PASS_WAIT_MS))) {
+      proof = await smsService.exchangePhoneProof(idToken);
+    }
+    if (proof.ok && proof.phoneToken) return proof.phoneToken;
+    if (proof.code === 'PHONE_PROOF_INVALID') throw new CodeRefused(t('schedule.error.phoneRefused'));
+    if (proof.status === 401) throw new CodeRefused(t('schedule.error.passExpired'));
+    throw new CodeRefused(t('schedule.genericError'));
+  }, [t]);
 
   const handleDetailsSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
@@ -447,6 +531,11 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
           setError(null);
           setResendTimer(30);
           setBookingStep('verification');
+        } else if (sent.code === 'auth/invalid-phone-number') {
+          // The code frame refused the number itself (LT-677): said on the field.
+          setFormErrors(prev => ({ ...prev, phone: t('phone.validation.invalid', { example: phoneExampleInText(phoneInput.country) }) }));
+        } else if (sent.code !== undefined) {
+          setError(codeNotSentText(sent.code));
         } else {
           setError(t(sent.status === 401 ? 'schedule.error.passExpired' : 'schedule.error.sendOtp'));
         }
@@ -456,7 +545,7 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
     } finally {
       setIsSubmitting(false);
     }
-  }, [validateForm, selectedDate, selectedAppointmentType, t, isPreview, sendCode]);
+  }, [validateForm, selectedDate, selectedAppointmentType, t, isPreview, sendCode, codeNotSentText, phoneInput.country]);
 
   const handleResendCode = useCallback(async () => {
     setResendTimer(30);
@@ -464,10 +553,11 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
     try {
       const sent = await sendCode();
       if (!sent.ok && sent.status === 401) setError(t('schedule.error.passExpired'));
+      else if (!sent.ok && sent.code !== undefined) setError(codeNotSentText(sent.code));
     } catch (error) {
       console.error("Failed to resend code");
     }
-  }, [isPreview, sendCode, t]);
+  }, [isPreview, sendCode, t, codeNotSentText]);
 
   /**
    * The booking itself, once the number is proven (LT-005): a new one, the
@@ -631,10 +721,24 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
       // proving this number was verified; createAppointment requires it and
       // matches it against the number being booked. (LT-005)
       let phoneToken: string | null = null;
+      // What the booking carries: an Israeli number as typed, as always; a
+      // number abroad in E.164 (LT-677).
+      const number = phoneInput.reading;
+      if ('problem' in number) return;
       if (!isPreview) {
-        phoneToken = await smsService.verifyOtp(formData.phone, formData.verificationCode);
+        let refusal = t('schedule.error.invalidOtp');
+        if (number.abroad) {
+          try {
+            phoneToken = await proveAbroad(formData.verificationCode);
+          } catch (err) {
+            if (!(err instanceof CodeRefused)) throw err;
+            refusal = err.message;
+          }
+        } else {
+          phoneToken = await smsService.verifyOtp(formData.phone, formData.verificationCode);
+        }
         if (!phoneToken) {
-          setError(t('schedule.error.invalidOtp'));
+          setError(refusal);
           setIsSubmitting(false);
           formData.verificationCode = "";
           otpInputRefs.current[0]?.focus();
@@ -648,7 +752,7 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
 
       const appointmentToCreate: NewBooking = {
         name: formData.name,
-        phone: formData.phone,
+        phone: number.value,
         type_id: selectedAppointmentType._id,
         timestamp: fixedDate.valueOf().toString(),
         user_id,
@@ -665,7 +769,7 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
         try {
           held = await AppointmentService.getInstance().findSameDay({
             user_id,
-            phone: formData.phone,
+            phone: number.value,
             phoneToken,
             timestamp: appointmentToCreate.timestamp,
           });
@@ -685,7 +789,7 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
     } finally {
       setIsSubmitting(false);
     }
-  }, [formData, validateForm, selectedDate, selectedAppointmentType, selectedTime, user_id, t, isPreview, isUpdating, channelType, tz, finishBooking]);
+  }, [formData, validateForm, selectedDate, selectedAppointmentType, selectedTime, user_id, t, isPreview, isUpdating, channelType, tz, finishBooking, phoneInput.reading, proveAbroad]);
 
   /** LT-451: the customer's answer to "you already have a booking that day". */
   const chooseSameDay = useCallback((held?: SameDayBooking) => {
@@ -1825,13 +1929,18 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
                         icon={Phone}
                         label={t('schedule.form.phone')}
                         value={formData.phone}
-                        onChange={(e) => handleInputChange('phone', e.target.value)}
+                        onChange={phoneInput.onChange}
                         error={formErrors.phone}
                         type="tel"
-                        inputMode="numeric"
-                        pattern="[0-9]*"
+                        // LT-677: with a country chip the number may carry
+                        // brackets, a space and a plus.
+                        inputMode={phoneInput.leading ? 'tel' : 'numeric'}
+                        pattern={phoneInput.leading ? undefined : '[0-9]*'}
+                        placeholder={phoneInput.placeholder}
                         name="phone"
                         id="schedule-phone"
+                        leading={phoneInput.leading}
+                        inputProps={phoneInput.inputProps}
                       />
                     </div>
 
@@ -1866,7 +1975,7 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
                     <div className="flex flex-col items-center gap-3 mt-6">
                       <span className="text-sm font-medium text-light-text/70 dark:text-dark-text/70 text-center">
                         {channelType === 'whatsapp'
-                          ? t('schedule.channel.whatsapp')
+                          ? (phoneAbroad ? t('schedule.channel.whatsappAbroad') : t('schedule.channel.whatsapp'))
                           : t('schedule.channel.sms')}
                       </span>
                       <div className="flex items-center gap-4 py-2" dir="ltr">
@@ -1876,7 +1985,7 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
                           type="button"
                           role="switch"
                           aria-checked={channelType === 'whatsapp'}
-                          aria-label={t('schedule.channel.switch')}
+                          aria-label={phoneAbroad ? t('schedule.channel.switchAbroad') : t('schedule.channel.switch')}
                           onClick={() => setChannelType(prev => prev === 'sms' ? 'whatsapp' : 'sms')}
                           className={`w-12 h-6 rounded-full p-1 transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary ${channelType === 'whatsapp' ? 'bg-green-500' : 'bg-amber-400'
                             }`}
@@ -2012,7 +2121,7 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
                     <div className="flex flex-col items-center gap-3 mb-4">
                       <span className="text-sm font-medium text-light-text/70 dark:text-dark-text/70 text-center">
                         {channelType === 'whatsapp'
-                          ? t('schedule.channel.whatsapp')
+                          ? (phoneAbroad ? t('schedule.channel.whatsappAbroad') : t('schedule.channel.whatsapp'))
                           : t('schedule.channel.sms')}
                       </span>
                       <div className="flex items-center gap-4 py-2" dir="ltr">
@@ -2022,7 +2131,7 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
                           type="button"
                           role="switch"
                           aria-checked={channelType === 'whatsapp'}
-                          aria-label={t('schedule.channel.switch')}
+                          aria-label={phoneAbroad ? t('schedule.channel.switchAbroad') : t('schedule.channel.switch')}
                           onClick={() => setChannelType(prev => prev === 'sms' ? 'whatsapp' : 'sms')}
                           className={`w-12 h-6 rounded-full p-1 transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary ${channelType === 'whatsapp' ? 'bg-green-500' : 'bg-amber-400'
                             }`}
@@ -2170,6 +2279,8 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
           </motion.div>
         </motion.div>
       )}
+      {/* LT-677: sends and checks the code of a number abroad; nothing until one is needed. */}
+      <CodeFrame ref={codeFrame} lang={language} />
     </section >
   );
 };

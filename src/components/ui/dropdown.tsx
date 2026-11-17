@@ -313,6 +313,12 @@ export type DropdownProps = {
   className?: string;
   rootClassName?: string;
   minPanelWidth?: number;
+  /**
+   * What the trigger shows for the chosen item when that is not the row's
+   * own label (LT-677: the phone field's country chip shows a flag and a
+   * dial code, its rows the country's name too). Never cut short.
+   */
+  face?: (item: DropdownItem | null) => ReactNode;
 };
 
 export const Dropdown = forwardRef<HTMLButtonElement, DropdownProps>(function Dropdown(
@@ -331,6 +337,7 @@ export const Dropdown = forwardRef<HTMLButtonElement, DropdownProps>(function Dr
     className = '',
     rootClassName = '',
     minPanelWidth = 180,
+    face,
   }: DropdownProps,
   ref,
 ) {
@@ -375,9 +382,13 @@ export const Dropdown = forwardRef<HTMLButtonElement, DropdownProps>(function Dr
         aria-invalid={invalid || undefined}
         className={cx('flex items-center text-start select-none cursor-pointer', className)}
       >
-        <span id={valueId} className={cx('min-w-0 flex-1 truncate', empty && 'text-light-text/50 dark:text-dark-text/50')}>
-          {selectedItem ? selectedItem.label : placeholder}
-        </span>
+        {face ? (
+          <span id={valueId} className="flex-1">{face(selectedItem)}</span>
+        ) : (
+          <span id={valueId} className={cx('min-w-0 flex-1 truncate', empty && 'text-light-text/50 dark:text-dark-text/50')}>
+            {selectedItem ? selectedItem.label : placeholder}
+          </span>
+        )}
         <motion.svg
           aria-hidden
           viewBox="0 0 12 12"

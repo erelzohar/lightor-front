@@ -143,7 +143,11 @@
       "invalidOtp": "Invalid verification code",
       "too_soon": "That time is too soon to move your appointment to - choose a time at least {{duration}} from now.",
       "passExpired": "Your session has expired. Please refresh the page and try again.",
-      "changesLimit": "This appointment was already changed the most times allowed online. To change it again, please call the business."
+      "changesLimit": "This appointment was already changed the most times allowed online. To change it again, please call the business.",
+      "codeNotSent": "We could not send a code. Please try again in a little while.",
+      "tooManyCodes": "Too many tries. Please try again in a little while.",
+      "codeExpired": "This code is no longer valid. Ask for a new one.",
+      "phoneRefused": "We could not verify this phone number. Check the number and try again."
     },
     "conflictError": "The appointment has been taken please try another one",
     "alreadyBookedError": "This number is already registered for this class.",
@@ -200,7 +204,9 @@
     "channel": {
       "sms": "Send code & updates via SMS",
       "whatsapp": "Send code & updates via WhatsApp",
-      "switch": "Get the code and updates on WhatsApp"
+      "switch": "Get the code and updates on WhatsApp",
+      "whatsappAbroad": "Code by SMS, updates via WhatsApp",
+      "switchAbroad": "Get the updates on WhatsApp"
     },
     "original": {
       "appointment": "Your Appointment"
@@ -222,6 +228,21 @@
       "another": "Book another",
       "updated": "Your booking was updated!",
       "tooLate": "The booking you have can no longer be changed online - that is possible up to {{duration}} before it. You can still book another."
+    }
+  },
+  "phone": {
+    "country": {
+      "IL": "Israel",
+      "US": "United States"
+    },
+    "chip": "Country of the phone number: {{country}} (+{{dial}})",
+    "validation": {
+      "invalid": "Enter a full phone number, for example {{example}}",
+      "country": "Numbers from this country cannot be used here. Choose a country from the list."
+    },
+    "check": {
+      "title": "Security check",
+      "close": "Close"
     }
   },
   "common": {

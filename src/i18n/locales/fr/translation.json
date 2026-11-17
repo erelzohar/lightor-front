@@ -143,7 +143,11 @@
       "invalidOtp": "Code de vérification invalide",
       "too_soon": "Cet horaire est trop proche pour y déplacer votre rendez-vous - choisissez-en un dans {{duration}} au moins.",
       "passExpired": "Votre session a expiré. Veuillez actualiser la page et réessayer.",
-      "changesLimit": "Ce rendez-vous a déjà été modifié le nombre maximal de fois en ligne. Pour le modifier encore, veuillez appeler l'établissement."
+      "changesLimit": "Ce rendez-vous a déjà été modifié le nombre maximal de fois en ligne. Pour le modifier encore, veuillez appeler l'établissement.",
+      "codeNotSent": "Nous n'avons pas pu envoyer de code. Veuillez réessayer dans un instant.",
+      "tooManyCodes": "Trop de tentatives. Veuillez réessayer dans un instant.",
+      "codeExpired": "Ce code n'est plus valable. Demandez-en un nouveau.",
+      "phoneRefused": "Nous n'avons pas pu vérifier ce numéro de téléphone. Vérifiez le numéro et réessayez."
     },
     "conflictError": "Ce créneau est déjà pris, veuillez en choisir un autre",
     "alreadyBookedError": "Ce numéro est déjà inscrit à ce cours.",
@@ -203,7 +207,9 @@
     "channel": {
       "sms": "Envoyer le code et les mises à jour par SMS",
       "whatsapp": "Envoyer le code et les mises à jour via WhatsApp",
-      "switch": "Recevoir le code et les mises à jour sur WhatsApp"
+      "switch": "Recevoir le code et les mises à jour sur WhatsApp",
+      "whatsappAbroad": "Code par SMS, mises à jour via WhatsApp",
+      "switchAbroad": "Recevoir les mises à jour sur WhatsApp"
     },
     "class": {
       "label": "Cours collectif",
@@ -222,6 +228,21 @@
       "another": "Réserver un autre",
       "updated": "Votre rendez-vous a été mis à jour !",
       "tooLate": "Le rendez-vous que vous avez ne peut plus être modifié en ligne - c'est possible jusqu'à {{duration}} avant. Vous pouvez en réserver un autre."
+    }
+  },
+  "phone": {
+    "country": {
+      "IL": "Israël",
+      "US": "États-Unis"
+    },
+    "chip": "Pays du numéro de téléphone : {{country}} (+{{dial}})",
+    "validation": {
+      "invalid": "Saisissez un numéro de téléphone complet, par exemple {{example}}",
+      "country": "Les numéros de ce pays ne peuvent pas être utilisés ici. Choisissez un pays dans la liste."
+    },
+    "check": {
+      "title": "Vérification de sécurité",
+      "close": "Fermer"
     }
   },
   "common": {
