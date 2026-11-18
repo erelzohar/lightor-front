@@ -177,7 +177,7 @@
       "answer": {
         "choose": "Choose an option",
         "optional": "optional",
-        "noAddresses": "No matching addresses",
+        "noAddresses": "No matching address. Try a street and a city",
         "addressSuggestions": "Address suggestions"
       },
       "otpDigit": "Digit {{index}} of {{total}}"
@@ -202,7 +202,7 @@
       "answer": {
         "required": "This field is required",
         "invalid": "Please check this answer",
-        "chooseAddress": "Choose an address from the suggestions"
+        "chooseAddress": "Choose an address from the list"
       }
     },
     "channel": {

@@ -16,8 +16,11 @@ import { QuestionField } from '../common/QuestionField';
 const toValue = (field: BookingField, answer: AppointmentAnswer | undefined): AnswerValue => {
   if (!answer) return undefined;
   if (field.type === 'confirm') return answer.value === 'yes';
-  if (field.type === 'address' && answer.placeId && typeof answer.lat === 'number' && typeof answer.lng === 'number') {
-    return { text: answer.value, placeId: answer.placeId, lat: answer.lat, lng: answer.lng };
+  // A chosen address is still chosen when it is opened again, with or without coordinates (LT-686).
+  if (field.type === 'address' && answer.placeId) {
+    return typeof answer.lat === 'number' && typeof answer.lng === 'number'
+      ? { text: answer.value, placeId: answer.placeId, lat: answer.lat, lng: answer.lng }
+      : { text: answer.value, placeId: answer.placeId };
   }
   return answer.value;
 };

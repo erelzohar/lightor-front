@@ -177,7 +177,7 @@
       "answer": {
         "choose": "בחרו אפשרות",
         "optional": "לא חובה",
-        "noAddresses": "לא נמצאו כתובות מתאימות",
+        "noAddresses": "לא נמצאה כתובת כזו. נסו רחוב ועיר",
         "addressSuggestions": "הצעות לכתובת"
       },
       "otpDigit": "ספרה {{index}} מתוך {{total}}"
@@ -196,7 +196,7 @@
       "answer": {
         "required": "שדה חובה",
         "invalid": "התשובה לא תקינה, נא לבדוק שוב",
-        "chooseAddress": "בחרו כתובת מתוך ההצעות"
+        "chooseAddress": "בחרו כתובת מהרשימה"
       }
     },
     "legend": {

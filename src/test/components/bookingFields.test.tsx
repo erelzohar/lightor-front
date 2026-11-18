@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen, fireEvent, waitFor, within } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, within, act } from '@testing-library/react';
 import { choose, optionOf } from '../helpers/dropdown';
 import Schedule from '../../components/Layout/Schedule/Schedule';
 import ManageAppointment from '../../components/ManageAppointment';
@@ -10,6 +10,14 @@ import { BookingField, fieldsForService, answersForRequest, answerProblem, remem
 import { ScheduleConfig } from '../../models/ScheduleConfig';
 import { WebsiteConfig } from '../../models/WebsiteConfig';
 import { RAW_AI_RESPONSE_SHAPE } from '../fixtures/rawAiConfig';
+import { ADDRESS_LIST_CLASS } from '../../components/Layout/Schedule/AddressAutocomplete';
+import { QuestionField } from '../../components/common/QuestionField';
+import tailwindSource from '../../../tailwind.config.js?raw';
+import he from '../../i18n/locales/he/translation.json';
+import en from '../../i18n/locales/en/translation.json';
+import ar from '../../i18n/locales/ar/translation.json';
+import fr from '../../i18n/locales/fr/translation.json';
+import es from '../../i18n/locales/es/translation.json';
 
 const DAY = 86_400_000;
 
@@ -640,7 +648,8 @@ describe('the address question with Google suggestions (LT-191)', () => {
     });
     expect(appointment.answers).toEqual([
       { key: 'address', label: 'Address', value: 'Herzl St 12', placeId: 'p1', lat: 32.0624, lng: 34.7702 },
-      { key: 'other', label: 'Other', value: 'typed' },
+      // A chosen place is its id (LT-686): coordinates that are not numbers go, the choice stays.
+      { key: 'other', label: 'Other', value: 'typed', placeId: 'p2' },
     ]);
   });
 
@@ -761,6 +770,156 @@ describe('the address question with Google suggestions (LT-191)', () => {
     expect(screen.queryByRole('listbox')).toBeNull();
     const answers = await bookAndReadAnswers();
     expect(answers).toEqual([{ key: 'address', value: 'Herzl 12, Tel Aviv' }]);
+  });
+
+  describe('not free text (LT-686)', () => {
+    const blockedBy = () => screen.queryByText('schedule.validation.answer.chooseAddress');
+
+    it('says to choose from the list as soon as the field is left with typed text, and stops once one is chosen', async () => {
+      await reachAddress();
+      fireEvent.focus(addressInput());
+      typeAddress('Herzl 12, Tel Aviv');
+      await screen.findByRole('option', { name: /Herzl 12/ });
+      // While the customer is still typing nothing nags.
+      expect(blockedBy()).toBeNull();
+
+      fireEvent.blur(addressInput());
+      expect(blockedBy()).toBeTruthy();
+      expect(addressInput().getAttribute('aria-invalid')).toBe('true');
+      // What they typed is kept, so they can come back and pick.
+      expect(addressInput().value).toBe('Herzl 12, Tel Aviv');
+
+      fireEvent.focus(addressInput());
+      expect(blockedBy()).toBeNull();
+      fireEvent.click(await screen.findByRole('option', { name: /Herzl 12/ }));
+      fireEvent.blur(addressInput());
+      await waitFor(() => expect(addressInput().value).toBe('Herzl 12, Tel Aviv-Yafo, Israel'));
+      expect(blockedBy()).toBeNull();
+      expect(addressInput().getAttribute('aria-invalid')).toBe('false');
+    });
+
+    it('an address edited after the choice is unchosen again', async () => {
+      await reachAddress();
+      typeAddress('Her');
+      fireEvent.click(await screen.findByRole('option', { name: /Herzl 12/ }));
+      await waitFor(() => expect(addressInput().value).toBe('Herzl 12, Tel Aviv-Yafo, Israel'));
+
+      typeAddress('Herzl 12, Tel Aviv-Yafo, Israel, apt 3');
+      fireEvent.blur(addressInput());
+      expect(blockedBy()).toBeTruthy();
+    });
+
+    it('leaves an empty field alone, and a field without live suggestions too', async () => {
+      await reachAddress();
+      fireEvent.focus(addressInput());
+      fireEvent.blur(addressInput());
+      expect(blockedBy()).toBeNull();
+      typeAddress('  ');
+      fireEvent.blur(addressInput());
+      expect(blockedBy()).toBeNull();
+
+      // Google refuses: free text from here on, and nothing is asked of it.
+      mocks.fetchSuggestions.mockRejectedValue(new Error('REQUEST_DENIED'));
+      typeAddress('Herzl 12, Tel Aviv');
+      await waitFor(() => expect(addressInput().getAttribute('role')).toBeNull());
+      fireEvent.blur(addressInput());
+      expect(blockedBy()).toBeNull();
+    });
+
+    it('a choice counts at the tap: a send before the coordinates arrive carries the place id', async () => {
+      let arrive: (place: typeof resolved) => void = () => undefined;
+      mocks.resolveSuggestion.mockReturnValue(new Promise((resolve) => { arrive = resolve; }));
+      await reachAddress();
+      typeAddress('Her');
+      fireEvent.click(await screen.findByRole('option', { name: /Herzl 12/ }));
+
+      const answers = await bookAndReadAnswers();
+      expect(answers).toEqual([{ key: 'address', value: 'Herzl 12, Tel Aviv-Yafo, Israel', placeId: 'p1' }]);
+      expect(Object.keys(answers[0])).toEqual(['key', 'value', 'placeId']);
+      arrive(resolved);
+    });
+
+    it('a choice whose coordinates never come is still a choice, and the field stays a list', async () => {
+      mocks.resolveSuggestion.mockRejectedValue(new Error('NOT_FOUND'));
+      await reachAddress();
+      typeAddress('Her');
+      fireEvent.click(await screen.findByRole('option', { name: /Herzl 12/ }));
+      await waitFor(() => expect(mocks.resolveSuggestion).toHaveBeenCalledTimes(1));
+      await waitFor(() => expect(addressInput().value).toBe('Herzl 12, Tel Aviv-Yafo, Israel'));
+      expect(addressInput().getAttribute('role')).toBe('combobox');
+
+      const answers = await bookAndReadAnswers();
+      expect(answers).toEqual([{ key: 'address', value: 'Herzl 12, Tel Aviv-Yafo, Israel', placeId: 'p1' }]);
+    });
+
+    it('coordinates that arrive after the customer typed again do not bring the choice back', async () => {
+      let arrive: (place: typeof resolved) => void = () => undefined;
+      mocks.resolveSuggestion.mockReturnValue(new Promise((resolve) => { arrive = resolve; }));
+      await reachAddress();
+      typeAddress('Her');
+      fireEvent.click(await screen.findByRole('option', { name: /Herzl 12/ }));
+      typeAddress('Herzl 12, somewhere else');
+      await act(async () => { arrive(resolved); });
+
+      expect(addressInput().value).toBe('Herzl 12, somewhere else');
+      fireEvent.submit(detailsForm());
+      expect(await screen.findByText('schedule.validation.answer.chooseAddress')).toBeTruthy();
+      expect(mocks.sendOtp).not.toHaveBeenCalled();
+    });
+
+    it('an optional address is held to the same rule once something is typed', () => {
+      const optional = { ...catalog[0], required: false };
+      expect(answerProblem(optional, '', { chooseAddress: true })).toBeNull();
+      expect(answerProblem(optional, 'Herzl 12', { chooseAddress: true })).toBe('chooseAddress');
+      expect(answerProblem(optional, { text: 'Herzl 12', placeId: 'p1' }, { chooseAddress: true })).toBeNull();
+    });
+
+    it('the list is a box of its own, never a pill: its corners stop at 1rem and it sits above the form', async () => {
+      await reachAddress();
+      typeAddress('Her');
+      await screen.findByRole('option', { name: /Herzl 12/ });
+
+      const list = document.querySelector('[data-address-list]') as HTMLElement;
+      expect(list.className).toBe(ADDRESS_LIST_CLASS);
+      const classes = ADDRESS_LIST_CLASS.split(' ');
+      expect(classes.filter((c) => c.startsWith('rounded'))).toEqual(['rounded-design-box']);
+      // The token follows the site's shape and stops at 1rem; half of a pill's 9999px is still an oval.
+      expect(tailwindSource).toContain("'design-box': 'min(calc(var(--radius) / 2), 1rem)'");
+      expect(classes).toContain('z-30');
+      // Rows and Google's logo keep their own padding inside the box.
+      expect(screen.getByRole('option', { name: /Herzl 12/ }).className).toContain('px-4');
+      expect(screen.getByRole('img', { name: 'Google Maps' }).parentElement?.className).toContain('px-4');
+    });
+
+    it('the other tall boxes of the form are boxes too: the options of a choice and a note', async () => {
+      render(
+        <QuestionField
+          field={field({ key: 'note', label: 'Notes', type: 'note', required: false, services: [] })}
+          value="" onChange={() => undefined} onAddressActive={() => undefined} idPrefix="t"
+        />
+      );
+      const note = screen.getByLabelText(/Notes/);
+      expect(note.className.split(' ').filter((c) => c.startsWith('rounded'))).toEqual(['rounded-design-box']);
+
+      renderWidget();
+      await reachDetails();
+      const room = screen.getByLabelText(/Room/);
+      const panel = optionOf(room, 'Front').closest('ul')?.parentElement as HTMLElement;
+      expect(panel.className.split(' ').filter((c) => c.startsWith('rounded'))).toEqual(['rounded-design-box']);
+      // A one-line field keeps the site's own shape.
+      expect(addressInput().className).toContain('rounded-design-sm');
+    });
+
+    it('says the same thing in the five languages, with no em-dash', () => {
+      for (const locale of [he, en, ar, fr, es]) {
+        const choose = locale.schedule.validation.answer.chooseAddress;
+        const none = locale.schedule.form.answer.noAddresses;
+        expect(choose).toBeTruthy();
+        expect(none).toBeTruthy();
+        expect(`${choose}${none}`).not.toMatch(/[\u2014\u2026]|\.\.\./);
+      }
+      expect(he.schedule.validation.answer.chooseAddress).toBe('בחרו כתובת מהרשימה');
+    });
   });
 
   it('the manage page still shows the text of a chosen address', async () => {

@@ -411,7 +411,8 @@ export const Dropdown = forwardRef<HTMLButtonElement, DropdownProps>(function Dr
               transition={reduced ? NONE : { ...OPEN, opacity: { duration: 0.12, ease: EASE } }}
               style={{ top: place.top, bottom: place.bottom, left: place.left, right: place.right, width: place.width }}
               className={cx(
-                'fixed z-[10100] rounded-design-sm border-2 border-primary/20 dark:border-primary-dark/30 bg-light-surface dark:bg-dark-surface p-1.5',
+                // A box, never a pill (LT-686): on a fully rounded design the options were cut by the curve.
+                'fixed z-[10100] rounded-design-box border-2 border-primary/20 dark:border-primary-dark/30 bg-light-surface dark:bg-dark-surface p-1.5',
                 'shadow-[0_1px_2px_rgba(0,0,0,0.06),0_16px_36px_-18px_rgba(0,0,0,0.5)]',
                 up ? 'origin-bottom' : 'origin-top',
               )}

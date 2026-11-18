@@ -6,11 +6,11 @@ import Dropdown from '../../ui/dropdown';
  * The border and text chrome every field on the booking form shares, so the
  * owner's own questions (LT-178) look like name and phone.
  */
-const fieldClass = (error?: string) =>
+const fieldClass = (error?: string, shape: string = 'rounded-design-sm') =>
     `w-full ps-10 pe-4 py-3 bg-transparent border-2 ${error
         ? 'border-red-500 dark:border-red-500'
         : 'border-primary/30 dark:border-primary-dark/30 focus:border-primary dark:focus:border-primary-dark'
-        } rounded-design-sm transition-all outline-none text-light-text dark:text-dark-text placeholder-light-text/50 dark:placeholder-dark-text/50`;
+        } ${shape} transition-all outline-none text-light-text dark:text-dark-text placeholder-light-text/50 dark:placeholder-dark-text/50`;
 
 const LABEL_CLASS = 'absolute start-10 -top-0 px-2 text-sm font-medium text-primary dark:text-primary-dark bg-light-surface dark:bg-dark-surface';
 
@@ -166,7 +166,9 @@ export const MaterialTextarea = memo(({
             name={name}
             maxLength={maxLength}
             rows={3}
-            className={`${fieldClass(error)} resize-y min-h-[6rem]`}
+            // A note is several lines tall: on a fully rounded design the
+            // field's own shape would draw it as an oval and cut its text (LT-686).
+            className={`${fieldClass(error, 'rounded-design-box')} resize-y min-h-[6rem]`}
             aria-required={required}
             aria-invalid={!!error}
             aria-describedby={error ? errorId(id) : undefined}

@@ -111,8 +111,9 @@ export const fieldsForService = (catalog: BookingField[], serviceId: string | nu
 export interface AddressAnswer {
   text: string;
   placeId: string;
-  lat: number;
-  lng: number;
+  /** Join the choice a moment after it; absent when Google could not say where the place is (LT-686). */
+  lat?: number;
+  lng?: number;
 }
 
 /** What the customer typed, ticked or chose for one question. Absent until they do. */
@@ -167,6 +168,10 @@ export interface AnswerPayload {
   lng?: number;
 }
 
+/** Both coordinates or neither, which is also all the server takes. */
+const coordinates = (place: { lat?: unknown; lng?: unknown }): { lat?: number; lng?: number } =>
+  typeof place.lat === 'number' && typeof place.lng === 'number' ? { lat: place.lat, lng: place.lng } : {};
+
 /**
  * The answers to send with a booking: the scoped fields only, skipping
  * empty optional ones and unticked confirms. A ticked confirm is 'yes',
@@ -178,7 +183,7 @@ export const answersForRequest = (fields: BookingField[], answers: Record<string
     if (field.type === 'confirm') return value === true ? [{ key: field.key, value: 'yes' }] : [];
     const text = answerText(value).trim();
     if (!text) return [];
-    if (isAddressAnswer(value)) return [{ key: field.key, value: text, placeId: value.placeId, lat: value.lat, lng: value.lng }];
+    if (isAddressAnswer(value)) return [{ key: field.key, value: text, placeId: value.placeId, ...coordinates(value) }];
     return [{ key: field.key, value: text }];
   });
 
@@ -189,6 +194,7 @@ export interface AppointmentAnswer {
   value: string;
   /** The place behind an address chosen from Google's suggestions (LT-191); absent for typed text. */
   placeId?: string;
+  /** Both or neither: a choice whose coordinates Google could not give stands on the id alone (LT-686). */
   lat?: number;
   lng?: number;
 }
@@ -202,8 +208,7 @@ export const parseAnswers = (json: unknown): AppointmentAnswer[] =>
           key: answer.key,
           label: typeof answer.label === 'string' ? answer.label : '',
           value: answer.value,
-          ...(typeof answer.placeId === 'string' && typeof answer.lat === 'number' && typeof answer.lng === 'number'
-            ? { placeId: answer.placeId, lat: answer.lat, lng: answer.lng }
-            : {}),
+          // A chosen place is its id; the coordinates may be missing (LT-686).
+          ...(typeof answer.placeId === 'string' && answer.placeId ? { placeId: answer.placeId, ...coordinates(answer) } : {}),
         }))
     : [];

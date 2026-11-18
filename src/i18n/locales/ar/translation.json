@@ -177,7 +177,7 @@
       "answer": {
         "choose": "اختر خيارًا",
         "optional": "اختياري",
-        "noAddresses": "لا توجد عناوين مطابقة",
+        "noAddresses": "لم نجد عنوانًا مطابقًا. جرّب الشارع والمدينة",
         "addressSuggestions": "اقتراحات العناوين"
       },
       "otpDigit": "الرقم {{index}} من {{total}}"
@@ -196,7 +196,7 @@
       "answer": {
         "required": "هذا الحقل مطلوب",
         "invalid": "يرجى التحقق من هذه الإجابة",
-        "chooseAddress": "اختر عنوانًا من الاقتراحات"
+        "chooseAddress": "اختر عنوانًا من القائمة"
       }
     },
     "legend": {

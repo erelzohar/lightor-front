@@ -177,7 +177,7 @@
       "answer": {
         "choose": "Choisissez une option",
         "optional": "facultatif",
-        "noAddresses": "Aucune adresse correspondante",
+        "noAddresses": "Aucune adresse correspondante. Essayez une rue et une ville",
         "addressSuggestions": "Suggestions d'adresses"
       },
       "otpDigit": "Chiffre {{index}} sur {{total}}"
@@ -196,7 +196,7 @@
       "answer": {
         "required": "Ce champ est obligatoire",
         "invalid": "Veuillez vérifier cette réponse",
-        "chooseAddress": "Choisissez une adresse parmi les suggestions"
+        "chooseAddress": "Choisissez une adresse dans la liste"
       }
     },
     "legend": {

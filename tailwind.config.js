@@ -42,6 +42,11 @@ export default {
         'design-lg': 'calc(var(--radius) * 1.5)',
         // For rectangular media/cards: tracks --radius but never goes pill.
         'design-card': 'var(--radius-card)',
+        // For a tall box beside the form's fields - a list of suggestions, a
+        // dropdown's options, a note (LT-686): design-sm on every shape, but
+        // never a pill. Half of 9999px is still a full oval, which cut the
+        // first letters of a row and Google's logo.
+        'design-box': 'min(calc(var(--radius) / 2), 1rem)',
       },
       boxShadow: {
         'card': 'var(--card-shadow)',

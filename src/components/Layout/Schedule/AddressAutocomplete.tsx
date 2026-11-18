@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import type { ChangeEvent, InputHTMLAttributes, KeyboardEvent } from 'react';
 import { MapPin } from 'lucide-react';
 import { useLanguage } from '../../../contexts/LanguageContext';
-import { AddressAnswer, AnswerValue, answerText } from '../../../models/BookingField';
+import { AddressAnswer, AnswerValue, answerText, isAddressAnswer } from '../../../models/BookingField';
 import {
   AddressSession,
   AddressSuggestion,
@@ -23,11 +23,26 @@ import { GoogleMapsLogo } from '../../common/GoogleMapsLogo';
  * the place id and coordinates — and any further keystroke drops back to
  * a plain string, because the place is no longer vouched for.
  *
+ * Not free text (LT-686): while the suggestions are live, only a chosen
+ * address is an answer. The form refuses anything else when it is sent, and
+ * the field says so itself as soon as the customer leaves it with text that
+ * was typed but not chosen.
+ *
  * Degrades, never blocks (the LT-098 lesson): without a key, with the
  * script blocked or slow, or with Google refusing a request, this is the
  * plain input the field always was — quietly, with no message — and the
  * parent hears (onActiveChange) so it stops insisting on a chosen address.
  */
+
+/**
+ * The suggestions box (LT-686). A list is not a pill: its corners follow
+ * the site's shape only up to 1rem (`design-box`), so on a fully rounded
+ * design (inputs drawn as pills, `--radius: 9999px`) the first letters of a
+ * row and Google's logo are never cut by the curve. Above the form's own
+ * controls.
+ */
+export const ADDRESS_LIST_CLASS =
+  'absolute start-0 end-0 top-full z-30 mt-1 overflow-hidden rounded-design-box border-2 border-primary/30 dark:border-primary-dark/30 bg-light-surface dark:bg-dark-surface shadow-card';
 
 const DEBOUNCE_MS = 250;
 const MIN_QUERY_LENGTH = 3;
@@ -71,6 +86,8 @@ export const AddressAutocomplete = ({
   const [suggestions, setSuggestions] = useState<AddressSuggestion[] | null>(null);
   const [open, setOpen] = useState(false);
   const [activeIndex, setActiveIndex] = useState(-1);
+  /** The customer left the field: from then until they return or type, unchosen text is called out. */
+  const [left, setLeft] = useState(false);
 
   const inputRef = useRef<HTMLInputElement>(null);
   const session = useRef<AddressSession>({});
@@ -79,6 +96,8 @@ export const AddressAutocomplete = ({
   /** Set on blur, cleared on the next keystroke or focus: a late answer must not open the list under nobody. */
   const blurred = useRef(false);
   const mounted = useRef(true);
+  /** The choice whose coordinates are on their way; null once the customer types again. */
+  const latest = useRef<AddressAnswer | null>(null);
   const onActiveRef = useRef(onActiveChange);
   onActiveRef.current = onActiveChange;
 
@@ -170,18 +189,22 @@ export const AddressAutocomplete = ({
       setOpen(false);
       setActiveIndex(-1);
       setQuery(null);
-      // The chosen line at once; the place id and coordinates join it below.
-      // The text never changes on them: what the customer read is what is
-      // stored, in the language it was listed in (LT-192).
-      onChange(suggestion.text);
+      // Chosen at once (LT-686), by the line and the place id the list
+      // itself carried, so a send right after the tap is never told to
+      // choose again; the coordinates join below. The text never changes on
+      // them: what the customer read is what is stored, in the language it
+      // was listed in (LT-192).
+      const chosenAt = { text: suggestion.text, placeId: suggestion.placeId };
+      latest.current = chosenAt;
+      onChange(chosenAt);
       try {
         const place = await resolveAddressSuggestion(suggestion);
-        if (!mounted.current) return;
+        // Typed over while the place was on its way: the choice is gone, leave it gone.
+        if (!mounted.current || latest.current !== chosenAt) return;
         onChange({ text: suggestion.text, placeId: place.placeId, lat: place.lat, lng: place.lng });
       } catch {
-        // The place could not be fetched: what they chose stays as text, and
-        // the form accepts it rather than demanding a choice it cannot verify.
-        if (mounted.current) setStatus('failed');
+        // The coordinates could not be fetched: the choice stands on its
+        // place id alone, which the server takes as it is.
       } finally {
         // The session ended with the details call; the next keystroke starts another.
         session.current = {};
@@ -193,6 +216,8 @@ export const AddressAutocomplete = ({
   const handleChange = (event: ChangeEvent<HTMLInputElement>) => {
     const typed = event.target.value;
     blurred.current = false;
+    latest.current = null;
+    setLeft(false);
     setQuery(typed);
     // A plain string again, even after a choice: the place is no longer vouched for.
     onChange(typed);
@@ -233,11 +258,13 @@ export const AddressAutocomplete = ({
 
   const handleFocus = () => {
     blurred.current = false;
+    setLeft(false);
     if (suggestions !== null && query !== null) setOpen(true);
   };
 
   const handleBlur = () => {
     blurred.current = true;
+    setLeft(true);
     setOpen(false);
     setActiveIndex(-1);
   };
@@ -253,6 +280,12 @@ export const AddressAutocomplete = ({
       }
     : {};
   const list = active && open ? suggestions : null;
+  // Typed, not chosen, and left that way (LT-686): said at once, under the
+  // field, in the words the form itself uses when it refuses to be sent.
+  const unchosen =
+    active && left && text.trim() !== '' && !isAddressAnswer(value)
+      ? t('schedule.validation.answer.chooseAddress')
+      : undefined;
 
   return (
     <div className="relative">
@@ -261,7 +294,7 @@ export const AddressAutocomplete = ({
         label={label}
         value={text}
         onChange={handleChange}
-        error={error}
+        error={error || unchosen}
         required={required}
         name={name}
         id={id}
@@ -274,7 +307,8 @@ export const AddressAutocomplete = ({
       />
       {list && (
         <div
-          className="absolute start-0 end-0 top-full z-20 mt-1 overflow-hidden rounded-design-sm border-2 border-primary/30 dark:border-primary-dark/30 bg-light-surface dark:bg-dark-surface shadow-card"
+          data-address-list=""
+          className={ADDRESS_LIST_CLASS}
           // Keeps the input focused through a click or a tap on a row.
           onMouseDown={(event) => event.preventDefault()}
         >
