@@ -12,7 +12,19 @@ const fieldClass = (error?: string, shape: string = 'rounded-design-sm') =>
         : 'border-primary/30 dark:border-primary-dark/30 focus:border-primary dark:focus:border-primary-dark'
         } ${shape} transition-all outline-none text-light-text dark:text-dark-text placeholder-light-text/50 dark:placeholder-dark-text/50`;
 
-const LABEL_CLASS = 'absolute start-10 -top-0 px-2 text-sm font-medium text-primary dark:text-primary-dark bg-light-surface dark:bg-dark-surface';
+/**
+ * Above the control (`z-10`, LT-688): the control's box is positioned, to
+ * hold the icon, and would otherwise draw its border line across the label.
+ */
+export const LABEL_CLASS = 'absolute z-10 start-10 -top-0 px-2 text-sm font-medium text-primary dark:text-primary-dark bg-light-surface dark:bg-dark-surface';
+
+/**
+ * The control with its icon (LT-688). The icon is centred on this box, which
+ * holds the control alone: the error line sits outside it, so a message
+ * under the field no longer pulls the icon down.
+ */
+export const CONTROL_BOX_CLASS = 'relative';
+export const FIELD_ICON_CLASS = 'absolute inset-y-0 start-0 ps-3 flex items-center pointer-events-none';
 
 /** A floating label, with the "(optional)" hint after it when there is one. */
 const FieldLabel = ({ htmlFor, label, hint, id }: { htmlFor: string; label: string; hint?: string; id?: string }) => (
@@ -90,16 +102,8 @@ export const MaterialInput = memo(({
     inputProps,
     inputRef,
     leading
-}: MaterialInputProps) => (
-    <div className={`relative pt-2${leading ? LEADING_FIELD_CLASS : ''}`}>
-        <FieldLabel htmlFor={id} label={label} hint={hint} />
-        {leading ? (
-            <div className={LEADING_SLOT_CLASS} dir="ltr">{leading}</div>
-        ) : (
-            <div className="absolute inset-y-0 start-0 ps-3 flex items-center pointer-events-none">
-                <Icon className="h-5 w-5 text-primary dark:text-primary-dark" aria-hidden="true" />
-            </div>
-        )}
+}: MaterialInputProps) => {
+    const control = (
         <input
             {...inputProps}
             ref={inputRef}
@@ -121,9 +125,26 @@ export const MaterialInput = memo(({
             aria-invalid={!!error}
             aria-describedby={[inputProps?.['aria-describedby'], error ? errorId(id) : ''].filter(Boolean).join(' ') || undefined}
         />
-        <FieldError id={id} error={error} />
-    </div>
-));
+    );
+    return (
+        <div className="relative pt-2">
+            <FieldLabel htmlFor={id} label={label} hint={hint} />
+            {/* One box either way, with the input always its second child: a
+                chip that arrives later (LT-677) must not remount the input. */}
+            <div className={`${CONTROL_BOX_CLASS}${leading ? LEADING_FIELD_CLASS : ''}`}>
+                {leading ? (
+                    <div className={LEADING_SLOT_CLASS} dir="ltr">{leading}</div>
+                ) : (
+                    <div className={FIELD_ICON_CLASS}>
+                        <Icon className="h-5 w-5 text-primary dark:text-primary-dark" aria-hidden="true" />
+                    </div>
+                )}
+                {control}
+            </div>
+            <FieldError id={id} error={error} />
+        </div>
+    );
+});
 
 MaterialInput.displayName = 'MaterialInput';
 
@@ -211,7 +232,8 @@ export const MaterialSelect = memo(({
 }: MaterialSelectProps) => (
     <div className="relative pt-2">
         <FieldLabel htmlFor={id} id={`${id}-label`} label={label} hint={hint} />
-        <div className="absolute inset-y-0 start-0 ps-3 flex items-center pointer-events-none">
+        <div className={CONTROL_BOX_CLASS}>
+        <div className={FIELD_ICON_CLASS}>
             <Icon className="h-5 w-5 text-primary dark:text-primary-dark" aria-hidden="true" />
         </div>
         {/* LT-365: the animated dropdown, not the browser's select. */}
@@ -226,6 +248,7 @@ export const MaterialSelect = memo(({
             placeholder={placeholder}
             className={fieldClass(error)}
         />
+        </div>
         <FieldError id={id} error={error} />
     </div>
 ));

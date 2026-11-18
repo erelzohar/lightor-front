@@ -18,7 +18,7 @@ import { useContactHandler } from '../../hooks/useContactHandler';
 import smsService from '../../services/SmsService';
 import { displayPhone, telHref, whatsAppHref, phoneExampleInText } from '../../utils/phone';
 import { usePhoneInput } from '../../hooks/usePhoneInput';
-import { LEADING_FIELD_CLASS, LEADING_CELL_CLASS, LEADING_SLOT_CLASS } from './Schedule/ScheduleForms';
+import { LEADING_FIELD_CLASS, LEADING_CELL_CLASS, LEADING_SLOT_CLASS, LABEL_CLASS, CONTROL_BOX_CLASS, FIELD_ICON_CLASS } from './Schedule/ScheduleForms';
 import { BookingField, AnswerValue, answerProblem, answersForRequest } from '../../models/BookingField';
 import { QuestionField } from '../common/QuestionField';
 import { googleMapsHref } from '../../utils/navigation';
@@ -125,22 +125,8 @@ const MaterialInput = ({
   // its input needs beside it. Without them the field is exactly as it was.
   leading = undefined as React.ReactNode,
   inputProps = undefined as React.InputHTMLAttributes<HTMLInputElement> | undefined
-}) => (
-  <div className={`relative pt-2${leading ? LEADING_FIELD_CLASS : ''}`}>
-    <label
-      htmlFor={id}
-      className="absolute start-10 -top-0 px-2 text-sm font-medium text-primary dark:text-primary-dark bg-light-surface dark:bg-dark-surface"
-    >
-      {label}
-    </label>
-    {leading ? (
-      <div className={LEADING_SLOT_CLASS} dir="ltr">{leading}</div>
-    ) : (
-      <div className="absolute inset-y-0 start-0 ps-3 flex items-center pointer-events-none">
-        <Icon className="h-5 w-5 text-primary dark:text-primary-dark" aria-hidden="true" />
-      </div>
-    )}
-    {multiline ? (
+}) => {
+  const control = multiline ? (
       <textarea
         id={id}
         value={value}
@@ -151,7 +137,7 @@ const MaterialInput = ({
         className={`w-full ps-10 pe-4 py-3 bg-transparent border-2 ${error
           ? 'border-red-500 dark:border-red-500'
           : 'border-primary/30 dark:border-primary-dark/30 focus:border-primary dark:focus:border-primary-dark'
-          } rounded-design-sm transition-all outline-none text-light-text dark:text-dark-text resize-none`}
+          } rounded-design-box transition-all outline-none text-light-text dark:text-dark-text resize-none`}
         aria-required={required}
         aria-invalid={!!error}
         aria-describedby={error ? `${id}-error` : undefined}
@@ -173,12 +159,32 @@ const MaterialInput = ({
         aria-invalid={!!error}
         aria-describedby={error ? `${id}-error` : undefined}
       />
-    )}
+    );
+  return (
+  <div className="relative pt-2">
+    <label htmlFor={id} className={LABEL_CLASS}>
+      {label}
+    </label>
+    {/* LT-688: the icon is centred on the control alone, so the error line
+        under it no longer pulls the icon down. One box either way, with the
+        input always its second child: a chip that arrives later (LT-677)
+        must not remount the input. */}
+    <div className={`${CONTROL_BOX_CLASS}${leading ? LEADING_FIELD_CLASS : ''}`}>
+      {leading ? (
+        <div className={LEADING_SLOT_CLASS} dir="ltr">{leading}</div>
+      ) : (
+        <div className={FIELD_ICON_CLASS}>
+          <Icon className="h-5 w-5 text-primary dark:text-primary-dark" aria-hidden="true" />
+        </div>
+      )}
+      {control}
+    </div>
     {error && (
       <p id={`${id}-error`} role="alert" className="mt-1 text-sm text-red-500 dark:text-red-400">{error}</p>
     )}
   </div>
-);
+  );
+};
 
 const Contact: React.FC<ContactProps> = ({ config, address, contact, workingDays, isPreview, layout = 'split', header, headerScale, reveal, tone, leadFields = NO_LEAD_FIELDS, leadsOpen = true, conversion = 'book', picture}) => {
   const { editing } = useEdit();
@@ -596,17 +602,22 @@ const Contact: React.FC<ContactProps> = ({ config, address, contact, workingDays
         />
       ))}
 
-      <MaterialInput
-        icon={MessageSquare}
-        label={`${t('contact.form.message')} (${t('schedule.form.answer.optional')})`}
-        value={formData.message}
-        onChange={(e) => handleInputChange('message', e.target.value.slice(0, 2000))}
-        multiline
-        required={false}
-        name="message"
-        id="contact-message"
-        error={formErrors.message}
-      />
+      {/* LT-688: the message is not a fixed part of the form. A form with
+          the owner's own questions asks exactly those (a free-text one is
+          a "note" question); only a form with none keeps a place to write. */}
+      {leadFields.length === 0 && (
+        <MaterialInput
+          icon={MessageSquare}
+          label={`${t('contact.form.message')} (${t('schedule.form.answer.optional')})`}
+          value={formData.message}
+          onChange={(e) => handleInputChange('message', e.target.value.slice(0, 2000))}
+          multiline
+          required={false}
+          name="message"
+          id="contact-message"
+          error={formErrors.message}
+        />
+      )}
 
       {/* The visitor check (LT-199): only on a page that has no pass yet —
           a booking page already ran one in its calendar. Usually invisible. */}

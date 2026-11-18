@@ -7,6 +7,7 @@ import { BookingField } from '../../models/BookingField';
 import { WebsiteConfig } from '../../models/WebsiteConfig';
 import { RAW_AI_RESPONSE_SHAPE } from '../fixtures/rawAiConfig';
 import { resetVisitorPassForTests } from '../../services/visitorPass';
+import { CONTROL_BOX_CLASS, FIELD_ICON_CLASS, LABEL_CLASS } from '../../components/Layout/Schedule/ScheduleForms';
 
 /**
  * LT-197 — the contact form is lead capture: the owner's own questions under
@@ -150,6 +151,73 @@ describe('lead form (LT-197)', () => {
     // The message sits inside the Project question's own block.
     expect(message.closest('div')?.querySelector('#contact-answer-project')).toBeTruthy();
     expect(screen.queryByText('contact.form.success')).toBeNull();
+  });
+
+  describe('the message is not a fixed part of the form (LT-688)', () => {
+    it('a form with its own questions asks those and has no message field', async () => {
+      renderForm();
+      expect(screen.getByLabelText('Project')).toBeTruthy();
+      expect(document.getElementById('contact-message')).toBeNull();
+      expect(screen.queryByLabelText(/contact\.form\.message/)).toBeNull();
+
+      fillBasics();
+      choose(screen.getByLabelText('Project'), 'Bath');
+      fireEvent.submit(form());
+      await waitFor(() => expect(mocks.sendContactMessage).toHaveBeenCalledTimes(1));
+      expect(sentPayload()).not.toHaveProperty('message');
+    });
+
+    it('a form with no questions keeps a place to write, still optional, and sends what was written', async () => {
+      renderForm({ leadFields: [] });
+      const message = document.getElementById('contact-message') as HTMLTextAreaElement;
+      expect(message.tagName).toBe('TEXTAREA');
+      expect(message.required).toBe(false);
+      // Several lines tall: a box on every design, never a pill (LT-686).
+      expect(message.className.split(' ').filter((c) => c.startsWith('rounded'))).toEqual(['rounded-design-box']);
+
+      fillBasics();
+      fireEvent.change(message, { target: { value: 'Call me after five' } });
+      fireEvent.submit(form());
+      await waitFor(() => expect(mocks.sendContactMessage).toHaveBeenCalledTimes(1));
+      expect(sentPayload()).toMatchObject({ name: 'Dana', phone: '0501234567', message: 'Call me after five' });
+    });
+
+    it('a free-text question of the owner is the way to ask for one', () => {
+      renderForm({ leadFields: [field({ key: 'details', label: 'Tell us more', type: 'note', required: false })] });
+      expect(screen.getByLabelText(/Tell us more/).tagName).toBe('TEXTAREA');
+      expect(document.getElementById('contact-message')).toBeNull();
+    });
+  });
+
+  describe("a field's icon and label (LT-688)", () => {
+    it('the error line sits outside the box the icon is centred on, in the lead form and in a question', async () => {
+      renderForm();
+      fireEvent.submit(form());
+      const error = await screen.findByText('contact.validation.name');
+      const name = screen.getByLabelText('contact.form.name');
+      const box = name.parentElement as HTMLElement;
+      expect(box.className).toBe(CONTROL_BOX_CLASS);
+      expect(box.querySelector('svg')?.parentElement?.className).toBe(FIELD_ICON_CLASS);
+      expect(box.contains(error)).toBe(false);
+      // The message is still the field's own, right under the box.
+      expect(box.nextElementSibling).toBe(error);
+
+      // The owner's choice question, refused for being empty.
+      const project = screen.getByLabelText('Project');
+      const required = await screen.findByText('schedule.validation.answer.required');
+      const projectBox = project.closest(`.${CONTROL_BOX_CLASS}`) as HTMLElement;
+      expect(projectBox.querySelector('svg')).toBeTruthy();
+      expect(projectBox.contains(required)).toBe(false);
+    });
+
+    it('the label is drawn above the control, so the border never crosses it', () => {
+      renderForm();
+      expect(LABEL_CLASS.split(' ')).toContain('z-10');
+      for (const id of ['contact-name', 'contact-answer-project', 'contact-answer-address']) {
+        const label = document.querySelector(`label[for="${id}"]`) as HTMLElement;
+        expect(label.className).toBe(LABEL_CLASS);
+      }
+    });
   });
 
   it('shows call and WhatsApp buttons and no form when leads are closed', () => {
