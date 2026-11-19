@@ -46,7 +46,8 @@ describe("festive's mesh hero (LT-605)", () => {
     // The seal: the name round the ring, the hero's picture inside it.
     const seal = screen.getByTestId('mesh-seal');
     expect(seal.getAttribute('aria-hidden')).toBe('true');
-    expect(seal.textContent).toContain('Party Time');
+    // A letter per place since LT-696: the spaces only take room.
+    expect(seal.textContent).toContain('PartyTime');
     expect(seal.querySelector('img')?.getAttribute('src')).toContain('hero.jpg');
   });
 

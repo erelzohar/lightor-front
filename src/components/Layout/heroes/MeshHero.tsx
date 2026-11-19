@@ -1,4 +1,4 @@
-import React, { useEffect, useId, useMemo, useRef, useState, type ReactNode } from 'react';
+import React, { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { motion, type Variants } from 'framer-motion';
 import { Sparkles } from 'lucide-react';
 import EditText from '../../EditText';
@@ -8,6 +8,7 @@ import { useStill } from '../../../hooks/useA11yPrefs';
 import type { HeroConfig } from '../../../models/HeroConfig';
 import type { Palette } from '../../../models/WebsiteConfig';
 import { lowEnd } from './common';
+import { ringLayout } from './ringLayout';
 import './MeshHero.css';
 
 type RGB = [number, number, number];
@@ -291,10 +292,9 @@ const MeshHero: React.FC<MeshHeroProps> = ({ config, businessName = '', logo, pa
   const colors = useMemo(() => meshColors(palette, dark), [palette, dark]);
   const [asleep, setAsleep] = useState(false);
   const [pictureFailed, setPictureFailed] = useState(false);
-  const pathId = `lt-mesh-ring-${useId().replace(/[^a-zA-Z0-9]/g, '')}`;
   const picture = !pictureFailed ? (config.heroImageSrc || logo) : '';
   const pictureField = config.heroImageSrc ? 'components.hero.heroImageSrc' : 'logoImageName';
-  const ring = ringText(businessName);
+  const ring = useMemo(() => ringLayout(ringText(businessName)), [businessName]);
   const vars = {
     '--mesh-a': css(colors[1]),
     '--mesh-b': css(colors[4]),
@@ -347,7 +347,7 @@ const MeshHero: React.FC<MeshHeroProps> = ({ config, businessName = '', logo, pa
           {social && <motion.div className="mt-6" variants={item}>{social}</motion.div>}
         </div>
 
-        {(ring || picture) && (
+        {(ring.pieces.length > 0 || picture) && (
           <motion.div className="relative order-first h-28 w-28 shrink-0 self-end md:order-none md:h-36 md:w-36" aria-hidden="true" variants={item} data-testid="mesh-seal">
             <span className="lt-mesh-glow absolute inset-[24%] rounded-full" />
             <span className="lt-mesh-ring absolute inset-[22%] rounded-full" />
@@ -363,15 +363,14 @@ const MeshHero: React.FC<MeshHeroProps> = ({ config, businessName = '', logo, pa
               ) : <span className="block h-full w-full" />}
             </span>
             {/* The name on top: the glow round the ring must not veil it. */}
-            {ring && (
+            {ring.pieces.length > 0 && (
               <svg viewBox="0 0 100 100" className="lt-mesh-spin absolute inset-0 h-full w-full overflow-visible text-light-text/80 dark:text-dark-text/80">
-                <defs>
-                  <path id={pathId} d="M 50,50 m -40,0 a 40,40 0 1,1 80,0 a 40,40 0 1,1 -80,0" />
-                </defs>
-                {/* Centred on the ring: a right-to-left line anchored at its start would run off the path. */}
-                <text className="fill-current" textAnchor="middle" style={{ fontSize: 9, fontWeight: 600, letterSpacing: noTrack ? 0 : 0.6 }}>
-                  <textPath href={`#${pathId}`} xlinkHref={`#${pathId}`} startOffset="50%" textLength={251} lengthAdjust="spacing">{ring}</textPath>
-                </text>
+                {/* Every letter at its own angle (ringLayout): text laid on a path came out backwards in Hebrew on iPhones. */}
+                <g className="fill-current" textAnchor="middle" style={{ fontSize: ring.fontSize, fontWeight: 600 }}>
+                  {ring.pieces.map((piece, i) => (
+                    <text key={i} x={50} y={10} direction={piece.rtl ? 'rtl' : 'ltr'} transform={`rotate(${piece.angle} 50 50)`}>{piece.text}</text>
+                  ))}
+                </g>
               </svg>
             )}
           </motion.div>
