@@ -112,7 +112,8 @@ const reachDetails = async ({ service = 'Haircut' as string | null } = {}) => {
   if (service) fireEvent.click(await screen.findByText(service));
   await waitFor(() => expect(screen.getByText('schedule.legend.available')).toBeTruthy());
   fireEvent.click(dayButtons().find((button) => !button.hasAttribute('disabled'))!);
-  const slots = await screen.findAllByRole('button', { name: /^\d{2}:\d{2}$/ });
+  // A US business's slots read "8:00 AM" (LT-702), an Israeli one's "08:00".
+  const slots = await screen.findAllByRole('button', { name: /^(\d{2}:\d{2}|\d{1,2}:\d{2} [AP]M)$/ });
   fireEvent.click(slots[0]);
   await waitFor(() => expect(screen.getByLabelText('schedule.form.name')).toBeTruthy());
 };

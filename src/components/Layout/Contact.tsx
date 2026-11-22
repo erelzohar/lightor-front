@@ -17,6 +17,7 @@ import { ContactModal } from '../../components/ContactModal';
 import { useContactHandler } from '../../hooks/useContactHandler';
 import smsService from '../../services/SmsService';
 import { displayPhone, telHref, whatsAppHref, phoneExampleInText } from '../../utils/phone';
+import { formatsForPhone } from '../../utils/siteFormats';
 import { usePhoneInput } from '../../hooks/usePhoneInput';
 import { LEADING_FIELD_CLASS, LEADING_CELL_CLASS, LEADING_SLOT_CLASS, LABEL_CLASS, CONTROL_BOX_CLASS, FIELD_ICON_CLASS } from './Schedule/ScheduleForms';
 import { BookingField, AnswerValue, answerProblem, answersForRequest } from '../../models/BookingField';
@@ -283,27 +284,14 @@ const Contact: React.FC<ContactProps> = ({ config, address, contact, workingDays
       .join(', ');
   };
 
+  // LT-702: one helper for every site's hours (Hebrew keeps the raw 24h
+  // ranges, an American site the 12-hour clock in every language).
+  const formats = formatsForPhone(contact.phone, language);
   const formatWorkingHours = () => {
-    const days = language === 'he'
-      ? ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי', 'שבת']
-      : ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-
     return workingDays
       .map((hours, index) => ({
         day: t(`day.${index}`),
-        // Hours may hold several comma-separated ranges (breaks, LT-057):
-        // format each range, join with ", ". Hebrew keeps the raw 24h ranges.
-        hours: hours === null
-          ? t('time.closed')
-          : language === 'he'
-            ? hours.split(',').map(range => range.trim()).filter(Boolean).join(', ')
-            : hours.split(',').map(range => range.trim()).filter(Boolean).map(range =>
-              range.split('-').map(time => {
-                const [h, m] = time.split(':');
-                const hour = parseInt(h);
-                return `${hour > 12 ? hour - 12 : hour}:${m} ${hour >= 12 ? 'PM' : 'AM'}`;
-              }).join(' - ')
-            ).join(', ')
+        hours: formats.hours(hours, language === 'he') ?? t('time.closed'),
       }))
       .filter(schedule => schedule.hours !== t('time.closed'));
   };

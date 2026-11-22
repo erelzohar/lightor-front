@@ -8,6 +8,7 @@ import { followLink, useSiteNav } from '../../services/siteNav';
 import { lastPostList, rememberPostList } from '../../services/postCards';
 import { useCoverOf } from '../../services/sitePictures';
 import { parsePostCard, postPath, type PostCard } from '../../models/Post';
+import { siteFormats, useSiteCountry } from '../../utils/siteFormats';
 import './blog.css';
 
 /**
@@ -20,13 +21,16 @@ const LOCALES: Record<string, string> = { he: 'he-IL', en: 'en-GB', ar: 'ar-u-nu
 
 export const useBlogFormat = (timeZone?: string) => {
   const { t, language } = useLanguage();
+  // LT-702: an American business's posts are dated "December 2, 2026" in English.
+  const country = useSiteCountry();
   const format = useMemo(() => {
+    const locale = siteFormats(country, language).dateLocale(LOCALES[language] ?? 'he-IL');
     try {
-      return new Intl.DateTimeFormat(LOCALES[language] ?? 'he-IL', { day: 'numeric', month: 'long', year: 'numeric', ...(timeZone ? { timeZone } : {}) });
+      return new Intl.DateTimeFormat(locale, { day: 'numeric', month: 'long', year: 'numeric', ...(timeZone ? { timeZone } : {}) });
     } catch {
-      return new Intl.DateTimeFormat(LOCALES[language] ?? 'he-IL', { day: 'numeric', month: 'long', year: 'numeric' });
+      return new Intl.DateTimeFormat(locale, { day: 'numeric', month: 'long', year: 'numeric' });
     }
-  }, [language, timeZone]);
+  }, [country, language, timeZone]);
   return {
     date: (iso: string): string => {
       const d = new Date(iso);

@@ -35,6 +35,7 @@ import SectionHeading from './SectionHeading';
 import type { HeadingScale } from '../../services/artDirection';
 import { Social } from '../../models/Social';
 import { displayPhone, telHref, whatsAppHref } from '../../utils/phone';
+import { formatsForPhone } from '../../utils/siteFormats';
 import { safeHttpUrl, openExternal } from '../../utils/safeUrl';
 import { googleMapsHref } from '../../utils/navigation';
 import WazeLink from '../WazeLink';
@@ -118,23 +119,14 @@ const About: React.FC<AboutProps> = ({ config, websiteConfig, layout = 'cards', 
   const visitOn = showVisit && showPart('visit');
   const { t, language } = useLanguage();
   const { isModalOpen, setIsModalOpen, modalType, handleContactClick } = useContactHandler();
+  // LT-702: one helper for every site's hours (Hebrew keeps the raw 24h
+  // ranges, an American site the 12-hour clock in every language).
+  const formats = formatsForPhone(websiteConfig.contact.phone, language);
   const formatWorkingHours = () => {
     return websiteConfig.workingDays
       .map((hours, index) => ({
         day: t(`day.${index}`),
-        // Hours may hold several comma-separated ranges (breaks, LT-057):
-        // format each range, join with ", ". Hebrew keeps the raw 24h ranges.
-        hours: hours === null
-          ? t('time.closed')
-          : language === 'he'
-            ? hours.split(',').map(range => range.trim()).filter(Boolean).join(', ')
-            : hours.split(',').map(range => range.trim()).filter(Boolean).map(range =>
-              range.split('-').map(time => {
-                const [h, m] = time.split(':');
-                const hour = parseInt(h);
-                return `${hour > 12 ? hour - 12 : hour}:${m} ${hour >= 12 ? 'PM' : 'AM'}`;
-              }).join(' - ')
-            ).join(', ')
+        hours: formats.hours(hours, language === 'he') ?? t('time.closed'),
       }))
       .filter(schedule => schedule.hours !== t('time.closed'));
   };

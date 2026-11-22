@@ -41,6 +41,7 @@ import { useEdit, editAttrs, servicePath } from '../../../services/editMode';
 import { handleSquareImageError } from '../../../utils/imageFallback';
 import { formatPrice } from '../../../utils/currency';
 import { displayPhone, telHref, phoneEntryOf, phoneExampleInText, HOME_COUNTRY } from '../../../utils/phone';
+import { formatsForPhone } from '../../../utils/siteFormats';
 import { usePhoneInput } from '../../../hooks/usePhoneInput';
 import CodeFrame from '../../common/CodeFrame';
 import TextConsent from './TextConsent';
@@ -205,6 +206,13 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
   };
 
   const { t, language } = useLanguage();
+  // LT-702: what a visitor reads of a time or a date. The "HH:MM" strings stay
+  // the data (a slot's key, what a booking sends); only their labels change.
+  const formats = useMemo(() => formatsForPhone(phone, language), [phone, language]);
+  // "10:00 AM" is wider than "10:00": on a 320px phone it kept one line only
+  // with a little less padding and gap (it still wraps, never clips, if not).
+  const slotPad = formats.hour12 ? 'px-2 py-3 sm:p-3' : 'p-3';
+  const slotGap = formats.hour12 ? 'gap-1.5 sm:gap-2' : 'gap-2';
   // The server refused a booking as closed (LT-458): the cached config lagged.
   const [refusedClosed, setRefusedClosed] = useState(false);
   const closed = !isUpdating && (!bookingOpen || refusedClosed);
@@ -1227,14 +1235,15 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
   }, [isPast, workingDays, dateOverrides, generateTimeSlots, isTimeInVacation, calendarDurationMS, selectedAppointmentType, sessionsOnDate, isBeyondWindow]);
 
   const formatSelectedDate = useCallback((date: Date) => {
-    return date.toLocaleDateString(language === 'he' ? 'he-IL' : (language === 'ar' ? 'ar-SA' : (language === 'fr' ? 'fr-FR' : (language === 'es' ? 'es-ES' : 'en-US'))), {
+    return date.toLocaleDateString(formats.dateLocale(language === 'he' ? 'he-IL' : (language === 'ar' ? 'ar-SA' : (language === 'fr' ? 'fr-FR' : (language === 'es' ? 'es-ES' : 'en-US')))), {
       weekday: 'long',
       month: 'long',
       day: 'numeric',
     });
-  }, [language]);
+  }, [formats, language]);
 
   const formatTime = useCallback((timestamp: string) => {
+    if (formats.hour12) return formats.momentClock(parseInt(timestamp), tz);
     const date = new Date(parseInt(timestamp));
     return date.toLocaleTimeString(language === 'he' ? 'he-IL' : (language === 'ar' ? 'ar-SA' : (language === 'fr' ? 'fr-FR' : (language === 'es' ? 'es-ES' : 'en-US'))), {
       hour: '2-digit',
@@ -1242,7 +1251,7 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
       hour12: language !== 'he',
       timeZone: tz,
     });
-  }, [language, tz]);
+  }, [language, tz, formats]);
 
   const handleDateSelect = useCallback((date: Date) => {
     if (!isPast(date) && isAvailable(date)) {
@@ -1366,13 +1375,13 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
       const date = new Date(firstDayOfWeek);
       date.setDate(firstDayOfWeek.getDate() + i);
       days.push(
-        new Intl.DateTimeFormat(language === 'he' ? 'he-IL' : (language === 'ar' ? 'ar-SA' : (language === 'fr' ? 'fr-FR' : (language === 'es' ? 'es-ES' : 'en-US'))), {
+        new Intl.DateTimeFormat(formats.dateLocale(language === 'he' ? 'he-IL' : (language === 'ar' ? 'ar-SA' : (language === 'fr' ? 'fr-FR' : (language === 'es' ? 'es-ES' : 'en-US')))), {
           weekday: 'short'
         }).format(date)
       );
     }
     return days;
-  }, [language]);
+  }, [formats, language]);
 
   const generateCalendarDays = useCallback(() => {
     const year = currentMonth.getFullYear();
@@ -1575,7 +1584,7 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
                     <div key={i} className="flex justify-between gap-6 py-3 text-sm">
                       <dt className="font-semibold text-light-text dark:text-dark-text">{t(`day.${i}`)}</dt>
                       <dd className={`m-0 ${h ? 'text-light-text/80 dark:text-dark-text/80' : 'text-light-text/40 dark:text-dark-text/40'}`} dir={h ? 'ltr' : undefined}>
-                        {h ? h.split(',').map((r) => r.trim()).filter(Boolean).join(', ') : t('time.closed')}
+                        {h ? formats.hours(h, true) : t('time.closed')}
                       </dd>
                     </div>
                   ))}
@@ -1662,7 +1671,7 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
                       <ChevronLeft className={`h-5 w-5 text-light-text dark:text-dark-text ${language === 'he' || language === 'ar' ? 'rotate-180' : ''}`} aria-hidden="true" />
                     </motion.button>
                     <h3 className="text-xl font-semibold text-light-text dark:text-dark-text" aria-live="polite">
-                      {currentMonth.toLocaleDateString(language === 'he' ? 'he-IL' : (language === 'ar' ? 'ar-SA' : (language === 'fr' ? 'fr-FR' : (language === 'es' ? 'es-ES' : 'en-US'))), {
+                      {currentMonth.toLocaleDateString(formats.dateLocale(language === 'he' ? 'he-IL' : (language === 'ar' ? 'ar-SA' : (language === 'fr' ? 'fr-FR' : (language === 'es' ? 'es-ES' : 'en-US')))), {
                         month: 'long',
                         year: 'numeric'
                       })}
@@ -1827,7 +1836,7 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
                     {selectedAppointmentType.isClass ? (
                       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                         {sessionsOnDate(selectedAppointmentType, selectedDate).map((occurrence) => {
-                          const time = zonedTimeLabel(occurrence.startMs, tz);
+                          const time = formats.momentClock(occurrence.startMs, tz);
                           // A number only when places are nearly gone; a new
                           // class must not advertise an empty room.
                           const note = occurrence.isFull
@@ -1843,7 +1852,7 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
                               disabled={occurrence.isFull}
                               aria-label={note ? `${time} - ${note}` : time}
                               onClick={() => handleSessionSelect(occurrence)}
-                              className={`relative overflow-hidden p-3 rounded-design-sm text-sm font-medium ${occurrence.isFull
+                              className={`relative overflow-hidden ${slotPad} rounded-design-sm text-sm font-medium ${occurrence.isFull
                                 ? 'bg-light-gray/30 dark:bg-dark-gray/30 text-light-text/40 dark:text-dark-text/40 cursor-not-allowed'
                                 : selectedSession?.timestamp === occurrence.timestamp
                                   ? 'bg-primary dark:bg-primary-dark text-on-primary dark:text-on-primary-dark shadow-lg'
@@ -1852,7 +1861,7 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
                               whileHover={occurrence.isFull ? undefined : { scale: 1.05 }}
                               whileTap={occurrence.isFull ? undefined : { scale: 0.95 }}
                             >
-                              <span className="relative flex items-center justify-center gap-2">
+                              <span className={`relative flex items-center justify-center ${slotGap}`}>
                                 <Clock className="h-4 w-4" aria-hidden="true" />
                                 {time}
                               </span>
@@ -1870,7 +1879,7 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
                           key={time}
                           type="button"
                           onClick={() => handleTimeSelect(time)}
-                          className={`relative overflow-hidden p-3 rounded-design-sm text-sm font-medium ${selectedTime === time
+                          className={`relative overflow-hidden ${slotPad} rounded-design-sm text-sm font-medium ${selectedTime === time
                             ? 'bg-primary dark:bg-primary-dark text-on-primary dark:text-on-primary-dark shadow-lg'
                             : 'bg-primary/10 dark:bg-primary-dark/10 text-primary-readable dark:text-primary-dark-readable hover:shadow-md'
                             }`}
@@ -1884,9 +1893,9 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
                             transition={{ duration: 0.3 }}
                             aria-hidden="true"
                           />
-                          <span className="relative flex items-center justify-center gap-2">
+                          <span className={`relative flex items-center justify-center ${slotGap}`}>
                             <Clock className="h-4 w-4" aria-hidden="true" />
-                            {time}
+                            {formats.clock(time)}
                           </span>
                         </motion.button>
                       ))}
@@ -1910,7 +1919,7 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
                     </div>
                     <div className="flex items-center gap-2 text-lg font-semibold text-light-text dark:text-dark-text mt-1">
                       <Clock className="h-5 w-5 text-primary/70 dark:text-primary-dark/70" aria-hidden="true" />
-                      <span>{selectedTime}</span>
+                      <span>{formats.clock(selectedTime)}</span>
                     </div>
                   </div>
                   <form onSubmit={handleDetailsSubmit}>
@@ -2042,14 +2051,14 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
                     <div role="group" aria-labelledby="same-day-title" className="space-y-5 text-center" data-testid="same-day">
                       <div>
                         <p id="same-day-title" className="text-lg font-semibold text-light-text dark:text-dark-text">{t('schedule.sameDay.title')}</p>
-                        <p className="mt-1 text-sm text-light-text/70 dark:text-dark-text/70">{t('schedule.sameDay.body', { time: selectedTime })}</p>
+                        <p className="mt-1 text-sm text-light-text/70 dark:text-dark-text/70">{t('schedule.sameDay.body', { time: formats.clock(selectedTime) })}</p>
                       </div>
                       <ul className="space-y-3">
                         {sameDay.held.map((booking) => (
                           <li key={booking._id} className="rounded-design border border-light-gray dark:border-dark-gray p-4 flex flex-col gap-3">
                             <div className="flex flex-wrap items-center justify-center gap-x-2 gap-y-1 font-medium text-light-text dark:text-dark-text">
                               <Clock className="h-4 w-4 text-primary/70 dark:text-primary-dark/70" aria-hidden="true" />
-                              <span dir="ltr">{zonedTimeLabel(parseInt(booking.timestamp, 10), tz)}</span>
+                              <span dir="ltr">{formats.momentClock(parseInt(booking.timestamp, 10), tz)}</span>
                               <span aria-hidden="true">·</span>
                               <span>{booking.type.name}</span>
                             </div>
@@ -2059,7 +2068,7 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
                               disabled={isSubmitting}
                               className="w-full bg-primary dark:bg-primary-dark text-on-primary dark:text-on-primary-dark py-3 px-5 rounded-design shadow-md hover:shadow-lg transition-shadow disabled:opacity-50 disabled:cursor-not-allowed"
                             >
-                              {t('schedule.sameDay.update', { time: selectedTime })}
+                              {t('schedule.sameDay.update', { time: formats.clock(selectedTime) })}
                             </button>
                           </li>
                         ))}
@@ -2081,7 +2090,7 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
                     </div>
                     <div className="flex items-center gap-2 text-lg font-semibold text-light-text dark:text-dark-text mt-1">
                       <Clock className="h-5 w-5 text-primary/70 dark:text-primary-dark/70" aria-hidden="true" />
-                      <span>{selectedTime}</span>
+                      <span>{formats.clock(selectedTime)}</span>
                     </div>
                   </div>
                   <form onSubmit={handleVerificationSubmit}>

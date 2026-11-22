@@ -2,15 +2,23 @@ import React from 'react';
 import { useLanguage } from '../../contexts/LanguageContext';
 import type { SectionTone } from '../SectionDivider';
 import { TONE_BG } from './blockUtils';
+import { formatsForPhone } from '../../utils/siteFormats';
 
-interface Props { workingDays: (string | null)[]; tone?: SectionTone; variant?: string }
+interface Props {
+  workingDays: (string | null)[];
+  tone?: SectionTone;
+  variant?: string;
+  /** The business phone: its country decides the clock (LT-702). */
+  phone?: string;
+}
 
 /** LT-136: opening hours as a block of their own — a table or a one-line strip. */
-const Hours: React.FC<Props> = ({ workingDays, tone = 'surface', variant = 'table' }) => {
+const Hours: React.FC<Props> = ({ workingDays, tone = 'surface', variant = 'table', phone }) => {
   const { t, language } = useLanguage();
+  const formats = formatsForPhone(phone, language);
   const rows = (workingDays ?? []).map((h, i) => ({
     day: t(`day.${i}`),
-    hours: h === null || !h ? t('time.closed') : h.split(',').map((r) => r.trim()).filter(Boolean).join(', '),
+    hours: h === null || !h ? t('time.closed') : formats.hours(h, true),
     open: !!h,
   }));
   if (!rows.some((r) => r.open)) return null;

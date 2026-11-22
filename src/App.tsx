@@ -61,6 +61,8 @@ import { setA11yMenuEnabled } from './services/a11yPrefs';
 import { withoutPaidDesigns } from './services/paidDesigns';
 import { useStill } from './hooks/useA11yPrefs';
 import { part, partLoaded, partsFor, preloadParts } from './designs/parts';
+import { SiteCountryContext } from './utils/siteFormats';
+import { siteCountry } from './utils/phone';
 
 // LT-603: the sections and pages only some sites draw come in their own
 // files, loaded by what the config names (designs/parts.tsx).
@@ -689,6 +691,7 @@ function MainContent() {
     <SiteNavContext.Provider value={siteNav}>
     <SitePicturesContext.Provider value={sitePictures}>
     <ProductInquiryContext.Provider value={inquiryState}>
+    <SiteCountryContext.Provider value={siteCountry(config.contact?.phone)}>
     <MotionConfig reducedMotion={still ? 'always' : 'user'}>
     <div className="min-h-screen overflow-x-clip bg-light-bg dark:bg-dark-bg transition-colors duration-300">
       {/* LT-346: the first stop for a keyboard: straight past the menu. */}
@@ -1042,6 +1045,7 @@ function MainContent() {
       {editing && <EditOverlay selected={selection} onPick={onPick} />}
     </div>
     </MotionConfig>
+    </SiteCountryContext.Provider>
     </ProductInquiryContext.Provider>
     </SitePicturesContext.Provider>
     </SiteNavContext.Provider>

@@ -3,6 +3,7 @@ import { useLanguage } from '../../contexts/LanguageContext';
 import { useDialogFocus } from '../../hooks/useDialogFocus';
 import { DialogTop } from '../ui/DialogTop';
 import { displayPhone, telHref } from '../../utils/phone';
+import { formatsForPhone } from '../../utils/siteFormats';
 import {
   ACCESSIBILITY_CONTACT, STATEMENT_HASH, STATEMENT_UPDATED,
   closeStatement, isStatementOpen, openStatement, subscribeStatement,
@@ -42,7 +43,7 @@ const AccessibilityStatement: React.FC<AccessibilityStatementProps> = ({ busines
 
   let updated = STATEMENT_UPDATED;
   try {
-    updated = new Intl.DateTimeFormat(language, { dateStyle: 'long', timeZone: 'UTC' }).format(new Date(`${STATEMENT_UPDATED}T00:00:00Z`));
+    updated = new Intl.DateTimeFormat(formatsForPhone(phone, language).dateLocale(language), { dateStyle: 'long', timeZone: 'UTC' }).format(new Date(`${STATEMENT_UPDATED}T00:00:00Z`));
   } catch { /* keep the ISO date */ }
   const tel = phone?.trim() ? telHref(phone) : '';
 

@@ -197,7 +197,7 @@ const ComposedPage: React.FC<ComposedPageProps> = ({ config, jitter, isPreview, 
       case 'priceCards':
         return <PriceCards appointmentTypes={config.appointmentTypes ?? []} bookable={bookable} title={c?.services?.title} currency={config.currency} />;
       case 'hours':
-        return <Hours workingDays={config.workingDays ?? []} variant={v} />;
+        return <Hours workingDays={config.workingDays ?? []} variant={v} phone={config.contact?.phone} />;
       case 'photoPair': {
         const from = typeof p.from === 'number' ? p.from : 0;
         return <PhotoPair items={(c?.portfolio?.items ?? []).slice(from, from + 2)} variant={v} from={from} />;

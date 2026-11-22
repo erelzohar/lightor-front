@@ -22,6 +22,7 @@ import { resolveTimeZone } from '../utils/businessTime';
 import SiteA11y from './a11y/SiteA11y';
 import { useDialogFocus } from '../hooks/useDialogFocus';
 import { displayPhone, telHref } from '../utils/phone';
+import { formatsForPhone } from '../utils/siteFormats';
 
 
 
@@ -145,9 +146,12 @@ const ManageAppointment: React.FC = () => {
     setIsUpdating(true);
   };
 
+  // LT-702: an American business's page writes its dates and times the American way.
+  const formats = formatsForPhone(config?.contact?.phone, language);
+
   const formatDate = (timestamp: string) => {
     const date = new Date(parseInt(timestamp));
-    return date.toLocaleDateString(language === 'he' ? 'he-IL' : 'en-US', {
+    return date.toLocaleDateString(formats.dateLocale(language === 'he' ? 'he-IL' : 'en-US'), {
       weekday: 'long',
       year: 'numeric',
       month: 'long',
@@ -157,6 +161,7 @@ const ManageAppointment: React.FC = () => {
   };
 
   const formatTime = (timestamp: string) => {
+    if (formats.hour12) return formats.momentClock(parseInt(timestamp), resolveTimeZone(config?.timeZone));
     const date = new Date(parseInt(timestamp));
     return date.toLocaleTimeString(language === 'he' ? 'he-IL' : 'en-US', {
       hour: '2-digit',
