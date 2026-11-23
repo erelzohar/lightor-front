@@ -2,8 +2,9 @@ import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import LightorBadge from '../../components/LightorBadge';
 
+const lang = vi.hoisted(() => ({ current: 'en' }));
 vi.mock('../../contexts/LanguageContext', () => ({
-  useLanguage: () => ({ t: (key: string) => key }),
+  useLanguage: () => ({ t: (key: string) => key, language: lang.current }),
 }));
 
 /**
@@ -17,7 +18,7 @@ describe('LightorBadge', () => {
   it('floats on the free plan, below the z-50 windows, and only the link takes clicks', () => {
     render(<LightorBadge />);
     const holder = badge()!.parentElement!;
-    expect(badge()).toHaveAttribute('href', 'https://register.lightor.app?ref=badge');
+    expect(badge()).toHaveAttribute('href', 'https://register.lightor.app/?ref=badge&lang=en');
     expect(holder).toHaveClass('fixed', 'bottom-4', 'z-40', 'pointer-events-none');
     expect(badge()).toHaveClass('pointer-events-auto');
   });
@@ -41,5 +42,15 @@ describe('LightorBadge', () => {
     expect(screen.getByRole('link', { name: 'a11y.menu.statement' }).parentElement).toHaveClass('pb-3');
     rerender(<LightorBadge badge={false} />);
     expect(container).toBeEmptyDOMElement();
+  });
+
+  it("opens the wizard in the language the visitor is reading the site in (LT-710)", () => {
+    for (const language of ['he', 'en', 'ar', 'fr', 'es']) {
+      lang.current = language;
+      const { unmount } = render(<LightorBadge />);
+      expect(badge()).toHaveAttribute('href', `https://register.lightor.app/?ref=badge&lang=${language}`);
+      unmount();
+    }
+    lang.current = 'en';
   });
 });

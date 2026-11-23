@@ -59,6 +59,37 @@ const siteLanguage = (): string | undefined => {
   }
 };
 
+/** The browser's clock is on Israel's time zone (no network call). */
+const inIsrael = (): boolean => {
+  try {
+    const zone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    return zone === 'Asia/Jerusalem' || zone === 'Asia/Tel_Aviv';
+  } catch {
+    return false;
+  }
+};
+
+/**
+ * LT-710: where a text missing in one language is taken from, and (`default`)
+ * the language of a visitor whose browser speaks none of the five, on a page
+ * drawn before or without the site's own language (the not-live page, the
+ * loading screen when the edge sent no config). Hebrew stays Hebrew. English
+ * falls back to Hebrew as before. Arabic, French and Spanish fall back to
+ * English: every language file has every key (localeParity.test.ts), so a
+ * Hebrew step after English could never be reached and would only add a third
+ * download (LT-603). A browser in another language reads English, except in
+ * Israel, where it keeps Hebrew as before (LT-408: a Russian phone in Israel).
+ * The site's own language (`lng`, the config) always wins over all of this.
+ */
+export const fallbackLanguages = (israel: boolean) => ({
+  he: ['he'],
+  en: ['he'],
+  ar: ['en'],
+  fr: ['en'],
+  es: ['en'],
+  default: [israel ? 'he' : 'en'],
+});
+
 if (!TESTING) i18n.use(lazyLanguages);
 
 i18n
@@ -77,11 +108,11 @@ i18n
         }
       : {}),
     lng: siteLanguage(),
-    fallbackLng: 'he',
+    fallbackLng: fallbackLanguages(inIsrael()),
     // LT-408: a visitor language the sites do not speak (a Russian browser)
-    // falls back to Hebrew whole - it used to stay "ru", so a page shown
-    // before the site's own language arrives (the not-live page, not found)
-    // read Hebrew laid out left to right.
+    // falls back whole (`default` above) - it used to stay "ru", so a page
+    // shown before the site's own language arrives (the not-live page, not
+    // found) read Hebrew laid out left to right.
     supportedLngs: [...LANGUAGES],
     load: 'languageOnly', // We only use 'en', 'he', etc.
     interpolation: {
@@ -91,7 +122,10 @@ i18n
     // Suspense): a language switched to later shows once it has arrived.
     react: { useSuspense: false },
     detection: {
-      order: ['querystring', 'localStorage', 'navigator', 'htmlTag'],
+      // LT-710: no 'htmlTag'. The shell ships `<html lang="he">` (the edge rewrites it only
+      // where it also inlines the config, which wins anyway), so a browser in none of the
+      // five always matched Hebrew there, before `fallbackLng` was ever asked.
+      order: ['querystring', 'localStorage', 'navigator'],
       lookupQuerystring: 'lng',
       lookupLocalStorage: 'i18nextLng',
       caches: ['localStorage'],

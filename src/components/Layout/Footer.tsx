@@ -21,6 +21,7 @@ import { showsPrices } from '../../utils/servicesHeading';
 import { telHref, whatsAppHref } from '../../utils/phone';
 import { safeHttpUrl, openExternal } from '../../utils/safeUrl';
 import { STATEMENT_HASH, onStatementLinkClick } from '../../services/a11yStatement';
+import { wizardLink } from '../../services/lightorLinks';
 
 interface WebsiteConfig {
   // LT-168: section titles double as the quick-link labels.
@@ -223,7 +224,7 @@ const Footer: React.FC<FooterProps> = ({ config, social, businessName, logoImage
       <button onClick={() => openLegalModal('terms')} className="hover:opacity-100 hover:underline">{t('footer.policy.terms')}</button>
       <button onClick={() => openLegalModal('security')} className="hover:opacity-100 hover:underline">{t('footer.policy.security')}</button>
       <a href={STATEMENT_HASH} onClick={onStatementLinkClick} className="hover:opacity-100 hover:underline">{t('a11y.menu.statement')}</a>
-      <a href="https://register.lightor.app" target="_blank" rel="noopener noreferrer" className="hover:opacity-100 hover:underline">{t('footer.business_link')}</a>
+      <a href={wizardLink(language)} target="_blank" rel="noopener noreferrer" className="hover:opacity-100 hover:underline">{t('footer.business_link')}</a>
     </div>
   );
   const tagline = [businessName, city].filter((x) => x && x.trim()).join(' · ');
@@ -467,7 +468,7 @@ const Footer: React.FC<FooterProps> = ({ config, social, businessName, logoImage
               </a>
             </div>
             <motion.a
-              href="https://register.lightor.app"
+              href={wizardLink(language)}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-block text-primary-dark hover:text-primary transition-colors"

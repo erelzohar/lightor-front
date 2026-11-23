@@ -27,6 +27,6 @@ describe('a site that is not live yet (LT-200)', () => {
     expect(screen.getByRole('heading', { name: 'inactive.title' })).toBeTruthy();
     expect(screen.getByText('inactive.message')).toBeTruthy();
     expect(screen.getByText('inactive.owner')).toBeTruthy();
-    expect(screen.getByRole('link', { name: 'inactive.button' })).toHaveAttribute('href', 'https://dashboard.lightor.app');
+    expect(screen.getByRole('link', { name: 'inactive.button' })).toHaveAttribute('href', 'https://dashboard.lightor.app/?lang=he');
   });
 });

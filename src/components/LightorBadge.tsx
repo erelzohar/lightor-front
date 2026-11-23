@@ -2,6 +2,7 @@ import React from 'react';
 import { Zap } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
 import { STATEMENT_HASH, onStatementLinkClick } from '../services/a11yStatement';
+import { wizardLink } from '../services/lightorLinks';
 
 interface LightorBadgeProps {
   /** The "Built with Lightor" link — free-plan sites (LT-032). */
@@ -22,7 +23,7 @@ interface LightorBadgeProps {
  * strip also holds the accessibility statement's link.
  */
 const LightorBadge: React.FC<LightorBadgeProps> = ({ badge = true, statementLink = false }) => {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   if (!badge && !statementLink) return null;
 
   return (
@@ -37,7 +38,7 @@ const LightorBadge: React.FC<LightorBadgeProps> = ({ badge = true, statementLink
       {badge && (
         <div className="fixed bottom-4 inset-x-0 z-40 flex justify-center pointer-events-none print:hidden">
           <a
-            href="https://register.lightor.app?ref=badge"
+            href={wizardLink(language, { ref: 'badge' })}
             target="_blank"
             rel="noopener noreferrer"
             className="pointer-events-auto flex items-center gap-2 min-[375px]:gap-3 rounded-full px-4 min-[375px]:px-6 py-2 min-[375px]:py-3 text-lg min-[375px]:text-2xl bg-dark-bg text-dark-text border border-white/15 shadow-lg hover:text-primary transition-colors"

@@ -105,5 +105,25 @@ describe('nav labels follow the section titles', () => {
     expect(labels['#faq']).toBe(TITLES.faq);
     expect(labels['#contact']).toBe(TITLES.contact);
   });
+
+  it("every footer's link to the wizard opens it in the visitor's language (LT-710)", () => {
+    for (const layout of ['columns', 'minimal', 'line', 'ticker'] as const) {
+      const { getAllByRole, unmount } = render(
+        <Footer
+          config={{ description: 'd' }}
+          social={{ instagram: '', facebook: '', tiktok: '' } as never}
+          businessName="Z"
+          logoImageName="l.png"
+          appointmentsType={[HAIRCUT]}
+          websiteConfig={components({})}
+          layout={layout}
+        />
+      );
+      const links = getAllByRole('link', { name: 'footer.business_link' });
+      expect(links.length, layout).toBeGreaterThan(0);
+      for (const link of links) expect(link, layout).toHaveAttribute('href', 'https://register.lightor.app/?lang=he');
+      unmount();
+    }
+  });
 });
 
