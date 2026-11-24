@@ -87,8 +87,9 @@ describe('the text consent line (LT-687)', () => {
   });
 
   it('the booking form shows it for a United States number, and the plain line otherwise', () => {
+    // LT-716: on the channel the booking goes by - WhatsApp's line wherever no text reaches.
     expect(scheduleSource).toMatch(
-      /phoneInput\.country === 'US' \? \(\s*<TextConsent channel=\{channelType\} \/>\s*\) : \(\s*<p[^>]*>\s*\{t\('schedule\.form\.helper'\)\}/,
+      /phoneInput\.country === 'US' \? \(\s*<TextConsent channel=\{channel\} \/>\s*\) : \(\s*<p[^>]*>\s*\{t\('schedule\.form\.helper'\)\}/,
     );
   });
 });

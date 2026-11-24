@@ -1,7 +1,7 @@
 import { useCallback, useMemo, useState } from 'react';
 import type { ChangeEvent, InputHTMLAttributes, ReactNode } from 'react';
 import PhoneCountryChip from '../components/common/PhoneCountryChip';
-import { usePhoneCountries } from '../services/phoneCountries';
+import { textReaches, usePhoneCountries, useSmsCountries } from '../services/phoneCountries';
 import {
   HOME_COUNTRY,
   dialCode,
@@ -59,6 +59,12 @@ export interface PhoneInput {
   reading: PhoneReading | { problem: PhoneProblem };
   /** A value put in from outside (a booking being moved): its own country, or null to start over. */
   setCountry: (country: PhoneCountry | null) => void;
+  /**
+   * LT-716: does a text reach a number of this country? False where the API
+   * names no SMS sender: the booking form then writes on WhatsApp. True
+   * while the API names no list (an older API), as it always was.
+   */
+  textReaches: boolean;
 }
 
 /**
@@ -94,6 +100,7 @@ const keepCaret = (input: HTMLInputElement, typed: string, shown: string): void 
 
 export function usePhoneInput({ text, onText, sitePhone, active = true, anyPlus = false }: PhoneInputOptions): PhoneInput {
   const open = usePhoneCountries(active);
+  const sms = useSmsCountries();
   // The visitor's own choice: the chip, a number typed with its country
   // code, or simply having typed. Until then the field follows the site.
   const [chosen, setChosen] = useState<PhoneCountry | null>(null);
@@ -134,5 +141,6 @@ export function usePhoneInput({ text, onText, sitePhone, active = true, anyPlus 
     placeholder: many ? phoneExample(country) : '',
     reading,
     setCountry: setChosen,
+    textReaches: textReaches(country, sms),
   };
 }

@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import MockAdapter from 'axios-mock-adapter';
 import axios from 'axios';
 import globals from '../../services/globals';
-import { loadPhoneCountries, phoneCountriesNow, resetPhoneCountriesForTests } from '../../services/phoneCountries';
+import { loadPhoneCountries, phoneCountriesNow, resetPhoneCountriesForTests, smsCountriesNow, textReaches } from '../../services/phoneCountries';
 
 /**
  * LT-677 - which countries a phone field offers. The API names the ones
@@ -76,6 +76,46 @@ describe('the open phone countries', () => {
   it('leaves out a country this app cannot read a number in, and Israel named twice', async () => {
     mock.onGet(url).reply(200, { success: true, data: { home: 'IL', abroad: ['GB', 'US', 'IL', 'US'] } });
     await expect(loadPhoneCountries()).resolves.toEqual(['IL', 'US']);
+  });
+
+  describe('where a text reaches (LT-716)', () => {
+    it('is not named before anything is asked: every country keeps its switch', () => {
+      expect(smsCountriesNow()).toBeNull();
+      expect(textReaches('US')).toBe(true);
+      expect(textReaches('IL')).toBe(true);
+    });
+
+    it('reads the API`s `sms` list: Israel, and only the countries named', async () => {
+      mock.onGet(url).reply(200, { success: true, data: { home: 'IL', abroad: ['US'], sms: ['IL'] } });
+      await loadPhoneCountries();
+      expect(phoneCountriesNow()).toEqual(['IL', 'US']);
+      expect(smsCountriesNow()).toEqual(['IL']);
+      expect(textReaches('IL')).toBe(true);
+      expect(textReaches('US')).toBe(false);
+    });
+
+    it('a country abroad named there takes texts', async () => {
+      mock.onGet(url).reply(200, { success: true, data: { home: 'IL', abroad: ['US'], sms: ['IL', 'US'] } });
+      await loadPhoneCountries();
+      expect(textReaches('US')).toBe(true);
+    });
+
+    it('keeps Israel and drops what is not a country code', async () => {
+      mock.onGet(url).reply(200, { success: true, data: { home: 'IL', abroad: ['US'], sms: ['US', 'us', 7, null, 'US'] } });
+      await loadPhoneCountries();
+      expect(smsCountriesNow()).toEqual(['IL', 'US']);
+    });
+
+    it.each([
+      ['an older API with no `sms` field', () => mock.onGet(url).reply(200, { success: true, data: { home: 'IL', abroad: ['US'] } })],
+      ['an `sms` that is no list', () => mock.onGet(url).reply(200, { success: true, data: { home: 'IL', abroad: ['US'], sms: 'IL' } })],
+      ['a failed request', () => mock.onGet(url).reply(500)],
+    ])('names nothing on %s: the switch stays for every number, as before', async (_name, arrange) => {
+      arrange();
+      await loadPhoneCountries();
+      expect(smsCountriesNow()).toBeNull();
+      expect(textReaches('US')).toBe(true);
+    });
   });
 
   it('never asks from a test that did not say so', async () => {

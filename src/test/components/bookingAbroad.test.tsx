@@ -3,6 +3,7 @@ import { render, screen, fireEvent, waitFor, act } from '@testing-library/react'
 import Schedule from '../../components/Layout/Schedule/Schedule';
 import { Appointment } from '../../models/Appointment';
 import { AppointmentType } from '../../models/AppointmentType';
+import { ClassOccurrence } from '../../models/ClassOccurrence';
 import { ScheduleConfig } from '../../models/ScheduleConfig';
 import { resetVisitorPassForTests } from '../../services/visitorPass';
 import { resetPhoneCountriesForTests } from '../../services/phoneCountries';
@@ -572,6 +573,141 @@ describe('booking with a number abroad (LT-677)', () => {
       expect(mocks.verifyOtp).toHaveBeenCalledWith('0501234567', '123456');
       expect(mocks.updateAppointment.mock.calls[0][0]).toMatchObject({ phone: '0501234567' });
       expect(document.querySelector('iframe')).toBeNull();
+    });
+  });
+
+  /**
+   * LT-716 - the API names where a customer's text reaches (`sms`: Israel,
+   * and the countries abroad with an SMS sender, none yet). A number of any
+   * other country gets its updates on WhatsApp: no switch, a line that says
+   * so, WhatsApp's consent, and the booking carries WhatsApp.
+   */
+  describe('where no text reaches (LT-716)', () => {
+    beforeEach(() => resetPhoneCountriesForTests({ offered: ['IL', 'US'], sms: ['IL'] }));
+
+    const switches = () => screen.queryAllByRole('switch');
+    const whatsappOnly = () => screen.queryByTestId('channel-whatsapp-only');
+    const usNumber = () => {
+      fillDetails('0501234567');
+      choose(chip(), 'US');
+      fireEvent.change(phoneInput(), { target: { value: '2125550123' } });
+    };
+    /** The fake frame sends the code and proves it. */
+    const proveByFrame = async (posted: Awaited<ReturnType<typeof listenToFrame>>) => {
+      await say({ type: 'lt-code-sent' });
+      await enterOtp();
+      await waitFor(() => expect(messages(posted, 'lt-code-confirm')).toHaveLength(1));
+      await say({ type: 'lt-code-verified', idToken: 'proof-1' });
+    };
+
+    it('a +1 number: no switch, the WhatsApp line and consent, and the booking on WhatsApp', async () => {
+      mocks.createAppointment.mockResolvedValue(booked('+12125550123'));
+      renderWidget();
+      await reachDetails();
+      usNumber();
+
+      expect(switches()).toHaveLength(0);
+      expect(whatsappOnly()).toHaveTextContent('schedule.channel.whatsappAbroad');
+      expect(screen.getByTestId('text-consent')).toHaveTextContent('schedule.form.consentWhatsapp');
+      expect(screen.getByTestId('text-consent')).not.toHaveTextContent('schedule.form.consentSms');
+
+      submitDetails();
+      const posted = await listenToFrame();
+      await say({ type: 'lt-code-ready' });
+      await say({ type: 'lt-code-sent' });
+      // Beside the code too: the line, and no switch.
+      await waitFor(() => expect(otpBoxes()).toHaveLength(6));
+      expect(switches()).toHaveLength(0);
+      expect(whatsappOnly()).toBeTruthy();
+
+      await enterOtp();
+      await waitFor(() => expect(messages(posted, 'lt-code-confirm')).toHaveLength(1));
+      await say({ type: 'lt-code-verified', idToken: 'proof-1' });
+      expect(await screen.findByText('schedule.success')).toBeTruthy();
+      expect(mocks.createAppointment.mock.calls[0][0]).toMatchObject({ phone: '+12125550123', channelType: 'whatsapp' });
+    });
+
+    it('a +972 number keeps the switch, its SMS default and the plain line', async () => {
+      renderWidget();
+      await reachDetails();
+      fillDetails('+972 50-123-4567');
+      expect(screen.getByTestId('phone-chip-face').textContent).toBe('+972');
+
+      expect(screen.getByRole('switch', { name: 'schedule.channel.switch' })).toHaveAttribute('aria-checked', 'false');
+      expect(screen.getByText('schedule.channel.sms')).toBeTruthy();
+      expect(whatsappOnly()).toBeNull();
+      expect(screen.queryByTestId('text-consent')).toBeNull();
+      expect(screen.getByText('schedule.form.helper')).toBeTruthy();
+
+      submitDetails();
+      await enterOtp();
+      expect(await screen.findByText('schedule.success')).toBeTruthy();
+      expect(mocks.sendOtp).toHaveBeenCalledWith('0501234567', 'sms');
+      expect(mocks.createAppointment.mock.calls[0][0]).toMatchObject({ channelType: 'sms' });
+    });
+
+    it("the switch comes back with the visitor's own choice when the number turns Israeli", async () => {
+      renderWidget();
+      await reachDetails();
+      fillDetails('0501234567');
+      fireEvent.click(screen.getByRole('switch', { name: 'schedule.channel.switch' }));
+      choose(chip(), 'US');
+      expect(switches()).toHaveLength(0);
+      choose(chip(), 'IL');
+      expect(screen.getByRole('switch', { name: 'schedule.channel.switch' })).toHaveAttribute('aria-checked', 'true');
+      expect(screen.getByText('schedule.channel.whatsapp')).toBeTruthy();
+    });
+
+    it('moving a US booking stored as a text: no switch, and the move carries WhatsApp', async () => {
+      const held = booked('+12125550123');
+      expect(held.channelType).toBe('sms');
+      mocks.updateAppointment.mockResolvedValue(held);
+      renderWidget({ isUpdating: true, appointmentToUpdate: held, onUpdateComplete: vi.fn() });
+      await reachDetails({ service: null });
+
+      expect(phoneInput().value).toBe('(212) 555-0123');
+      expect(switches()).toHaveLength(0);
+      expect(whatsappOnly()).toBeTruthy();
+      submitDetails();
+      const posted = await listenToFrame();
+      await say({ type: 'lt-code-ready' });
+      await proveByFrame(posted);
+      await waitFor(() => expect(mocks.updateAppointment).toHaveBeenCalledTimes(1));
+      expect(mocks.updateAppointment.mock.calls[0][0]).toMatchObject({ phone: '+12125550123', channelType: 'whatsapp' });
+    });
+
+    it('a class seat from a +1 number goes the same way', async () => {
+      const DAY = 86_400_000;
+      const yoga = new AppointmentType('c1', 'Yoga', '60', 'u1', '3600000', 'class', 10,
+        [0, 1, 2, 3, 4, 5, 6].map((weekday) => ({ weekday, time: '12:00' })));
+      const noon = new Date();
+      noon.setHours(12, 0, 0, 0);
+      const classes = [1, 2, 3, 4, 5, 6, 7].map((days) =>
+        new ClassOccurrence('c1', String(noon.getTime() + days * DAY), '3600000', 10, 2));
+      mocks.getCalendar.mockResolvedValue({ busy: [], classes });
+      mocks.createAppointment.mockResolvedValue(booked('+12125550123'));
+      renderWidget({ appointmentTypes: [yoga] });
+      await reachDetails({ service: 'Yoga' });
+
+      usNumber();
+      expect(switches()).toHaveLength(0);
+      expect(whatsappOnly()).toBeTruthy();
+      submitDetails();
+      const posted = await listenToFrame();
+      await say({ type: 'lt-code-ready' });
+      await proveByFrame(posted);
+      expect(await screen.findByText('schedule.success')).toBeTruthy();
+      expect(mocks.createAppointment.mock.calls[0][0]).toMatchObject({ type_id: 'c1', phone: '+12125550123', channelType: 'whatsapp' });
+    });
+
+    it('an API that names no `sms` list leaves the switch for a +1 number, as before', async () => {
+      resetPhoneCountriesForTests({ offered: ['IL', 'US'] });
+      renderWidget();
+      await reachDetails();
+      usNumber();
+      expect(screen.getByRole('switch', { name: 'schedule.channel.switchAbroad' })).toHaveAttribute('aria-checked', 'false');
+      expect(whatsappOnly()).toBeNull();
+      expect(screen.getByTestId('text-consent')).toHaveTextContent('schedule.form.consentSms');
     });
   });
 });

@@ -179,6 +179,9 @@ type CodeSendResult = OtpSendResult & { code?: string };
 /** A number abroad whose code was not accepted (LT-677): the message is what the form says. */
 class CodeRefused extends Error {}
 
+/** WhatsApp's mark, drawn beside the channel switch and on the WhatsApp-only line (LT-716). */
+const WHATSAPP_ICON = "M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z";
+
 /** The booking being made, as the form sends it once the number is proven. */
 type NewBooking = { name: string; phone: string; type_id: string; timestamp: string; user_id: string; status: string; channelType: 'sms' | 'whatsapp' };
 
@@ -258,6 +261,14 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
   // A number abroad gets its code by SMS through the code frame, whatever
   // the channel chosen for the messages that follow.
   const phoneAbroad = phoneInput.country !== HOME_COUNTRY;
+  // LT-716: a number no text reaches (the API names where one does: Israel,
+  // and the countries abroad with an SMS sender) gets its updates on
+  // WhatsApp, whatever the switch held: the switch gives way to a line that
+  // says so, the booking carries WhatsApp and the consent line is WhatsApp's.
+  // The visitor's own choice is kept for a number a text reaches. From an
+  // older API, which names no such list, the switch is as it always was.
+  const textReaches = phoneInput.textReaches;
+  const channel: 'sms' | 'whatsapp' = textReaches ? channelType : 'whatsapp';
   const codeFrame = useRef<CodeFrameHandle>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
@@ -285,6 +296,8 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
       const timestamp = parseInt(appointmentToUpdate.timestamp);
       setSelectedDate(zonedDateOf(timestamp, tz));
       setSelectedTime(zonedTimeLabel(timestamp, tz));
+      // A number no text reaches is moved on WhatsApp whatever was stored
+      // (LT-716): `channel` above follows the number's country.
       setChannelType(appointmentToUpdate.channelType || 'sms');
     }
   }, [isUpdating, appointmentToUpdate, tz, setPhoneCountry]);
@@ -482,11 +495,11 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
         return { ok: false, code: err instanceof CodeFrameError ? err.code : '' };
       }
     }
-    const first = await smsService.sendOtp(formData.phone, channelType);
+    const first = await smsService.sendOtp(formData.phone, channel);
     if (first.ok || first.status !== 401) return first;
     if (!(await visitorPass.renew(PASS_WAIT_MS))) return first;
-    return smsService.sendOtp(formData.phone, channelType);
-  }, [formData.phone, channelType, phoneInput.reading]);
+    return smsService.sendOtp(formData.phone, channel);
+  }, [formData.phone, channel, phoneInput.reading]);
 
   /** What the form says when the code frame could not send a code (LT-677). */
   const codeNotSentText = useCallback((code: string): string => (
@@ -766,7 +779,7 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
         timestamp: fixedDate.valueOf().toString(),
         user_id,
         status: "scheduled",
-        channelType
+        channelType: channel
       }
       
       // LT-451: this number may already hold a booking that day. Asked only
@@ -798,7 +811,7 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
     } finally {
       setIsSubmitting(false);
     }
-  }, [formData, validateForm, selectedDate, selectedAppointmentType, selectedTime, user_id, t, isPreview, isUpdating, channelType, tz, finishBooking, phoneInput.reading, proveAbroad]);
+  }, [formData, validateForm, selectedDate, selectedAppointmentType, selectedTime, user_id, t, isPreview, isUpdating, channel, tz, finishBooking, phoneInput.reading, proveAbroad]);
 
   /** LT-451: the customer's answer to "you already have a booking that day". */
   const chooseSameDay = useCallback((held?: SameDayBooking) => {
@@ -1465,6 +1478,57 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
     tz
   ]);
 
+  /**
+   * How the messages after the code go: the SMS / WhatsApp switch, on the
+   * details step and again beside the code. For a number no text reaches
+   * (LT-716) a line in its place: the code by SMS, the updates on WhatsApp.
+   */
+  const renderChannelChoice = (placement: string) => (
+    textReaches ? (
+      <div className={`flex flex-col items-center gap-3 ${placement}`}>
+        <span className="text-sm font-medium text-light-text/70 dark:text-dark-text/70 text-center">
+          {channelType === 'whatsapp'
+            ? (phoneAbroad ? t('schedule.channel.whatsappAbroad') : t('schedule.channel.whatsapp'))
+            : t('schedule.channel.sms')}
+        </span>
+        <div className="flex items-center gap-4 py-2" dir="ltr">
+          <MessagesSquare aria-hidden="true" className={`w-6 h-6 transition-colors ${channelType === 'sms' ? 'text-amber-400' : 'text-gray-400'}`} />
+
+          <button
+            type="button"
+            role="switch"
+            aria-checked={channelType === 'whatsapp'}
+            aria-label={phoneAbroad ? t('schedule.channel.switchAbroad') : t('schedule.channel.switch')}
+            onClick={() => setChannelType(prev => prev === 'sms' ? 'whatsapp' : 'sms')}
+            className={`w-12 h-6 rounded-full p-1 transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary ${channelType === 'whatsapp' ? 'bg-green-500' : 'bg-amber-400'
+              }`}
+          >
+            <div
+              className={`w-4 h-4 rounded-full bg-white shadow-md transform transition-transform duration-300 ${channelType === 'whatsapp' ? 'translate-x-6' : 'translate-x-0'
+                }`}
+            />
+          </button>
+
+          <svg
+            viewBox="0 0 24 24"
+            fill="currentColor"
+            className={`w-6 h-6 transition-colors ${channelType === 'whatsapp' ? 'text-[#25D366]' : 'text-gray-400'}`}
+            aria-hidden="true"
+          >
+            <path d={WHATSAPP_ICON} />
+          </svg>
+        </div>
+      </div>
+    ) : (
+      <p className={`flex items-center justify-center gap-2 text-sm font-medium text-light-text/70 dark:text-dark-text/70 text-center ${placement}`} data-testid="channel-whatsapp-only">
+        <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5 flex-shrink-0 text-[#25D366]" aria-hidden="true">
+          <path d={WHATSAPP_ICON} />
+        </svg>
+        <span>{t('schedule.channel.whatsappAbroad')}</span>
+      </p>
+    )
+  );
+
   /** One of the owner's questions on the details step (LT-178); shared with the lead form (LT-197). */
   const renderBookingField = (field: BookingField) => (
     <QuestionField
@@ -1982,40 +2046,7 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
                       </div>
                     ))}
 
-                    <div className="flex flex-col items-center gap-3 mt-6">
-                      <span className="text-sm font-medium text-light-text/70 dark:text-dark-text/70 text-center">
-                        {channelType === 'whatsapp'
-                          ? (phoneAbroad ? t('schedule.channel.whatsappAbroad') : t('schedule.channel.whatsapp'))
-                          : t('schedule.channel.sms')}
-                      </span>
-                      <div className="flex items-center gap-4 py-2" dir="ltr">
-                        <MessagesSquare aria-hidden="true" className={`w-6 h-6 transition-colors ${channelType === 'sms' ? 'text-amber-400' : 'text-gray-400'}`} />
-
-                        <button
-                          type="button"
-                          role="switch"
-                          aria-checked={channelType === 'whatsapp'}
-                          aria-label={phoneAbroad ? t('schedule.channel.switchAbroad') : t('schedule.channel.switch')}
-                          onClick={() => setChannelType(prev => prev === 'sms' ? 'whatsapp' : 'sms')}
-                          className={`w-12 h-6 rounded-full p-1 transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary ${channelType === 'whatsapp' ? 'bg-green-500' : 'bg-amber-400'
-                            }`}
-                        >
-                          <div
-                            className={`w-4 h-4 rounded-full bg-white shadow-md transform transition-transform duration-300 ${channelType === 'whatsapp' ? 'translate-x-6' : 'translate-x-0'
-                              }`}
-                          />
-                        </button>
-
-                        <svg
-                          viewBox="0 0 24 24"
-                          fill="currentColor"
-                          className={`w-6 h-6 transition-colors ${channelType === 'whatsapp' ? 'text-[#25D366]' : 'text-gray-400'}`}
-                          aria-hidden="true"
-                        >
-                          <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" />
-                        </svg>
-                      </div>
-                    </div>
+                    {renderChannelChoice('mt-6')}
 
                     <motion.button
                       type="submit"
@@ -2029,7 +2060,7 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
                     </motion.button>
                     {/* LT-687: a United States number agrees to texts here, in the words the carriers ask for. */}
                     {phoneInput.country === 'US' ? (
-                      <TextConsent channel={channelType} />
+                      <TextConsent channel={channel} />
                     ) : (
                       <p className="mt-4 text-xs text-light-text/60 dark:text-dark-text/50 text-center">
                         {t('schedule.form.helper')}
@@ -2133,40 +2164,7 @@ const Schedule: React.FC<ScheduleProps> = ({ config, workingDays, user_id, phone
                       {t('schedule.form.verification.message')}
                     </motion.p>
 
-                    <div className="flex flex-col items-center gap-3 mb-4">
-                      <span className="text-sm font-medium text-light-text/70 dark:text-dark-text/70 text-center">
-                        {channelType === 'whatsapp'
-                          ? (phoneAbroad ? t('schedule.channel.whatsappAbroad') : t('schedule.channel.whatsapp'))
-                          : t('schedule.channel.sms')}
-                      </span>
-                      <div className="flex items-center gap-4 py-2" dir="ltr">
-                        <MessagesSquare aria-hidden="true" className={`w-6 h-6 transition-colors ${channelType === 'sms' ? 'text-amber-400' : 'text-gray-400'}`} />
-
-                        <button
-                          type="button"
-                          role="switch"
-                          aria-checked={channelType === 'whatsapp'}
-                          aria-label={phoneAbroad ? t('schedule.channel.switchAbroad') : t('schedule.channel.switch')}
-                          onClick={() => setChannelType(prev => prev === 'sms' ? 'whatsapp' : 'sms')}
-                          className={`w-12 h-6 rounded-full p-1 transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary ${channelType === 'whatsapp' ? 'bg-green-500' : 'bg-amber-400'
-                            }`}
-                        >
-                          <div
-                            className={`w-4 h-4 rounded-full bg-white shadow-md transform transition-transform duration-300 ${channelType === 'whatsapp' ? 'translate-x-6' : 'translate-x-0'
-                              }`}
-                          />
-                        </button>
-
-                        <svg
-                          viewBox="0 0 24 24"
-                          fill="currentColor"
-                          className={`w-6 h-6 transition-colors ${channelType === 'whatsapp' ? 'text-[#25D366]' : 'text-gray-400'}`}
-                          aria-hidden="true"
-                        >
-                          <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" />
-                        </svg>
-                      </div>
-                    </div>
+                    {renderChannelChoice('mb-4')}
 
                     <div className="text-center mt-4">
                       <button
