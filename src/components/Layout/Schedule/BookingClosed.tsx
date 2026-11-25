@@ -18,10 +18,13 @@ const BookingClosed: React.FC<{ phone: string }> = ({ phone }) => {
   const { isModalOpen, setIsModalOpen, modalType, handleContactClick } = useContactHandler();
   const phoneTel = telHref(phone);
   const waHref = whatsAppHref(phone);
+  // LT-724: a site may have no phone; then no call or WhatsApp buttons.
+  const hasPhone = !!phone?.trim();
 
   return (
     <div className="card-design space-y-6 p-8 text-center max-w-2xl mx-auto" data-testid="booking-closed">
       <p className="text-lg text-light-text dark:text-dark-text">{t('schedule.closedOnline')}</p>
+      {hasPhone && (
       <div className="flex flex-col sm:flex-row gap-3 justify-center">
         <button
           type="button"
@@ -42,6 +45,7 @@ const BookingClosed: React.FC<{ phone: string }> = ({ phone }) => {
           </button>
         )}
       </div>
+      )}
       <ContactModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}

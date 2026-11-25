@@ -447,6 +447,7 @@ const Contact: React.FC<ContactProps> = ({ config, address, contact, workingDays
     ].filter(Boolean)
     : [];
 
+  const hasPhone = !!contact.phone?.trim();
   const contactInfo = [
     // Location card only when there is an address to point at.
     ...(fullAddress ? [{
@@ -457,14 +458,15 @@ const Contact: React.FC<ContactProps> = ({ config, address, contact, workingDays
       isLink: true,
       color: 'bg-primary/10 text-primary dark:bg-primary-dark/10 dark:text-primary-dark'
     }] : []),
-    {
+    // LT-724: a site may have no phone; then no phone card.
+    ...(hasPhone ? [{
       icon: Phone,
       title: t('about.phone'),
       content: displayPhone(contact.phone),
       action: () => handleContactClick('phone', telHref(contact.phone)),
       isLink: false,
       color: 'bg-primary/10 text-primary dark:bg-primary-dark/10 dark:text-primary-dark'
-    },
+    }] : []),
     {
       icon: Mail,
       title: t('about.email'),
@@ -520,7 +522,7 @@ const Contact: React.FC<ContactProps> = ({ config, address, contact, workingDays
           <WazeLink address={fullAddress} />
         </>
       )}
-      {!opts.skipPhone && (
+      {!opts.skipPhone && hasPhone && (
         <button type="button" onClick={() => handleContactClick('phone', phoneTel)} className="block hover:underline">
           <span dir="ltr">{phoneText}</span>
         </button>
@@ -689,6 +691,8 @@ const Contact: React.FC<ContactProps> = ({ config, address, contact, workingDays
       data-testid="contact-closed"
     >
       <p className="text-lg text-light-text dark:text-dark-text">{t('contact.closed')}</p>
+      {/* LT-724: no phone, no buttons (WhatsApp needs a mobile, so it goes too). */}
+      {hasPhone && (
       <div className="flex flex-col sm:flex-row gap-3 justify-center">
         <button
           type="button"
@@ -709,6 +713,7 @@ const Contact: React.FC<ContactProps> = ({ config, address, contact, workingDays
           </button>
         )}
       </div>
+      )}
     </motion.div>
   );
   const formOrButtons = formOpen ? formNode : closedNode;
@@ -729,6 +734,8 @@ const Contact: React.FC<ContactProps> = ({ config, address, contact, workingDays
             <SectionHeading titlePath="components.contact.title" descriptionPath="components.contact.description" title={config.title} description={config.description || undefined} variant={header} scale={headerScale} mb="mb-10" titleId="contact-title" />
             <div className="grid md:grid-cols-2 border-t border-light-text/15 dark:border-dark-text/15">
               <div className="py-12 md:pe-12 md:border-e border-light-text/15 dark:border-dark-text/15">
+                {/* LT-724: no phone, no big number; the lines start at the top. */}
+                {hasPhone && (
                 <button
                   type="button"
                   onClick={() => handleContactClick('phone', phoneTel)}
@@ -737,7 +744,8 @@ const Contact: React.FC<ContactProps> = ({ config, address, contact, workingDays
                 >
                   <span dir="ltr">{phoneText}</span>
                 </button>
-                {plainLines('mt-8 text-light-text/80 dark:text-dark-text/80', { skipPhone: true })}
+                )}
+                {plainLines(`${hasPhone ? 'mt-8 ' : ''}text-light-text/80 dark:text-dark-text/80`, { skipPhone: true })}
               </div>
               <div className="py-12 md:ps-12">{formOrButtons}</div>
             </div>
@@ -778,8 +786,12 @@ const Contact: React.FC<ContactProps> = ({ config, address, contact, workingDays
             </h2>
             <div className="mt-10 flex flex-wrap items-baseline gap-x-4 gap-y-2 text-lg opacity-90">
               <a href={`mailto:${contact.mail}`} className="hover:underline">{contact.mail}</a>
-              <span aria-hidden="true">·</span>
-              <button type="button" onClick={() => handleContactClick('phone', phoneTel)} className="hover:underline"><span dir="ltr">{phoneText}</span></button>
+              {hasPhone && (
+                <>
+                  <span aria-hidden="true">·</span>
+                  <button type="button" onClick={() => handleContactClick('phone', phoneTel)} className="hover:underline"><span dir="ltr">{phoneText}</span></button>
+                </>
+              )}
               {fullAddress && (
                 <>
                   <span aria-hidden="true">·</span>

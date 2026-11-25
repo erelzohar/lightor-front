@@ -152,6 +152,8 @@ const About: React.FC<AboutProps> = ({ config, websiteConfig, layout = 'cards', 
 
   // A landline has no WhatsApp (LT-404): no chat button for it.
   const waHref = whatsAppHref(websiteConfig.contact.phone);
+  // LT-724: a site may have no phone; then no call button and no phone card.
+  const hasPhone = !!websiteConfig.contact.phone?.trim();
 
   // Owner links, http(s) only (LT-315): the model drops the rest, and this is
   // where a link becomes clickable, so it is checked again here.
@@ -213,7 +215,7 @@ const About: React.FC<AboutProps> = ({ config, websiteConfig, layout = 'cards', 
       color: 'bg-[#000000]/5 text-black hover:bg-[#000000] hover:text-white dark:bg-[#000000]/10 dark:text-white dark:hover:bg-[#000000]',
       label: t('footer.social.follow.x')
     },
-    websiteConfig.contact.phone && {
+    hasPhone && {
       icon: Phone,
       onClick: () => handleContactClick('phone', telHref(websiteConfig.contact.phone)),
       color: 'bg-[#10B981]/10 text-[#10B981] hover:bg-[#10B981] hover:text-white dark:hover:text-white',
@@ -234,14 +236,14 @@ const About: React.FC<AboutProps> = ({ config, websiteConfig, layout = 'cards', 
       isLink: true,
       color: 'bg-primary/10 text-primary dark:bg-primary-dark/10 dark:text-primary-dark'
     }] : []),
-    {
+    ...(hasPhone ? [{
       icon: Phone,
       title: t('about.phone'),
       content: displayPhone(websiteConfig.contact.phone),
       action: () => handleContactClick('phone', telHref(websiteConfig.contact.phone)),
       isLink: false,
       color: 'bg-primary/10 text-primary dark:bg-primary-dark/10 dark:text-primary-dark'
-    },
+    }] : []),
     {
       icon: Mail,
       title: t('about.email'),

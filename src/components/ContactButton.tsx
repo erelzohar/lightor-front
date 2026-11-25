@@ -29,14 +29,16 @@ const ContactButton: React.FC<ContactButtonProps> = ({ phone }) => {
 
   // A landline has no WhatsApp (LT-404): its option is left out.
   const waHref = whatsAppHref(phone);
+  // LT-724: a site may have no phone; then there is no call option.
+  const hasPhone = !!phone?.trim();
 
   const contactOptions = [
-    {
+    ...(hasPhone ? [{
       icon: Phone,
       label: t('contact.option.call'),
       onClick: () => handleContactClick('phone', telHref(phone)),
       color: 'bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500 dark:text-emerald-400 dark:hover:bg-emerald-400'
-    },
+    }] : []),
     ...(waHref ? [{
       icon: WhatsAppIcon,
       label: t('contact.option.whatsapp'),
