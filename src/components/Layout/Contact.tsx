@@ -690,7 +690,7 @@ const Contact: React.FC<ContactProps> = ({ config, address, contact, workingDays
       variants={itemVariants}
       data-testid="contact-closed"
     >
-      <p className="text-lg text-light-text dark:text-dark-text">{t('contact.closed')}</p>
+      <p className="text-lg text-light-text dark:text-dark-text">{t(hasPhone ? 'contact.closed' : 'contact.closedNoPhone')}</p>
       {/* LT-724: no phone, no buttons (WhatsApp needs a mobile, so it goes too). */}
       {hasPhone && (
       <div className="flex flex-col sm:flex-row gap-3 justify-center">

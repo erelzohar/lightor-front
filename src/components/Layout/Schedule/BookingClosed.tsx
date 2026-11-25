@@ -23,7 +23,7 @@ const BookingClosed: React.FC<{ phone: string }> = ({ phone }) => {
 
   return (
     <div className="card-design space-y-6 p-8 text-center max-w-2xl mx-auto" data-testid="booking-closed">
-      <p className="text-lg text-light-text dark:text-dark-text">{t('schedule.closedOnline')}</p>
+      <p className="text-lg text-light-text dark:text-dark-text">{t(hasPhone ? 'schedule.closedOnline' : 'schedule.closedOnlineNoPhone')}</p>
       {hasPhone && (
       <div className="flex flex-col sm:flex-row gap-3 justify-center">
         <button

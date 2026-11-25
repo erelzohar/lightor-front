@@ -124,6 +124,7 @@
   },
   "schedule": {
     "closedOnline": "We're not taking bookings through the site right now - call us or send a WhatsApp message.",
+    "closedOnlineNoPhone": "We're not taking bookings through the site right now - please try again later.",
     "title": "Schedule Your Visit",
     "select": {
       "date": "Select Date",
@@ -290,6 +291,7 @@
   "contact": {
     "title": "Get in Touch",
     "closed": "We're not taking messages through the site right now - call us or send a WhatsApp message.",
+    "closedNoPhone": "We're not taking messages through the site right now - please try again later.",
     "form": {
       "title": "Contact form",
       "name": "Name",

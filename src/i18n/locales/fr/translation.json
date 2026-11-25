@@ -124,6 +124,7 @@
   },
   "schedule": {
     "closedOnline": "La prise de rendez-vous en ligne n'est pas disponible pour le moment - appelez-nous ou envoyez un message WhatsApp.",
+    "closedOnlineNoPhone": "La prise de rendez-vous en ligne n'est pas disponible pour le moment - réessayez plus tard.",
     "title": "Planifiez votre visite",
     "select": {
       "date": "Choisir une date",
@@ -290,6 +291,7 @@
   "contact": {
     "title": "Contactez-nous",
     "closed": "Le formulaire n'est pas disponible pour le moment - appelez-nous ou envoyez un message WhatsApp.",
+    "closedNoPhone": "Le formulaire n'est pas disponible pour le moment - réessayez plus tard.",
     "form": {
       "title": "Formulaire de contact",
       "name": "Nom",

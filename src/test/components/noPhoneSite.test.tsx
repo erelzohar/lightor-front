@@ -140,11 +140,15 @@ describe('a site with no phone (LT-724)', () => {
       expectNoPhone(closed);
       expect(closed.querySelectorAll('button')).toHaveLength(0);
       expect(closed.children).toHaveLength(1);
+      expect(within(closed).getByText('contact.closedNoPhone')).toBeInTheDocument();
+      expect(within(closed).queryByText('contact.closed')).toBeNull();
     });
 
     it('leads closed with a phone: call and WhatsApp as before', async () => {
       render(contact(MOBILE, 'editorial', false));
       const closed = screen.getByTestId('contact-closed');
+      expect(within(closed).getByText('contact.closed')).toBeInTheDocument();
+      expect(within(closed).queryByText('contact.closedNoPhone')).toBeNull();
       expect(within(closed).getByText('contact.option.whatsapp')).toBeInTheDocument();
       fireEvent.click(within(closed).getByText('contact.option.call'));
       await expectCallCard();
@@ -175,11 +179,14 @@ describe('a site with no phone (LT-724)', () => {
       const card = screen.getByTestId('booking-closed');
       expectNoPhone(card);
       expect(card.querySelectorAll('button')).toHaveLength(0);
-      expect(card).toHaveTextContent('schedule.closedOnline');
+      expect(within(card).getByText('schedule.closedOnlineNoPhone')).toBeInTheDocument();
+      expect(within(card).queryByText('schedule.closedOnline')).toBeNull();
     });
 
     it('with a phone: the call button dials the number', async () => {
       render(<BookingClosed phone={MOBILE} />);
+      expect(screen.getByText('schedule.closedOnline')).toBeInTheDocument();
+      expect(screen.queryByText('schedule.closedOnlineNoPhone')).toBeNull();
       expect(screen.getByRole('button', { name: 'contact.option.whatsapp' })).toBeInTheDocument();
       fireEvent.click(screen.getByRole('button', { name: 'contact.option.call' }));
       await expectCallCard();
