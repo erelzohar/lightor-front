@@ -71,9 +71,26 @@ describe('a site with no phone (LT-724)', () => {
   describe('the floating contact button', () => {
     it.each(NO_PHONES)('offers no call and no WhatsApp for %j, the report option stays', (phone) => {
       render(<ContactButton phone={phone} />);
-      fireEvent.click(screen.getByLabelText('contact.button.options'));
+      fireEvent.click(screen.getByRole('button', { name: 'contact.option.report' }));
       expectNoPhone();
       expect(screen.getByText('contact.option.report')).toBeInTheDocument();
+    });
+
+    it.each(NO_PHONES)('for %j the round button is named and drawn as "report a problem"', (phone) => {
+      render(<ContactButton phone={phone} />);
+      expect(screen.queryByLabelText('contact.button.options')).toBeNull();
+      const button = screen.getByRole('button', { name: 'contact.option.report' });
+      expect(button.querySelector('svg.lucide-alert-triangle')).not.toBeNull();
+      expect(button.querySelector('svg.lucide-phone')).toBeNull();
+      fireEvent.click(button);
+      expect(screen.getByText('contact.option.report')).toBeInTheDocument();
+    });
+
+    it('with a phone the round button keeps its name and phone icon', () => {
+      render(<ContactButton phone={MOBILE} />);
+      const button = screen.getByRole('button', { name: 'contact.button.options' });
+      expect(button.querySelector('svg.lucide-phone')).not.toBeNull();
+      expect(button.querySelector('svg.lucide-alert-triangle')).toBeNull();
     });
 
     it('with a phone: call and WhatsApp as before, the call dials the number', async () => {

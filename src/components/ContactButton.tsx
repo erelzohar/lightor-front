@@ -95,13 +95,16 @@ const ContactButton: React.FC<ContactButtonProps> = ({ phone }) => {
           }`}
         whileHover={{ scale: 1.1 }}
         whileTap={{ scale: 0.95 }}
-        aria-label={t('contact.button.options')}
+        // LT-724: with no phone it opens only "report a problem", so it says so and wears that icon.
+        aria-label={t(hasPhone ? 'contact.button.options' : 'contact.option.report')}
         aria-expanded={isOpen}
       >
         {isOpen ? (
           <X className="h-6 w-6" aria-hidden="true" />
-        ) : (
+        ) : hasPhone ? (
           <Phone className="h-6 w-6" aria-hidden="true" />
+        ) : (
+          <AlertTriangle className="h-6 w-6" aria-hidden="true" />
         )}
       </motion.button>
 
